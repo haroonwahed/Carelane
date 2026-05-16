@@ -8,6 +8,10 @@
 # flows use Playwright after deploy with rehearsal or pilot demo users.
 set -euo pipefail
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=scripts/lib/http_probe.sh
+. "$ROOT_DIR/scripts/lib/http_probe.sh"
+
 if [[ -z "${BASE_URL:-}" ]]; then
   echo "ERROR: set BASE_URL (e.g. https://careon-web.onrender.com)" >&2
   exit 1
@@ -26,15 +30,22 @@ paths=(
 )
 
 echo "== V1 staging shell smoke: ${ORIGIN}"
+
+if [[ "${STAGING_WAKE_FIRST:-1}" == "1" ]]; then
+  http_wake_origin "$ORIGIN" "/login/" || exit 1
+fi
+
 failed=0
 for path in "${paths[@]}"; do
   url="${ORIGIN}${path}"
-  code="$(curl -sS -L -o /dev/null -w '%{http_code}' --max-time 60 "$url" || true)"
+  result="$(http_probe_request "$url" "$(http_probe_curl_max_time)" || echo "000 0")"
+  code="${result%% *}"
+  elapsed="${result#* }"
   if [[ ! "$code" =~ ^(2|3)[0-9]{2}$ ]]; then
-    echo "FAIL $url → HTTP $code"
+    echo "FAIL $url → HTTP $code (${elapsed}s)"
     failed=1
   else
-    echo "OK   $url → HTTP $code"
+    echo "OK   $url → HTTP $code (${elapsed}s)"
   fi
 done
 

@@ -74,7 +74,8 @@ if [[ "$RUN_SEED" -eq 1 ]]; then
   "$PYTHON_BIN" manage.py bootstrap_staging_pilot
 fi
 
-echo "[staging_pilot_signoff] HTTP shell smoke …"
+echo "[staging_pilot_signoff] Wake + HTTP shell smoke …"
+export STAGING_WAKE_FIRST=1
 ./scripts/staging_v1_shell_smoke.sh
 
 LIVE="$(curl -sS -L --max-time 60 "${BASE_URL%/}/dashboard/" | grep -oE 'index-[A-Za-z0-9_-]+\.js' | head -1 || true)"
@@ -98,8 +99,8 @@ if [[ "$LIVE" != "$EXPECTED" ]]; then
   echo "[staging_pilot_signoff] WARN: repo hash != live (Render rebuilds SPA on deploy; Playwright is the functional gate)."
 fi
 
-echo "[staging_pilot_signoff] Playwright (staging-shell + provider-review) …"
-if ! (cd "$ROOT_DIR/client" && npx playwright install chromium >/dev/null 2>&1); then
+echo "[staging_pilot_signoff] Playwright (staging-shell + provider-review) — line reporter …"
+if ! (cd "$ROOT_DIR/client" && npx playwright install chromium 2>&1 | sed 's/^/[playwright install] /'); then
   die "playwright install chromium failed"
 fi
 (
@@ -107,7 +108,8 @@ fi
   npx playwright test \
     tests/e2e/staging-shell-smoke.spec.ts \
     tests/e2e/provider-review-smoke.spec.ts \
-    --workers=1
+    --workers=1 \
+    --reporter=line
 )
 
 echo "[staging_pilot_signoff] GO — shell smoke, live SPA asset, and Playwright passed."

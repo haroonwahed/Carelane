@@ -18,6 +18,9 @@ echo "[wait_staging_spa_deploy] Expecting $EXPECTED on ${BASE_URL%/}/dashboard/ 
 
 deadline=$((SECONDS + MAX_WAIT_SEC))
 while (( SECONDS < deadline )); do
+  elapsed=$((SECONDS))
+  remaining=$((deadline - SECONDS))
+  echo "[wait_staging_spa_deploy] poll (+${elapsed}s, ~${remaining}s left) …"
   LIVE="$(curl -sS -L --max-time 60 "${BASE_URL%/}/dashboard/" | grep -oE 'index-[A-Za-z0-9_-]+\.js' | head -1 || true)"
   if [[ -n "$LIVE" ]]; then
     echo "[wait_staging_spa_deploy] live=$LIVE"
