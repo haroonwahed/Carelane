@@ -5,18 +5,24 @@ import { useCases, type SpaCase } from "../../hooks/useCases";
 import { Button } from "../ui/button";
 import {
   CareAttentionBar,
+  CareQueueInlineAction,
   CareContextHint,
+  CareDominantStatus,
   CareInfoPopover,
+  CareMetaChip,
   CareMetricBadge,
+  CareOperationalQueueHeader,
   CarePageScaffold,
+  CarePrimaryList,
   CareSearchFiltersBar,
+  CareWorkListCard,
+  CareWorkRow,
   EmptyState,
   ErrorState,
   LoadingState,
   PrimaryActionButton,
 } from "./CareDesignPrimitives";
-import { UrgencyBadge } from "./UrgencyBadge";
-import { tokens } from "../../design/tokens";
+import { cn } from "../ui/utils";
 
 interface IntakeListPageProps {
   onCaseClick: (caseId: string) => void;
@@ -124,7 +130,7 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
 
   return (
     <CarePageScaffold
-      archetype="worklist"
+      archetype="queue"
       className="pb-8"
       title={
         <span className="inline-flex flex-wrap items-center gap-2">
@@ -142,6 +148,7 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
       }
       dominantAction={
         <CareAttentionBar
+          layout="compact"
           tone={pendingRequests.length > 0 ? "warning" : "info"}
           icon={<Send size={16} />}
           message={
@@ -153,28 +160,12 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
           }
           action={
             visibleCases.length > 0 ? (
-              <PrimaryActionButton onClick={() => onCaseClick(visibleCases[0].id)}>
+              <CareQueueInlineAction onClick={() => onCaseClick(visibleCases[0].id)}>
                 Bekijk eerste casus
-              </PrimaryActionButton>
+              </CareQueueInlineAction>
             ) : undefined
           }
         />
-      }
-      kpiStrip={
-        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
-          {[
-            { label: "Open aanvragen", value: pendingRequests.length, detail: "Beoordelen" },
-            { label: "In plaatsing", value: intakeCases.length, detail: "Volgende stap" },
-            { label: "Gem. wachttijd", value: `${avgWaitDays}d`, detail: "Op huidige filters" },
-            { label: "Zichtbaar", value: visibleCases.length, detail: "In dit overzicht" },
-          ].map((item) => (
-            <div key={item.label} className="rounded-2xl border border-border/70 bg-card/70 px-4 py-3.5 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{item.label}</p>
-              <div className="mt-1.5 text-[20px] font-semibold leading-none text-foreground">{item.value}</div>
-              <p className="mt-1.5 text-[13px] leading-snug text-muted-foreground">{item.detail}</p>
-            </div>
-          ))}
-        </div>
       }
       filters={
         <CareSearchFiltersBar
@@ -208,66 +199,98 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
       )}
 
       {!loading && !error && visibleCases.length > 0 && (
-        <div className="space-y-3">
-          {visibleCases.map((caseItem) => {
-            const isPending = caseItem.status === "provider_beoordeling";
-            const isBusy = submittingCaseId === caseItem.id;
+        <CareWorkListCard
+          testId="intake-worklist"
+          header={
+            <CareOperationalQueueHeader
+              labels={["Urgentie", "Casus", "Operationeel", "Status", "Wachttijd", "Volgende actie"]}
+            />
+          }
+        >
+          <div className="divide-y divide-border/40">
+            <CarePrimaryList>
+              {visibleCases.map((caseItem) => {
+                const isPending = caseItem.status === "provider_beoordeling";
+                const isBusy = submittingCaseId === caseItem.id;
+                const canDecide = isPending && role === "zorgaanbieder";
 
-            return (
-              <div
-                key={caseItem.id}
-                className="panel-surface p-4 transition-all hover:bg-card/80"
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-lg font-semibold text-foreground">{formatClientReference(caseItem.id)}</h2>
-                      <UrgencyBadge urgency={caseItem.urgency} />
-                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-foreground">
-                        {isPending ? "IN BEOORDELING" : "INTAKE / PLAATSING"}
-                      </span>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground">
-                      Betrokkene: {maskParticipantIdentity(caseItem.title || caseItem.id)} · Casus #{caseItem.id} · {caseItem.regio || "Onbekende regio"} · {caseItem.zorgtype || "Onbekend zorgtype"}
-                    </p>
-
-                    <p className="text-sm text-foreground/85" style={{ maxWidth: tokens.layout.contentMeasure }}>
-                      {caseItem.systemInsight || "Geen toelichting."}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <span className="rounded-full bg-muted px-2.5 py-1">Wachttijd: {caseItem.wachttijd} dagen</span>
-                      <span className="rounded-full bg-muted px-2.5 py-1">Actie: {caseItem.recommendedAction}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                    <Button variant="outline" onClick={() => onCaseClick(caseItem.id)}>
-                      Bekijk casus
-                    </Button>
-                    {isPending && role === "zorgaanbieder" && (
+                return (
+                  <CareWorkRow
+                    key={caseItem.id}
+                    density="operational"
+                    leading={
+                      <CareMetaChip
+                        className={cn(
+                          "h-6 px-2 text-[11px] font-semibold",
+                          caseItem.urgency === "critical"
+                            ? "border-red-500/35 bg-red-500/10 text-red-100"
+                            : caseItem.urgency === "warning"
+                              ? "border-amber-500/35 bg-amber-500/10 text-amber-100"
+                              : "border-border bg-muted/30 text-foreground",
+                        )}
+                      >
+                        {caseItem.urgency === "critical" ? "Kritiek" : caseItem.urgency === "warning" ? "Hoog" : "Normaal"}
+                      </CareMetaChip>
+                    }
+                    title={formatClientReference(caseItem.id)}
+                    context={
                       <>
+                        <CareMetaChip className="font-mono text-[11px]">{caseItem.id}</CareMetaChip>
+                        <CareMetaChip>{caseItem.regio || "Regio onbekend"}</CareMetaChip>
+                        <span className="line-clamp-1 min-w-0 max-w-[min(100%,28rem)] text-[11px] text-foreground/85">
+                          {caseItem.systemInsight || caseItem.recommendedAction || "Geen toelichting."}
+                        </span>
+                      </>
+                    }
+                    status={
+                      <CareDominantStatus>
+                        {isPending ? "In beoordeling" : "Intake / plaatsing"}
+                      </CareDominantStatus>
+                    }
+                    time={
+                      <CareMetaChip>
+                        <Clock3 size={12} aria-hidden />
+                        {caseItem.wachttijd}d wacht
+                      </CareMetaChip>
+                    }
+                    contextInfo={
+                      canDecide ? (
                         <Button
+                          type="button"
                           variant="outline"
-                          onClick={() => handleDecision(caseItem.id, "REJECTED")}
+                          size="sm"
+                          className="h-7 shrink-0 px-2 text-xs"
                           disabled={isBusy}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleDecision(caseItem.id, "REJECTED");
+                          }}
                         >
-                          <XCircle size={16} className="mr-2" />
+                          <XCircle size={14} className="mr-1" aria-hidden />
                           Afwijzen
                         </Button>
-                        <Button onClick={() => handleDecision(caseItem.id, "ACCEPTED")} disabled={isBusy}>
-                          {isBusy ? <Loader2 size={16} className="mr-2 animate-spin" /> : <CheckCircle2 size={16} className="mr-2" />}
-                          Accepteren
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                      ) : (
+                        <CareMetaChip>{maskParticipantIdentity(caseItem.title || caseItem.id)}</CareMetaChip>
+                      )
+                    }
+                    actionLabel={canDecide ? (isBusy ? "Verwerken…" : "Accepteren") : "Bekijk casus"}
+                    actionVariant={canDecide ? "primary" : "ghost"}
+                    accentTone={caseItem.urgency === "critical" ? "critical" : caseItem.urgency === "warning" ? "warning" : "neutral"}
+                    onOpen={() => onCaseClick(caseItem.id)}
+                    onAction={(event) => {
+                      event.stopPropagation();
+                      if (canDecide && !isBusy) {
+                        void handleDecision(caseItem.id, "ACCEPTED");
+                      } else {
+                        onCaseClick(caseItem.id);
+                      }
+                    }}
+                  />
+                );
+              })}
+            </CarePrimaryList>
+          </div>
+        </CareWorkListCard>
       )}
 
       <CareContextHint

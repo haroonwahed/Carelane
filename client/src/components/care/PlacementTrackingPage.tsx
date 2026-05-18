@@ -3,6 +3,7 @@ import { CheckCircle2 } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   CareAttentionBar,
+  CareQueueInlineAction,
   CareContextHint,
   CareDominantStatus,
   CareFilterTabButton,
@@ -16,6 +17,7 @@ import {
   CareSectionBody,
   CareSectionHeader,
   CareSearchFiltersBar,
+  CareOperationalQueueHeader,
   CareWorkListCard,
   CareWorkRow,
   EmptyState,
@@ -102,7 +104,7 @@ export function PlacementTrackingPage({ onCaseClick, onNavigateToMatching }: Pla
 
   return (
     <CarePageScaffold
-      archetype="worklist"
+      archetype="queue"
       className="pb-8"
       title={
         <span className="inline-flex flex-wrap items-center gap-2">
@@ -116,7 +118,7 @@ export function PlacementTrackingPage({ onCaseClick, onNavigateToMatching }: Pla
       actions={
         <div className="flex flex-wrap items-center gap-2">
           {onNavigateToMatching ? (
-            <PrimaryActionButton onClick={onNavigateToMatching}>Naar matching</PrimaryActionButton>
+            <CareQueueInlineAction onClick={onNavigateToMatching}>Naar matching</CareQueueInlineAction>
           ) : null}
           <Button variant="outline" onClick={() => void refetch()}>
             Ververs
@@ -130,9 +132,10 @@ export function PlacementTrackingPage({ onCaseClick, onNavigateToMatching }: Pla
       }
       dominantAction={
         <CareAttentionBar
+          layout="compact"
           tone="info"
           message="Plaatsingen zijn het gevolg van provideracceptatie. Gebruik dit overzicht om bevestiging, intake en vertragingen te bewaken."
-          action={onNavigateToMatching ? <PrimaryActionButton onClick={onNavigateToMatching}>Bekijk matching</PrimaryActionButton> : undefined}
+          action={onNavigateToMatching ? <CareQueueInlineAction onClick={onNavigateToMatching}>Bekijk matching</CareQueueInlineAction> : undefined}
         />
       }
     >
@@ -163,7 +166,7 @@ export function PlacementTrackingPage({ onCaseClick, onNavigateToMatching }: Pla
             title={<span id="plaatsingen-werkvoorraad-heading">Werkvoorraad</span>}
             meta={
               <div className="w-full min-w-0 space-y-2">
-                <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
+                <span className="inline-flex w-fit items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
                   {visibleCases.length} plaatsingen
                 </span>
                 <CareSearchFiltersBar
@@ -189,22 +192,17 @@ export function PlacementTrackingPage({ onCaseClick, onNavigateToMatching }: Pla
               <EmptyState
                 title="Geen plaatsingen in dit overzicht"
                 copy={emptyCopy[activeTab]}
-                action={<PrimaryActionButton onClick={() => onNavigateToMatching?.()}>Naar matching</PrimaryActionButton>}
+                action={<CareQueueInlineAction onClick={() => onNavigateToMatching?.()}>Naar matching</CareQueueInlineAction>}
               />
             ) : (
               <CareWorkListCard
-                header={(
-                  <div className="hidden min-w-[980px] gap-y-3 gap-x-4 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid md:grid-cols-[88px_128px_minmax(220px,260px)_104px_112px_minmax(220px,1fr)] md:gap-x-5 md:px-5">
-                    <span>Fase</span>
-                    <span>Casus</span>
-                    <span>Status</span>
-                    <span>Tijd</span>
-                    <span>Context</span>
-                    <span>Volgende actie</span>
-                  </div>
-                )}
+                header={
+                  <CareOperationalQueueHeader
+                    labels={["Fase", "Casus", "Status", "Tijd", "Context", "Volgende actie"]}
+                  />
+                }
               >
-                <div className="min-w-[980px] divide-y divide-border/45">
+                <div className="divide-y divide-border/45">
                   <CarePrimaryList>
                     {visibleCases.map((item) => {
                       const { actionLabel, actionVariant } = placementTrackingRowAction(item);
@@ -212,6 +210,7 @@ export function PlacementTrackingPage({ onCaseClick, onNavigateToMatching }: Pla
                       return (
                         <CareWorkRow
                           key={item.id}
+                          density="operational"
                           leading={<FlowPhaseBadge phaseId={normalizeBoardColumnToPhaseId(item.boardColumn)} />}
                           title={formatClientReference(item.id)}
                           context={`${item.id} · ${item.recommendedProviderName ?? "Nog niet gekozen"}`}

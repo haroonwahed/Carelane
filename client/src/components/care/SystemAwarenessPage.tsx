@@ -34,12 +34,15 @@ import {
   CareSectionHeader,
   CareOperationalSelect,
   CareSearchFiltersBar,
+  CareDominantStatus,
+  CareOperationalQueueHeader,
   CareWorkListCard,
+  CareWorkRow,
+  CareQueueInlineAction,
   CareWorkspaceSection,
   EmptyState,
   ErrorState,
   LoadingState,
-  PrimaryActionButton,
 } from "./CareDesignPrimitives";
 import { useRegiekamerDecisionOverview } from "../../hooks/useRegiekamerDecisionOverview";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
@@ -1090,7 +1093,7 @@ export function SystemAwarenessPage({
     <div className="flex w-full flex-col gap-8 xl:flex-row xl:items-start xl:gap-8">
       <div className="min-w-0 flex-1">
         <CarePageScaffold
-          archetype="decision"
+          archetype="command"
           className="pb-8"
           title={
             <span className="inline-flex flex-wrap items-center gap-2">
@@ -1116,7 +1119,7 @@ export function SystemAwarenessPage({
                 )}
                 {canCreateCase && onCreateCase && hasActiveData ? (
                   // Demoted to outline so the dominantAction below holds the operational focus.
-                  // Empty-state still uses PrimaryActionButton (no competing dominantAction there).
+                  // Outline in header when data exists; empty-state uses restrained default CTA.
                   <Button variant="outline" onClick={onCreateCase} className="gap-2">
                     Nieuwe aanvraag
                   </Button>
@@ -1140,6 +1143,7 @@ export function SystemAwarenessPage({
             <div className="space-y-3">
           {hasActiveData && (
             <CareAlertCard
+              density="compact"
               testId="regiekamer-dominant-action"
               data-regiekamer-mode={uiMode}
               tone={
@@ -1166,29 +1170,23 @@ export function SystemAwarenessPage({
                 ) : undefined
               }
               primaryAction={
-                <Button
+                <CareQueueInlineAction
                   type="button"
-                  size="lg"
-                  className="h-11 rounded-xl px-5 text-[14px] font-semibold shadow-md"
                   onClick={runModePrimary}
                   data-testid="regiekamer-dominant-primary-cta"
                 >
                   {dominantPrimaryLabel}
-                  <ChevronRight size={16} className="ml-2" aria-hidden />
-                </Button>
+                </CareQueueInlineAction>
               }
               secondaryAction={
                 regiekamerNba.secondaryAction ? (
-                  <Button
+                  <CareQueueInlineAction
                     type="button"
-                    variant="outline"
-                    size="lg"
-                    className="h-11 rounded-xl border-border/70 px-5 text-[14px]"
                     onClick={runModeSecondary}
                     data-testid="regiekamer-dominant-secondary-cta"
                   >
                     {dominantSecondaryLabel}
-                  </Button>
+                  </CareQueueInlineAction>
                 ) : undefined
               }
             />
@@ -1312,17 +1310,27 @@ export function SystemAwarenessPage({
           action={
             canCreateCase && onCreateCase && onAppNavigate ? (
               <div className="flex flex-wrap items-center gap-2">
-                <PrimaryActionButton type="button" onClick={onCreateCase}>
+                <Button
+                  type="button"
+                  variant="default"
+                  className="h-9 min-h-9 rounded-lg px-4 text-[13px] font-semibold shadow-sm"
+                  onClick={onCreateCase}
+                >
                   Nieuwe aanvraag
-                </PrimaryActionButton>
+                </Button>
                 <Button type="button" variant="outline" onClick={() => onAppNavigate("/casussen")}>
                   Open aanvragen
                 </Button>
               </div>
             ) : canCreateCase && onCreateCase ? (
-              <PrimaryActionButton type="button" onClick={onCreateCase}>
+              <Button
+                type="button"
+                variant="default"
+                className="h-9 min-h-9 rounded-lg px-4 text-[13px] font-semibold shadow-sm"
+                onClick={onCreateCase}
+              >
                 Nieuwe aanvraag
-              </PrimaryActionButton>
+              </Button>
             ) : onAppNavigate ? (
               <Button type="button" variant="outline" onClick={() => onAppNavigate("/casussen")}>
                 Open aanvragen
@@ -1445,18 +1453,13 @@ export function SystemAwarenessPage({
           }
         >
           <CareWorkListCard
-            header={(
-              <div className="hidden min-w-[980px] gap-y-3 gap-x-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid md:grid-cols-[88px_128px_minmax(220px,260px)_104px_112px_minmax(220px,1fr)] md:gap-x-5">
-                <span>Prioriteit</span>
-                <span>Casus</span>
-                <span>Blokkade / aandacht</span>
-                <span>Eigenaar</span>
-                <span>Wachttijd</span>
-                <span>Volgende actie</span>
-              </div>
-            )}
+            header={
+              <CareOperationalQueueHeader
+                labels={["Prioriteit", "Casus", "Blokkade / aandacht", "Eigenaar", "Wachttijd", "Volgende actie"]}
+              />
+            }
           >
-            <div className="min-w-[980px] divide-y divide-border/30">
+            <div className="divide-y divide-border/40">
               {visibleItems.map((item) => (
                 <RegiekamerWorkItemCard
                   key={item.case_id}
@@ -1695,85 +1698,51 @@ function RegiekamerWorkItemCard({
   const summaryState = summaryWorkflowState(item);
   const hasPrimaryNba = normalizedPrimaryAction != null && normalizedPrimaryAction.trim() !== "" && !summaryState?.processing;
   const blockerDetail = actionableProblemLabel(item);
+  const processingOnly = Boolean(summaryState && summaryState.actionLabel == null);
+  const actionLabel = processingOnly
+    ? summaryState!.statusLabel
+    : hasPrimaryNba
+      ? normalizedPrimaryAction!
+      : "Bekijk aanvraag";
+
   return (
-    <div
-      data-testid="regiekamer-worklist-item"
-      className={cn(
-        "group grid gap-y-3 gap-x-4 px-4 py-3.5 transition-colors md:grid-cols-[88px_128px_minmax(220px,260px)_104px_112px_minmax(220px,1fr)] md:gap-x-5 md:items-center md:px-5",
-        "hover:bg-background/35",
-      )}
-    >
-      <button
-        type="button"
-        onClick={() => onCaseClick(String(item.case_id))}
-        aria-label={`Open aanvraag ${item.title}`}
-        className={cn(
-          "group grid min-w-0 gap-y-3 gap-x-4 text-left outline-none transition-colors md:col-span-5 md:grid-cols-[88px_128px_minmax(220px,260px)_104px_112px] md:gap-x-5 md:items-center",
-          "focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        )}
-      >
-        <div className="flex items-center gap-2 md:flex-col md:items-start md:gap-2.5">
-          <CareMetaChip className={cn("h-8 px-3 text-[13px] font-semibold", priorityBadgeClasses(item.priority_score))}>
-            {priorityLabel(item.priority_score)}
-          </CareMetaChip>
-        </div>
-
-        <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold leading-tight text-foreground">{item.title}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-muted-foreground">
-            <span className="font-mono text-[11px] text-muted-foreground/80">{item.case_reference}</span>
-          </div>
-        </div>
-
-        <div className="min-w-0 space-y-1.5">
-          <CareMetaChip
-            className={cn(
-              "w-fit max-w-full whitespace-normal border text-left text-[12px] font-semibold leading-snug text-foreground",
-              severityBadgeClasses(issueTone(item)),
-            )}
-          >
-            <span className="line-clamp-2">{blockerDetail}</span>
-          </CareMetaChip>
-        </div>
-
-        <div className="min-w-0">
-          <p className="text-[14px] font-medium leading-tight text-foreground/95">{ownerLabel(item)}</p>
-        </div>
-
-        <div className="md:justify-self-start">
-          <CareMetaChip className="h-8">
-            <Clock3 size={12} />
-            {formatHours(item.hours_in_current_state)}
-          </CareMetaChip>
-        </div>
-      </button>
-
-      <div className="min-w-0 md:justify-self-start">
-        {summaryState && summaryState.actionLabel == null ? (
-          <CareMetaChip className="h-8 max-w-full whitespace-normal text-left leading-tight">
-            {summaryState.statusLabel}
-          </CareMetaChip>
-        ) : hasPrimaryNba ? (
-          <Button
-            variant="default"
-            size="sm"
-            className="h-11 min-h-11 w-full justify-center rounded-xl px-3 text-[13px] font-semibold leading-tight"
-            onClick={() => onCaseClick(String(item.case_id))}
-          >
-            <span className="whitespace-nowrap text-center">{normalizedPrimaryAction}</span>
-          </Button>
-        ) : (
-          <Button
-            variant="secondary"
-            size="sm"
-            className="h-11 min-h-11 w-full justify-center rounded-xl px-3 text-[13px] font-semibold leading-tight"
-            onClick={() => onCaseClick(String(item.case_id))}
-          >
-            Bekijk aanvraag
-          </Button>
-        )}
-      </div>
-
-    </div>
+    <CareWorkRow
+      testId="regiekamer-worklist-item"
+      density="operational"
+      queueVariant="command"
+      leading={
+        <CareMetaChip className={cn("h-6 px-2 text-[11px] font-semibold", priorityBadgeClasses(item.priority_score))}>
+          {priorityLabel(item.priority_score)}
+        </CareMetaChip>
+      }
+      title={item.title}
+      context={<span className="font-mono text-[11px] text-muted-foreground/90">{item.case_reference}</span>}
+      status={
+        <CareDominantStatus
+          className={cn(
+            "h-auto max-w-full whitespace-normal border px-2 py-1 text-left text-[11px] font-semibold leading-snug",
+            severityBadgeClasses(issueTone(item)),
+          )}
+        >
+          <span className="line-clamp-2">{blockerDetail}</span>
+        </CareDominantStatus>
+      }
+      time={
+        <CareMetaChip>
+          <Clock3 size={12} aria-hidden />
+          {formatHours(item.hours_in_current_state)}
+        </CareMetaChip>
+      }
+      contextInfo={<CareMetaChip>{ownerLabel(item)}</CareMetaChip>}
+      actionLabel={actionLabel}
+      actionVariant={processingOnly ? "ghost" : hasPrimaryNba ? "primary" : "ghost"}
+      hideAction={processingOnly}
+      accentTone={item.priority_score >= 80 ? "critical" : item.priority_score >= 50 ? "warning" : "neutral"}
+      onOpen={() => onCaseClick(String(item.case_id))}
+      onAction={(event) => {
+        event.stopPropagation();
+        onCaseClick(String(item.case_id));
+      }}
+    />
   );
 }

@@ -63,16 +63,24 @@ import {
   CareFilterTabButton,
   CareFilterTabGroup,
   CareInfoPopover,
+  CareDominantStatus,
+  CareMetaChip,
   CareMetricBadge,
+  CareOperationalQueueHeader,
   CarePageScaffold,
+  CarePrimaryList,
   CareSearchFiltersBar,
+  CareQueueInlineAction,
+  CareWorkListCard,
+  CareWorkRow,
   CareSection,
   CareSectionBody,
   CareSectionHeader,
   EmptyState,
   ErrorState,
   LoadingState,
-  PrimaryActionButton,
+  OPERATIONAL_QUEUE_GRID_CLASS,
+  OPERATIONAL_QUEUE_HEADER_GRID_CLASS,
 } from "./CareDesignPrimitives";
 import { tokens } from "../../design/tokens";
 import { RegieRailEdgeTab, RegieRailToggleButton } from "./RegieRailControls";
@@ -662,6 +670,117 @@ function statusPillClass(kind: ProviderInviteRow["statusKind"]): string {
   }
 }
 
+function providerInviteAccentClass(kind: ProviderInviteRow["statusKind"]): string {
+  switch (kind) {
+    case "rejected":
+      return "border-l-red-500/70";
+    case "waiting":
+      return "border-l-amber-500/60";
+    default:
+      return "border-l-transparent";
+  }
+}
+
+function ProviderInviteWorkRow({
+  row,
+  onPrimaryAction,
+  onOpenCase,
+  onNavigateToMatching,
+}: {
+  row: ProviderInviteRow;
+  onPrimaryAction: () => void;
+  onOpenCase: () => void;
+  onNavigateToMatching?: () => void;
+}) {
+  return (
+    <article
+      data-care-provider-invite-row
+      className={cn(
+        "group relative border-b border-border/35 border-l-2 bg-transparent transition-colors hover:bg-muted/12",
+        providerInviteAccentClass(row.statusKind),
+      )}
+    >
+      <div className={cn(OPERATIONAL_QUEUE_GRID_CLASS, "px-4 py-2 md:px-5")}>
+        <div className="flex min-w-0 items-center justify-start">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-background/60">
+            {row.logo}
+          </div>
+        </div>
+
+        <div className="min-w-0">
+          <p className="truncate text-[13px] font-semibold leading-tight text-foreground">{row.name}</p>
+          <p className="truncate text-[11px] text-muted-foreground">
+            {row.city} · {row.distanceKm} km
+          </p>
+        </div>
+
+        <div className="min-w-0 overflow-hidden text-[11px] leading-snug text-muted-foreground">
+          <p className="line-clamp-2">{row.response}</p>
+          <p className="mt-0.5 truncate text-[10px] text-muted-foreground/90">{row.tags}</p>
+        </div>
+
+        <div className="min-w-0 space-y-1">
+          <span
+            className={cn(
+              "inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+              statusPillClass(row.statusKind),
+            )}
+          >
+            {row.statusLabel}
+          </span>
+          <p className="truncate text-[10px] text-muted-foreground">{row.statusMeta}</p>
+        </div>
+
+        <div className="min-w-0">
+          {row.fitPct != null ? (
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold text-foreground">
+                {row.fitPct}% <span className="font-medium text-muted-foreground">{row.fitLabel}</span>
+              </p>
+              <div className="h-1 w-full max-w-[7rem] overflow-hidden rounded-full bg-muted/50">
+                <div className="h-full rounded-full bg-primary" style={{ width: `${row.fitPct}%` }} />
+              </div>
+            </div>
+          ) : (
+            <span className="text-[11px] text-muted-foreground">—</span>
+          )}
+        </div>
+
+        <div className="flex min-w-0 items-center justify-end gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 max-w-[11rem] shrink-0 justify-center rounded-lg px-3 text-[12px] font-medium"
+            onClick={onPrimaryAction}
+          >
+            <span className="truncate">{row.actionLabel}</span>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 text-muted-foreground"
+                aria-label={`Meer acties voor ${row.name}`}
+              >
+                <MoreHorizontal size={16} aria-hidden />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {onNavigateToMatching ? (
+                <DropdownMenuItem onClick={onNavigateToMatching}>Naar matching</DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem onClick={onOpenCase}>Open casus</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function GemeenteBeoordelingStepper({ embedded = false }: { embedded?: boolean }) {
   const steps = [
     { id: "casus", label: "Casus", state: "done" as const },
@@ -796,7 +915,7 @@ function GemeenteView({
     >
       <div className="min-w-0 flex-1">
         <CarePageScaffold
-          archetype="decision"
+          archetype="workspace"
           className="pb-8"
           title={(
             <span className="inline-flex flex-wrap items-center gap-2">
@@ -867,18 +986,17 @@ function GemeenteView({
                 title="aanbieders uitgenodigd"
                 description={dominantActionDeadlineText}
                 primaryAction={(
-                  <Button
+                  <CareQueueInlineAction
                     type="button"
-                    size="lg"
-                    className="h-11 gap-2 rounded-xl px-5 text-[14px] font-semibold shadow-md"
+                    className="gap-1.5"
                     onClick={() =>
                       toast.message("Herinnering gepland", {
                         description: "Aanbieders ontvangen een herinnering.",
                       })}
                   >
-                    <Send size={16} aria-hidden />
+                    <Send size={14} aria-hidden />
                     Herinner aanbieders
-                  </Button>
+                  </CareQueueInlineAction>
                 )}
               />
             ) : undefined
@@ -925,18 +1043,19 @@ function GemeenteView({
           {!loading && !error && reviewCasesAll.length === 0 && (
             <div className="space-y-3">
               <CareAttentionBar
+                layout="compact"
                 tone="info"
                 icon={<Info size={16} aria-hidden />}
                 message="Reacties verschijnen pas na gemeentelijke validatie van het matchvoorstel en verzending naar de aanbieder."
                 action={
                   <div className="flex flex-wrap items-center gap-2">
                     {onNavigateToMatching ? (
-                      <PrimaryActionButton onClick={onNavigateToMatching}>Naar matching</PrimaryActionButton>
+                      <CareQueueInlineAction onClick={onNavigateToMatching}>Naar matching</CareQueueInlineAction>
                     ) : null}
                     {onNavigateToCasussen ? (
-                      <Button variant="outline" onClick={() => onNavigateToCasussen()}>
+                      <CareQueueInlineAction onClick={() => onNavigateToCasussen()}>
                         Terug naar werkvoorraad
-                      </Button>
+                      </CareQueueInlineAction>
                     ) : null}
                   </div>
                 }
@@ -972,105 +1091,29 @@ function GemeenteView({
                   </div>
                 )}
                 {activeTab === "overzicht" && (
-                  <div className="overflow-x-auto rounded-xl border border-border/60 bg-card/35">
-                    <table className="w-full min-w-[720px] border-collapse text-left text-[13px]">
-                      <thead>
-                        <tr className="border-b border-border/60 bg-muted/15">
-                          <th className="px-4 py-3 font-semibold text-muted-foreground">Aanbieder</th>
-                          <th className="px-4 py-3 font-semibold text-muted-foreground">Status</th>
-                          <th className="px-4 py-3 font-semibold text-muted-foreground">Reactie</th>
-                          <th className="px-4 py-3 font-semibold text-muted-foreground">Geschiktheid</th>
-                          <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Volgende stap</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                  <CareWorkListCard
+                    testId="aanbieder-provider-invite-list"
+                    header={
+                      <CareOperationalQueueHeader
+                        labels={["", "Aanbieder", "Reactie", "Status", "Match", "Actie"]}
+                        testId="aanbieder-provider-invite-headers"
+                      />
+                    }
+                  >
+                    <div className="divide-y divide-border/40">
+                      <CarePrimaryList>
                         {gemeenteProviderTableRows.map((row) => (
-                          <tr key={row.id} className="border-b border-border/50 last:border-b-0">
-                            <td className="px-4 py-4 align-top">
-                              <div className="flex gap-3">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-border/60 bg-background/50">
-                                  {row.logo}
-                                </div>
-                                <div className="min-w-0 space-y-1">
-                                  <p className="font-semibold leading-tight text-foreground">{row.name}</p>
-                                  <p className="text-[12px] text-muted-foreground">
-                                    {row.city} · {row.distanceKm} km
-                                  </p>
-                                  <p className="text-[11px] leading-snug text-muted-foreground">{row.tags}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 align-top">
-                              <div className="space-y-1.5">
-                                <span
-                                  className={cn(
-                                    "inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold",
-                                    statusPillClass(row.statusKind),
-                                  )}
-                                >
-                                  {row.statusLabel}
-                                </span>
-                                <p className="text-[11px] text-muted-foreground">{row.statusMeta}</p>
-                              </div>
-                            </td>
-                            <td className="max-w-[14rem] px-4 py-4 align-top text-[12px] leading-snug text-muted-foreground">
-                              {row.response}
-                            </td>
-                            <td className="px-4 py-4 align-top">
-                              {row.fitPct != null ? (
-                                <div className="space-y-1.5">
-                                  <p className="text-[12px] font-semibold text-foreground">
-                                    {row.fitPct}%{" "}
-                                    <span className="font-medium text-muted-foreground">{row.fitLabel}</span>
-                                  </p>
-                                  <div className="h-1.5 w-full max-w-[140px] overflow-hidden rounded-full bg-muted/50">
-                                    <div
-                                      className="h-full rounded-full bg-primary"
-                                      style={{ width: `${row.fitPct}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              ) : (
-                                <span className="text-[12px] text-muted-foreground">— Niet beschikbaar</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-4 align-top text-right">
-                              <div className="flex flex-wrap items-center justify-end gap-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-9 border-border/70 bg-background/50 text-[12px] font-semibold"
-                                  onClick={() => onCaseClick(focusCase?.id ?? displayCaseId)}
-                                >
-                                  {row.actionLabel}
-                                </Button>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-9 w-9 shrink-0 text-muted-foreground"
-                                      aria-label={`Meer acties voor ${row.name}`}
-                                    >
-                                      <MoreHorizontal size={18} aria-hidden />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem onClick={() => onNavigateToMatching?.()}>Naar matching</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => onCaseClick(focusCase?.id ?? displayCaseId)}>
-                                      Open casus
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </td>
-                          </tr>
+                          <ProviderInviteWorkRow
+                            key={row.id}
+                            row={row}
+                            onPrimaryAction={() => onCaseClick(focusCase?.id ?? displayCaseId)}
+                            onOpenCase={() => onCaseClick(focusCase?.id ?? displayCaseId)}
+                            onNavigateToMatching={onNavigateToMatching}
+                          />
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      </CarePrimaryList>
+                    </div>
+                  </CareWorkListCard>
                 )}
 
                 {activeTab !== "overzicht" && (
@@ -1187,7 +1230,195 @@ function capacityLabel(signal: CapacitySignal): string {
   }
 }
 
-// ─── Zorgaanbieder: single-case review card ───────────────────────────────────
+// ─── Zorgaanbieder: compact queue row (wachtrij / verwerkt) ─────────────────────
+
+function ProviderReviewQueueRow({
+  caseItem,
+  outcome,
+  onCaseClick,
+}: {
+  caseItem: SpaCase;
+  outcome: "accepted" | "rejected" | "info_requested" | "inactive" | null;
+  onCaseClick: (caseId: string) => void;
+}) {
+  const statusLabel =
+    outcome === "accepted"
+      ? "Geaccepteerd"
+      : outcome === "rejected"
+        ? "Afgewezen"
+        : outcome === "info_requested"
+          ? "Meer info"
+          : "In wachtrij";
+
+  return (
+    <CareWorkRow
+      density="operational"
+      leading={
+        <CareMetaChip
+          className={cn(
+            "h-6 px-2 text-[11px] font-semibold",
+            caseItem.urgency === "critical"
+              ? "border-red-500/35 bg-red-500/10 text-red-100"
+              : caseItem.urgency === "warning"
+                ? "border-amber-500/35 bg-amber-500/10 text-amber-100"
+                : "border-border bg-muted/30 text-foreground",
+          )}
+        >
+          {caseItem.urgency === "critical" ? "Kritiek" : caseItem.urgency === "warning" ? "Hoog" : "Normaal"}
+        </CareMetaChip>
+      }
+      title={caseItem.id}
+      context={
+        <>
+          <CareMetaChip>{caseItem.regio || "Regio onbekend"}</CareMetaChip>
+          <CareMetaChip>{caseItem.zorgtype || "Zorgtype onbekend"}</CareMetaChip>
+          <span className="line-clamp-1 text-[11px] text-muted-foreground">{caseItem.title}</span>
+        </>
+      }
+      status={<CareDominantStatus>{statusLabel}</CareDominantStatus>}
+      time={
+        <CareMetaChip>
+          <Clock size={12} aria-hidden />
+          {caseItem.wachttijd}d
+        </CareMetaChip>
+      }
+      actionLabel="Open casus"
+      actionVariant="ghost"
+      onOpen={() => onCaseClick(caseItem.id)}
+      onAction={(event) => {
+        event.stopPropagation();
+        onCaseClick(caseItem.id);
+      }}
+    />
+  );
+}
+
+
+// ─── Zorgaanbieder: processed outcome band (queue family) ─────────────────────
+
+function ProviderReviewOutcomeBand({
+  outcome,
+  evaluation,
+  onNextCase,
+  showNextAction = true,
+}: {
+  outcome: "accepted" | "rejected" | "info_requested" | "inactive";
+  evaluation?: ProviderEvaluation | null;
+  onNextCase?: () => void;
+  showNextAction?: boolean;
+}) {
+  const nextAction =
+    showNextAction && onNextCase ? (
+      <Button className="h-9 w-auto justify-start gap-2" variant="outline" size="sm" onClick={onNextCase}>
+        Volgende casus
+        <ArrowRight size={14} aria-hidden />
+      </Button>
+    ) : null;
+
+  if (outcome === "inactive") {
+    return (
+      <div className="border-b border-border/40 bg-muted/10 px-4 py-3 md:px-5 space-y-2">
+        <div className="flex items-start gap-3">
+          <Info className="shrink-0 text-muted-foreground mt-0.5" size={18} aria-hidden />
+          <div className="min-w-0 space-y-1">
+            <p className="text-[14px] font-semibold text-foreground">Niet meer actief</p>
+            <p className="text-[13px] text-muted-foreground">
+              Deze aanvraag staat niet meer open voor jouw reactie in dit overzicht.
+            </p>
+          </div>
+        </div>
+        {nextAction}
+      </div>
+    );
+  }
+
+  if (outcome === "info_requested") {
+    const slug = evaluation?.informationRequestType;
+    const typeLab = slug ? INFO_REQUEST_TYPE_LABELS[slug] : undefined;
+    const detail = (evaluation?.informationRequestComment || "").trim();
+    const auditLine =
+      typeLab && slug ? `${typeLab} (type-code: ${slug})` : slug ? `type-code: ${slug}` : null;
+    return (
+      <div
+        className="border-b border-border/40 bg-muted/10 px-4 py-3 md:px-5 space-y-2"
+        data-testid="provider-info-requested-summary"
+      >
+        <div className="flex items-start gap-3">
+          <MessageSquare className="shrink-0 text-primary mt-0.5" size={18} aria-hidden />
+          <div className="min-w-0 space-y-1">
+            <p className="text-[14px] font-semibold text-foreground">Aanvullende informatie gevraagd</p>
+            <p className="text-[13px] text-muted-foreground">
+              De gemeente verwerkt dit verzoek; jij hoeft hier niets meer te doen tot er een update is.
+            </p>
+            {auditLine ? (
+              <p className="text-[12px] text-muted-foreground" data-testid="provider-info-requested-audit-line">
+                {auditLine}
+              </p>
+            ) : null}
+            {detail ? (
+              <p className="text-[11px] leading-snug text-muted-foreground/90">
+                {detail.length > 220 ? `${detail.slice(0, 220)}…` : detail}
+              </p>
+            ) : null}
+          </div>
+        </div>
+        {nextAction}
+      </div>
+    );
+  }
+
+  if (outcome === "accepted") {
+    return (
+      <div className="border-b border-border/40 bg-muted/10 px-4 py-3 md:px-5 space-y-2">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="shrink-0 text-primary mt-0.5" size={18} aria-hidden />
+          <div className="min-w-0 space-y-1">
+            <p className="text-[14px] font-semibold text-foreground">Geaccepteerd</p>
+            <p className="text-[13px] text-muted-foreground">Gemeente bevestigt plaatsing; daarna intake.</p>
+          </div>
+        </div>
+        {nextAction}
+      </div>
+    );
+  }
+
+  const rejCode = evaluation?.rejectionReasonCode;
+  const rejLabel = rejCode ? REJECTION_REASON_LABELS[rejCode] : undefined;
+  const rejNote = (evaluation?.providerComment || "").trim();
+  const auditLine =
+    rejLabel && rejCode
+      ? `${rejLabel} (redencode: ${rejCode})`
+      : rejCode
+        ? `Redencode: ${rejCode}`
+        : null;
+  return (
+    <div
+      className="border-b border-border/40 bg-muted/10 px-4 py-3 md:px-5 space-y-2"
+      data-testid="provider-rejected-summary"
+    >
+      <div className="flex items-start gap-3">
+        <XCircle className="shrink-0 text-destructive mt-0.5" size={18} aria-hidden />
+        <div className="min-w-0 space-y-1">
+          <p className="text-[14px] font-semibold text-foreground">Afgewezen</p>
+          <p className="text-[13px] text-muted-foreground">Casus gaat terug naar matching.</p>
+          {auditLine ? (
+            <p className="text-[12px] text-muted-foreground" data-testid="provider-rejected-audit-line">
+              {auditLine}
+            </p>
+          ) : null}
+          {rejNote ? (
+            <p className="text-[11px] leading-snug text-muted-foreground/90">
+              {rejNote.length > 220 ? `${rejNote.slice(0, 220)}…` : rejNote}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      {nextAction}
+    </div>
+  );
+}
+
+// ─── Zorgaanbieder: single-case review workspace ──────────────────────────────
 
 interface ProviderReviewCaseCardProps {
   caseItem: SpaCase;
@@ -1275,115 +1506,13 @@ function ProviderReviewCaseCard({
     }
   };
 
-  if (outcome === "inactive") {
+  if (outcome === "inactive" || outcome === "info_requested" || outcome === "accepted" || outcome === "rejected") {
     return (
-      <div className="rounded-xl border border-border/70 bg-card/50 p-4 space-y-3">
-        <div className="flex items-start gap-3">
-          <Info className="text-muted-foreground shrink-0 mt-0.5" size={20} />
-          <div className="space-y-1">
-            <p className="text-base font-semibold text-foreground">Niet meer actief</p>
-            <p className="text-sm text-muted-foreground">Deze aanvraag staat niet meer open voor jouw reactie in dit overzicht.</p>
-          </div>
-        </div>
-        <Button className="h-10 w-auto justify-start gap-2" variant="outline" onClick={onNextCase}>
-          Volgende casus
-          <ArrowRight size={16} />
-        </Button>
-      </div>
-    );
-  }
-
-  if (outcome === "info_requested") {
-    const slug = evaluation?.informationRequestType;
-    const typeLab = slug ? INFO_REQUEST_TYPE_LABELS[slug] : undefined;
-    const detail = (evaluation?.informationRequestComment || "").trim();
-    const auditLine =
-      typeLab && slug ? `${typeLab} (type-code: ${slug})` : slug ? `type-code: ${slug}` : null;
-    return (
-      <div
-        className="rounded-xl border border-border/70 bg-card/50 p-4 space-y-3"
-        data-testid="provider-info-requested-summary"
-      >
-        <div className="flex items-start gap-3">
-          <MessageSquare className="text-primary shrink-0 mt-0.5" size={20} />
-          <div className="space-y-1">
-            <p className="text-base font-semibold text-foreground">Aanvullende informatie gevraagd</p>
-            <p className="text-sm text-muted-foreground">De gemeente verwerkt dit verzoek; jij hoeft hier niets meer te doen tot er een update is.</p>
-            {auditLine ? (
-              <p className="text-[12px] text-muted-foreground" data-testid="provider-info-requested-audit-line">
-                {auditLine}
-              </p>
-            ) : null}
-            {detail ? (
-              <p className="text-[11px] leading-snug text-muted-foreground/90">
-                {detail.length > 220 ? `${detail.slice(0, 220)}…` : detail}
-              </p>
-            ) : null}
-          </div>
-        </div>
-        <Button className="h-10 w-auto justify-start gap-2" variant="outline" onClick={onNextCase}>
-          Volgende casus
-          <ArrowRight size={16} />
-        </Button>
-      </div>
-    );
-  }
-
-  if (outcome === "accepted") {
-    return (
-      <div className="rounded-xl border border-border/70 bg-card/50 p-4 space-y-3">
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="text-primary shrink-0 mt-0.5" size={20} />
-          <div className="space-y-1">
-            <p className="text-base font-semibold text-foreground">Geaccepteerd</p>
-            <p className="text-sm text-muted-foreground">Gemeente bevestigt plaatsing; daarna intake.</p>
-          </div>
-        </div>
-        <Button className="h-10 w-auto justify-start gap-2" onClick={onNextCase}>
-          Volgende casus
-          <ArrowRight size={16} />
-        </Button>
-      </div>
-    );
-  }
-
-  if (outcome === "rejected") {
-    const rejCode = evaluation?.rejectionReasonCode;
-    const rejLabel = rejCode ? REJECTION_REASON_LABELS[rejCode] : undefined;
-    const rejNote = (evaluation?.providerComment || "").trim();
-    const auditLine =
-      rejLabel && rejCode
-        ? `${rejLabel} (redencode: ${rejCode})`
-        : rejCode
-          ? `Redencode: ${rejCode}`
-          : null;
-    return (
-      <div
-        className="rounded-xl border border-border/70 bg-card/50 p-4 space-y-3"
-        data-testid="provider-rejected-summary"
-      >
-        <div className="flex items-start gap-3">
-          <XCircle className="text-destructive shrink-0 mt-0.5" size={20} />
-          <div className="space-y-1">
-            <p className="text-base font-semibold text-foreground">Afgewezen</p>
-            <p className="text-sm text-muted-foreground">Casus gaat terug naar matching.</p>
-            {auditLine ? (
-              <p className="text-[12px] text-muted-foreground" data-testid="provider-rejected-audit-line">
-                {auditLine}
-              </p>
-            ) : null}
-            {rejNote ? (
-              <p className="text-[11px] leading-snug text-muted-foreground/90">
-                {rejNote.length > 220 ? `${rejNote.slice(0, 220)}…` : rejNote}
-              </p>
-            ) : null}
-          </div>
-        </div>
-        <Button variant="outline" className="h-10 w-auto justify-start gap-2" onClick={onNextCase}>
-          Volgende casus
-          <ArrowRight size={16} />
-        </Button>
-      </div>
+      <ProviderReviewOutcomeBand
+        outcome={outcome}
+        evaluation={evaluation}
+        onNextCase={onNextCase}
+      />
     );
   }
 
@@ -1416,11 +1545,11 @@ function ProviderReviewCaseCard({
       </AlertDialog>
 
       <div
-        className="rounded-xl border border-border/80 bg-card/40 overflow-hidden shadow-sm"
+        className="min-w-0 overflow-hidden rounded-xl surface-workspace" data-testid="provider-review-workspace"
         aria-busy={submitting}
       >
-        <div className="border-b border-border/60 px-4 py-4 sm:px-5">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
+        <div className="border-b border-border/40 px-4 py-3 md:px-5 surface-workspace-header">
+          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
             {formatClientReference(caseItem.id)}
           </h2>
           <p className="mt-1 text-[13px] text-muted-foreground">
@@ -1445,10 +1574,7 @@ function ProviderReviewCaseCard({
         </div>
 
         <div
-          className={cn(
-            "sticky z-20 border-b border-border/70 px-4 py-3 sm:px-5",
-            "bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85",
-          )}
+          className="sticky z-20 border-b border-border/40 bg-muted/15 px-4 py-2.5 md:px-5"
           style={{ top: tokens.layout.edgeZero }}
         >
           <div className="flex flex-wrap items-center gap-2">
@@ -1519,7 +1645,7 @@ function ProviderReviewCaseCard({
           )}
           {panelMode === "accept" && (
             <div className="space-y-4" data-testid="provider-review-accept-panel">
-              <div className="rounded-lg border border-border/60 bg-muted/5 px-3 py-3">
+              <div className="border border-border/40 bg-muted/10 px-3 py-3">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-2">
                   Capaciteit (indicatie)
                 </p>
@@ -1782,7 +1908,7 @@ function ProviderView({
       )}
 
       <CarePageScaffold
-        archetype="worklist"
+        archetype="queue"
         testId="aanbieder-beoordeling-zorgaanbieder-root"
         className="pb-8"
         title={
@@ -1797,6 +1923,7 @@ function ProviderView({
         }
         dominantAction={
           <CareAttentionBar
+            layout="compact"
             tone={activeQueue.length > 0 ? "warning" : "info"}
             icon={<Clock size={16} />}
             message={
@@ -1806,7 +1933,7 @@ function ProviderView({
                   : `${activeQueue.length} aanvragen wachten op jouw reactie`
                 : "Geen openstaande reacties"
             }
-            action={onNavigateToCasussen ? <PrimaryActionButton onClick={onNavigateToCasussen}>Naar aanvragen</PrimaryActionButton> : undefined}
+            action={onNavigateToCasussen ? <CareQueueInlineAction onClick={onNavigateToCasussen}>Naar aanvragen</CareQueueInlineAction> : undefined}
           />
         }
         metric={
@@ -1882,7 +2009,7 @@ function ProviderView({
         {!loading && !error && pendingCases.length > 0 && (
           <div className="space-y-8">
             {activeQueue.length > 0 && (
-              <section className="space-y-3" key={focusToken} data-testid="provider-beoordeling-actieve-sectie">
+              <section className="space-y-2" key={focusToken} data-testid="provider-beoordeling-actieve-sectie">
                 <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                   Actieve reactie
                 </p>
@@ -1923,27 +2050,76 @@ function ProviderView({
               />
             )}
 
+            {activeQueue.length > 1 && (
+              <section className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  Overige in wachtrij ({activeQueue.length - 1})
+                </p>
+                <CareWorkListCard
+                  header={
+                    <CareOperationalQueueHeader
+                      labels={["Urgentie", "Casus", "Operationeel", "Status", "Wachttijd", "Actie"]}
+                    />
+                  }
+                >
+                  <div className="divide-y divide-border/40">
+                    <CarePrimaryList>
+                      {activeQueue.slice(1).map((c) => (
+                        <ProviderReviewQueueRow
+                          key={c.id}
+                          caseItem={c}
+                          outcome={null}
+                          onCaseClick={onCaseClick}
+                        />
+                      ))}
+                    </CarePrimaryList>
+                  </div>
+                </CareWorkListCard>
+              </section>
+            )}
+
             {doneCases.length > 0 && (
-              <section className="space-y-3">
+              <section className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                   Verwerkte aanvragen (dit overzicht)
                 </p>
-                <div className="space-y-3">
-                  {doneCases.map(c => (
-                    <ProviderReviewCaseCard
-                      key={c.id}
-                      caseItem={c}
-                      evaluation={evaluationByCaseId.get(c.id)}
-                      submitting={false}
-                      submitDecision={submitDecision}
-                      onCaseClick={onCaseClick}
-                      onRequestInfo={() => setDecisionModal({ type: "info_request", caseId: c.id })}
-                      outcome={deriveProviderCardOutcome(c.id, evaluationByCaseId, acceptedCaseIds, rejectedCaseIds)}
-                      onOutcome={() => { /* read-only success state */ }}
-                      onNextCase={handleNextCase}
-                    />
-                  ))}
-                </div>
+                <CareWorkListCard>
+                  <div className="divide-y divide-border/40">
+                    <CarePrimaryList>
+                      {doneCases.map((c) => {
+                        const doneOutcome = deriveProviderCardOutcome(
+                          c.id,
+                          evaluationByCaseId,
+                          acceptedCaseIds,
+                          rejectedCaseIds,
+                        );
+                        if (
+                          doneOutcome === "accepted"
+                          || doneOutcome === "rejected"
+                          || doneOutcome === "info_requested"
+                          || doneOutcome === "inactive"
+                        ) {
+                          return (
+                            <ProviderReviewOutcomeBand
+                              key={c.id}
+                              outcome={doneOutcome}
+                              evaluation={evaluationByCaseId.get(c.id)}
+                              showNextAction={false}
+                            />
+                          );
+                        }
+                        return (
+                          <ProviderReviewQueueRow
+                            key={c.id}
+                            caseItem={c}
+                            outcome={doneOutcome}
+                            onCaseClick={onCaseClick}
+                          />
+                        );
+                      })}
+                    </CarePrimaryList>
+                  </div>
+                </CareWorkListCard>
               </section>
             )}
           </div>

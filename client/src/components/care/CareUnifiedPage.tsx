@@ -1,4 +1,4 @@
-import { useId, type CSSProperties, type ReactNode } from "react";
+import { useId, type ComponentProps, type CSSProperties, type ReactNode } from "react";
 import { ChevronDown, ChevronUp, Info, Search } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -44,8 +44,11 @@ export function CarePageTemplate({
 
 export function CareMetricBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/50 bg-cyan-500/15 px-3 py-1 text-[12px] font-semibold text-cyan-100">
-      <span className="size-1.5 shrink-0 rounded-full bg-cyan-300" />
+    <span
+      title="Status — geen actie"
+      className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-[12px] font-semibold text-muted-foreground"
+    >
+      <span className="size-1.5 shrink-0 rounded-full bg-muted-foreground/50" aria-hidden />
       {children}
     </span>
   );
@@ -252,33 +255,56 @@ export function CareAttentionBar({
   message,
   action,
   icon,
+  layout = "default",
 }: {
   visible?: boolean;
   tone?: "warning" | "info" | "critical";
   message: ReactNode;
   action?: ReactNode;
   icon?: ReactNode;
+  /** `compact` = flat queue band without hero chrome (operational queues). */
+  layout?: "default" | "compact";
 }) {
   if (!visible) return null;
+  const isCompact = layout === "compact";
   const accent =
-    tone === "critical" ? "border-l-red-500" : tone === "warning" ? "border-l-amber-500" : "border-l-cyan-400";
+    tone === "critical" ? "border-l-red-500/80" : tone === "warning" ? "border-l-amber-500/70" : "border-l-border";
   return (
     <div
       data-component="care-attention-bar"
+      data-layout={isCompact ? "compact" : "default"}
       className={cn(
-        "flex min-h-[52px] items-center justify-between gap-3 rounded-xl border-l-2 bg-muted/20 px-3 py-2.5 shadow-sm",
+        "flex min-h-[44px] items-center justify-between gap-3 border-l-2",
+        isCompact
+          ? "border-b border-border/40 bg-muted/10 px-4 py-2"
+          : "min-h-[52px] rounded-xl bg-muted/20 px-3 py-2.5 shadow-sm",
         accent,
       )}
     >
-      <div className="flex min-w-0 flex-1 items-start gap-2.5">
-        {icon && <div className="mt-0.5 shrink-0 text-muted-foreground">{icon}</div>}
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        {icon ? <div className="shrink-0 text-muted-foreground">{icon}</div> : null}
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Operatieve aandacht</p>
-          <p className="truncate text-sm text-foreground">{message}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Operatieve aandacht</p>
+          <p className={cn("text-foreground", isCompact ? "truncate text-[13px]" : "truncate text-sm")}>{message}</p>
         </div>
       </div>
-      {action && <div className="shrink-0">{action}</div>}
+      {action ? <div className="flex shrink-0 items-center justify-end">{action}</div> : null}
     </div>
+  );
+}
+
+/** Compact outline action for queue attention bands — not a hero CTA. */
+export function CareQueueInlineAction({ className, children, ...props }: ComponentProps<typeof Button>) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className={cn("h-8 shrink-0 rounded-lg px-3 text-[12px] font-medium", className)}
+      {...props}
+    >
+      {children}
+    </Button>
   );
 }
 
@@ -474,9 +500,9 @@ export function CarePrimaryList({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-2 px-1">
+    <section className="min-w-0">
       {header}
-      <div className="space-y-1.5">{children}</div>
+      <div className="min-w-0 divide-y divide-border/35">{children}</div>
     </section>
   );
 }
@@ -491,15 +517,53 @@ export type CareWorkRowProps = {
   onOpen: () => void;
   onAction: (event: React.MouseEvent<HTMLButtonElement>) => void;
   accentTone?: "critical" | "warning" | "neutral";
-  /** Primary = decision CTA (Regiekamer next-best-action); ghost = secondary list action. */
+  /** Primary = progression CTA; ghost = secondary — always inline, never full-width. */
   actionVariant?: "primary" | "ghost";
   /** When true, no row CTA button (e.g. no next_best_action — open row for detail only). */
   hideAction?: boolean;
+  /** Operational queues use compact 56px rhythm; comfortable retains legacy card padding. */
+  density?: "operational" | "comfortable";
+  /** Command worklist: slightly stronger accent, same grid geometry. */
+  queueVariant?: "default" | "command";
   className?: string;
   testId?: string;
   /** Optional icon or badge before title/context (e.g. Acties type icon). */
   leading?: ReactNode;
 };
+
+/** Six-column dispatch grid — header and rows share this template. */
+export const OPERATIONAL_QUEUE_GRID_COLS =
+  "grid-cols-[5.5rem_8rem_minmax(11rem,1fr)_6.5rem_7rem_9.5rem] md:grid-cols-[88px_128px_minmax(12rem,1fr)_104px_112px_9.5rem]";
+
+/** Shared geometry for operational queue header + row cells. */
+export const OPERATIONAL_QUEUE_GRID_CLASS = cn(
+  "grid w-full min-w-[52rem] items-center gap-x-3 md:gap-x-5",
+  OPERATIONAL_QUEUE_GRID_COLS,
+);
+
+/** Shared column header grid for operational queue tables (Casussen, Acties, Matching, …). */
+export const OPERATIONAL_QUEUE_HEADER_GRID_CLASS = cn(
+  OPERATIONAL_QUEUE_GRID_CLASS,
+  "border-b border-border/40 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground md:px-5",
+);
+
+export function CareOperationalQueueHeader({
+  labels,
+  testId = "operational-queue-column-headers",
+}: {
+  labels: readonly [string, string, string, string, string, string];
+  testId?: string;
+}) {
+  return (
+    <div className={OPERATIONAL_QUEUE_HEADER_GRID_CLASS} data-testid={testId}>
+      {labels.map((label) => (
+        <span key={label} className="min-w-0 truncate">
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 /**
  * Operational work list row: shared grid, density, and interaction pattern for
@@ -517,87 +581,88 @@ export function CareWorkRow({
   accentTone = "neutral",
   actionVariant = "ghost",
   hideAction = false,
+  density = "operational",
+  queueVariant = "default",
   className,
   testId,
   leading,
 }: CareWorkRowProps) {
-  const accentClass = accentTone === "critical" ? "border-l-red-500/80" : accentTone === "warning" ? "border-l-amber-500/70" : "border-l-transparent";
+  const accentClass =
+    accentTone === "critical"
+      ? "border-l-red-500/80"
+      : accentTone === "warning"
+        ? "border-l-amber-500/70"
+        : "border-l-transparent";
+  const isOperational = density === "operational";
+  const isCommand = queueVariant === "command";
+  const rowMinHeight = isOperational ? tokens.density.compactWorklistRowHeight : tokens.density.worklistRowHeight;
+
+  const ctaClass = cn(
+    "h-8 max-w-[11rem] shrink-0 justify-center rounded-lg px-3 text-[12px] font-medium",
+    isOperational
+      ? actionVariant === "primary"
+        ? "border-primary/35 text-primary hover:bg-primary/10"
+        : "text-primary hover:bg-muted/25"
+      : actionVariant === "primary"
+        ? "border-primary/35 text-primary shadow-sm"
+        : "text-primary hover:bg-muted/30",
+  );
+
   return (
     <article
       data-care-work-row
       data-testid={testId}
-      data-density="compact"
-      style={{ minHeight: tokens.density.worklistRowHeight }}
+      data-density={isOperational ? "operational" : "comfortable"}
+      data-queue-variant={queueVariant}
+      style={{ minHeight: rowMinHeight }}
       className={cn(
-        "rounded-2xl border border-border/70 border-l-2 bg-card/75 px-3 py-2.5 shadow-sm transition-all hover:border-border/90 hover:bg-card/90 hover:shadow-md",
+        "group relative border-b border-border/35 border-l-2 bg-transparent transition-colors hover:bg-muted/12",
+        isCommand && "bg-muted/[0.05]",
         accentClass,
         className,
       )}
     >
-      <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-3">
-        {/* max-sm: stack phase chips above title so narrow screens get vertical rhythm; sm+: fixed leading column (tokens.layout.worklistLeadingColumnWidth). */}
+      <div className={cn(OPERATIONAL_QUEUE_GRID_CLASS, "px-4 py-2 md:px-5")}>
+        <div className="flex min-w-0 items-center justify-start overflow-hidden">{leading}</div>
+
         <button
           type="button"
           onClick={onOpen}
           className={cn(
-            "group flex min-w-0 flex-1 flex-col gap-2 rounded-[1.125rem] text-left outline-none transition-colors",
-            "focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            "hover:bg-transparent",
+            "min-w-0 truncate text-left font-semibold leading-tight text-foreground outline-none",
+            "focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-1",
+            isOperational ? "text-[13px]" : "text-[14px]",
           )}
           aria-label={`Open casus ${title}`}
         >
-          <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:gap-2.5">
-            {leading ? (
-              <div className="mt-0.5 w-full shrink-0 sm:box-border sm:w-[13rem] sm:min-w-[13rem] sm:max-w-[13rem] [&_svg]:size-4">
-                {leading}
-              </div>
-            ) : null}
-            <div className="min-w-0 flex-1 space-y-1">
-              {/* Below md: title then status on their own lines on xs; inline from sm–md so columns stay predictable. */}
-              <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-1">
-                <p className="min-w-0 truncate text-[14px] font-semibold leading-tight text-foreground">{title}</p>
-                <div className="min-w-0 shrink-0 md:hidden">{status}</div>
-              </div>
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] leading-none text-muted-foreground">
-                {context}
-              </div>
-            </div>
-          </div>
+          {title}
         </button>
-        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-2.5">
-          <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 sm:justify-end">
-            <div
-              className="hidden md:flex md:box-border md:items-center md:justify-start md:overflow-hidden"
-              style={
-                {
-                  width: tokens.layout.worklistStatusColumnWidth,
-                  minWidth: tokens.layout.worklistStatusColumnWidth,
-                  maxWidth: tokens.layout.worklistStatusColumnWidth,
-                } satisfies Record<string, string>
-              }
-            >
-              {status}
-            </div>
-            {time}
-            {contextInfo}
+
+        <div className="min-w-0 overflow-hidden text-[11px] leading-snug text-muted-foreground">
+          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden [&>*]:max-w-full [&>*]:shrink">
+            {context}
           </div>
+        </div>
+
+        <div className="min-w-0 overflow-hidden">{status}</div>
+
+        <div className="flex min-w-0 flex-col gap-0.5 overflow-hidden text-[11px] text-muted-foreground">
+          {time ? <div className="min-w-0 truncate">{time}</div> : null}
+          {contextInfo ? <div className="min-w-0 truncate">{contextInfo}</div> : null}
+        </div>
+
+        <div className="flex min-w-0 items-center justify-end">
           {!hideAction ? (
-            <div className="flex w-full min-w-0 shrink-0 justify-end sm:w-auto sm:self-center md:min-w-[10.5rem]">
-              <Button
-                size="sm"
-                variant={actionVariant === "primary" ? "default" : "ghost"}
-                type="button"
-                data-care-work-row-cta={actionVariant}
-                onClick={onAction}
-                className={cn(
-                  actionVariant === "primary"
-                    ? "h-9 shrink-0 justify-center rounded-xl px-4 text-[13px] font-semibold shadow-md"
-                    : "h-8 shrink-0 justify-center rounded-full px-3 text-[13px] font-medium text-primary hover:bg-muted/35 hover:text-primary",
-                )}
-              >
-                <span className="truncate">{actionLabel}</span>
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              type="button"
+              data-care-work-row-cta={actionVariant}
+              onClick={onAction}
+              className={ctaClass}
+            >
+              <span className="truncate">{actionLabel}</span>
+            </Button>
           ) : null}
         </div>
       </div>

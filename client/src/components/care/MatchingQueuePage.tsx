@@ -3,9 +3,9 @@ import { Building2, ClipboardList, Clock3, Lock, ShieldAlert } from "lucide-reac
 import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { cn } from "../ui/utils";
-import { CareKPICard } from "./CareKPICard";
 import {
   CareAttentionBar,
+  CareQueueInlineAction,
   CareDominantStatus,
   CareMetaChip,
   CareInfoPopover,
@@ -16,6 +16,7 @@ import {
   CareSectionBody,
   CareSectionHeader,
   CareSearchFiltersBar,
+  CareOperationalQueueHeader,
   CareWorkListCard,
   CareWorkRow,
   EmptyState,
@@ -164,42 +165,9 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
   const selectTriggerClass =
     "h-10 border-border bg-card text-foreground hover:bg-muted/35 focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/30";
 
-  const kpiStrip = (
-    <div className="grid gap-3 px-1 sm:grid-cols-2 xl:grid-cols-4">
-      <CareKPICard
-        title="Totaal in wachtrij"
-        value={loading ? "—" : counts.total}
-        subtitle="Zoek zorgcapaciteit"
-        icon={ClipboardList}
-        urgency="normal"
-      />
-      <CareKPICard
-        title="Kritiek"
-        value={loading ? "—" : counts.critical}
-        subtitle="Hoogste urgentie"
-        icon={ShieldAlert}
-        urgency="critical"
-      />
-      <CareKPICard
-        title="Hoog"
-        value={loading ? "—" : counts.warning}
-        subtitle="Vereist tempo"
-        icon={Clock3}
-        urgency="warning"
-      />
-      <CareKPICard
-        title="Geblokkeerd"
-        value={loading ? "—" : counts.blocked}
-        subtitle="Eerst oorzaak oplossen"
-        icon={Lock}
-        urgency={counts.blocked > 0 ? "warning" : "normal"}
-      />
-    </div>
-  );
-
   return (
     <CarePageScaffold
-      archetype="worklist"
+      archetype="queue"
       className="pb-8"
       title="Matching"
       subtitleInfoTestId="matching-page-info"
@@ -208,7 +176,7 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
       actions={
         <div className="flex flex-wrap items-center gap-2">
           {onNavigateToCasussen ? (
-            <PrimaryActionButton onClick={onNavigateToCasussen}>Naar casussen</PrimaryActionButton>
+            <CareQueueInlineAction onClick={onNavigateToCasussen}>Naar casussen</CareQueueInlineAction>
           ) : null}
           <Button variant="outline" onClick={() => void refetch()}>
             Ververs
@@ -217,11 +185,14 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
       }
       metric={
         <CareMetricBadge>
-          {loading ? "Laden…" : `${filteredCases.length} in deze weergave · ${counts.total} totaal`}
+          {loading
+            ? "Laden…"
+            : `${filteredCases.length} weergave · ${counts.total} totaal · ${counts.blocked} geblokkeerd`}
         </CareMetricBadge>
       }
       dominantAction={
         <CareAttentionBar
+          layout="compact"
           visible
           tone={blockedCount > 0 ? "warning" : "info"}
           message={
@@ -229,9 +200,15 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
               ? `${blockedCount} casus${blockedCount === 1 ? "" : "sen"} geblokkeerd — los dit eerst op voordat matching betrouwbaar is.`
               : "Matching is advisering; de gemeente valideert de selectie voordat een aanbieder de casus beoordeelt."
           }
+          action={
+            filteredCases.length > 0 ? (
+              <CareQueueInlineAction type="button" onClick={() => onCaseClick(filteredCases[0].id)}>
+                Open eerste casus in wachtrij
+              </CareQueueInlineAction>
+            ) : undefined
+          }
         />
       }
-      kpiStrip={kpiStrip}
     >
       <CareSection testId="matching-uitvoerlijst" aria-labelledby="matching-werkvoorraad-heading">
         <CareSectionHeader
@@ -241,7 +218,7 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
           }
           meta={
             <div className="w-full min-w-0 space-y-2">
-              <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
+              <span className="inline-flex w-fit items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
                 {loading ? "…" : `${filteredCases.length} casussen`}
               </span>
               <CareSearchFiltersBar
@@ -364,22 +341,17 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
                   ? "Zodra samenvatting en voorbereiding klaar zijn, verschijnen casussen hier automatisch."
                   : "Pas tabblad, zoekopdracht of filters aan."
               }
-              action={<PrimaryActionButton onClick={() => onNavigateToCasussen?.()}>Naar casussen</PrimaryActionButton>}
+              action={<CareQueueInlineAction onClick={() => onNavigateToCasussen?.()}>Naar casussen</CareQueueInlineAction>}
             />
           )}
 
           {!loading && !error && filteredCases.length > 0 && (
             <CareWorkListCard
-              header={(
-                <div className="hidden gap-y-3 gap-x-4 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid md:grid-cols-[88px_128px_minmax(220px,260px)_104px_112px_minmax(220px,1fr)] md:gap-x-5 md:px-5">
-                  <span>Fase</span>
-                  <span>Casus</span>
-                  <span>Matchadvies</span>
-                  <span>Wachttijd</span>
-                  <span>Context</span>
-                  <span>Volgende actie</span>
-                </div>
-              )}
+              header={
+                <CareOperationalQueueHeader
+                  labels={["Fase", "Casus", "Matchadvies", "Wachttijd", "Context", "Volgende actie"]}
+                />
+              }
             >
               <div className="divide-y divide-border/45">
                 <CarePrimaryList>

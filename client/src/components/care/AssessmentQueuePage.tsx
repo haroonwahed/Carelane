@@ -1,16 +1,22 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, ClipboardCheck } from "lucide-react";
+import { ClipboardCheck } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   CareContextHint,
   CareInfoPopover,
+  CareMetaChip,
   CareMetricBadge,
+  CareOperationalQueueHeader,
   CarePageScaffold,
+  CarePrimaryList,
+  CareQueueInlineAction,
   CareSearchFiltersBar,
+  CareWorkListCard,
+  CareWorkRow,
+  CareDominantStatus,
   EmptyState,
   ErrorState,
   LoadingState,
-  PrimaryActionButton,
 } from "./CareDesignPrimitives";
 import { useCases } from "../../hooks/useCases";
 import { useProviders } from "../../hooks/useProviders";
@@ -38,7 +44,7 @@ export function AssessmentQueuePage({ onCaseClick, onNavigateToCasussen }: Asses
 
   return (
     <CarePageScaffold
-      archetype="worklist"
+      archetype="queue"
       className="pb-8"
       title={
         <span className="inline-flex flex-wrap items-center gap-2">
@@ -89,54 +95,58 @@ export function AssessmentQueuePage({ onCaseClick, onNavigateToCasussen }: Asses
         <EmptyState
           title="Geen open beoordelingen"
           copy="Zodra casussen intake of aanbieder-beoordeling ingaan, verschijnen ze hier."
-          action={<PrimaryActionButton onClick={() => onNavigateToCasussen?.()}>Open werkvoorraad</PrimaryActionButton>}
+          action={
+            onNavigateToCasussen ? (
+              <CareQueueInlineAction onClick={() => onNavigateToCasussen()}>Open werkvoorraad</CareQueueInlineAction>
+            ) : undefined
+          }
         />
       )}
 
       {!loading && !error && queueCases.length > 0 && (
-        <div className="rounded-2xl border border-border/70 bg-card/75 overflow-hidden">
-          <div className="grid grid-cols-[1fr_1.2fr_70px_0.9fr_90px_110px_132px] gap-3 border-b border-border/70 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            <span>Casus</span>
-            <span>Onderwerp</span>
-            <span>Leeftijd</span>
-            <span>Regio</span>
-            <span>Urgentie</span>
-            <span>Wachttijd</span>
-            <span className="text-right">Actie</span>
-          </div>
-          <div className="divide-y divide-border/70">
+        <CareWorkListCard
+          testId="assessment-queue-worklist"
+          header={
+            <CareOperationalQueueHeader
+              labels={["Urgentie", "Casus", "Operationeel", "Fase", "Wachttijd", "Actie"]}
+            />
+          }
+        >
+          <CarePrimaryList>
             {queueCases.map((item) => (
-              <div
+              <CareWorkRow
                 key={item.id}
-                className="grid grid-cols-[1fr_1.2fr_70px_0.9fr_90px_110px_132px] gap-3 px-4 py-3 items-center transition-colors hover:bg-muted/15"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{item.id}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{item.phaseLabel}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">{item.clientLabel}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{item.tags[0] ?? "Casus"}</p>
-                </div>
-                <p className="text-sm text-foreground">{item.clientAge}</p>
-                <p className="text-sm text-foreground">{item.region}</p>
-                <p className="text-sm text-foreground">{item.urgencyLabel}</p>
-                <p className="text-sm text-foreground">{item.daysInCurrentPhase} dagen</p>
-                <div className="text-right">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="gap-2 text-primary hover:bg-muted/35 hover:text-primary"
-                    onClick={() => onCaseClick?.(item.id)}
-                  >
-                    Openen
-                    <ArrowRight size={14} />
-                  </Button>
-                </div>
-              </div>
+                density="operational"
+                leading={
+                  <CareMetaChip className="h-6 px-2 text-[11px] font-semibold">
+                    {item.urgencyLabel}
+                  </CareMetaChip>
+                }
+                title={item.clientLabel}
+                context={
+                  <>
+                    <CareMetaChip className="font-mono text-[11px]">{item.id}</CareMetaChip>
+                    <CareMetaChip>{item.region}</CareMetaChip>
+                    <span className="line-clamp-1 text-[11px]">{item.tags[0] ?? "Casus"}</span>
+                  </>
+                }
+                status={<CareDominantStatus>{item.phaseLabel}</CareDominantStatus>}
+                time={
+                  <CareMetaChip>
+                    {item.daysInCurrentPhase} dagen
+                  </CareMetaChip>
+                }
+                actionLabel="Openen"
+                actionVariant="ghost"
+                onOpen={() => onCaseClick?.(item.id)}
+                onAction={(event) => {
+                  event.stopPropagation();
+                  onCaseClick?.(item.id);
+                }}
+              />
             ))}
-          </div>
-        </div>
+          </CarePrimaryList>
+        </CareWorkListCard>
       )}
 
       <CareContextHint

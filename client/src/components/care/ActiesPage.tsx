@@ -22,6 +22,7 @@ import {
 } from "../../lib/actiesTaskSemantics";
 import {
   CareAttentionBar,
+  CareQueueInlineAction,
   CareDominantStatus,
   CareMetaChip,
   CareMetricBadge,
@@ -31,6 +32,7 @@ import {
   CareSectionBody,
   CareSectionHeader,
   CareSearchFiltersBar,
+  CareOperationalQueueHeader,
   CareWorkListCard,
   CareWorkRow,
   EmptyState,
@@ -38,7 +40,6 @@ import {
   LoadingState,
   PrimaryActionButton,
 } from "./CareDesignPrimitives";
-import { CareKPICard } from "./CareKPICard";
 
 interface ActiesPageProps {
   onCaseClick: (caseId: string) => void;
@@ -198,7 +199,16 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
 
   const dominantAction = useMemo(() => {
     if (openTaskTotal === 0) {
-      return null;
+      return {
+        tone: "info" as const,
+        icon: <ClipboardList size={16} aria-hidden />,
+        message: "Geen open taken in deze weergave.",
+        action: onNavigateToCasussen ? (
+          <Button type="button" variant="outline" className="rounded-xl px-4 font-semibold" onClick={onNavigateToCasussen}>
+            Open casussen
+          </Button>
+        ) : undefined,
+      };
     }
 
     if (counts.urgent > 0) {
@@ -207,10 +217,7 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
         icon: <ShieldAlert size={16} aria-hidden />,
         message: `${counts.urgent} kritieke actie${counts.urgent === 1 ? "" : "s"} staan nu open voor jou; pak de oudste eerst op om de blokkade niet te laten oplopen.`,
         action: (
-          <Button
-            type="button"
-            variant="default"
-            className="rounded-xl px-4 font-semibold"
+          <Button type="button" variant="outline" className="h-8 rounded-lg px-3 text-[12px] font-medium"
             onClick={() => {
               setShowSecondaryFilters(true);
               setDueBucket("overdue");
@@ -228,10 +235,7 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
         icon: <Clock size={16} aria-hidden />,
         message: `${counts.today} actie${counts.today === 1 ? "" : "s"} vervalt vandaag; werk deze eerst af voordat je verder filtert.`,
         action: (
-          <Button
-            type="button"
-            variant="default"
-            className="rounded-xl px-4 font-semibold"
+          <Button type="button" variant="outline" className="h-8 rounded-lg px-3 text-[12px] font-medium"
             onClick={() => {
               setShowSecondaryFilters(true);
               setDueBucket("today");
@@ -298,42 +302,9 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
   const selectTriggerClass =
     "h-10 border-border bg-card text-foreground hover:bg-muted/35 focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/30";
 
-  const kpiStrip = (
-    <div className="grid gap-3 px-1 sm:grid-cols-2 xl:grid-cols-4">
-      <CareKPICard
-        title="Totaal open"
-        value={loading ? "—" : openTaskTotal}
-        subtitle="Openstaande taken"
-        icon={ClipboardList}
-        urgency="normal"
-      />
-      <CareKPICard
-        title="Kritiek"
-        value={loading ? "—" : counts.urgent}
-        subtitle="Vereist directe actie"
-        icon={ShieldAlert}
-        urgency="critical"
-      />
-      <CareKPICard
-        title="Vandaag"
-        value={loading ? "—" : counts.today}
-        subtitle="Vervalt vandaag"
-        icon={Calendar}
-        urgency="warning"
-      />
-      <CareKPICard
-        title="Wacht op anderen"
-        value={loading ? "—" : counts.waitingOthers}
-        subtitle="In afwachting"
-        icon={Clock}
-        urgency="normal"
-      />
-    </div>
-  );
-
   return (
     <CarePageScaffold
-      archetype="worklist"
+      archetype="queue"
       className="pb-8"
       title="Acties"
       subtitleInfoTestId="acties-page-info"
@@ -342,9 +313,9 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
       actions={
         <div className="flex flex-wrap items-center gap-2">
           {onNavigateToCasussen ? (
-            <PrimaryActionButton type="button" className="rounded-xl px-4 font-semibold" onClick={onNavigateToCasussen}>
+            <CareQueueInlineAction type="button" onClick={onNavigateToCasussen}>
               Naar casussen
-            </PrimaryActionButton>
+            </CareQueueInlineAction>
           ) : null}
           <Button type="button" variant="outline" className="rounded-xl px-4 font-semibold" onClick={() => refetch()}>
             Ververs
@@ -352,21 +323,21 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
         </div>
       }
       dominantAction={
-        dominantAction ? (
-          <CareAttentionBar
-            tone={dominantAction.tone}
-            icon={dominantAction.icon}
-            message={dominantAction.message}
-            action={dominantAction.action}
-          />
-        ) : undefined
+        <CareAttentionBar
+          layout="compact"
+          tone={dominantAction.tone}
+          icon={dominantAction.icon}
+          message={dominantAction.message}
+          action={dominantAction.action}
+        />
       }
       metric={
         <CareMetricBadge>
-          {loading ? "Laden…" : `${sortedTasks.length} in deze weergave · ${openTaskTotal} totaal`}
+          {loading
+            ? "Laden…"
+            : `${sortedTasks.length} weergave · ${openTaskTotal} open · ${counts.urgent} kritiek · ${counts.today} vandaag`}
         </CareMetricBadge>
       }
-      kpiStrip={kpiStrip}
     >
       <CareSection testId="acties-uitvoerlijst" aria-labelledby="acties-werkvoorraad-heading">
         <CareSectionHeader
@@ -376,7 +347,7 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
           }
           meta={
             <div className="w-full min-w-0 space-y-2">
-              <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
+              <span className="inline-flex w-fit items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
                 {loading ? "…" : `${sortedTasks.length} acties`}
               </span>
               <CareSearchFiltersBar
@@ -493,16 +464,11 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
             )}
             {!loading && !error && sortedTasks.length > 0 && (
               <CareWorkListCard
-                header={(
-                  <div className="hidden gap-y-3 gap-x-4 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid md:grid-cols-[88px_128px_minmax(220px,260px)_104px_112px_minmax(220px,1fr)] md:gap-x-5 md:px-5">
-                    <span>Prioriteit</span>
-                    <span>Taak</span>
-                    <span>Casus</span>
-                    <span>Verval</span>
-                    <span>Eigenaar</span>
-                    <span>Volgende actie</span>
-                  </div>
-                )}
+                header={
+                  <CareOperationalQueueHeader
+                    labels={["Prioriteit", "Taak", "Casus", "Verval", "Eigenaar", "Volgende actie"]}
+                  />
+                }
               >
                 <div className="divide-y divide-border/45">
                   <CarePrimaryList>
@@ -568,14 +534,14 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
                 }
                 action={
                   onNavigateToCasussen ? (
-                    <PrimaryActionButton
+                    <CareQueueInlineAction
                       type="button"
-                      className="mt-1 rounded-xl px-4 font-semibold"
+                      className="mt-1"
                       onClick={onNavigateToCasussen}
                       data-testid="acties-empty-open-casussen"
                     >
                       Open casussen
-                    </PrimaryActionButton>
+                    </CareQueueInlineAction>
                   ) : undefined
                 }
               />

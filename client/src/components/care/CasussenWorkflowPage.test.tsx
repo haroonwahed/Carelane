@@ -95,7 +95,6 @@ describe("WorkloadPage", () => {
 
     expect(screen.getByRole("heading", { name: "Aanvragen" })).toBeInTheDocument();
     expect(screen.getByText(/2 aanvragen ·/)).toBeInTheDocument();
-    expect(screen.getByTestId("casussen-workflow-strip")).toBeInTheDocument();
     const worklist = screen.getByTestId("worklist");
     expect(worklist).toHaveAttribute("data-layout", "queue");
     expect(screen.queryByTestId("casussen-werkvoorraad-column-headers")).not.toBeInTheDocument();
@@ -231,8 +230,8 @@ describe("WorkloadPage", () => {
     const worklist = screen.getByTestId("worklist");
     expect(worklist).toBeInTheDocument();
     expect(screen.getByText("test")).toBeInTheDocument();
-    const openCase = screen.getByRole("button", { name: /Open aanvraag test/ });
-    expect(within(openCase).getByText(/Urgentie is nog niet gevalideerd/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Open casus test/ })).toBeInTheDocument();
+    expect(within(worklist).getAllByText(/Urgentie is nog niet gevalideerd/).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /Vul casus aan/ })).toBeInTheDocument();
     expect(within(worklist).getByText(/dag geleden|Vandaag/)).toBeInTheDocument();
     expect(screen.queryByText(/^Blokkade:/)).not.toBeInTheDocument();

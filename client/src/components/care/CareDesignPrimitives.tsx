@@ -40,6 +40,11 @@ export {
   CareSearchFiltersBar,
   CareSearchFiltersBar as CareSearchFilterBar,
   CareWorkRow,
+  CareOperationalQueueHeader,
+  CareQueueInlineAction,
+  OPERATIONAL_QUEUE_GRID_CLASS,
+  OPERATIONAL_QUEUE_GRID_COLS,
+  OPERATIONAL_QUEUE_HEADER_GRID_CLASS,
   CanonicalPhaseBadge as FlowPhaseBadge,
   normalizeBoardColumnToPhaseId,
 } from "./CareUnifiedPage";
@@ -343,6 +348,7 @@ export function CareAlertCard({
   supportingLink,
   primaryAction,
   secondaryAction,
+  density = "default",
   className,
   testId,
   ...props
@@ -355,15 +361,18 @@ export function CareAlertCard({
   supportingLink?: ReactNode;
   primaryAction: ReactNode;
   secondaryAction?: ReactNode;
+  density?: "default" | "compact";
   className?: string;
   testId?: string;
 } & ComponentProps<"section">) {
   const toneClasses = CARE_ALERT_TONE_CLASSES[tone];
+  const isCompact = density === "compact";
   return (
     <section
       data-component="care-dominant-action-panel"
       data-testid={testId}
-      className={cn("rounded-xl px-4 py-4 md:px-5", toneClasses.shell, className)}
+      className={cn(isCompact ? "border-b border-border/40 px-4 py-3 md:px-5" : "rounded-xl px-4 py-4 md:px-5", toneClasses.shell, className)}
+      data-density={density}
       aria-live="polite"
       {...props}
     >
@@ -390,7 +399,7 @@ export function CareAlertCard({
         </div>
         <div
           data-testid={testId ? `${testId}-actions` : undefined}
-          className="flex w-full flex-wrap items-center justify-start gap-2 self-center md:w-auto md:justify-end"
+          className="flex shrink-0 flex-wrap items-center justify-end gap-2 self-center"
         >
           {primaryAction}
           {secondaryAction ? secondaryAction : null}
@@ -530,8 +539,8 @@ export function CareWorkListCard({
         className,
       )}
     >
-      {header ? <div className="min-w-0 surface-workspace-header px-4 py-3 md:px-5">{header}</div> : null}
-      {children}
+      {header ? <div className="min-w-0 surface-workspace-header">{header}</div> : null}
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

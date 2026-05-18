@@ -14,20 +14,25 @@ import {
 import { Button } from "../ui/button";
 import {
   CareAttentionBar,
+  CareQueueInlineAction,
+  CareDominantStatus,
   CareFlowBoard,
   CareFlowStepCard,
   CareMetaChip,
+  CareOperationalQueueHeader,
   CarePageScaffold,
+  CarePrimaryList,
   CareSection,
   CareSectionBody,
   CareSectionHeader,
   CareOperationalSelect,
   CareSearchFiltersBar,
+  CareWorkListCard,
+  CareWorkRow,
   CareWorkspaceSection,
   EmptyState,
   ErrorState,
   LoadingState,
-  PrimaryActionButton,
   normalizeBoardColumnToPhaseId,
 } from "./CareDesignPrimitives";
 import { cn } from "../ui/utils";
@@ -275,19 +280,16 @@ function buildOperationalMetaLine(item: WorkflowCaseView, decision: CaseDecision
   return `${item.lastUpdatedLabel} · ${owner} · ${phaseHumanLabel}`;
 }
 
-function queueGroupAccentClass(queueGroup: OperatieveWachtrijGroepKey): string {
+function queueGroupAccentTone(queueGroup: OperatieveWachtrijGroepKey): "critical" | "warning" | "neutral" {
   switch (queueGroup) {
     case "wacht-op-aanmelder":
     case "financiele-validatie":
-      return "border-l-[3px] border-l-destructive/70";
-    case "klaar-voor-matching":
-      return "border-l-[3px] border-l-sky-500/60";
+      return "critical";
     case "wacht-op-aanbieder":
-      return "border-l-[3px] border-l-amber-500/65";
-    case "plaatsing-intake":
-      return "border-l-[3px] border-l-emerald-600/55";
+    case "klaar-voor-matching":
+      return "warning";
     default:
-      return "border-l-[3px] border-l-border/70";
+      return "neutral";
   }
 }
 
@@ -298,8 +300,6 @@ function CasussenOperatieveWachtrijItem({
   classification,
   phaseHumanLabel,
   headline,
-  subline,
-  metaLine,
   showPrimaryCta,
   onOpenCase,
   onWorkflowAction,
@@ -310,57 +310,54 @@ function CasussenOperatieveWachtrijItem({
   classification: CasusWorkboardClassification;
   phaseHumanLabel: string;
   headline: string;
-  subline: string;
-  metaLine: string;
   showPrimaryCta: boolean;
   onOpenCase: () => void;
   onWorkflowAction: () => void;
 }) {
-  const actionVariant = showPrimaryCta ? "primary" : "ghost";
+  const ownerLabel =
+    decision.responsibleParty === "Gemeente" ? "Regie" : decision.responsibleParty === "Zorgaanbieder" ? "Aanbieder" : "Systeem";
+  const actionLabel = decision.nextActionLabel.replace(/\s*→\s*$/u, "").trim() || decision.nextActionLabel;
 
   return (
-    <div
-      data-care-work-row
-      data-queue-group={queueGroup}
-      className={cn(
-        "group relative rounded-xl border border-border/55 bg-card/25 px-4 py-4 shadow-sm transition-colors hover:bg-card/40 sm:px-5",
-        queueGroupAccentClass(queueGroup),
-      )}
-    >
-      <button
-        type="button"
-        onClick={onOpenCase}
-        aria-label={`Open aanvraag ${item.clientLabel}`}
-        className="w-full min-w-0 space-y-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      >
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <span className="break-all font-mono text-[13px] font-semibold leading-snug text-foreground">{item.id}</span>
-          <CareMetaChip className={cn("h-7 shrink-0 px-2.5 text-[12px] font-semibold", urgencyChipShellClass(item.urgency))}>
+    <div className="group relative">
+      <CareWorkRow
+        density="operational"
+        leading={
+          <CareMetaChip className={cn("h-6 px-2 text-[11px] font-semibold", urgencyChipShellClass(item.urgency))}>
             {item.urgencyLabel}
           </CareMetaChip>
-        </div>
-        <p className="text-[15px] font-semibold leading-snug text-foreground break-words">{item.clientLabel}</p>
-        <p className="text-[14px] font-medium leading-snug text-foreground break-words">{headline}</p>
-        <p className="text-[13px] leading-relaxed text-muted-foreground break-words">{subline}</p>
-        <p className="flex flex-wrap items-center gap-1.5 text-[12px] leading-snug text-muted-foreground">
-          <Clock3 size={12} className="shrink-0 opacity-70" aria-hidden />
-          <span className="break-words">{metaLine}</span>
-        </p>
-      </button>
-      <div className="mt-3 min-w-0">
-        <Button
-          variant={showPrimaryCta ? "default" : "secondary"}
-          size="sm"
-          type="button"
-          data-care-work-row-cta={actionVariant}
-          className="h-11 min-h-11 w-full rounded-xl px-3 text-[13px] font-semibold leading-snug"
-          onClick={onWorkflowAction}
-        >
-          <span className="text-center break-words whitespace-normal">{decision.nextActionLabel} →</span>
-        </Button>
-      </div>
+        }
+        title={item.clientLabel}
+        context={
+          <>
+            <CareMetaChip className="font-mono text-[11px]">{item.id}</CareMetaChip>
+            <CareMetaChip>{item.region}</CareMetaChip>
+            <span className="line-clamp-1 min-w-0 max-w-[min(100%,28rem)] text-[11px] text-foreground/85">{headline}</span>
+          </>
+        }
+        status={
+          <CareDominantStatus className={cn("h-7 px-2.5 text-[11px] font-semibold", phasePillClasses("waiting"))}>
+            {phaseHumanLabel}
+          </CareDominantStatus>
+        }
+        time={
+          <CareMetaChip>
+            <Clock3 size={12} aria-hidden />
+            {item.lastUpdatedLabel}
+          </CareMetaChip>
+        }
+        contextInfo={<CareMetaChip>{ownerLabel}</CareMetaChip>}
+        actionLabel={actionLabel}
+        actionVariant={showPrimaryCta ? "primary" : "ghost"}
+        accentTone={queueGroupAccentTone(queueGroup)}
+        onOpen={onOpenCase}
+        onAction={(event) => {
+          event.stopPropagation();
+          onWorkflowAction();
+        }}
+      />
       {import.meta.env.DEV && (
-        <details className="absolute right-2 top-2">
+        <details className="absolute right-2 top-1.5 z-10">
           <summary
             aria-label="Open debug classificatie"
             className="inline-block cursor-pointer list-none rounded-full px-1 text-[10px] text-muted-foreground opacity-0 transition-opacity hover:bg-muted/40 group-hover:opacity-100 focus-visible:opacity-100"
@@ -385,6 +382,7 @@ function CasussenOperatieveWachtrijItem({
     </div>
   );
 }
+
 
 export function WorkloadPage({
   onCaseClick,
@@ -700,22 +698,23 @@ export function WorkloadPage({
 
   const workloadAttentionAction =
     primaryShortcut !== null ? (
-      <PrimaryActionButton
-        type="button"
-        className="h-9 min-h-9 px-4 text-[13px] shadow-md"
-        onClick={primaryShortcut.onClick}
-      >
+      <CareQueueInlineAction type="button" onClick={primaryShortcut.onClick}>
         {primaryShortcut.label}
-      </PrimaryActionButton>
+      </CareQueueInlineAction>
     ) : null;
 
   const headerActions = (
     <div className="flex flex-col items-start gap-1 md:pt-3 md:items-end">
       <div className="flex flex-wrap items-center justify-end gap-2">
         {canCreateCase && onCreateCase ? (
-          <PrimaryActionButton type="button" className="h-10 min-h-10 px-4 text-[13px]" onClick={onCreateCase}>
-          Nieuwe aanvraag
-          </PrimaryActionButton>
+          <Button
+            type="button"
+            variant="default"
+            className="h-9 min-h-9 rounded-lg px-4 text-[13px] font-semibold shadow-sm"
+            onClick={onCreateCase}
+          >
+            Nieuwe aanvraag
+          </Button>
         ) : null}
         <RegieRailToggleButton
           collapsed={railCollapsed}
@@ -766,88 +765,11 @@ export function WorkloadPage({
     return 0;
   })();
 
-  const doorstroomStrip = (
-    <CareSection tone="context" testId="casussen-workflow-strip" aria-label="Doorstroom per fase">
-      <CareSectionHeader
-        title="Doorstroom"
-        description={
-          <>
-            <p>Toont waar aanvragen in de keten staan, op basis van je huidige filters.</p>
-            <p>Klik een fase om de werkvoorraad op die fase te filteren.</p>
-          </>
-        }
-        descriptionAriaLabel="Uitleg doorstroom"
-        descriptionTestId="casussen-doorstroom-uitleg"
-        action={
-          <Button type="button" variant="ghost" className="gap-1 px-2 text-sm font-semibold text-primary hover:bg-muted/35 hover:text-primary" asChild>
-            <a href={CARE_PATHS.REGIEKAMER} data-testid="casussen-doorstroom-naar-regiekamer">
-              Naar coördinatie
-              <ChevronRight size={14} aria-hidden />
-            </a>
-          </Button>
-        }
-      />
-      <CareSectionBody className="mt-4 space-y-0">
-        <CareFlowBoard
-          testId="casussen-flow-board"
-          variant="pipeline"
-          activeStepIndex={activeStripIndex}
-          stepCount={STRIP_DEF.length}
-        >
-          {STRIP_DEF.map((step, stepIndex) => {
-            const active = stripStepIsActive(step);
-            const completed = !active && stepIndex < activeStripIndex;
-            const count = stripCounts[step.key];
-            const StepIcon = stripStepIcon(step.key);
-            // Operational lane: phase-first, count-second. The waiting label IS the
-            // bottleneck signal when count > 0; "Geen instroom" stays as the only
-            // generic status pill (drops the low-value "Doorstroom actief").
-            const roleAwareWait = ownerWaitLabelForRole(step.key, role).toLowerCase();
-            const waitingLabel = count > 0
-              ? `${count} ${roleAwareWait}`
-              : null;
-            return (
-              <CareFlowStepCard
-                key={step.key}
-                testId={`casussen-phase-column-${step.key}`}
-                onClick={() => {
-                  setSelectedPhase(step.filterPhase);
-                  setSelectedFlowColumn(step.key === "plaatsing" || step.key === "intake" ? step.key : "all");
-                  setFocusChip("all");
-                }}
-                active={active}
-                completed={completed}
-                icon={<StepIcon size={16} className="text-current" />}
-                metric={count}
-                title={step.label}
-                subStatusLines={
-                  waitingLabel
-                    ? [<p key={`${step.key}-wait`} className="truncate text-[11px] leading-snug text-muted-foreground">{waitingLabel}</p>]
-                    : [
-                      <span
-                        key={`${step.key}-empty`}
-                        className={cn(
-                          "inline-flex w-fit rounded-full border px-2 py-0.5 text-[10px] font-semibold",
-                          phasePillClasses(step.statusTone),
-                        )}
-                      >
-                        Geen instroom
-                      </span>,
-                    ]
-                }
-              />
-            );
-          })}
-        </CareFlowBoard>
-      </CareSectionBody>
-    </CareSection>
-  );
-
   return (
     <div className="flex w-full flex-col gap-8 xl:flex-row xl:items-start xl:gap-8">
       <div className="min-w-0 flex-1">
     <CarePageScaffold
-      archetype="worklist"
+      archetype="queue"
       className="pb-8"
       title="Aanvragen"
       subtitleInfoTestId="casussen-page-info"
@@ -882,14 +804,12 @@ export function WorkloadPage({
       }
       actions={headerActions}
       kpiStrip={
-        <div className="space-y-3">
-          <CareAttentionBar
-            tone={workflowCases.length === 0 ? "warning" : attentionCount > 0 ? "critical" : "info"}
-            message={workloadAttentionMessage}
-            action={workloadAttentionAction}
-          />
-          {doorstroomStrip}
-        </div>
+        <CareAttentionBar
+          layout="compact"
+          tone={workflowCases.length === 0 ? "warning" : attentionCount > 0 ? "critical" : "info"}
+          message={workloadAttentionMessage}
+          action={workloadAttentionAction}
+        />
       }
     >
       <CareWorkspaceSection
@@ -1033,118 +953,131 @@ export function WorkloadPage({
           )}
 
           {!loading && !error && filteredItems.length > 0 && (
-            <div data-testid="worklist" data-density="compact" data-layout="queue" className="space-y-5">
+            <div data-testid="worklist" data-density="operational" data-layout="queue" className="space-y-3">
               {groupedPageSections.length === 0 ? (
                 <p className="text-[13px] text-muted-foreground">Geen aanvragen op deze pagina.</p>
               ) : (
-                groupedPageSections.map(({ key: groupKey, items }) => {
-                  const totalInGroup = queueGroupTotals[groupKey];
-                  const isCollapsed = isQueueGroupCollapsed(groupKey);
-                  return (
-                    <section key={groupKey} className="space-y-2.5">
-                      <button
+                <>
+                  <CareWorkListCard
+                    header={
+                      <CareOperationalQueueHeader
+                        labels={["Urgentie", "Aanvraag", "Operationeel", "Fase", "Bijgewerkt", "Volgende actie"]}
+                      />
+                    }
+                  >
+                    {groupedPageSections.map(({ key: groupKey, items }, groupIndex) => {
+                      const totalInGroup = queueGroupTotals[groupKey];
+                      const isCollapsed = isQueueGroupCollapsed(groupKey);
+                      return (
+                        <section key={groupKey} className={cn(groupIndex > 0 && "border-t border-border/40")}>
+                          <button
+                            type="button"
+                            onClick={() => toggleQueueGroup(groupKey)}
+                            className="flex w-full items-center justify-between gap-2 px-4 py-2 text-left md:px-5"
+                          >
+                            <h2 className="text-[13px] font-semibold leading-snug text-foreground">
+                              {OPERATIEVE_WACHTLIJN_LABELS[groupKey]}{" "}
+                              <span className="font-semibold tabular-nums text-muted-foreground">({totalInGroup})</span>
+                            </h2>
+                            {isCollapsed ? (
+                              <ChevronDown size={16} className="shrink-0 text-muted-foreground" />
+                            ) : (
+                              <ChevronUp size={16} className="shrink-0 text-muted-foreground" />
+                            )}
+                          </button>
+
+                          {!isCollapsed && (
+                            <div className="divide-y divide-border/40">
+                              <CarePrimaryList>
+                                {items.map(({ item, decision, classification, queueGroup }) => {
+                                  const phaseHuman = phasePillLabel(item);
+                                  const headline = buildOperationalHeadline(item, decision, phaseHuman);
+                                  const showPrimaryCta = Boolean(
+                                    decision.requiresCurrentUserAction && decision.primaryActionEnabled,
+                                  );
+                                  return (
+                                    <CasussenOperatieveWachtrijItem
+                                      key={item.id}
+                                      item={item}
+                                      decision={decision}
+                                      queueGroup={queueGroup}
+                                      classification={classification}
+                                      phaseHumanLabel={phaseHuman}
+                                      headline={headline}
+                                      showPrimaryCta={showPrimaryCta}
+                                      onOpenCase={() => onCaseClick(item.id)}
+                                      onWorkflowAction={() => handleNavigate(decision.nextActionRoute)}
+                                    />
+                                  );
+                                })}
+                              </CarePrimaryList>
+                            </div>
+                          )}
+                        </section>
+                      );
+                    })}
+                  </CareWorkListCard>
+
+                  <p className="text-[12px] leading-snug text-muted-foreground" data-testid="worklist-pagination-hint">
+                    Paginering loopt plat over alle wachtrijen (volgorde: wachtrij → urgentie → aanvraag). Tellingen bij elke kop
+                    zijn voor je huidige filters, niet alleen voor deze pagina.
+                  </p>
+
+                  <div className="flex flex-col gap-3 border-t border-border/50 pt-3 text-[13px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                    <p className="tabular-nums">
+                      {totalRows === 0 ? "0" : `${(safePage - 1) * pageSize + 1}–${Math.min(safePage * pageSize, totalRows)}`} van {totalRows}{" "}
+                      aanvragen
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
                         type="button"
-                        onClick={() => toggleQueueGroup(groupKey)}
-                        className="flex w-full items-start justify-between gap-2 rounded-lg px-0.5 py-0.5 text-left"
+                        variant="outline"
+                        size="icon"
+                        className="size-8"
+                        disabled={safePage <= 1}
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        aria-label="Vorige pagina"
                       >
-                        <div className="min-w-0 space-y-0.5">
-                          <h2 className="text-[15px] font-semibold leading-snug text-foreground">
-                            {OPERATIEVE_WACHTLIJN_LABELS[groupKey]}{" "}
-                            <span className="font-semibold tabular-nums text-muted-foreground">({totalInGroup})</span>
-                          </h2>
-                        </div>
-                        {isCollapsed ? <ChevronDown size={16} className="mt-0.5 shrink-0 text-muted-foreground" /> : <ChevronUp size={16} className="mt-0.5 shrink-0 text-muted-foreground" />}
-                      </button>
-
-                      {!isCollapsed && (
-                        <div className="space-y-3">
-                          {items.map(({ item, decision, classification, queueGroup }) => {
-                            const phaseHuman = phasePillLabel(item);
-                            const headline = buildOperationalHeadline(item, decision, phaseHuman);
-                            const subline = buildOperationalSubline(decision, queueGroup);
-                            const metaLine = buildOperationalMetaLine(item, decision, phaseHuman);
-                            const showPrimaryCta = Boolean(decision.requiresCurrentUserAction && decision.primaryActionEnabled);
-                            return (
-                              <CasussenOperatieveWachtrijItem
-                                key={item.id}
-                                item={item}
-                                decision={decision}
-                                queueGroup={queueGroup}
-                                classification={classification}
-                                phaseHumanLabel={phaseHuman}
-                                headline={headline}
-                                subline={subline}
-                                metaLine={metaLine}
-                                showPrimaryCta={showPrimaryCta}
-                                onOpenCase={() => onCaseClick(item.id)}
-                                onWorkflowAction={() => handleNavigate(decision.nextActionRoute)}
-                              />
-                            );
-                          })}
-                        </div>
-                      )}
-                    </section>
-                  );
-                })
+                        <ChevronLeft size={16} />
+                      </Button>
+                      <span className="tabular-nums text-foreground">
+                        Pagina {safePage} / {totalPages}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="size-8"
+                        disabled={safePage >= totalPages}
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        aria-label="Volgende pagina"
+                      >
+                        <ChevronRight size={16} />
+                      </Button>
+                    </div>
+                    <label className="flex items-center gap-2">
+                      <span className="text-[12px]">Rijen per pagina</span>
+                      <CareOperationalSelect
+                        value={pageSize}
+                        onChange={(event) => {
+                          setPageSize(Number(event.target.value));
+                          setPage(1);
+                        }}
+                        className="care-op-select h-9 w-auto rounded-lg px-2 text-[13px]"
+                      >
+                        {[5, 10, 20, 50].map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </CareOperationalSelect>
+                    </label>
+                  </div>
+                </>
               )}
-
-              <p className="text-[12px] leading-snug text-muted-foreground" data-testid="worklist-pagination-hint">
-                Paginering loopt plat over alle wachtrijen (volgorde: wachtrij → urgentie → aanvraag). Tellingen bij elke kop
-                zijn voor je huidige filters, niet alleen voor deze pagina.
-              </p>
-
-              <div className="flex flex-col gap-3 border-t border-border/50 pt-3 text-[13px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-                <p className="tabular-nums">
-                  {totalRows === 0 ? "0" : `${(safePage - 1) * pageSize + 1}–${Math.min(safePage * pageSize, totalRows)}`} van {totalRows}{" "}
-                  aanvragen
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="size-8"
-                    disabled={safePage <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    aria-label="Vorige pagina"
-                  >
-                    <ChevronLeft size={16} />
-                  </Button>
-                  <span className="tabular-nums text-foreground">
-                    Pagina {safePage} / {totalPages}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="size-8"
-                    disabled={safePage >= totalPages}
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    aria-label="Volgende pagina"
-                  >
-                    <ChevronRight size={16} />
-                  </Button>
-                </div>
-                <label className="flex items-center gap-2">
-                  <span className="text-[12px]">Rijen per pagina</span>
-                  <CareOperationalSelect
-                    value={pageSize}
-                    onChange={(event) => {
-                      setPageSize(Number(event.target.value));
-                      setPage(1);
-                    }}
-                    className="care-op-select h-9 w-auto rounded-lg px-2 text-[13px]"
-                  >
-                    {[5, 10, 20, 50].map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </CareOperationalSelect>
-                </label>
-              </div>
             </div>
           )}
+
       </CareWorkspaceSection>
     </CarePageScaffold>
       </div>

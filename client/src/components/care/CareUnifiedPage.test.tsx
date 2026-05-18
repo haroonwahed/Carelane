@@ -41,7 +41,7 @@ describe("CarePageTemplate", () => {
     const root = container.firstElementChild;
     expect(root).toHaveClass(CARE_UNIFIED_PAGE_STACK.trim().split(/\s+/)[0]);
     expect(root).toHaveClass("pb-8");
-    expect(root).toHaveClass("space-y-4");
+    expect(root).toHaveClass("space-y-5");
   });
 });
 
@@ -61,7 +61,7 @@ describe("CareWorkRow / CareListRow", () => {
     const row = document.querySelector("[data-care-work-row]");
     expect(screen.getByTestId("lead")).toBeInTheDocument();
     expect(screen.getByText("Titel")).toBeInTheDocument();
-    expect(screen.getAllByTestId("st")).toHaveLength(2);
+    expect(screen.getAllByTestId("st")).toHaveLength(1);
     expect(screen.getByText("Actie →").closest("button")).toBeTruthy();
     expect(row).toBeTruthy();
     expect(row).not.toHaveAttribute("role");

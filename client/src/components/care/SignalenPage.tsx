@@ -19,7 +19,10 @@ import {
   CareSectionBody,
   CareSectionHeader,
   CareSearchFiltersBar,
+  CareOperationalQueueHeader,
+  CareWorkListCard,
   CareWorkRow,
+  CareQueueInlineAction,
   EmptyState,
   ErrorState,
   LoadingState,
@@ -136,6 +139,7 @@ function SignalWorkRow({
 
   return (
     <CareWorkRow
+      density="operational"
       testId="signalen-worklist-item"
       leading={<SignalSeverityIcon severity={signal.severity} />}
       title={signal.title}
@@ -380,14 +384,14 @@ export function SignalenPage({ onOpenCase, onNavigateToWorkflow }: SignalenPageP
 
   const headerActions =
     !loading && !error && signals.length > 0 ? (
-      <PrimaryActionButton type="button" onClick={() => toggleSeverityFilter(dominantActionSeverity)}>
+      <CareQueueInlineAction type="button" onClick={() => toggleSeverityFilter(dominantActionSeverity)}>
         {dominantActionLabel}
-      </PrimaryActionButton>
+      </CareQueueInlineAction>
     ) : undefined;
 
   return (
     <CarePageScaffold
-      archetype="signal-action"
+      archetype="command"
       className="pb-8"
       title="Signalen"
       subtitleInfoTestId="signalen-page-uitleg"
@@ -475,13 +479,22 @@ export function SignalenPage({ onOpenCase, onNavigateToWorkflow }: SignalenPageP
           )}
 
           {!loading && !error && filteredSignals.length > 0 && (
-            <div data-testid="signalen-worklist">
-              <CarePrimaryList>
-                {filteredSignals.map((signal) => (
-                  <SignalWorkRow key={signal.id} signal={signal} onRunAction={runAction} />
-                ))}
-              </CarePrimaryList>
-            </div>
+            <CareWorkListCard
+              testId="signalen-worklist"
+              header={
+                <CareOperationalQueueHeader
+                  labels={["Ernst", "Signaal", "Toelichting", "Casus", "Secundair", "Actie"]}
+                />
+              }
+            >
+              <div className="divide-y divide-border/40">
+                <CarePrimaryList>
+                  {filteredSignals.map((signal) => (
+                    <SignalWorkRow key={signal.id} signal={signal} onRunAction={runAction} />
+                  ))}
+                </CarePrimaryList>
+              </div>
+            </CareWorkListCard>
           )}
 
           {!loading && !error && filteredSignals.length === 0 && (
@@ -489,9 +502,9 @@ export function SignalenPage({ onOpenCase, onNavigateToWorkflow }: SignalenPageP
               title="Geen actieve signalen op dit moment"
               copy="De workflow loopt stabiel. Je kunt verder met reguliere casusopvolging."
               action={(
-                <PrimaryActionButton className="mt-2" onClick={() => onNavigateToWorkflow?.("casussen")}>
+                <CareQueueInlineAction className="mt-2" onClick={() => onNavigateToWorkflow?.("casussen")}>
                   Naar casussen
-                </PrimaryActionButton>
+                </CareQueueInlineAction>
               )}
             />
           )}
