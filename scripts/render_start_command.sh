@@ -29,14 +29,28 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
   exit 1
 fi
 
-python scripts/render_startup_checks.py
+PYTHON_BIN="${PYTHON_BIN:-}"
+if [[ -z "$PYTHON_BIN" ]]; then
+  if command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="python"
+  elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+  else
+    echo "ERROR: Neither python nor python3 is available on PATH."
+    exit 1
+  fi
+fi
+
+echo "[render] using python binary: ${PYTHON_BIN}"
+
+"$PYTHON_BIN" scripts/render_startup_checks.py
 
 if [[ "${PILOT_AUTO_BOOTSTRAP:-}" =~ ^(1|true|yes)$ ]]; then
   echo "[render] PILOT_AUTO_BOOTSTRAP enabled — migrate + bootstrap_staging_pilot"
-  python manage.py migrate --noinput
-  if ! python manage.py bootstrap_staging_pilot; then
+  "$PYTHON_BIN" manage.py migrate --noinput
+  if ! "$PYTHON_BIN" manage.py bootstrap_staging_pilot; then
     echo "[render] WARN: bootstrap_staging_pilot failed — running seed_pilot_e2e fallback"
-    python manage.py seed_pilot_e2e || true
+    "$PYTHON_BIN" manage.py seed_pilot_e2e || true
   fi
 fi
 

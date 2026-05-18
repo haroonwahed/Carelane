@@ -5,11 +5,12 @@ services:
     plan: free
     buildCommand: |
       pip install -r requirements/runtime.txt
-      DJANGO_TEST_LOG_LEVEL=ERROR DATABASE_URL='sqlite:////tmp/careon-build.sqlite3' python manage.py check --settings=config.settings
+      PYTHON_BIN="$(command -v python || command -v python3)"
+      DJANGO_TEST_LOG_LEVEL=ERROR DATABASE_URL='sqlite:////tmp/careon-build.sqlite3' "$PYTHON_BIN" manage.py check --settings=config.settings
       npm ci --prefix client
       npm run build --prefix client
-      DATABASE_URL='sqlite:////tmp/careon-build.sqlite3' python manage.py collectstatic --noinput --settings=config.settings
-      DATABASE_URL='sqlite:////tmp/careon-build.sqlite3' python manage.py migrate --noinput --settings=config.settings
+      DATABASE_URL='sqlite:////tmp/careon-build.sqlite3' "$PYTHON_BIN" manage.py collectstatic --noinput --settings=config.settings
+      DATABASE_URL='sqlite:////tmp/careon-build.sqlite3' "$PYTHON_BIN" manage.py migrate --noinput --settings=config.settings
     # One line so manual Start Command on Render can match: bash scripts/render_start_command.sh
     startCommand: bash scripts/render_start_command.sh
     envVars:
