@@ -41,7 +41,7 @@ describe("CarePageTemplate", () => {
     const root = container.firstElementChild;
     expect(root).toHaveClass(CARE_UNIFIED_PAGE_STACK.trim().split(/\s+/)[0]);
     expect(root).toHaveClass("pb-8");
-    expect(root).toHaveClass("space-y-5");
+    expect(root).toHaveClass("care-page-rhythm");
   });
 });
 

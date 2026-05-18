@@ -77,6 +77,24 @@ describe("operationalDesignLawsGuard", () => {
     expect(source).not.toMatch(/Math\.max\(52,\s*66/);
   });
 
+  it("LAW 06 — Regiekamer NBA must not route to rapportages optimization", () => {
+    const nba = readFileSync(join(ROOT, "lib/regiekamerNextBestAction.ts"), "utf8");
+    const page = readCareFile("SystemAwarenessPage.tsx");
+    expect(nba).not.toMatch(/OPEN_REPORTS/);
+    expect(nba).not.toMatch(/uiMode:\s*"optimization"/);
+    expect(page).not.toMatch(/\/rapportages/);
+    expect(page).toMatch(/FOCUS_PIPELINE/);
+  });
+
+  it("LAW 05 — workflow list surfaces do not fabricate match confidence percentages", () => {
+    const workflowUi = readFileSync(join(ROOT, "lib/workflowUi.ts"), "utf8");
+    expect(workflowUi).not.toMatch(/function buildMatchConfidence/);
+    expect(workflowUi).toMatch(/matchConfidenceScore:\s*null/);
+    const matchingQueue = readCareFile("MatchingQueuePage.tsx");
+    expect(matchingQueue).not.toMatch(/Fit sterk \(\d+%\)/);
+    expect(matchingQueue).not.toMatch(/matchConfidenceScore/);
+  });
+
   it("LAW 05 — no Sparkles gimmick on matching workspace", () => {
     const source = readCareFile("MatchingPageWithMap.tsx");
     expect(source).not.toMatch(/\bSparkles\b/);
@@ -163,5 +181,34 @@ describe("operationalDesignLawsGuard", () => {
       }
     }
     expect(violations, violations.join("\n")).toEqual([]);
+  });
+
+  it("LAW 10 — queue werkvoorraad shells use CareWorkspaceSection rhythm", () => {
+    const mustWorkspace = [
+      "WorkloadPage.tsx",
+      "ActiesPage.tsx",
+      "MatchingQueuePage.tsx",
+      "PlacementTrackingPage.tsx",
+      "SignalenPage.tsx",
+      "SystemAwarenessPage.tsx",
+    ];
+    const violations: string[] = [];
+    for (const file of mustWorkspace) {
+      const source = readCareFile(file);
+      if (!/\bCareWorkspaceSection\b/.test(source)) {
+        violations.push(`${file}: missing CareWorkspaceSection`);
+      }
+      if (/CareSectionBody className="space-y-3"/.test(source)) {
+        violations.push(`${file}: legacy space-y-3 section body`);
+      }
+    }
+    expect(violations, violations.join("\n")).toEqual([]);
+  });
+
+  it("LAW 10 — operational rhythm tokens are defined in design tokens", () => {
+    const tokens = readFileSync(join(ROOT, "design/tokens.ts"), "utf8");
+    expect(tokens).toMatch(/rhythm:\s*\{/);
+    expect(tokens).toMatch(/filterQueue:/);
+    expect(tokens).toMatch(/queueHeader:/);
   });
 });

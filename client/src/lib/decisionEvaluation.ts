@@ -51,6 +51,7 @@ export interface BlockedAction {
 export interface DecisionEvaluationContext {
   required_data_complete: boolean;
   has_summary: boolean;
+  matching_summary_ready?: boolean;
   has_matching_result: boolean;
   latest_match_confidence: number | null;
   provider_review_status: string;

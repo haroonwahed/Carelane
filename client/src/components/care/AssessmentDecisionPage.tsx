@@ -131,7 +131,7 @@ export function AssessmentDecisionPage({ caseId, onBack, onSaved }: AssessmentDe
 
   return (
     <CarePageScaffold
-      archetype="decision"
+      archetype="workspace"
       className="pb-8"
       title={
         <span className="inline-flex flex-wrap items-center gap-2">
@@ -156,26 +156,6 @@ export function AssessmentDecisionPage({ caseId, onBack, onSaved }: AssessmentDe
               : "Selecteer eerst een beslissing om verder te gaan."
           }
         />
-      }
-      kpiStrip={
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-border/70 bg-card/55 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Casus</p>
-            <p className="mt-2 text-lg font-semibold text-foreground">{data.summary.caseId}</p>
-          </div>
-          <div className="rounded-xl border border-border/70 bg-card/55 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Regio</p>
-            <p className="mt-2 text-lg font-semibold text-foreground">{data.summary.region}</p>
-          </div>
-          <div className="rounded-xl border border-border/70 bg-card/55 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Zorgtype</p>
-            <p className="mt-2 text-lg font-semibold text-foreground">{data.summary.careType}</p>
-          </div>
-          <div className="rounded-xl border border-border/70 bg-card/55 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Wachttijd</p>
-            <p className="mt-2 text-lg font-semibold text-foreground">{data.summary.waitDays} dagen</p>
-          </div>
-        </div>
       }
     >
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_360px]">

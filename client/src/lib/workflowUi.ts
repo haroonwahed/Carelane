@@ -9,6 +9,21 @@ import {
   type CanonicalWorkflowState,
 } from "./workflowStateMachine";
 import { getShortReasonLabel } from "./uxCopy";
+import {
+  deriveListMatchingAdvisory,
+  signalSeverityForAdvisoryLabel,
+  type MatchingAdvisoryAssessment,
+} from "./matchingAdvisory";
+
+/**
+ * WORKFLOW UI TRUTH (temporary heuristics — list surfaces only)
+ *
+ * - **Authority:** persisted `workflow_state` + `/care/api/cases/{id}/decision-evaluation/` on case detail.
+ * - **This module** builds queue/board views from `SpaCase` when batch evaluation is unavailable.
+ * - **Not fabricated:** match fit % on lists; use `matchingAdvisory.ts` + case `decision-evaluation`.
+ * - **Explicit fallbacks:** `resolveBoardColumnWithFallback` when `workflow_state` is missing on legacy payloads.
+ * - **Placement rows:** `effectivePlacementCanonicalState` when snapshots omit state (see function docs).
+ */
 
 /**
  * Detects whether a primary-action label indicates a system-driven samenvatting
@@ -77,7 +92,10 @@ export interface WorkflowCaseView {
   primaryActionReason: string | null;
   decisionBadges: WorkflowDecisionBadgeView[];
   missingDataItems: string[];
+  /** Operational advisory label (no fabricated %). */
   matchConfidenceLabel: string | null;
+  matchAdvisoryHint: string | null;
+  /** @deprecated Always null — kept for type compatibility; do not render as %. */
   matchConfidenceScore: number | null;
   providerStatusLabel: string | null;
   providerStatusTone: WorkflowDecisionBadgeTone | null;
@@ -232,24 +250,20 @@ function buildRegionalMatches(spaCase: SpaCase, providers: SpaProvider[]): SpaPr
     .sort((left, right) => right.availableSpots - left.availableSpots || left.averageWaitDays - right.averageWaitDays);
 }
 
-function buildMatchConfidence(providerCount: number, urgency: SpaCase["urgency"]): { label: string; score: number; tone: WorkflowDecisionBadgeTone } | null {
-  if (providerCount <= 0) {
-    return { label: "Fit laag", score: 22, tone: "critical" };
-  }
-
-  if (providerCount === 1) {
-    return {
-      label: urgency === "critical" ? "Fit kwetsbaar" : "Fit middel",
-      score: 58,
-      tone: urgency === "critical" ? "warning" : "info",
-    };
-  }
-
-  if (providerCount === 2) {
-    return { label: "Fit middel", score: 73, tone: "info" };
-  }
-
-  return { label: "Fit sterk", score: 89, tone: "good" };
+function buildMatchingAdvisory(
+  boardColumn: WorkflowBoardColumn,
+  spaCase: SpaCase,
+  providerCount: number,
+  summaryAvailable: boolean,
+  isBlocked: boolean,
+): MatchingAdvisoryAssessment | null {
+  return deriveListMatchingAdvisory({
+    boardColumn,
+    providerCount,
+    urgency: spaCase.urgency,
+    summaryAvailable,
+    isBlocked,
+  });
 }
 
 function boardColumnFromWorkflowState(workflowState: CanonicalWorkflowState): WorkflowBoardColumn {
@@ -423,7 +437,7 @@ function buildDecisionBadges(
   column: WorkflowBoardColumn,
   missingDataItems: string[],
   summaryAvailable: boolean,
-  matchConfidence: { label: string; score: number; tone: WorkflowDecisionBadgeTone } | null,
+  matchAdvisory: MatchingAdvisoryAssessment | null,
   providerStatus: { label: string | null; tone: WorkflowDecisionBadgeTone | null },
 ): WorkflowDecisionBadgeView[] {
   const badges: WorkflowDecisionBadgeView[] = [];
@@ -444,8 +458,8 @@ function buildDecisionBadges(
     badges.push({ label: `${missingDataItems.length} open`, tone: "warning" });
   }
 
-  if (column === "matching" && matchConfidence) {
-    badges.push({ label: matchConfidence.label, tone: matchConfidence.tone });
+  if (matchAdvisory) {
+    badges.push({ label: matchAdvisory.label, tone: matchAdvisory.tone });
   }
 
   if (providerStatus.label && providerStatus.tone) {
@@ -461,7 +475,7 @@ function buildDecisionBadges(
 
 function buildSignals(
   spaCase: SpaCase,
-  item: Pick<WorkflowCaseView, "id" | "blockReason" | "matchConfidenceLabel" | "providerStatusLabel" | "missingDataItems" | "boardColumn" | "daysInCurrentPhase">,
+  item: Pick<WorkflowCaseView, "id" | "blockReason" | "matchConfidenceLabel" | "matchAdvisoryHint" | "providerStatusLabel" | "missingDataItems" | "boardColumn" | "daysInCurrentPhase">,
 ): CasusSignal[] {
   const signals: CasusSignal[] = [];
 
@@ -478,11 +492,11 @@ function buildSignals(
 
   if (item.boardColumn === "matching" && item.matchConfidenceLabel) {
     signals.push({
-      id: `${item.id}-match-confidence`,
+      id: `${item.id}-match-advisory`,
       type: "matching",
-      severity: item.matchConfidenceLabel.includes("laag") ? "critical" : item.matchConfidenceLabel.includes("middel") ? "warning" : "info",
+      severity: signalSeverityForAdvisoryLabel(item.matchConfidenceLabel),
       title: item.matchConfidenceLabel,
-      description: "Advies controleren en voorbereiden voor gemeentevalidatie.",
+      description: item.matchAdvisoryHint ?? "Advies controleren en voorbereiden voor gemeentevalidatie.",
       isResolved: false,
     });
   }
@@ -600,7 +614,6 @@ export function buildWorkflowCase(spaCase: SpaCase, providers: SpaProvider[] = [
   const summaryAvailable = Boolean(spaCase.systemInsight.trim());
   const boardColumn = resolveBoardColumnWithFallback(spaCase, missingDataItems);
   const label = boardColumnLabel(boardColumn);
-  const matchConfidence = boardColumn === "matching" ? buildMatchConfidence(regionalMatches.length, spaCase.urgency) : null;
   const providerStatus = resolveProviderStatusLabel(boardColumn, firstProvider?.name ?? null);
   const whyInThisStep = resolveWhyInThisStep(spaCase, boardColumn, missingDataItems, summaryAvailable, regionalMatches.length);
   const primaryAction = resolvePrimaryAction(boardColumn, summaryAvailable, regionalMatches.length, missingDataItems.length > 0);
@@ -610,6 +623,13 @@ export function buildWorkflowCase(spaCase: SpaCase, providers: SpaProvider[] = [
     : boardColumn === "casus"
       ? missingDataItems[0] ?? null
       : null;
+  const matchAdvisory = buildMatchingAdvisory(
+    boardColumn,
+    spaCase,
+    regionalMatches.length,
+    summaryAvailable,
+    isBlocked,
+  );
 
   const view: WorkflowCaseView = {
     id: spaCase.id,
@@ -657,10 +677,11 @@ export function buildWorkflowCase(spaCase: SpaCase, providers: SpaProvider[] = [
     primaryActionLabel: primaryAction.label,
     primaryActionEnabled: primaryAction.enabled,
     primaryActionReason: primaryAction.reason,
-    decisionBadges: buildDecisionBadges(spaCase, boardColumn, missingDataItems, summaryAvailable, matchConfidence, providerStatus),
+    decisionBadges: buildDecisionBadges(spaCase, boardColumn, missingDataItems, summaryAvailable, matchAdvisory, providerStatus),
     missingDataItems,
-    matchConfidenceLabel: matchConfidence ? `${matchConfidence.label} (${matchConfidence.score}%)` : null,
-    matchConfidenceScore: matchConfidence?.score ?? null,
+    matchConfidenceLabel: matchAdvisory?.label ?? null,
+    matchAdvisoryHint: matchAdvisory?.hint ?? null,
+    matchConfidenceScore: null,
     providerStatusLabel: providerStatus.label,
     providerStatusTone: providerStatus.tone,
     waitlistBucket: spaCase.waitlistBucket,

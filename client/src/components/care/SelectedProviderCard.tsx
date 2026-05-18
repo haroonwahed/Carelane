@@ -9,6 +9,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { CarePanel } from "./CareDesignPrimitives";
+import { advisoryQualitativeFromNumericScore } from "../../lib/matchingAdvisory";
 
 interface Provider {
   id: string;
@@ -24,8 +25,10 @@ interface Provider {
 
 interface SelectedProviderCardProps {
   provider: Provider;
-  /** Optional — only render when a real fitScore/matchScore is available. */
+  /** @deprecated Use `advisoryLabel` — numeric scores are not shown as percentages. */
   matchScore?: number | null;
+  /** Operational advisory label for the selected provider. */
+  advisoryLabel?: string | null;
   /** Optional — only render when real, evidence-backed reasons exist. */
   reasons?: Array<{ text: string; positive: boolean }>;
   tradeOffs?: {
@@ -37,17 +40,22 @@ interface SelectedProviderCardProps {
 export function SelectedProviderCard({
   provider,
   matchScore,
+  advisoryLabel: advisoryLabelProp,
   reasons,
   tradeOffs
 }: SelectedProviderCardProps) {
-  const hasMatchScore = typeof matchScore === "number" && Number.isFinite(matchScore);
+  const advisoryLabel =
+    advisoryLabelProp ??
+    (typeof matchScore === "number" && Number.isFinite(matchScore)
+      ? advisoryQualitativeFromNumericScore(matchScore)
+      : null);
+  const displayAdvisory = advisoryLabel?.trim() || null;
   const hasReasons = Array.isArray(reasons) && reasons.length > 0;
   const hasCapacity = provider.availableSpots > 0;
   const fastResponse = provider.responseTime <= 6;
 
   return (
     <CarePanel className="border border-border/70 bg-card/90 p-4 ring-1 ring-primary/20">
-      {/* Selected Badge */}
       <div className="flex items-center gap-2 mb-4">
         <div className="w-3 h-3 rounded-full bg-primary" />
         <span className="text-sm font-semibold text-primary uppercase tracking-wide">
@@ -55,7 +63,6 @@ export function SelectedProviderCard({
         </span>
       </div>
 
-      {/* Header */}
       <div className="flex items-start justify-between mb-5">
         <div className="flex-1">
           <h2 className="text-2xl font-bold text-foreground mb-2">
@@ -64,21 +71,16 @@ export function SelectedProviderCard({
           <p className="text-sm text-muted-foreground">{provider.type}</p>
         </div>
         
-        {/* Match Score Badge — only render when a real score exists */}
-        {hasMatchScore ? (
-          <div className="text-center">
-            <div className="px-4 py-2 rounded-xl border border-emerald-500/40 bg-emerald-500/15">
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-emerald-300">{matchScore}</span>
-                <span className="text-sm text-muted-foreground">%</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Matchscore</p>
+        {displayAdvisory ? (
+          <div className="max-w-[9rem] text-center shrink-0">
+            <div className="rounded-xl border border-border/60 bg-muted/20 px-3 py-2">
+              <span className="text-[12px] font-semibold leading-snug text-foreground">{displayAdvisory}</span>
+              <p className="text-[10px] text-muted-foreground mt-1">Matchadvies</p>
             </div>
           </div>
         ) : null}
       </div>
 
-      {/* Key Metrics */}
       <div className="grid grid-cols-4 gap-4 mb-5">
         <div>
           <div className="flex items-center gap-1.5 mb-1">
@@ -121,7 +123,6 @@ export function SelectedProviderCard({
         </div>
       </div>
 
-      {/* Specializations */}
       <div className="mb-5">
         <p className="text-xs text-muted-foreground mb-2">Specialisaties</p>
         <div className="flex flex-wrap gap-2">
@@ -136,7 +137,6 @@ export function SelectedProviderCard({
         </div>
       </div>
 
-      {/* Why This Provider — only render when evidence-backed reasons exist */}
       {hasReasons ? (
         <div className="mb-5 p-4 rounded-lg border border-cyan-500/40 bg-cyan-500/15">
           <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -160,7 +160,6 @@ export function SelectedProviderCard({
         </div>
       ) : null}
 
-      {/* Trade-offs */}
       {tradeOffs && (
         <div className="p-4 rounded-lg bg-muted/30 border border-muted-foreground/20">
           <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">

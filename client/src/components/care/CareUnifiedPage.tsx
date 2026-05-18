@@ -5,6 +5,7 @@ import { Input } from "../ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "../ui/utils";
 import { tokens } from "../../design/tokens";
+import { CARE_RHYTHM } from "../../lib/operationalRhythm";
 import {
   decisionUiPhaseBadgeLabel,
   decisionUiPhaseBadgeShellClass,
@@ -13,7 +14,7 @@ import {
 } from "../../lib/decisionPhaseUi";
 
 /** Vertical rhythm for unified care list pages (header → optional attention → filters → list). */
-export const CARE_UNIFIED_PAGE_STACK = "space-y-5";
+export const CARE_UNIFIED_PAGE_STACK = CARE_RHYTHM.pageStack;
 
 /**
  * Shared list-page shell: header, optional attention strip, optional filters, then main content
@@ -33,11 +34,11 @@ export function CarePageTemplate({
   className?: string;
 }) {
   return (
-    <div className={cn(CARE_UNIFIED_PAGE_STACK, className)}>
-      {header}
-      {attention}
-      {filters}
-      {children}
+    <div className={cn(CARE_RHYTHM.pageStack, className)}>
+      <div className={CARE_RHYTHM.zoneHeader}>{header}</div>
+      {attention ? <div className={CARE_RHYTHM.zoneAlert}>{attention}</div> : null}
+      {filters ? <div className={CARE_RHYTHM.zoneControl}>{filters}</div> : null}
+      <div className={CARE_RHYTHM.zoneMain}>{children}</div>
     </div>
   );
 }
@@ -217,7 +218,7 @@ export function CareUnifiedHeader({
   subtitleAriaLabel?: string;
 }) {
   return (
-    <section data-testid="care-unified-header" className="space-y-1.5 px-1 pb-3">
+    <section data-testid="care-unified-header" className={cn("space-y-1.5 px-1", CARE_RHYTHM.zoneHeader)}>
       {/* Row 1: title (+ optional info) and actions — row 2: status/metric pills always below title row */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
@@ -426,7 +427,10 @@ export function CareSearchFiltersBar({
   const secondaryFiltersId = useId();
 
   return (
-    <section data-testid="care-search-control-stack" className={cn("space-y-2 px-1", className)}>
+    <section
+      data-testid="care-search-control-stack"
+      className={cn(CARE_RHYTHM.searchStack, "px-1", className)}
+    >
       {tabs ? <div className="w-full min-w-0">{tabs}</div> : null}
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">

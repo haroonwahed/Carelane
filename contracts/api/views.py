@@ -84,6 +84,7 @@ from contracts.case_timeline import (
 )
 from contracts.navigation import SPA_DASHBOARD_URL
 from contracts.operational_failures import build_operational_failure_payload
+from contracts.provider_matching_service import MatchEngine
 from contracts.workflow_state_machine import (
     WorkflowAction,
     WorkflowRole,
@@ -93,6 +94,10 @@ from contracts.workflow_state_machine import (
     log_transition_event,
     normalize_provider_rejection_states,
     resolve_actor_role,
+)
+from contracts.workflow_summary_gate import (
+    ensure_workflow_summary_for_matching,
+    workflow_summary_complete,
 )
 
 logger = logging.getLogger(__name__)
@@ -157,9 +162,6 @@ def _derive_aanmelder_actor_profile_for_intake(*, actor_role: str, entry_route: 
         return CaseIntakeProcess.AanmelderActorProfile.GEMEENTE_AMBTELIJK
     return CaseIntakeProcess.AanmelderActorProfile.ONBEKEND
 
-MIN_SUMMARY_CONTEXT_LEN = 24
-
-
 def _active_organization(request):
     """Resolve org for API calls; prefers middleware-cached request.organization when set."""
     user = getattr(request, 'user', None)
@@ -179,28 +181,6 @@ def _active_organization(request):
             )
             return None
     return organization
-
-
-def _workflow_summary_complete(*, assessment: CaseAssessment | None, intake: CaseIntakeProcess) -> tuple[bool, str]:
-    """Pilot samenvatting gate vóór matching (structured summary + urgency)."""
-    if assessment is None:
-        return False, 'Casusbeoordeling ontbreekt.'
-    ws = assessment.workflow_summary or {}
-    context = (ws.get('context') or '').strip()
-    if len(context) < MIN_SUMMARY_CONTEXT_LEN:
-        return False, (
-            f'Samenvatting (context) moet minstens {MIN_SUMMARY_CONTEXT_LEN} tekens bevatten vóór matching.'
-        )
-    if not (intake.urgency or '').strip():
-        return False, 'Urgentie is verplicht op de casus.'
-    if 'risks' not in ws:
-        return False, 'Vul het veld risico\'s in (of vink aan: geen aanvullende risico\'s).'
-    risks = ws.get('risks')
-    if not isinstance(risks, list):
-        return False, 'Risico\'s moeten als lijst worden aangeleverd.'
-    if len(risks) == 0 and not ws.get('risks_none_ack'):
-        return False, 'Voeg risico\'s toe of bevestig expliciet dat er geen aanvullende risico\'s zijn.'
-    return True, ''
 
 
 def _draft_validation_placement(*, request, intake, provider, validation_context):
@@ -1049,7 +1029,7 @@ def matching_candidates_api(request, case_id):
         return JsonResponse({'error': 'Casus is gearchiveerd.'}, status=400)
 
     assessment = getattr(intake, 'case_assessment', None)
-    ok, err = _workflow_summary_complete(assessment=assessment, intake=intake)
+    ok, err = workflow_summary_complete(assessment=assessment, intake=intake)
     if not ok:
         return JsonResponse({'error': err, 'code': 'SUMMARY_INCOMPLETE'}, status=400)
 
@@ -1122,6 +1102,13 @@ def case_detail_string_fallback_api(request, case_ref):
     if str(case_ref).isdigit():
         return case_detail_api(request, case_id=int(case_ref))
     return JsonResponse({'error': 'Casus niet gevonden'}, status=404)
+
+
+def _persist_advisory_matching_results(*, case_record: CareCase, intake: CaseIntakeProcess, organization) -> None:
+    """Run advisory matching and persist ranked candidates for decision-engine read models."""
+    ctx = _build_match_context_from_intake(intake, organization)
+    MatchResultaat.objects.filter(casus=case_record).delete()
+    MatchEngine.run(ctx=ctx, casus=intake, max_results=20, persist=True)
 
 
 def _assessment_decision_payload(*, case_record, intake, assessment):
@@ -1257,19 +1244,38 @@ def assessment_decision_api(request, case_id):
         intake.zorgvorm_gewenst = zorgtype
         intake.preferred_care_form = zorgtype
 
+    transition_steps: list[tuple[str, str, str]] = []
     if decision == 'matching':
-        ok_sum, err_sum = _workflow_summary_complete(assessment=assessment, intake=intake)
+        ok_sum, err_sum = ensure_workflow_summary_for_matching(assessment=assessment, intake=intake)
         if not ok_sum:
             return JsonResponse({'ok': False, 'error': err_sum, 'code': 'SUMMARY_INCOMPLETE'}, status=400)
 
-        transition = evaluate_transition(
-            current_state=previous_state,
+        current_state = previous_state
+        if current_state == WorkflowState.DRAFT_CASE:
+            summary_step = evaluate_transition(
+                current_state=current_state,
+                target_state=WorkflowState.SUMMARY_READY,
+                actor_role=actor_role,
+                action=WorkflowAction.COMPLETE_SUMMARY,
+            )
+            if not summary_step.allowed:
+                return JsonResponse({'ok': False, 'error': summary_step.reason}, status=400)
+            transition_steps.append(
+                (current_state, WorkflowState.SUMMARY_READY, WorkflowAction.COMPLETE_SUMMARY),
+            )
+            current_state = WorkflowState.SUMMARY_READY
+
+        matching_step = evaluate_transition(
+            current_state=current_state,
             target_state=WorkflowState.MATCHING_READY,
             actor_role=actor_role,
             action=WorkflowAction.START_MATCHING,
         )
-        if not transition.allowed:
-            return JsonResponse({'ok': False, 'error': transition.reason}, status=400)
+        if not matching_step.allowed:
+            return JsonResponse({'ok': False, 'error': matching_step.reason}, status=400)
+        transition_steps.append(
+            (current_state, WorkflowState.MATCHING_READY, WorkflowAction.START_MATCHING),
+        )
 
         assessment.assessment_status = CaseAssessment.AssessmentStatus.APPROVED_FOR_MATCHING
         assessment.matching_ready = True
@@ -1321,19 +1327,53 @@ def assessment_decision_api(request, case_id):
     assessment.save()
 
     new_state = WorkflowState.MATCHING_READY if decision == 'matching' else WorkflowState.SUMMARY_READY
-    action = WorkflowAction.START_MATCHING if decision == 'matching' else WorkflowAction.COMPLETE_SUMMARY
     try:
-        log_transition_event(
-            intake=intake,
-            actor_user=request.user,
-            actor_role=actor_role,
-            old_state=previous_state,
-            new_state=new_state,
-            action=action,
-            source='assessment_decision_api',
-        )
+        if decision == 'matching' and transition_steps:
+            for old_state, target_state, action in transition_steps:
+                log_transition_event(
+                    intake=intake,
+                    actor_user=request.user,
+                    actor_role=actor_role,
+                    old_state=old_state,
+                    new_state=target_state,
+                    action=action,
+                    source='assessment_decision_api',
+                )
+        else:
+            action = WorkflowAction.START_MATCHING if decision == 'matching' else WorkflowAction.COMPLETE_SUMMARY
+            log_transition_event(
+                intake=intake,
+                actor_user=request.user,
+                actor_role=actor_role,
+                old_state=previous_state,
+                new_state=new_state,
+                action=action,
+                source='assessment_decision_api',
+            )
     except AuditLoggingError as exc:
         return JsonResponse({'ok': False, 'error': str(exc)}, status=503)
+
+    if decision == 'matching':
+        try:
+            _persist_advisory_matching_results(
+                case_record=case_record,
+                intake=intake,
+                organization=organization,
+            )
+        except Exception:
+            logger.exception(
+                "persist_matching_results_failed case_id=%s intake_id=%s",
+                case_record.pk,
+                intake.pk,
+            )
+            return JsonResponse(
+                {
+                    'ok': False,
+                    'error': 'Matching kon niet worden vastgelegd. Probeer opnieuw vanuit de matchingpagina.',
+                    'code': 'MATCHING_PERSIST_FAILED',
+                },
+                status=503,
+            )
 
     return JsonResponse({
         'ok': True,
@@ -1387,7 +1427,7 @@ def _matching_action_api_inner(request, case_id):
 
         actions_need_summary = {'prepare_waitlist_proposal', 'confirm_validation', 'send_to_provider', 'assign'}
         if action in actions_need_summary:
-            ok_s, err_s = _workflow_summary_complete(assessment=assessment, intake=intake)
+            ok_s, err_s = workflow_summary_complete(assessment=assessment, intake=intake)
             if not ok_s:
                 return JsonResponse({'ok': False, 'error': err_s, 'code': 'SUMMARY_INCOMPLETE'}, status=400)
 

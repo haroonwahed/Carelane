@@ -432,12 +432,15 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
 
   const handleAppNavigate = useCallback(
     (path: string) => {
-      const pathname = (path.split("?")[0] ?? path).split("#")[0] ?? "/";
-      const { page, caseId } = getInitialNavigation(pathname);
+      const fullPath = path.startsWith("/") ? path : `/${path}`;
+      const url = new URL(fullPath, window.location.origin);
+      const pathname = url.pathname;
+      const caseFromPath = matchCareCasesNumericDetailPath(pathname);
+      const { page } = getInitialNavigation(pathname);
       const normalized = normalizePageForRole(page, currentContext.type);
       setCurrentPage(normalized);
-      setSelectedCase(caseId);
-      window.history.pushState({}, "", path.startsWith("/") ? path : `/${path}`);
+      setSelectedCase(caseFromPath);
+      window.history.pushState({}, "", `${url.pathname}${url.search}${url.hash}`);
     },
     [currentContext.type],
   );
@@ -659,6 +662,7 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
                 caseId={selectedCase}
                 role={currentContext.type}
                 onBack={handleCloseCaseDetail}
+                onAppNavigate={handleAppNavigate}
               />
             ) : currentContext.type === "gemeente" || currentContext.type === "admin" ? (
               <>

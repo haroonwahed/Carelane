@@ -49,6 +49,7 @@ class ActorProfileDecisionEngineIntegrationTest(TestCase):
             placement=None,
             required_data_complete=True,
             has_summary=True,
+            has_matching_result=False,
             matching_ready=True,
             latest_match_confidence=0.8,
             provider_response_pending_sla_breached=False,

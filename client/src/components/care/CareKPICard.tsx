@@ -2,6 +2,10 @@ import { LucideIcon } from "lucide-react";
 import { cn } from "../ui/utils";
 import { CarePanel } from "./CareDesignPrimitives";
 
+/**
+ * @deprecated LAW 02 — KPI card grids only belong on command (Coördinatie / SystemAwarenessPage).
+ * Queue pages use CareMetricBadge + dominantAction instead.
+ */
 interface CareKPICardProps {
   title: string;
   value: string | number;

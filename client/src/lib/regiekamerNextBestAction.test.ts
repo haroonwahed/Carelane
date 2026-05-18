@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  REGIEKAMER_NBA_OPTIMIZATION_MIN_ACTIVE,
+  REGIEKAMER_NBA_COORDINATION_MIN_ACTIVE,
   REGIEKAMER_NBA_RISK_THRESHOLD,
   computeRegiekamerNextBestAction,
   formatRegiekamerDominantDescription,
@@ -103,21 +103,22 @@ describe("computeRegiekamerNextBestAction", () => {
     expect(r.primaryAction.actionKey).not.toBe("FOCUS_RISKS");
   });
 
-  it("chooses optimization when volume is high and signals are quiet", () => {
+  it("chooses coordination when volume is high and signals are quiet (no rapportages)", () => {
     const r = computeRegiekamerNextBestAction({
       totals: baseTotals(),
-      activeCases: REGIEKAMER_NBA_OPTIMIZATION_MIN_ACTIVE,
+      activeCases: REGIEKAMER_NBA_COORDINATION_MIN_ACTIVE,
       noMatchUrgentCount: 0,
     });
-    expect(r.primaryAction.actionKey).toBe("OPEN_REPORTS");
-    expect(r.panel.uiMode).toBe("optimization");
+    expect(r.primaryAction.actionKey).toBe("FOCUS_PIPELINE");
+    expect(r.primaryAction.label).toMatch(/knelpunt/i);
+    expect(r.panel.uiMode).toBe("coordination");
     expect(r.reasons).toEqual(["8 actieve aanvragen in doorstroom"]);
   });
 
   it("defaults to stable when volume is low and signals are quiet", () => {
     const r = computeRegiekamerNextBestAction({
       totals: baseTotals(),
-      activeCases: REGIEKAMER_NBA_OPTIMIZATION_MIN_ACTIVE - 1,
+      activeCases: REGIEKAMER_NBA_COORDINATION_MIN_ACTIVE - 1,
       noMatchUrgentCount: 0,
     });
     expect(r.primaryAction.actionKey).toBe("REVIEW_STABLE");

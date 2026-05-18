@@ -1,0 +1,52 @@
+---
+description: Enforceable operational UX laws for CareOn consolidation phase. Apply to all care routes, layout, and matching.
+alwaysApply: true
+---
+
+# CareOn Operational UX Laws
+
+CareOn is an **operational coordination system under scarcity**, not a healthcare SaaS dashboard.
+
+## Archetypes (exactly one per route)
+
+| Archetype | Purpose | Examples |
+|-----------|---------|----------|
+| `command` | Triage, escalation, doorstroom telemetry | Coördinatie / Regiekamer |
+| `queue` | Werkvoorraad, throughput, row execution | Casussen, Acties, Signalen, Matching-wachtrij |
+| `workspace` | Single-casus judgment and progression | Casus detail, Matching casus, Plaatsing |
+| `network` | Institutional reference, capacity/dekking | Zorgaanbieders, Gemeenten, Regio's |
+| `exception` | Audit, export, access | Audittrail, Rapportages |
+
+Declare via `CarePageScaffold` `archetype=` or `data-care-page-archetype="workspace"` on workspace shells.
+
+**No page may combine command + queue + analytics + workspace behaviors.**
+
+## Laws
+
+**LAW 01** — Only `command` (Regiekamer) may contain telemetry strips (doorstroom board, phase counts strip, dominant metric band).
+
+**LAW 02** — Queue pages may not use `CareKPICard` or multi-metric stat grids in `kpiStrip`.
+
+**LAW 03** — Every page exposes exactly one dominant next-best-action (filled primary or `CareAlertCard` / `CasePrimaryActionPanel`).
+
+**LAW 04** — Matching explanations must cite engine output (`fit_samenvatting`, trade-offs, verification); no invented factor copy.
+
+**LAW 05** — No fabricated demo scores, distances, or ranking when API data is absent.
+
+**LAW 06** — Progress appears in one primary representation per page (timeline XOR doorstroom board on that surface).
+
+**LAW 07** — Purple (`primary`) reserved for progression, focus, and primary CTAs — not decorative count chips.
+
+**LAW 08** — Operational queues use `CareWorkRow` + `CareOperationalQueueHeader` (compact ~56px rows, inline right-aligned CTA). No full-width purple bars or hero-style case cards in queues.
+
+**LAW 09** — One archetype per route; enforced in `client/src/lib/pageArchetypes.ts`.
+
+**LAW 10** — No dashboard + queue + analytics on the same page (e.g. Rapportages stat grid + werklijst).
+
+## Trinity source of truth
+
+**Coördinatie → Casussen → Casus detail** define spacing, NBA rhythm, surfaces, and copy. Other routes inherit primitives (`CarePageScaffold`, `CareWorkListCard`, `CareAlertCard`, neutral `CareMetricBadge`).
+
+## Verification
+
+Run: `npm test -- operationalDesignLawsGuard`

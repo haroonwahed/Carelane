@@ -179,9 +179,10 @@ describe("CaseExecutionPage workspace", () => {
     expect(screen.getByRole("button", { name: "Casusacties" })).toBeInTheDocument();
     expect(await screen.findByText(/Bijgewerkt:/)).toBeInTheDocument();
     expect(await screen.findByText("Operationele keten")).toBeInTheDocument();
+    expect(screen.getByTestId("casus-flow-progress")).toBeInTheDocument();
     expect(screen.getByTestId("casus-hero-band")).toBeInTheDocument();
     const heroBand = screen.getByTestId("casus-hero-band");
-    expect(within(heroBand).getByRole("button", { name: /Start matching|Stuur naar aanbieder/i })).toBeInTheDocument();
+    expect(within(heroBand).getByRole("button", { name: /Vraag reactie aanbieder|Zoek zorgcapaciteit/i })).toBeInTheDocument();
     expect(screen.getAllByText("Casusacties").length).toBeGreaterThanOrEqual(1);
     expect(container.innerHTML).not.toContain("mx-auto max-w-[1440px]");
     expect(container.innerHTML).not.toContain(`#${"111827"}`);
@@ -208,7 +209,7 @@ describe("CaseExecutionPage workspace", () => {
     expect((await screen.findAllByText("Casusgegevens onvolledig")).length).toBeGreaterThan(0);
     expect(screen.getByText("Matching nog niet gestart.")).toBeInTheDocument();
     const heroBand = screen.getByTestId("casus-hero-band");
-    expect(within(heroBand).getByRole("button", { name: /Start matching|Controleer casusstatus/i })).toBeInTheDocument();
+    expect(within(heroBand).getByRole("button", { name: /Vul aanvraag aan|Controleer casusstatus/i })).toBeInTheDocument();
     expect(screen.queryByTestId("worklist")).not.toBeInTheDocument();
 
     expect(screen.queryByText("Casussen")).not.toBeInTheDocument();
@@ -217,6 +218,29 @@ describe("CaseExecutionPage workspace", () => {
     expect(screen.queryByText("SLA")).not.toBeInTheDocument();
     expect(screen.queryByText("Afwijzingen")).not.toBeInTheDocument();
     expect(screen.getByText("Plaatsing & uitstroom")).toBeInTheDocument();
+  });
+
+  it("maps workflow state to decision UI phase and surfaces NBA reason", async () => {
+    setupCase(makeDecisionEvaluation({
+      current_state: "MATCHING_READY",
+      phase: "matching",
+      next_best_action: {
+        action: "VALIDATE_MATCHING",
+        label: "Valideer matchadvies",
+        priority: "high",
+        reason: "Gemeentelijke validatie is vereist voordat aanbieders reageren.",
+      },
+    }));
+
+    render(<CaseExecutionPage caseId="C-100" onBack={vi.fn()} />);
+
+    expect(await screen.findByText("Matching & validatie")).toBeInTheDocument();
+    expect(screen.getByTestId("next-best-action-reason")).toHaveTextContent(
+      "Gemeentelijke validatie is vereist",
+    );
+    const stepper = screen.getByTestId("casus-flow-progress");
+    expect(within(stepper).getByText("Actief")).toBeInTheDocument();
+    expect(within(stepper).getAllByText(/Matching & validatie/i).length).toBeGreaterThan(0);
   });
 
   it("shows dominant blocked state and missing-summary guidance", async () => {
@@ -274,11 +298,12 @@ describe("CaseExecutionPage workspace", () => {
   });
 
   it("keeps primary action wired to existing action executor", async () => {
+    const onAppNavigate = vi.fn();
     setupCase(makeDecisionEvaluation());
-    render(<CaseExecutionPage caseId="C-100" onBack={vi.fn()} />);
+    render(<CaseExecutionPage caseId="C-100" onBack={vi.fn()} onAppNavigate={onAppNavigate} />);
 
     const heroBand = screen.getByTestId("casus-hero-band");
-    const primaryButtons = await within(heroBand).findAllByRole("button", { name: /Start matching|Stuur naar aanbieder/i });
+    const primaryButtons = await within(heroBand).findAllByRole("button", { name: /Vraag reactie aanbieder|Zoek zorgcapaciteit/i });
     const clickable = primaryButtons.filter((button) => !button.hasAttribute("disabled"));
     expect(clickable.length).toBeGreaterThan(0);
     fireEvent.click(clickable[0]);
@@ -287,7 +312,7 @@ describe("CaseExecutionPage workspace", () => {
       expect(mockExecuteCaseAction).toHaveBeenCalledWith(
         "C-100",
         "SEND_TO_PROVIDER",
-        expect.objectContaining({ role: "gemeente" }),
+        expect.objectContaining({ role: "gemeente", onNavigate: onAppNavigate }),
       );
     });
   });

@@ -15,7 +15,7 @@ import {
   Info,
   MapPin,
   Shield,
-  Sparkles,
+  Scale,
   TrendingUp,
   UserRound,
   Users,
@@ -48,6 +48,7 @@ import { ProviderMapSurface } from "./ProviderMapSurface";
 import { tokens } from "../../design/tokens";
 import { cn } from "../ui/utils";
 import { CarePanel, EmptyState, ErrorState, LoadingState } from "./CareDesignPrimitives";
+import { advisoryFromEngineConfidenceLabel } from "../../lib/matchingAdvisory";
 
 const MATCH_BRAND = tokens.colors.casussenAccent;
 const MATCH_SURFACE = tokens.colors.casussenSurfaceRaised;
@@ -69,15 +70,6 @@ function formatClientReference(caseId: string): string {
   return "CLI-ONBEKEND";
 }
 
-function confidenceLabelNl(label: string): string {
-  const l = (label || "").toLowerCase();
-  if (l === "hoog") return "Hoog vertrouwen";
-  if (l === "middel") return "Gemiddeld vertrouwen";
-  if (l === "laag") return "Voorzichtig vertrouwen";
-  if (l === "onzeker") return "Onzeker vertrouwen";
-  return "Vertrouwen op basis van beschikbare gegevens";
-}
-
 function maskParticipantIdentity(name: string): string {
   const parts = name
     .trim()
@@ -94,31 +86,25 @@ function maskParticipantIdentity(name: string): string {
     .join(" ");
 }
 
-function MatchingScoreRing({ percent, label }: { percent: number; label: string }) {
-  const r = 40;
-  const c = 2 * Math.PI * r;
-  const dash = (percent / 100) * c;
+function MatchingAdvisoryBadge({ label, hint }: { label: string; hint?: string }) {
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="relative flex size-[5.5rem] items-center justify-center">
-        <svg viewBox="0 0 100 100" className="absolute size-full -rotate-90 text-muted-foreground/25" aria-hidden>
-          <circle cx="50" cy="50" fill="none" r={r} stroke="currentColor" strokeWidth="8" />
-          <circle
-            cx="50"
-            cy="50"
-            fill="none"
-            r={r}
-            stroke={MATCH_BRAND}
-            strokeWidth="8"
-            strokeDasharray={`${dash} ${c}`}
-            strokeLinecap="round"
-          />
-        </svg>
-        <span className="relative text-lg font-bold tabular-nums text-foreground">{percent}%</span>
-      </div>
-      <span className="max-w-[7rem] text-center text-[11px] font-medium text-muted-foreground">{label}</span>
+    <div className="flex max-w-[7.5rem] flex-col items-center gap-1 text-center">
+      <span className="inline-flex min-h-[4.5rem] items-center justify-center rounded-xl border border-border/60 bg-muted/20 px-2 py-2 text-[12px] font-semibold leading-snug text-foreground">
+        {label}
+      </span>
+      {hint ? (
+        <span className="line-clamp-2 text-[10px] leading-snug text-muted-foreground">{hint}</span>
+      ) : null}
     </div>
   );
+}
+
+function formatEngineFactorScore(raw: number): string {
+  if (!Number.isFinite(raw) || raw <= 0) {
+    return "—";
+  }
+  const normalized = raw <= 1 ? Math.round(raw * 100) : Math.round(raw);
+  return `${normalized} (factor)`;
 }
 
 interface MatchingPageWithMapProps {
@@ -195,42 +181,13 @@ export function MatchingPageWithMap({
     );
   }, [caseData, legacyProviders]);
 
-  const topMatches = regionalPool.slice(0, 3);
   const overflowProviders = regionalPool.slice(3);
-
-  const getMatchScore = (index: number): number => {
-    if (index === 0) return 94;
-    if (index === 1) return 89;
-    return 78;
-  };
-
-  const matchTierLabel = (score: number) => {
-    if (score >= 90) return "Zeer goede match";
-    if (score >= 80) return "Goede match";
-    return "Redelijke match";
-  };
-
-  const getDistance = (index: number): number => {
-    if (index === 0) return 2.3;
-    if (index === 1) return 4.8;
-    return 8.1;
-  };
-
-  const scoreBreakdownParts = (score: number) => {
-    const specialization = Math.round((score * 30) / 82);
-    const region = Math.round((score * 20) / 82);
-    const capacity = Math.round((score * 15) / 82);
-    const complexity = Math.max(0, score - specialization - region - capacity);
-    return { specialization, region, capacity, complexity };
-  };
 
   const rankedMatches = useMemo(() => {
     if (liveApiRanked && liveApiRanked.length > 0) {
       return liveApiRanked.map(({ legacy: provider, api }, index) => {
-        const raw = Number(api.totaalscore) || 0;
-        const score = raw > 0 && raw <= 1 ? Math.round(raw * 100) : Math.max(0, Math.min(100, Math.round(raw)));
-        const distance = getDistance(index);
-        const breakdown = scoreBreakdownParts(score);
+        const advisory = advisoryFromEngineConfidenceLabel(api.confidence_label || "");
+        const distance: number | null = null;
         const tradeFromApi = (api.trade_offs ?? []).map(t => String(t)).filter(Boolean);
         const strongParts = [api.fit_samenvatting, api.verificatie_advies].map(s => (s || "").trim()).filter(Boolean);
         const strongPoints =
@@ -253,16 +210,21 @@ export function MatchingPageWithMap({
         return {
           provider,
           index,
-          score,
           distance,
           strongPoints,
           tradeOffs,
           alternativeReasons: [] as string[],
-          confidenceLabel: confidenceLabelNl(api.confidence_label),
-          breakdown,
+          advisoryLabel: advisory.label,
+          advisoryHint: advisory.hint,
+          engineFactors: {
+            specialization: api.score_inhoudelijke_fit,
+            region: api.score_regio_contract_fit,
+            capacity: api.score_capaciteit_wachttijd_fit,
+            complexity: api.score_complexiteit_veiligheid_fit,
+          },
           focusChecks: [
             { label: "Regio", value: provider.region },
-            { label: "Score", value: `${score}%` },
+            { label: "Advies", value: advisory.label },
           ],
           warnings,
           whyMatch,
@@ -271,106 +233,35 @@ export function MatchingPageWithMap({
         };
       });
     }
-    return topMatches.map((provider, index) => {
-      const score = getMatchScore(index);
-      const distance = getDistance(index);
-      const breakdown = scoreBreakdownParts(score);
+    return [];
+  }, [liveApiRanked, caseData?.lastActivity]);
 
-      const strongPoints =
-        index === 0
-          ? [
-              "Sterke inhoudelijke fit met de zorgvraag",
-              "Hoge succeskans op basis van vergelijkbare trajecten",
-              "Snelle operationele opstart",
-            ]
-          : index === 1
-            ? ["Meer vrije plekken op korte termijn", "Goede ervaring met complexe casussen"]
-            : ["Hoge kwaliteitsscore", "Sterke specialistische expertise"];
+  const overflowList = useMemo(() => {
+    if (!apiMatches.length || apiMatches.length <= 3) return [];
+    return apiMatches.slice(3).map((m) => {
+      const raw = Number(m.totaalscore) || 0;
+      const score = raw > 0 && raw <= 1 ? Math.round(raw * 100) : Math.max(0, Math.min(100, Math.round(raw)));
+      const nm = (m.aanbiederName || "").trim();
+      const spa = providers.find((p) => p.name.trim().toLowerCase() === nm.toLowerCase());
+      if (!spa) return null;
+      const advisory = advisoryFromEngineConfidenceLabel(m.confidence_label || "");
+      return { provider: toLegacyProvider(spa), advisoryLabel: advisory.label };
+    }).filter((row): row is { provider: ReturnType<typeof toLegacyProvider>; advisoryLabel: string } => row != null);
+  }, [apiMatches, providers]);
 
-      const tradeOffs =
-        index === 0
-          ? ["Minder buffer bij plotselinge capaciteitsdruk", "Hogere kans op piekbelasting"]
-          : index === 1
-            ? ["Lagere inhoudelijke fit dan de topkeuze", "Langere reactietijd"]
-            : ["Afstand buiten voorkeursradius", "Lagere directe beschikbaarheid"];
-
-      const alternativeReasons =
-        index === 1
-          ? ["Iets zwakkere specialisatie-fit", "Langere reactietijd dan aanbevolen aanbieder"]
-          : index === 2
-            ? ["Minder directe beschikbaarheid", "Grotere afstand dan voorkeur"]
-            : [];
-
-      const focusChecks =
-        index === 0
-          ? [
-              { label: "Specialisatie", value: "Jeugdzorg complex" },
-              { label: "Regio", value: provider.region },
-              { label: "Historisch succes", value: "Hoog" },
-            ]
-          : index === 1
-            ? [
-                { label: "Capaciteit", value: "Beschikbaar" },
-                { label: "Regio", value: "Randgebied" },
-              ]
-            : [
-                { label: "Regio", value: provider.region },
-                { label: "Score", value: `${score}%` },
-              ];
-
-      const capacityUpdateLabel = caseData?.lastActivity?.trim() || "recent onbekend";
-      const warnings =
-        index === 0
-          ? [`Capaciteit onzeker (laatste activiteit casus: ${capacityUpdateLabel})`]
-          : index === 1
-            ? ["Minder ervaring met complexe casussen"]
-            : ["Lage capaciteit", "Onzekere wachttijd"];
-
-      const whyMatch =
-        index === 0
-          ? "Sterke inhoudelijke fit, maar risico op vertraging"
-          : index === 1
-            ? "Sneller beschikbaar, maar lagere inhoudelijke fit"
-            : "Geen betere alternatieven beschikbaar";
-
-      const tier = index === 0 ? "best" : index === 1 ? "balanced" : "risk";
-
-      return {
-        provider,
-        index,
-        score,
-        distance,
-        strongPoints,
-        tradeOffs,
-        alternativeReasons,
-        confidenceLabel: index === 0 ? "Hoog vertrouwen" : index === 1 ? "Gemiddeld vertrouwen" : "Voorzichtig vertrouwen",
-        breakdown,
-        focusChecks,
-        warnings,
-        whyMatch,
-        tier,
-        whyShownThird: index === 2 ? "Geen betere alternatieven beschikbaar" : null,
-      };
-    });
-  }, [liveApiRanked, topMatches, caseData?.lastActivity]);
-
-  const overflowList = useMemo(
-    () =>
-      overflowProviders.map((provider, i) => ({
-        provider,
-        score: Math.max(52, 66 - i * 3),
-      })),
-    [overflowProviders],
-  );
-
-  const allProvidersTable = useMemo(
-    () =>
-      regionalPool.map((provider, i) => ({
-        provider,
-        score: Math.max(52, 82 - i * 5),
-      })),
-    [regionalPool],
-  );
+  const allProvidersTable = useMemo(() => {
+    const rows: { provider: ReturnType<typeof toLegacyProvider>; score: number }[] = [];
+    for (const m of apiMatches) {
+      const nm = (m.aanbiederName || "").trim();
+      if (!nm) continue;
+      const spa = providers.find((p) => p.name.trim().toLowerCase() === nm.toLowerCase());
+      if (!spa) continue;
+      const raw = Number(m.totaalscore) || 0;
+      const score = raw > 0 && raw <= 1 ? Math.round(raw * 100) : Math.max(0, Math.min(100, Math.round(raw)));
+      rows.push({ provider: toLegacyProvider(spa), score });
+    }
+    return rows;
+  }, [apiMatches, providers]);
 
   type RankedMatchRow = (typeof rankedMatches)[number];
   const [selectionConfirmMatch, setSelectionConfirmMatch] = useState<RankedMatchRow | null>(null);
@@ -459,7 +350,10 @@ export function MatchingPageWithMap({
       await apiClient.post<Record<string, unknown>>(`/care/api/cases/${caseId}/matching/action/`, {
         action: "prepare_waitlist_proposal",
         provider_id: providerId,
-        match_score: target.score,
+        match_score: apiMatches.find((m) => {
+          const nm = (m.aanbiederName || "").trim().toLowerCase();
+          return nm === target.provider.name.trim().toLowerCase();
+        })?.totaalscore,
       });
       setSelectedProviderId(target.provider.id);
       setWaitlistModalOpen(false);
@@ -526,9 +420,13 @@ export function MatchingPageWithMap({
       if (Number.isNaN(pid)) {
         throw new Error("Ongeldige aanbieder-id.");
       }
+      const apiRow = apiMatches.find((m) => {
+        const nm = (m.aanbiederName || "").trim().toLowerCase();
+        return nm === match.provider.name.trim().toLowerCase();
+      });
       const validation_context = {
-        totaalscore: match.score,
-        confidenceLabel: match.confidenceLabel,
+        totaalscore: apiRow?.totaalscore,
+        confidenceLabel: match.advisoryLabel,
         tradeOffs: match.tradeOffs,
         warnings: match.warnings,
         whyMatch: match.whyMatch,
@@ -551,22 +449,27 @@ export function MatchingPageWithMap({
     }
   };
 
-  const resolveRankedMatchRow = (providerId: string, fallbackScore: number): RankedMatchRow | null => {
+  const resolveRankedMatchRow = (providerId: string): RankedMatchRow | null => {
     const existing = rankedMatches.find((m) => m.provider.id === providerId);
     if (existing) return existing;
     const provider = legacyProviders.find((p) => String(p.id) === String(providerId));
     if (!provider) return null;
-    const breakdown = scoreBreakdownParts(fallbackScore);
+    const advisory = advisoryFromEngineConfidenceLabel("");
     return {
       provider,
       index: Math.max(0, allProvidersTable.findIndex((r) => r.provider.id === providerId)),
-      score: fallbackScore,
-      distance: 5,
+      distance: null,
       strongPoints: ["Beschikbaar in het regionale netwerk"],
       tradeOffs: ["Verificatie tijdens gemeente-validatie"],
       alternativeReasons: [],
-      confidenceLabel: "Te verifiëren",
-      breakdown,
+      advisoryLabel: advisory.label,
+      advisoryHint: advisory.hint,
+      engineFactors: {
+        specialization: 0,
+        region: 0,
+        capacity: 0,
+        complexity: 0,
+      },
       focusChecks: [
         { label: "Regio", value: provider.region },
         { label: "Type", value: provider.type },
@@ -583,7 +486,7 @@ export function MatchingPageWithMap({
   };
 
   return (
-    <div className="flex min-h-screen flex-col text-foreground" style={{ backgroundColor: MATCH_BG }}>
+    <div data-care-page-archetype="workspace" className="flex min-h-screen flex-col text-foreground" style={{ backgroundColor: MATCH_BG }}>
       <header className="border-b border-border/60 px-4 py-5 md:px-8" style={{ backgroundColor: MATCH_BG }}>
         <div className="mx-auto flex max-w-[1680px] flex-col gap-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -660,7 +563,7 @@ export function MatchingPageWithMap({
               {(
                 [
                   { Icon: CheckCircle2, label: "Casus", sub: "Voltooid", state: "done" as const },
-                  { Icon: Sparkles, label: "Matching", sub: "Huidige fase", state: "current" as const },
+                  { Icon: Scale, label: "Matching", sub: "Huidige fase", state: "current" as const },
                   { Icon: Shield, label: "Validatie", sub: "Wacht op gemeente", state: "pending" as const },
                   { Icon: UserRound, label: "Aanbieder", sub: "—", state: "idle" as const },
                   { Icon: Home, label: "Plaatsing", sub: "—", state: "idle" as const },
@@ -783,7 +686,7 @@ export function MatchingPageWithMap({
               <div className="hidden gap-4 border-b border-border/60 pb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid lg:grid-cols-[2.25rem_minmax(0,1fr)_7.5rem_minmax(0,1fr)_11rem] lg:items-end lg:px-2">
                 <span className="sr-only">Rang</span>
                 <span>Aanbieder</span>
-                <span className="text-center">Match score</span>
+                <span className="text-center">Advies</span>
                 <span>Reden van match</span>
                 <span className="text-right">Actie</span>
               </div>
@@ -829,7 +732,7 @@ export function MatchingPageWithMap({
                                 <div className="min-w-0 flex-1 space-y-1.5">
                                   <h3 className="truncate text-[15px] font-semibold leading-tight text-foreground">{item.provider.name}</h3>
                                   <p className="text-[12px] text-muted-foreground">
-                                    {item.provider.region} · {item.distance.toFixed(1)} km
+                                    {item.provider.region}{item.distance != null ? ` · ${item.distance.toFixed(1)} km` : ""}
                                   </p>
                                   <div className="flex flex-wrap gap-1.5">
                                     {(item.provider.specializations ?? []).slice(0, 3).map((tag) => (
@@ -849,7 +752,7 @@ export function MatchingPageWithMap({
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <div>
-                                    <MatchingScoreRing percent={item.score} label={matchTierLabel(item.score)} />
+                                    <MatchingAdvisoryBadge label={item.advisoryLabel} hint={item.advisoryHint} />
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent
@@ -857,13 +760,14 @@ export function MatchingPageWithMap({
                                   className="border border-border bg-popover px-3 py-2 text-xs text-popover-foreground"
                                   style={{ maxWidth: tokens.layout.tooltipMaxWidth }}
                                 >
-                                  <p className="font-semibold text-foreground">{item.score}% opgebouwd uit</p>
+                                  <p className="font-semibold text-foreground">Factorweging (keten-engine)</p>
                                   <ul className="mt-2 space-y-1">
-                                    <li>Specialisatie: {item.breakdown.specialization}%</li>
-                                    <li>Regio: {item.breakdown.region}%</li>
-                                    <li>Capaciteit: {item.breakdown.capacity}%</li>
-                                    <li>Complexiteit match: {item.breakdown.complexity}%</li>
+                                    <li>Inhoudelijke fit: {formatEngineFactorScore(item.engineFactors.specialization)}</li>
+                                    <li>Regio/contract: {formatEngineFactorScore(item.engineFactors.region)}</li>
+                                    <li>Capaciteit: {formatEngineFactorScore(item.engineFactors.capacity)}</li>
+                                    <li>Complexiteit: {formatEngineFactorScore(item.engineFactors.complexity)}</li>
                                   </ul>
+                                  <p className="mt-2 text-muted-foreground">Geen automatische toewijzing — gemeente beslist.</p>
                                 </TooltipContent>
                               </Tooltip>
                             </div>
@@ -923,13 +827,13 @@ export function MatchingPageWithMap({
                       );
                     })
                   : allProvidersTable.map((row, idx) => {
-                      const resolved = resolveRankedMatchRow(row.provider.id, row.score);
+                      const resolved = resolveRankedMatchRow(row.provider.id);
                       const isSelected = selectedProviderId === row.provider.id;
                       const rank = idx + 1;
                       const bullets =
                         resolved?.strongPoints?.length && resolved.strongPoints.length > 0
                           ? resolved.strongPoints
-                          : [`${row.provider.region} · type ${row.provider.type}`, matchTierLabel(row.score)];
+                          : [`${row.provider.region} · type ${row.provider.type}`, resolved?.advisoryLabel ?? "Beoordeling nodig"];
                       return (
                         <article
                           key={`all-${row.provider.id}`}
@@ -975,7 +879,7 @@ export function MatchingPageWithMap({
                             </div>
 
                             <div className="flex justify-center">
-                              <MatchingScoreRing percent={row.score} label={matchTierLabel(row.score)} />
+                              <MatchingAdvisoryBadge label={advisoryFromEngineConfidenceLabel(apiMatches.find(m => (m.aanbiederName||"").trim().toLowerCase() === row.provider.name.trim().toLowerCase())?.confidence_label || "").label} />
                             </div>
 
                             <ul className="space-y-1.5 text-[13px] text-muted-foreground">
@@ -1040,7 +944,7 @@ export function MatchingPageWithMap({
                           >
                             {row.provider.name}
                           </button>
-                          <span className="tabular-nums text-muted-foreground">{row.score}%</span>
+                          <span className="text-muted-foreground">{row.advisoryLabel}</span>
                         </li>
                       ))}
                     </ul>
@@ -1118,7 +1022,7 @@ export function MatchingPageWithMap({
             <div className="mt-4 space-y-3">
               {(
                 [
-                  { Icon: Sparkles, text: "Sterke specialisatie-fit met het zorgprofiel" },
+                  { Icon: Scale, text: "Sterke specialisatie-fit met het zorgprofiel" },
                   { Icon: Clock, text: "Relatief korte inschatting van wachttijd" },
                   { Icon: MapPin, text: "Dichtbij de woonplaats van de jeugdige" },
                   { Icon: TrendingUp, text: "Goede eerdere uitkomsten in vergelijkbare trajecten" },
@@ -1279,8 +1183,8 @@ export function MatchingPageWithMap({
                     <span className="truncate text-right font-medium text-foreground" style={{ maxWidth: tokens.layout.rowLabelMaxWidth }}>{waitlistTargetMatch.provider.name}</span>
                   </div>
                   <div className="flex justify-between gap-4 border-b border-border/60 py-2 last:border-b-0">
-                    <span className="text-muted-foreground">Matchscore</span>
-                    <span className="font-medium text-foreground">{waitlistTargetMatch.score}%</span>
+                    <span className="text-muted-foreground">Matchadvies</span>
+                    <span className="font-medium text-foreground">{waitlistTargetMatch.advisoryLabel}</span>
                   </div>
                   <div className="flex justify-between gap-4 border-b border-border/60 py-2 last:border-b-0">
                     <span className="text-muted-foreground">Afstand</span>

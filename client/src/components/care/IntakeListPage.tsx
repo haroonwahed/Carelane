@@ -14,9 +14,12 @@ import {
   CareOperationalQueueHeader,
   CarePageScaffold,
   CarePrimaryList,
+  CareSectionHeader,
+  CareWorkspaceSection,
   CareSearchFiltersBar,
   CareWorkListCard,
   CareWorkRow,
+  CARE_RHYTHM,
   EmptyState,
   ErrorState,
   LoadingState,
@@ -98,10 +101,13 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
 
   const summary = requestBadge(view);
   const visibleCases = view === "requests" ? pendingRequests : intakeCases;
-  const avgWaitDays =
-    visibleCases.length > 0
-      ? Math.round(visibleCases.reduce((total, caseItem) => total + caseItem.wachttijd, 0) / visibleCases.length)
-      : 0;
+  const attentionMessage =
+    feedback ??
+    (pendingRequests.length > 0
+      ? pendingRequests.length === 1
+        ? "1 open aanvraag — beoordeling nodig"
+        : `${pendingRequests.length} open aanvragen — beoordeling nodig`
+      : "Geen open aanvragen");
 
   const handleDecision = async (caseId: string, status: "ACCEPTED" | "REJECTED") => {
     if (submittingCaseId) {
@@ -151,13 +157,7 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
           layout="compact"
           tone={pendingRequests.length > 0 ? "warning" : "info"}
           icon={<Send size={16} />}
-          message={
-            pendingRequests.length > 0
-              ? pendingRequests.length === 1
-                ? "1 open aanvraag — beoordeling nodig"
-                : `${pendingRequests.length} open aanvragen — beoordeling nodig`
-              : "Geen open aanvragen"
-          }
+          message={attentionMessage}
           action={
             visibleCases.length > 0 ? (
               <CareQueueInlineAction onClick={() => onCaseClick(visibleCases[0].id)}>
@@ -167,131 +167,149 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
           }
         />
       }
-      filters={
-        <CareSearchFiltersBar
-          searchValue={searchQuery}
-          onSearchChange={setSearchQuery}
-          searchPlaceholder="Zoek op casus, regio of zorgtype"
-        />
+      actions={
+        <Button variant="outline" onClick={() => void refetch()}>
+          Ververs
+        </Button>
       }
     >
-      {feedback && (
-        <div className="rounded-2xl border border-border bg-card/70 px-4 py-3 text-sm text-foreground">
-          {feedback}
-        </div>
-      )}
+      <CareWorkspaceSection
+        testId="intake-workspace"
+        aria-labelledby="intake-werkvoorraad-heading"
+        bodyBleedX
+        header={
+          <CareSectionHeader
+            className="lg:flex-col lg:items-stretch"
+            title={<span id="intake-werkvoorraad-heading">Werkvoorraad</span>}
+            meta={
+              <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
+                <span className="inline-flex w-fit items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
+                  {visibleCases.length} casussen
+                </span>
+                <CareSearchFiltersBar
+                  variant="workspace"
+                  className="px-0"
+                  searchValue={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Zoek op casus, regio of zorgtype"
+                />
+              </div>
+            }
+          />
+        }
+      >
+        {loading && <LoadingState title="Laden…" copy="Intake-overzicht wordt opgebouwd." />}
 
-      {loading && <LoadingState title="Laden…" copy="Intake-overzicht wordt opgebouwd." />}
+        {!loading && error && (
+          <ErrorState
+            title="Fout bij laden"
+            copy={error}
+            action={<Button variant="outline" onClick={() => void refetch()}>Opnieuw</Button>}
+          />
+        )}
 
-      {!loading && error && (
-        <ErrorState
-          title="Fout bij laden"
-          copy={error}
-          action={<Button variant="outline" onClick={() => void refetch()}>Opnieuw</Button>}
-        />
-      )}
+        {!loading && !error && visibleCases.length === 0 && (
+          <EmptyState
+            title={view === "requests" ? "Geen open verzoeken" : "Geen casussen in dit overzicht"}
+            copy={view === "requests" ? "Pas de zoekopdracht of kom later terug." : "Geen plaatsingen of intakes die aan dit filter voldoen."}
+          />
+        )}
 
-      {!loading && !error && visibleCases.length === 0 && (
-        <EmptyState
-          title={view === "requests" ? "Geen open verzoeken" : "Geen casussen in dit overzicht"}
-          copy={view === "requests" ? "Pas de zoekopdracht of kom later terug." : "Geen plaatsingen of intakes die aan dit filter voldoen."}
-        />
-      )}
+        {!loading && !error && visibleCases.length > 0 && (
+          <CareWorkListCard
+            testId="intake-worklist"
+            header={
+              <CareOperationalQueueHeader
+                labels={["Urgentie", "Casus", "Operationeel", "Status", "Wachttijd", "Volgende actie"]}
+              />
+            }
+          >
+            <div className="divide-y divide-border/40">
+              <CarePrimaryList>
+                {visibleCases.map((caseItem) => {
+                  const isPending = caseItem.status === "provider_beoordeling";
+                  const isBusy = submittingCaseId === caseItem.id;
+                  const canDecide = isPending && role === "zorgaanbieder";
 
-      {!loading && !error && visibleCases.length > 0 && (
-        <CareWorkListCard
-          testId="intake-worklist"
-          header={
-            <CareOperationalQueueHeader
-              labels={["Urgentie", "Casus", "Operationeel", "Status", "Wachttijd", "Volgende actie"]}
-            />
-          }
-        >
-          <div className="divide-y divide-border/40">
-            <CarePrimaryList>
-              {visibleCases.map((caseItem) => {
-                const isPending = caseItem.status === "provider_beoordeling";
-                const isBusy = submittingCaseId === caseItem.id;
-                const canDecide = isPending && role === "zorgaanbieder";
-
-                return (
-                  <CareWorkRow
-                    key={caseItem.id}
-                    density="operational"
-                    leading={
-                      <CareMetaChip
-                        className={cn(
-                          "h-6 px-2 text-[11px] font-semibold",
-                          caseItem.urgency === "critical"
-                            ? "border-red-500/35 bg-red-500/10 text-red-100"
-                            : caseItem.urgency === "warning"
-                              ? "border-amber-500/35 bg-amber-500/10 text-amber-100"
-                              : "border-border bg-muted/30 text-foreground",
-                        )}
-                      >
-                        {caseItem.urgency === "critical" ? "Kritiek" : caseItem.urgency === "warning" ? "Hoog" : "Normaal"}
-                      </CareMetaChip>
-                    }
-                    title={formatClientReference(caseItem.id)}
-                    context={
-                      <>
-                        <CareMetaChip className="font-mono text-[11px]">{caseItem.id}</CareMetaChip>
-                        <CareMetaChip>{caseItem.regio || "Regio onbekend"}</CareMetaChip>
-                        <span className="line-clamp-1 min-w-0 max-w-[min(100%,28rem)] text-[11px] text-foreground/85">
-                          {caseItem.systemInsight || caseItem.recommendedAction || "Geen toelichting."}
-                        </span>
-                      </>
-                    }
-                    status={
-                      <CareDominantStatus>
-                        {isPending ? "In beoordeling" : "Intake / plaatsing"}
-                      </CareDominantStatus>
-                    }
-                    time={
-                      <CareMetaChip>
-                        <Clock3 size={12} aria-hidden />
-                        {caseItem.wachttijd}d wacht
-                      </CareMetaChip>
-                    }
-                    contextInfo={
-                      canDecide ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-7 shrink-0 px-2 text-xs"
-                          disabled={isBusy}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void handleDecision(caseItem.id, "REJECTED");
-                          }}
+                  return (
+                    <CareWorkRow
+                      key={caseItem.id}
+                      density="operational"
+                      leading={
+                        <CareMetaChip
+                          className={cn(
+                            "h-6 px-2 text-[11px] font-semibold",
+                            caseItem.urgency === "critical"
+                              ? "border-red-500/35 bg-red-500/10 text-red-100"
+                              : caseItem.urgency === "warning"
+                                ? "border-amber-500/35 bg-amber-500/10 text-amber-100"
+                                : "border-border bg-muted/30 text-foreground",
+                          )}
                         >
-                          <XCircle size={14} className="mr-1" aria-hidden />
-                          Afwijzen
-                        </Button>
-                      ) : (
-                        <CareMetaChip>{maskParticipantIdentity(caseItem.title || caseItem.id)}</CareMetaChip>
-                      )
-                    }
-                    actionLabel={canDecide ? (isBusy ? "Verwerken…" : "Accepteren") : "Bekijk casus"}
-                    actionVariant={canDecide ? "primary" : "ghost"}
-                    accentTone={caseItem.urgency === "critical" ? "critical" : caseItem.urgency === "warning" ? "warning" : "neutral"}
-                    onOpen={() => onCaseClick(caseItem.id)}
-                    onAction={(event) => {
-                      event.stopPropagation();
-                      if (canDecide && !isBusy) {
-                        void handleDecision(caseItem.id, "ACCEPTED");
-                      } else {
-                        onCaseClick(caseItem.id);
+                          {caseItem.urgency === "critical" ? "Kritiek" : caseItem.urgency === "warning" ? "Hoog" : "Normaal"}
+                        </CareMetaChip>
                       }
-                    }}
-                  />
-                );
-              })}
-            </CarePrimaryList>
-          </div>
-        </CareWorkListCard>
-      )}
+                      title={formatClientReference(caseItem.id)}
+                      context={
+                        <>
+                          <CareMetaChip className="font-mono text-[11px]">{caseItem.id}</CareMetaChip>
+                          <CareMetaChip>{caseItem.regio || "Regio onbekend"}</CareMetaChip>
+                          <span className="line-clamp-1 min-w-0 max-w-[min(100%,28rem)] text-[11px] text-foreground/85">
+                            {caseItem.systemInsight || caseItem.recommendedAction || "Geen toelichting."}
+                          </span>
+                        </>
+                      }
+                      status={
+                        <CareDominantStatus>
+                          {isPending ? "In beoordeling" : "Intake / plaatsing"}
+                        </CareDominantStatus>
+                      }
+                      time={
+                        <CareMetaChip>
+                          <Clock3 size={12} aria-hidden />
+                          {caseItem.wachttijd}d wacht
+                        </CareMetaChip>
+                      }
+                      contextInfo={
+                        canDecide ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 shrink-0 px-2 text-xs"
+                            disabled={isBusy}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleDecision(caseItem.id, "REJECTED");
+                            }}
+                          >
+                            <XCircle size={14} className="mr-1" aria-hidden />
+                            Afwijzen
+                          </Button>
+                        ) : (
+                          <CareMetaChip>{maskParticipantIdentity(caseItem.title || caseItem.id)}</CareMetaChip>
+                        )
+                      }
+                      actionLabel={canDecide ? (isBusy ? "Verwerken…" : "Accepteren") : "Bekijk casus"}
+                      actionVariant={canDecide ? "primary" : "ghost"}
+                      accentTone={caseItem.urgency === "critical" ? "critical" : caseItem.urgency === "warning" ? "warning" : "neutral"}
+                      onOpen={() => onCaseClick(caseItem.id)}
+                      onAction={(event) => {
+                        event.stopPropagation();
+                        if (canDecide && !isBusy) {
+                          void handleDecision(caseItem.id, "ACCEPTED");
+                        } else {
+                          onCaseClick(caseItem.id);
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </CarePrimaryList>
+            </div>
+          </CareWorkListCard>
+        )}
+      </CareWorkspaceSection>
 
       <CareContextHint
         icon={<CheckCircle2 className="text-primary" size={20} />}

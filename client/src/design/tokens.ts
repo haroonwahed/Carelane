@@ -41,6 +41,33 @@ export const tokens = {
     sectionGap: "16px",
     rowGap: "8px",
     inlineGap: "12px",
+    /**
+     * Semantic operational rhythm — mirrored as `--care-rhythm-*` in globals.css.
+     * Use via `CARE_RHYTHM` / `care-page-rhythm`; avoid ad-hoc `space-y-*` on queue shells.
+     */
+    rhythm: {
+      /** Page stack: header → attention → filters → main */
+      page: "24px",
+      pageMobile: "20px",
+      /** Major blocks (werklijst section, doorstroom → list) */
+      section: "20px",
+      sectionMobile: "16px",
+      /** Extra pause between workflow lanes (e.g. doorstroom strip → werkvoorraad) */
+      quiet: "20px",
+      /** Stacked attention / escalation bands */
+      band: "16px",
+      /** Controls in a group (search row, filter chips, meta under title) */
+      control: "12px",
+      /** Search / filter toolbar → queue grid header */
+      filterQueue: "12px",
+      /** Inside queue card: toolbar area → column headers */
+      queueLead: "10px",
+      queueHeader: "8px",
+      /** Empty / loading / error blocks in main column */
+      empty: "16px",
+      /** Side rail offset from main column (xl+) */
+      layoutRail: "24px",
+    },
   },
 
   colors: {

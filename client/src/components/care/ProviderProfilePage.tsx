@@ -36,7 +36,8 @@ import {
 import { Button } from "../ui/button";
 import { Provider } from "../../lib/casesData";
 import { tokens } from "../../design/tokens";
-import { CareAttentionBar, CareInfoPopover, CarePageScaffold } from "./CareDesignPrimitives";
+import { CareAttentionBar, CareInfoPopover, CareMetricBadge, CarePageScaffold } from "./CareDesignPrimitives";
+import { advisoryQualitativeFromNumericScore } from "../../lib/matchingAdvisory";
 
 // AI Components
 import { 
@@ -90,7 +91,7 @@ export function ProviderProfilePage({
 
   return (
     <CarePageScaffold
-      archetype="decision"
+      archetype="network"
       className="pb-8"
       title={
         <span className="inline-flex flex-wrap items-center gap-2">
@@ -107,11 +108,13 @@ export function ProviderProfilePage({
           {context === "matching" && (
             <div className="flex items-center gap-3">
               {caseId && <span className="text-sm text-muted-foreground">Matching voor {caseId}</span>}
-              {matchScore && (
-                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1">
-                  <span className="text-lg font-bold text-emerald-400">{matchScore}%</span>
+              {matchScore != null && advisoryQualitativeFromNumericScore(matchScore) ? (
+                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-1.5">
+                  <span className="text-[12px] font-semibold text-foreground">
+                    {advisoryQualitativeFromNumericScore(matchScore)}
+                  </span>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
           <Button variant="ghost" onClick={onBack} className="gap-2 hover:bg-muted/35 hover:text-primary">
@@ -141,29 +144,12 @@ export function ProviderProfilePage({
               </Button>
             )
           }
-        />
+        metric={
+        <CareMetricBadge>
+          {provider.availableSpots}/{provider.capacity} plekken · {estimatedWaitTime} wachttijd · score {provider.rating.toFixed(1)}
+        </CareMetricBadge>
       }
-      kpiStrip={
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-border/70 bg-card/55 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Capaciteit</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">
-              {provider.availableSpots}/{provider.capacity}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border/70 bg-card/55 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Wachttijd</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">{estimatedWaitTime}</p>
-          </div>
-          <div className="rounded-xl border border-border/70 bg-card/55 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Reactietijd</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">Binnen {provider.responseTime} uur</p>
-          </div>
-          <div className="rounded-xl border border-border/70 bg-card/55 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Score</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">{provider.rating.toFixed(1)}</p>
-          </div>
-        </div>
+  </div>
       }
     >
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -258,7 +244,7 @@ export function ProviderProfilePage({
             />
 
             {/* WHY THIS PROVIDER (DECISION SUPPORT) */}
-            {context === "matching" && matchScore && (
+            {context === "matching" && matchScore != null ? (
               <div className="panel-surface p-4">
                 <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
                   <Target size={20} className="text-muted-foreground" />
@@ -266,24 +252,21 @@ export function ProviderProfilePage({
                 </h2>
                 
                 <MatchExplanation
-                  score={matchScore}
+                  advisoryLabel={advisoryQualitativeFromNumericScore(matchScore) ?? "Beoordeling nodig"}
                   strengths={[
-                    "Sterke ervaring met vergelijkbare casussen (15+ afgelopen jaar)",
-                    "Perfecte match met gevraagd zorgtype",
-                    "Capaciteit direct beschikbaar",
-                    "Snelle intake planning (gemiddeld binnen 5 dagen)",
-                    "Hoge acceptatiegraad (92% van verwijzingen)"
+                    "Ervaring met vergelijkbare casussen",
+                    "Aansluiting op gevraagd zorgtype",
+                    "Capaciteit nog te bevestigen in casus",
+                    "Intakeplanning afhankelijk van aanbiederreactie",
                   ]}
-                  tradeoffs={
-                    matchScore < 90 ? [
-                      "Afstand tot jeugdige is 15km (boven gemiddelde)",
-                      "Groepstherapie heeft wachtlijst van 2-3 weken"
-                    ] : []
-                  }
+                  tradeoffs={[
+                    "Afstand en reistijd controleren",
+                    "Capaciteit en wachtlijst bij aanbieder verifiëren",
+                  ]}
                   confidence={matchScore >= 90 ? "high" : matchScore >= 75 ? "medium" : "low"}
                 />
               </div>
-            )}
+            ) : null}
 
             {/* EXPANDABLE SECTIONS */}
             

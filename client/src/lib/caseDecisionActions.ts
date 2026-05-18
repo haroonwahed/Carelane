@@ -1,4 +1,5 @@
 import type { DecisionEvaluation, CaseDecisionRole } from "./decisionEvaluation";
+import { apiClient } from "./apiClient";
 import { toCareCaseEdit, toCareMatching } from "./routes";
 
 export type CaseDecisionActionCode =
@@ -37,6 +38,8 @@ export interface ExecuteCaseActionOptions {
   decisionEvaluation: DecisionEvaluation;
   role?: CaseDecisionRole;
   payload?: Record<string, unknown>;
+  /** SPA navigation (avoids full reload). When omitted, falls back to window.location.assign. */
+  onNavigate?: (href: string) => void;
 }
 
 function getCsrfToken(): string {
@@ -115,6 +118,15 @@ async function requestForm(path: string, formData: Record<string, string>) {
   });
 }
 
+function navigateToHref(href: string, onNavigate?: (href: string) => void): CaseDecisionActionResult {
+  if (onNavigate) {
+    onNavigate(href);
+  } else {
+    window.location.assign(href);
+  }
+  return { kind: "navigate", message: "", href };
+}
+
 export async function executeCaseAction(
   caseId: string | number,
   action: CaseDecisionActionCode,
@@ -122,39 +134,47 @@ export async function executeCaseAction(
 ): Promise<CaseDecisionActionResult> {
   const caseIdString = String(caseId);
   const selectedProviderId = options.decisionEvaluation.decision_context.selected_provider_id ?? null;
+  const onNavigate = options.onNavigate;
 
   switch (action) {
     case "COMPLETE_CASE_DATA":
       return {
-        kind: "navigate",
+        ...navigateToHref(toCareCaseEdit(caseIdString), onNavigate),
         message: "Casusgegevens worden geopend.",
         href: toCareCaseEdit(caseIdString),
       };
 
     case "GENERATE_SUMMARY":
-      await requestJson(`/care/api/cases/${caseIdString}/assessment-decision/`, {
-        decision: "",
-        shortDescription: options.decisionEvaluation.decision_context.has_summary ? "Samenvatting herbeoordeeld vanuit casusdetail." : "Samenvatting aangemaakt vanuit casusdetail.",
-      });
-      return { kind: "mutation", message: "Samenvatting bijgewerkt." };
-
-    case "START_MATCHING":
-      await requestJson(`/care/api/cases/${caseIdString}/assessment-decision/`, {
-        decision: "matching",
-        shortDescription: "Casus doorgestuurd naar matching vanuit casusdetail.",
-      });
       return {
-        kind: "navigate",
+        ...navigateToHref(toCareCaseEdit(caseIdString, "samenvatting"), onNavigate),
+        message: "Voltooi de gestructureerde samenvatting.",
+        href: toCareCaseEdit(caseIdString, "samenvatting"),
+      };
+
+    case "START_MATCHING": {
+      await apiClient.post<{ ok?: boolean; error?: string }>(
+        `/care/api/cases/${caseIdString}/assessment-decision/`,
+        {
+          decision: "matching",
+          shortDescription: "Casus doorgestuurd naar matching vanuit casusdetail.",
+        },
+      );
+      const matchingHref = toCareMatching(caseIdString);
+      return {
+        ...navigateToHref(matchingHref, onNavigate),
         message: "Matching gestart.",
-        href: toCareMatching(caseIdString),
+        href: matchingHref,
       };
+    }
 
-    case "VALIDATE_MATCHING":
+    case "VALIDATE_MATCHING": {
+      const matchingHref = toCareMatching(caseIdString);
       return {
-        kind: "navigate",
+        ...navigateToHref(matchingHref, onNavigate),
         message: "Matching wordt geopend.",
-        href: toCareMatching(caseIdString),
+        href: matchingHref,
       };
+    }
 
     case "SEND_TO_PROVIDER":
       if (!selectedProviderId) {

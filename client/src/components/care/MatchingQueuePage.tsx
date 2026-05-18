@@ -12,12 +12,12 @@ import {
   CareMetricBadge,
   CarePageScaffold,
   CarePrimaryList,
-  CareSection,
-  CareSectionBody,
   CareSectionHeader,
+  CareWorkspaceSection,
   CareSearchFiltersBar,
   CareOperationalQueueHeader,
   CareWorkListCard,
+  CARE_RHYTHM,
   CareWorkRow,
   EmptyState,
   ErrorState,
@@ -210,14 +210,18 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
         />
       }
     >
-      <CareSection testId="matching-uitvoerlijst" aria-labelledby="matching-werkvoorraad-heading">
+      <CareWorkspaceSection
+        testId="matching-uitvoerlijst"
+        aria-labelledby="matching-werkvoorraad-heading"
+        bodyBleedX
+        header={(
         <CareSectionHeader
           className="lg:flex-col lg:items-stretch"
           title={
             <span id="matching-werkvoorraad-heading">Werkvoorraad</span>
           }
           meta={
-            <div className="w-full min-w-0 space-y-2">
+            <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
               <span className="inline-flex w-fit items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
                 {loading ? "…" : `${filteredCases.length} casussen`}
               </span>
@@ -327,7 +331,8 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
             </div>
           }
         />
-        <CareSectionBody className="space-y-3">
+        )}
+      >
           {loading && <LoadingState title="Matching laden…" copy="De wachtrij wordt opgebouwd." />}
           {!loading && error && (
             <ErrorState title="Laden mislukt" copy={error} action={<Button variant="outline" onClick={refetch}>Opnieuw</Button>} />
@@ -364,9 +369,9 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
                       status={
                         <CareDominantStatus
                           className={
-                            item.matchConfidenceScore != null && item.matchConfidenceScore < 40
-                              ? "border-destructive/35 bg-destructive/10 text-destructive"
-                              : item.matchConfidenceScore != null && item.matchConfidenceScore < 65
+                            item.matchConfidenceLabel?.includes("Handmatige")
+                              ? "border-amber-500/35 bg-amber-500/10 text-amber-100"
+                              : item.matchConfidenceLabel?.includes("Capaciteit")
                                 ? "border-amber-500/35 bg-amber-500/10 text-amber-100"
                                 : undefined
                           }
@@ -383,6 +388,11 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
                       contextInfo={
                         <>
                           <CareMetaChip>{item.recommendedProvidersCount} aanbieders</CareMetaChip>
+                          {item.matchAdvisoryHint ? (
+                            <CareMetaChip className="max-w-[14rem] truncate" title={item.matchAdvisoryHint}>
+                              {item.matchAdvisoryHint}
+                            </CareMetaChip>
+                          ) : null}
                           {item.isBlocked ? (
                             <CareMetaChip className="border-destructive/30 text-destructive">
                               Geblokkeerd
@@ -404,8 +414,7 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
               </div>
             </CareWorkListCard>
           )}
-        </CareSectionBody>
-      </CareSection>
+      </CareWorkspaceSection>
     </CarePageScaffold>
   );
 }

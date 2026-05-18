@@ -3,6 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { cn } from "../ui/utils";
+import { CARE_RHYTHM } from "../../lib/operationalRhythm";
 import { CareInfoPopover } from "./CareUnifiedPage";
 import { CareEmptyState } from "./CareSurface";
 import { CareAppFrame } from "./CareAppFrame";
@@ -24,6 +25,8 @@ export { CarePageHeader as PageHeroHeader };
  * List surfaces, filters, and work rows — single import path for care pages.
  * `FlowPhaseBadge` is the canonical keten phase chip (alias of `CanonicalPhaseBadge`).
  */
+export { CARE_RHYTHM } from "../../lib/operationalRhythm";
+
 export {
   CARE_UNIFIED_PAGE_STACK,
   CareAttentionBar,
@@ -172,24 +175,24 @@ const CARE_ALERT_TONE_CLASSES: Record<
   }
 > = {
   critical: {
-    shell: "care-dominant-focus border-0 bg-destructive/8 ring-1 ring-destructive/20",
-    icon: "border-destructive/25 bg-destructive/10 text-destructive",
-    metric: "text-destructive",
+    shell: "care-dominant-focus care-alert-shell care-alert-shell--critical",
+    icon: "border border-yellow-500/15 bg-yellow-500/10 text-yellow-100",
+    metric: "text-yellow-100",
   },
   warning: {
-    shell: "care-dominant-focus border-0 bg-amber-500/8 ring-1 ring-amber-500/20",
-    icon: "border-amber-500/25 bg-amber-500/10 text-amber-200",
-    metric: "text-amber-200",
+    shell: "care-dominant-focus care-alert-shell care-alert-shell--warning",
+    icon: "border border-yellow-500/12 bg-yellow-500/8 text-yellow-100",
+    metric: "text-yellow-100",
   },
   info: {
-    shell: "care-dominant-focus border-0 bg-sky-500/8 ring-1 ring-sky-500/18",
-    icon: "border-sky-500/25 bg-sky-500/10 text-sky-200",
-    metric: "text-sky-200",
+    shell: "care-dominant-focus care-alert-shell care-alert-shell--info",
+    icon: "border border-sky-500/20 bg-sky-500/10 text-sky-100",
+    metric: "text-sky-100",
   },
   success: {
-    shell: "care-dominant-focus border-0 bg-emerald-500/8 ring-1 ring-emerald-500/18",
-    icon: "border-emerald-500/25 bg-emerald-500/10 text-emerald-200",
-    metric: "text-emerald-200",
+    shell: "care-dominant-focus care-alert-shell care-alert-shell--success",
+    icon: "border border-emerald-500/20 bg-emerald-500/10 text-emerald-100",
+    metric: "text-emerald-100",
   },
 };
 
@@ -257,7 +260,7 @@ export function CareSectionHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between", className)}>
+    <div className={cn("care-section-header flex flex-col lg:flex-row lg:items-start lg:justify-between", className)}>
       <div className="min-w-0 shrink-0 space-y-1.5 lg:min-w-[12rem] lg:max-w-[min(100%,28rem)]">
         {eyebrow ? (
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{eyebrow}</p>
@@ -288,7 +291,7 @@ export function CareSectionBody({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={cn("mt-4", className)}>{children}</div>;
+  return <div className={cn("care-section-body", className)}>{children}</div>;
 }
 
 
@@ -323,11 +326,12 @@ export function CareWorkspaceSection({
   className?: string;
 } & Omit<ComponentProps<"section">, "children">) {
   return (
-    <CareSection tone="workspace" className={cn("mt-1 p-0 md:p-0", className)} testId={testId} {...props}>
+    <CareSection tone="workspace" className={cn(CARE_RHYTHM.quietGap, "p-0 md:p-0", className)} testId={testId} {...props}>
       <div className="care-workspace-section__header">{header}</div>
       <CareSectionBody
         className={cn(
           "care-workspace-section__body mt-0",
+          CARE_RHYTHM.zoneStack,
           bodyBleedX && "care-workspace-section__body--bleed-x",
           bodyClassName,
         )}
@@ -349,6 +353,7 @@ export function CareAlertCard({
   primaryAction,
   secondaryAction,
   density = "default",
+  showMetric = true,
   className,
   testId,
   ...props
@@ -362,6 +367,8 @@ export function CareAlertCard({
   primaryAction: ReactNode;
   secondaryAction?: ReactNode;
   density?: "default" | "compact";
+  /** When false, title stands alone without a hero metric (orchestration surfaces). */
+  showMetric?: boolean;
   className?: string;
   testId?: string;
 } & ComponentProps<"section">) {
@@ -371,26 +378,50 @@ export function CareAlertCard({
     <section
       data-component="care-dominant-action-panel"
       data-testid={testId}
-      className={cn(isCompact ? "border-b border-border/40 px-4 py-3 md:px-5" : "rounded-xl px-4 py-4 md:px-5", toneClasses.shell, className)}
+      className={cn(
+        "px-4 py-3 md:px-5",
+        isCompact ? "rounded-[1.5rem]" : "rounded-xl",
+        toneClasses.shell,
+        className,
+      )}
       data-density={density}
       aria-live="polite"
       {...props}
     >
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[56px_minmax(12rem,1fr)_auto] md:items-center">
+      <div className="relative z-10 grid grid-cols-1 items-start gap-4 md:grid-cols-[56px_minmax(12rem,1fr)_auto] md:items-center">
         <div
           data-testid={testId ? `${testId}-icon` : undefined}
-          className={cn("flex h-14 w-14 shrink-0 items-center justify-center rounded-full border", toneClasses.icon)}
+          className={cn(
+            "flex shrink-0 items-center justify-center rounded-full border",
+            isCompact ? "h-11 w-11" : "h-14 w-14",
+            toneClasses.icon,
+          )}
         >
           {icon}
         </div>
         <div data-testid={testId ? `${testId}-content` : undefined} className="min-w-0 max-w-full self-center">
-          <h2 className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[22px] font-medium leading-tight text-foreground">
-            <span
-              data-testid={testId ? `${testId}-metric` : undefined}
-              className={cn("text-[30px] font-semibold leading-none tracking-[-0.04em]", toneClasses.metric)}
-            >
-              {metric}
-            </span>
+          <h2
+            className={cn(
+              "font-medium leading-tight text-foreground",
+              showMetric
+                ? isCompact
+                  ? "flex flex-col gap-0.5 text-[16px] md:text-[17px]"
+                  : "flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[22px]"
+                : "text-[17px] font-semibold",
+            )}
+          >
+            {showMetric ? (
+              <span
+                data-testid={testId ? `${testId}-metric` : undefined}
+                className={cn(
+                  "font-semibold leading-none tracking-[-0.03em]",
+                  isCompact ? "text-[16px] md:text-[17px]" : "text-[30px]",
+                  toneClasses.metric,
+                )}
+              >
+                {metric}
+              </span>
+            ) : null}
             <span>{title}</span>
           </h2>
           {description ? (
@@ -534,13 +565,16 @@ export function CareWorkListCard({
     <div
       data-testid={testId}
       className={cn(
+        CARE_RHYTHM.queueShell,
         // `min-w-0` + horizontal scroll: wide grid rows (e.g. Werkvoorraad min-w-[980px]) stay usable beside rails / narrow main columns.
-        "min-w-0 overflow-x-auto rounded-xl surface-workspace",
+        "overflow-x-auto rounded-xl surface-workspace",
         className,
       )}
     >
-      {header ? <div className="min-w-0 surface-workspace-header">{header}</div> : null}
-      <div className="min-w-0">{children}</div>
+      {header ? (
+        <div className={cn(CARE_RHYTHM.queueHeader, "min-w-0 surface-workspace-header")}>{header}</div>
+      ) : null}
+      <div className={cn(CARE_RHYTHM.queueRows)}>{children}</div>
     </div>
   );
 }

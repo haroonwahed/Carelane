@@ -70,15 +70,16 @@ import {
 import { ApiRequestError } from "../../lib/apiClient";
 import { getShortActionLabel, getShortReasonLabel } from "../../lib/uxCopy";
 import {
+  formatCaseDetailMatchingUnderbouwing,
+  matchingProposalStatusLabel,
+} from "../../lib/matchingAdvisory";
+import {
   canonicalPhaseForCaseExecution,
-  canonicalPhaseSubStatusLabel,
   decisionTimelineIndexFromWorkflowState,
-  decisionUiPhaseBadgeLabel,
-  decisionUiPhaseBadgeShellClass,
   DECISION_WORKSPACE_FLOW_STEPS,
-  mapApiPhaseToDecisionUiPhase,
-  type DecisionUiPhaseId,
+  resolveCaseExecutionPhasePresentation,
 } from "../../lib/decisionPhaseUi";
+import type { DecisionEvaluationContext } from "../../lib/decisionEvaluation";
 import { CARE_TERMS } from "../../lib/terminology";
 import { toCareCaseEdit } from "../../lib/routes";
 
@@ -86,6 +87,8 @@ interface CaseExecutionPageProps {
   caseId: string;
   role?: CaseDecisionRole;
   onBack: () => void;
+  /** In-app navigation (e.g. matching with openCase) without full page reload. */
+  onAppNavigate?: (path: string) => void;
 }
 
 type FlowStepId =
@@ -174,35 +177,98 @@ function operationalRequirementItems(evaluation: DecisionEvaluation | null): str
   if (!evaluation) {
     return ["Controleer casusstatus."];
   }
+  const nba = evaluation.next_best_action;
+  if (nba?.label) {
+    return [nba.label];
+  }
   const items: string[] = [];
   if (!evaluation.decision_context.required_data_complete) {
     items.push("Vul ontbrekende casusgegevens aan");
   }
-  if (!evaluation.decision_context.has_summary) {
+  if (!evaluation.decision_context.matching_summary_ready && !evaluation.decision_context.has_summary) {
     items.push("Controleer en voltooi samenvatting");
   }
-  if (!evaluation.decision_context.has_matching_result) {
+  if (!evaluation.decision_context.has_matching_result && evaluation.decision_context.matching_summary_ready) {
     items.push("Start matching");
   }
   if (!evaluation.decision_context.selected_provider_id && evaluation.current_state === "MATCHING_READY") {
     items.push("Selecteer aanbieder");
   }
   if (
-    evaluation.current_state === "PROVIDER_REVIEW"
+    (evaluation.current_state === "PROVIDER_REVIEW_PENDING"
+      || evaluation.current_state === "BUDGET_REVIEW_PENDING")
     && evaluation.decision_context.provider_review_status !== "ACCEPTED"
   ) {
     items.push("Wacht op aanbiederbeoordeling of stuur opvolging");
   }
-  if (evaluation.current_state === "ACCEPTED" && !evaluation.decision_context.placement_confirmed) {
+  if (
+    evaluation.current_state === "PROVIDER_ACCEPTED"
+    && !evaluation.decision_context.placement_confirmed
+  ) {
     items.push("Bevestig plaatsing");
   }
-  if (evaluation.current_state === "PLACED" && !evaluation.decision_context.intake_started) {
+  if (
+    (evaluation.current_state === "PLACEMENT_CONFIRMED"
+      || evaluation.current_state === "INTAKE_STARTED")
+    && !evaluation.decision_context.intake_started
+  ) {
     items.push("Start intake");
   }
   if (items.length === 0) {
     items.push("Controleer status en vervolgactie.");
   }
   return Array.from(new Set(items)).slice(0, 3);
+}
+
+function isProviderReviewState(state: string): boolean {
+  return state === "PROVIDER_REVIEW_PENDING" || state === "BUDGET_REVIEW_PENDING";
+}
+
+function actionHolderForWorkflowState(
+  state: string,
+  ctx: DecisionEvaluationContext | undefined,
+  municipalityOwnerLabel: string,
+  selectedProviderName: string | null,
+  stepOwner: string,
+  summaryNeedsCaseCompletion: boolean,
+): string {
+  if (summaryNeedsCaseCompletion) {
+    return municipalityOwnerLabel;
+  }
+  if (isProviderReviewState(state)) {
+    return selectedProviderName || CARE_TERMS.roles.zorgaanbieder;
+  }
+  if (state === "PLACEMENT_CONFIRMED" && ctx && !ctx.intake_started) {
+    return selectedProviderName || "Intakecoordinator";
+  }
+  return stepOwner;
+}
+
+function waitingOnForWorkflowState(
+  state: string,
+  ctx: DecisionEvaluationContext | undefined,
+  summaryNeedsCaseCompletion: boolean,
+): string {
+  if (summaryNeedsCaseCompletion) {
+    return "Samenvatting wordt verwerkt";
+  }
+  if (state === "MATCHING_READY" && !ctx?.selected_provider_id) {
+    return `Wacht op ${CARE_TERMS.workflow.gemeenteValidatie.toLowerCase()}`;
+  }
+  if (isProviderReviewState(state)) {
+    return "Wacht op reactie aanbieder";
+  }
+  if (state === "PROVIDER_ACCEPTED" && !ctx?.placement_confirmed) {
+    return "Wacht op plaatsing";
+  }
+  if (
+    (state === "PLACEMENT_CONFIRMED" || state === "INTAKE_STARTED")
+    && ctx
+    && !ctx.intake_started
+  ) {
+    return "Wacht op intake-start";
+  }
+  return "Wacht op doorstroming";
 }
 
 function buildAttentionRollup(evaluation: DecisionEvaluation | null): Array<{
@@ -363,7 +429,7 @@ function ProviderDecisionDialog({
   );
 }
 
-export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExecutionPageProps) {
+export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavigate }: CaseExecutionPageProps) {
   const { cases, loading, error, refetch } = useCases({ q: "" });
   const { me } = useCurrentUser();
   const spaCase = cases.find((item) => item.id === caseId);
@@ -440,9 +506,9 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
         decisionEvaluation,
         role,
         payload,
+        onNavigate: onAppNavigate,
       });
       if (result.kind === "navigate" && result.href) {
-        window.location.assign(result.href);
         return;
       }
       if (result.message) {
@@ -463,6 +529,10 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
       return;
     }
     if (nextBestAction.action === "GENERATE_SUMMARY") {
+      await handleAction("GENERATE_SUMMARY");
+      return;
+    }
+    if (nextBestAction.action === "COMPLETE_CASE_DATA") {
       await handleAction("COMPLETE_CASE_DATA");
       return;
     }
@@ -548,15 +618,12 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
     ];
   const missingGeo = (decisionEvaluation?.coverage_basis ?? "unknown") === "unknown";
   const actionButtonDisabled = decisionLoading
+    || Boolean(pendingAction)
     || !nextBestAction
-    || (
-      !summaryNeedsCaseCompletion
-      && (
-        !nextActionAllowed
-        || Boolean(nextActionBlocked?.reason)
-        || (nextBestAction?.action === "SEND_TO_PROVIDER" && !selectedProviderId)
-      )
-    );
+    || (nextBestAction?.action === "SEND_TO_PROVIDER" && !selectedProviderId);
+  const primaryDisabledHint = !nextActionAllowed && nextBestAction
+    ? (nextActionBlocked?.reason ?? "Deze actie is op dit moment niet beschikbaar.")
+    : primaryDisabledReason;
   const decisionCtx = decisionEvaluation?.decision_context;
   const providerRejectionSignal =
     (decisionCtx?.provider_rejection_count ?? 0) > 0
@@ -599,12 +666,19 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
         : "Nog geen voorstel om te valideren.",
       tone: decisionEvaluation?.decision_context.has_matching_result ? "info" : "warning",
     },
-    {
-      label: "Confidence",
-      value: decisionEvaluation?.confidence_score != null ? `${Math.round(decisionEvaluation.confidence_score * 100)}%` : "Niet beschikbaar",
-      impact: decisionEvaluation?.confidence_reason ?? "Geen samenvatting of matchresultaat beschikbaar.",
-      tone: decisionEvaluation?.confidence_score != null ? "info" : "warning",
-    },
+    (() => {
+      const onderbouwing = formatCaseDetailMatchingUnderbouwing({
+        confidence_score: decisionEvaluation?.confidence_score,
+        confidence_reason: decisionEvaluation?.confidence_reason,
+        has_matching_result: Boolean(decisionEvaluation?.decision_context.has_matching_result),
+      });
+      return {
+        label: "Onderbouwing matchadvies",
+        value: onderbouwing.label,
+        impact: onderbouwing.detail,
+        tone: decisionEvaluation?.decision_context.has_matching_result ? "info" : "warning",
+      };
+    })(),
     {
       label: "Geo",
       value: missingGeo ? "Onbekend" : "Beschikbaar",
@@ -637,7 +711,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
   const compactEvidenceRows = evidenceRows.filter((row) => (
     row.label === "Samenvatting"
     || row.label === "Matchresultaat"
-    || row.label === "Confidence"
+    || row.label === "Onderbouwing matchadvies"
     || row.label === "Laatste aanbiederreactie"
     || row.label === "Laatste gebeurtenis"
   ));
@@ -681,7 +755,13 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
   const statusDotTone = summaryNeedsCaseCompletion || dominantBlocker
     ? "bg-amber-400"
     : "bg-emerald-400";
-  const currentPhaseLabel = decisionUiPhaseBadgeLabel(mapApiPhaseToDecisionUiPhase(resolvedState));
+  const phasePresentation = resolveCaseExecutionPhasePresentation({
+    evaluationPhase: decisionEvaluation?.phase,
+    currentState: resolvedState,
+  });
+  const currentPhaseLabel = phasePresentation.subStatusLabel
+    ? `${phasePresentation.badgeLabel} · ${phasePresentation.subStatusLabel}`
+    : phasePresentation.badgeLabel;
   const waitForStateLabel = nextBestAction?.label ?? activeStepLabel;
   const waitingSignal = formatWaitingIndicator(
     decisionEvaluation?.decision_context.hours_in_current_state,
@@ -690,8 +770,8 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
   const matchingAvailabilityLabel = decisionEvaluation?.decision_context.has_matching_result
     ? "Matchadvies beschikbaar"
     : (
-      decisionEvaluation?.decision_context.has_summary
-        ? "Matchvoorstel in voorbereiding"
+      decisionEvaluation?.decision_context.matching_summary_ready
+        ? "Matchadvies wordt opgebouwd na start matching"
         : "Matching nog niet mogelijk: samenvatting ontbreekt"
     );
   const providerSelectionLabel = decisionEvaluation?.decision_context.selected_provider_name
@@ -716,45 +796,23 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
   const statusTriggerCopy = statusAttentionCount > 0
     ? `${statusAttentionCount} open aandachtspunt${statusAttentionCount === 1 ? "" : "en"}`
     : "Stabiele voortgang";
-  const matchingProposalStatusLabel = !decisionEvaluation?.decision_context.has_matching_result
-    ? "Nog geen passend voorstel"
-    : decisionEvaluation?.confidence_score == null
-      ? "Matchvoorstel beschikbaar"
-      : decisionEvaluation.confidence_score >= 0.75
-        ? "Voorstel is goed onderbouwd"
-        : decisionEvaluation.confidence_score >= 0.45
-          ? "Voorstel vraagt aanvullende controle"
-          : "Voorstel vraagt herbeoordeling";
-  const actionHolderLabel = (() => {
-    if (summaryNeedsCaseCompletion) {
-      return municipalityOwnerLabel;
-    }
-    if (resolvedState === "PROVIDER_REVIEW") {
-      return selectedProviderName || CARE_TERMS.roles.zorgaanbieder;
-    }
-    if (resolvedState === "PLACED" && !decisionEvaluation?.decision_context.intake_started) {
-      return selectedProviderName || "Intakecoordinator";
-    }
-    return stepOwner;
-  })();
-  const waitingOnLabel = (() => {
-    if (summaryNeedsCaseCompletion) {
-      return "Samenvatting wordt verwerkt";
-    }
-    if (resolvedState === "MATCHING_READY" && !selectedProviderId) {
-      return `Wacht op ${CARE_TERMS.workflow.gemeenteValidatie.toLowerCase()}`;
-    }
-    if (resolvedState === "PROVIDER_REVIEW") {
-      return "Wacht op reactie aanbieder";
-    }
-    if (resolvedState === "ACCEPTED" && !decisionEvaluation?.decision_context.placement_confirmed) {
-      return "Wacht op plaatsing";
-    }
-    if (resolvedState === "PLACED" && !decisionEvaluation?.decision_context.intake_started) {
-      return "Wacht op intake-start";
-    }
-    return "Wacht op doorstroming";
-  })();
+  const matchingProposalLabel = matchingProposalStatusLabel({
+    has_matching_result: Boolean(decisionEvaluation?.decision_context.has_matching_result),
+    confidence_score: decisionEvaluation?.confidence_score,
+  });
+  const actionHolderLabel = actionHolderForWorkflowState(
+    resolvedState,
+    decisionEvaluation?.decision_context,
+    municipalityOwnerLabel,
+    selectedProviderName,
+    stepOwner,
+    summaryNeedsCaseCompletion,
+  );
+  const waitingOnLabel = waitingOnForWorkflowState(
+    resolvedState,
+    decisionEvaluation?.decision_context,
+    summaryNeedsCaseCompletion,
+  );
   const ctaSupportLine = summaryNeedsCaseCompletion
     ? "Matching wordt gestart zodra samenvatting compleet is."
     : nextBestAction?.action === "START_MATCHING"
@@ -801,10 +859,12 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
     `Urgentie: ${spaCase.urgency}`,
     missingGeo ? "Locatiebasis onvolledig voor volledige matching." : "Locatiebasis beschikbaar voor matching.",
   ].slice(0, 5);
-  const displayNextTransitionLabel = gateItems[0] ?? "Start matching";
-  const displayNextStepHeading = displayNextTransitionLabel.toLowerCase().includes("controleer")
-    ? "Start matching"
-    : displayNextTransitionLabel;
+  const displayNextStepHeading = nextBestAction
+    ? (
+      imperativeLabelForActionCode(nextBestAction.action, nextBestAction.label)
+      ?? getShortActionLabel(nextBestAction.label)
+    )
+    : (gateItems[0] ?? "Volgende actie");
 
   const trajectoryExited = resolvedState === "ARCHIVED";
   const showArrangementAlignment = role === "gemeente" || role === "admin";
@@ -836,9 +896,15 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
   ];
 
   const primaryCtaLabel = nextBestAction
-    ? (summaryNeedsCaseCompletion
-      ? "Start matching"
-      : (displayNextStepHeading || primaryButtonLabel || getShortActionLabel(nextBestAction.label)))
+    ? (
+      summaryNeedsCaseCompletion
+        ? (primaryButtonLabel ?? "Controleer casusstatus")
+        : (
+          imperativeLabelForActionCode(nextBestAction.action, nextBestAction.label)
+          ?? primaryButtonLabel
+          ?? getShortActionLabel(nextBestAction.label)
+        )
+    )
     : null;
 
   const historyEvents = (decisionEvaluation?.timeline_signals.recent_events ?? []).slice(0, 12).map((event) => ({
@@ -875,11 +941,13 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
         statusLabel={statusLine}
         actionHolderLabel={actionHolderLabel}
         waitingOnLabel={waitingOnLabel}
-        nextStepLabel={summaryNeedsCaseCompletion ? "Start matching" : (displayNextStepHeading || "Volgende actie")}
+        nextStepLabel={displayNextStepHeading || "Volgende actie"}
+        nextActionReason={nextBestAction ? nextActionReason : null}
         primaryCtaLabel={primaryCtaLabel}
         onPrimaryAction={() => void handlePrimaryAction()}
         primaryDisabled={actionButtonDisabled}
-        disabledReason={primaryDisabledReason}
+        primaryPending={Boolean(pendingAction)}
+        disabledReason={primaryDisabledHint}
         errorMessage={decisionError}
       />
     </div>
@@ -887,7 +955,6 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
 
   const contextStack = (
     <div className="space-y-4">
-      {flowProgress}
       <CaseKeyFactsCard facts={caseFacts} />
       {showArrangementAlignment ? (
         <ArrangementAlignmentPanel caseId={caseId} careContext={arrangementCareContext} variant="compact" />
@@ -931,8 +998,15 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
             rows={[
               { label: "Matchadvies", value: decisionEvaluation?.decision_context.has_matching_result ? "Beschikbaar" : "Ontbreekt" },
               { label: "Aanbieder", value: selectedProviderName || "Nog niet gekozen" },
-              { label: "Voorstelstatus", value: matchingProposalStatusLabel },
-              { label: "Confidence", value: decisionEvaluation?.confidence_score != null ? `${Math.round(decisionEvaluation.confidence_score * 100)}%` : "—" },
+              { label: "Voorstelstatus", value: matchingProposalLabel },
+              {
+                label: "Onderbouwing",
+                value: formatCaseDetailMatchingUnderbouwing({
+                  confidence_score: decisionEvaluation?.confidence_score,
+                  confidence_reason: decisionEvaluation?.confidence_reason,
+                  has_matching_result: Boolean(decisionEvaluation?.decision_context.has_matching_result),
+                }).detail,
+              },
               { label: "Wachttijd", value: waitingSignal ?? "—" },
             ]}
           />
@@ -963,11 +1037,11 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack }: CaseExe
     <>
       <CasusWorkspaceLayout
         onBack={onBack}
-        flowProgress={null}
+        flowProgress={flowProgress}
         title={`CASUS #${spaCase.id.replace(/\D/g, "") || spaCase.id} — ${spaCase.title}`}
         metaLine={null}
         phaseLabel={currentPhaseLabel}
-        phaseId={mapApiPhaseToDecisionUiPhase(resolvedState) as DecisionUiPhaseId}
+        phaseId={phasePresentation.decisionUiPhaseId}
         statusVariant={workspaceStatusVariant}
         statusHint={workspaceStatusHint}
         headerActions={(

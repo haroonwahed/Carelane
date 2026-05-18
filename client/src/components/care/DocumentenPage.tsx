@@ -183,7 +183,7 @@ export function DocumentenPage() {
 
   return (
     <CarePageScaffold
-      archetype="worklist"
+      archetype="queue"
       className="pb-8"
       title={
         <span className="inline-flex flex-wrap items-center gap-2">

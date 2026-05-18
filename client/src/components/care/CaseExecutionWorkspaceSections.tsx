@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ProcessTimeline } from "../design/ProcessTimeline";
@@ -114,9 +114,11 @@ export function CasePrimaryActionPanel({
   actionHolderLabel,
   waitingOnLabel,
   nextStepLabel,
+  nextActionReason,
   primaryCtaLabel,
   onPrimaryAction,
   primaryDisabled,
+  primaryPending,
   disabledReason,
   errorMessage,
 }: {
@@ -124,9 +126,12 @@ export function CasePrimaryActionPanel({
   actionHolderLabel: string;
   waitingOnLabel: string;
   nextStepLabel: string;
+  /** Backend NBA reason — shown whenever present so operators know why. */
+  nextActionReason?: string | null;
   primaryCtaLabel: string | null;
   onPrimaryAction: () => void;
   primaryDisabled: boolean;
+  primaryPending?: boolean;
   disabledReason?: string | null;
   errorMessage?: string | null;
 }) {
@@ -147,6 +152,15 @@ export function CasePrimaryActionPanel({
           <p className="mt-1 text-sm font-semibold text-foreground">{nextStepLabel}</p>
         </div>
       </div>
+      {nextActionReason?.trim() ? (
+        <p
+          data-testid="next-best-action-reason"
+          className="text-[12px] leading-snug text-muted-foreground"
+        >
+          <span className="font-medium text-foreground/90">Waarom: </span>
+          {nextActionReason.trim()}
+        </p>
+      ) : null}
       {primaryCtaLabel ? (
         <div className="flex flex-col gap-2 border-t border-border/40 pt-3 sm:flex-row sm:items-center sm:justify-between">
           <Button
@@ -155,8 +169,9 @@ export function CasePrimaryActionPanel({
             disabled={primaryDisabled}
             className="h-11 min-h-[44px] w-full gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 sm:w-auto sm:min-w-[220px]"
           >
+            {primaryPending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
             {primaryCtaLabel}
-            <ArrowRight size={16} aria-hidden />
+            {!primaryPending ? <ArrowRight size={16} aria-hidden /> : null}
           </Button>
         </div>
       ) : null}

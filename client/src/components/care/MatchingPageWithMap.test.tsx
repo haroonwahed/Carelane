@@ -16,15 +16,33 @@ vi.mock("../../hooks/useProviders", () => ({
   useProviders: (...args: unknown[]) => mockUseProviders(...args),
 }));
 
+const mockUseMatchingCandidates = vi.fn();
+
 vi.mock("../../hooks/useMatchingCandidates", () => ({
-  useMatchingCandidates: () => ({
-    matches: [],
-    loading: false,
-    error: null,
-    incompleteCode: null,
-    refetch: vi.fn(),
-  }),
+  useMatchingCandidates: (...args: unknown[]) => mockUseMatchingCandidates(...args),
 }));
+
+function makeApiMatch(name: string, ranking: number) {
+  return {
+    casus_id: 1,
+    zorgprofiel_id: 1,
+    zorgaanbieder_id: ranking,
+    aanbiederName: name,
+    totaalscore: 0.82,
+    score_inhoudelijke_fit: 0.8,
+    score_regio_contract_fit: 0.85,
+    score_capaciteit_wachttijd_fit: 0.75,
+    score_complexiteit_veiligheid_fit: 0.7,
+    score_performance_fit: 0.65,
+    confidence_label: ranking === 1 ? "hoog" : "middel",
+    fit_samenvatting: "Arrangement sluit grotendeels aan.",
+    trade_offs: ["Capaciteit nog niet bevestigd"],
+    verificatie_advies: "Controleer gemeentelijke validatie.",
+    uitgesloten: false,
+    uitsluitreden: "",
+    ranking,
+  };
+}
 
 vi.mock("../../lib/apiClient", () => ({
   apiClient: {
@@ -112,6 +130,17 @@ describe("MatchingPageWithMap", () => {
       totalCount: 3,
       networkSummary: null,
       lastUpdatedAt: Date.now(),
+      refetch: vi.fn(),
+    });
+    mockUseMatchingCandidates.mockReturnValue({
+      matches: [
+        makeApiMatch("Zorggroep A", 1),
+        makeApiMatch("Zorggroep B", 2),
+        makeApiMatch("Zorggroep C", 3),
+      ],
+      loading: false,
+      error: null,
+      incompleteCode: null,
       refetch: vi.fn(),
     });
 

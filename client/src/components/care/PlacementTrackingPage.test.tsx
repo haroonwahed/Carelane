@@ -86,7 +86,7 @@ describe("PlacementTrackingPage", () => {
 
     render(<PlacementTrackingPage onCaseClick={vi.fn()} onNavigateToMatching={vi.fn()} />);
 
-    expect(screen.getByText(/≥5 dagen in plaatsing/i)).toBeInTheDocument();
+    expect(screen.getByText(/zonder duidelijke intake/i)).toBeInTheDocument();
   });
 
   it("uses unified tabs, header, and intake-oriented CTA", () => {
@@ -101,8 +101,8 @@ describe("PlacementTrackingPage", () => {
     render(<PlacementTrackingPage onCaseClick={vi.fn()} onNavigateToMatching={vi.fn()} />);
 
     expect(screen.getByRole("heading", { name: "Plaatsingen" })).toBeInTheDocument();
-    expect(screen.getByText(/plaatsingen zijn het gevolg van provideracceptatie/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Naar matching" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bekijk matching" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Te bevestigen ·/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Bevestig plaatsing" })).toBeInTheDocument();
   });

@@ -74,6 +74,7 @@ import {
   type MatchResult,
 } from "../../lib/phaseEngine";
 import { tokens } from "../../design/tokens";
+import { advisoryQualitativeFromNumericScore } from "../../lib/matchingAdvisory";
 
 // ─── Decision strip colors ────────────────────────────────────────────────────
 
@@ -726,10 +727,7 @@ function ProviderCard({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const scoreColor =
-    result.score >= 90 ? "text-emerald-500" :
-    result.score >= 80 ? "text-amber-500" :
-    "text-muted-foreground";
+  const advisoryLabel = advisoryQualitativeFromNumericScore(result.score) ?? "Beoordeling nodig";
 
   const badgeColor =
     result.recommendationType === "perfect" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" :
@@ -760,8 +758,8 @@ function ProviderCard({
               <p className="font-semibold text-sm leading-tight">{result.providerName}</p>
               <p className="text-xs text-muted-foreground">{result.providerType} · {result.region}</p>
             </div>
-            <div className="shrink-0 text-right">
-              <p className={`text-2xl font-bold leading-none ${scoreColor}`}>{result.score}%</p>
+            <div className="shrink-0 text-right max-w-[7rem]">
+              <p className="text-[11px] font-semibold leading-snug text-foreground">{advisoryLabel}</p>
               <div className="flex items-center justify-end gap-0.5 mt-1">
                 {[1,2,3,4,5].map(s => (
                   <Star key={s} size={9} className={s <= Math.round(result.rating) ? "text-amber-400 fill-amber-400" : "text-muted"} />
@@ -800,7 +798,7 @@ function PlaatsingPanel({
 
   const provider = providers.find(p => p.id === placement.providerId);
   const matchResult = casus.matchResults.find(r => r.providerId === placement.providerId);
-  const score = matchResult?.score ?? 0;
+  const advisoryLabel = advisoryQualitativeFromNumericScore(matchResult?.score) ?? "Beoordeling nodig";
 
   return (
     <div className="space-y-3">
@@ -815,9 +813,9 @@ function PlaatsingPanel({
             <p className="font-semibold">{placement.providerName}</p>
             <p className="text-sm text-muted-foreground">{provider?.type} · {provider?.region}</p>
           </div>
-          <div className="text-right shrink-0">
-            <p className={`text-3xl font-bold ${score >= 90 ? "text-emerald-500" : score >= 80 ? "text-amber-500" : "text-muted-foreground"}`}>{score}%</p>
-            <p className="text-xs text-muted-foreground">Matchscore</p>
+          <div className="text-right shrink-0 max-w-[8rem]">
+            <p className="text-[12px] font-semibold leading-snug text-foreground">{advisoryLabel}</p>
+            <p className="text-xs text-muted-foreground">Matchadvies</p>
           </div>
         </div>
         {provider && (

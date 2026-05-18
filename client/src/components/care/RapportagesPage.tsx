@@ -4,7 +4,16 @@ import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { toast } from "sonner@2.0.3";
 import { tokens } from "../../design/tokens";
-import { CareAttentionBar, CareInfoPopover, CarePageScaffold, CareSearchFiltersBar, CareSection, CareSectionBody, CareSectionHeader } from "./CareDesignPrimitives";
+import {
+  CareAttentionBar,
+  CareInfoPopover,
+  CareMetricBadge,
+  CarePageScaffold,
+  CareSearchFiltersBar,
+  CareSection,
+  CareSectionBody,
+  CareSectionHeader,
+} from "./CareDesignPrimitives";
 
 type ReportCategory = "doorstroom" | "kwaliteit" | "compliance";
 
@@ -199,7 +208,7 @@ export function RapportagesPage() {
 
   return (
     <CarePageScaffold
-      archetype="worklist"
+      archetype="exception"
       className="pb-8"
       title={
         <span className="inline-flex flex-wrap items-center gap-2">
@@ -232,39 +241,18 @@ export function RapportagesPage() {
           }
         />
       }
-      kpiStrip={
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-xl border border-border/70 bg-card/55 p-4">
-            <div className="mb-2 flex items-center gap-2 text-muted-foreground">
-              <FileBarChart2 size={16} />
-              <span className="text-xs font-semibold uppercase tracking-[0.08em]">Actieve templates</span>
-            </div>
-            <p className="text-2xl font-semibold text-foreground">{reportTemplates.length}</p>
-          </div>
-          <div className="rounded-xl border border-border/70 bg-card/55 p-4">
-            <div className="mb-2 flex items-center gap-2 text-muted-foreground">
-              <TrendingUp size={16} />
-              <span className="text-xs font-semibold uppercase tracking-[0.08em]">Direct beschikbaar</span>
-            </div>
-            <p className="text-2xl font-semibold text-foreground">{readyCount}</p>
-          </div>
-          <div className="rounded-xl border border-border/70 bg-card/55 p-4">
-            <div className="mb-2 flex items-center gap-2 text-muted-foreground">
-              <CalendarClock size={16} />
-              <span className="text-xs font-semibold uppercase tracking-[0.08em]">Laatste run</span>
-            </div>
-            <p className="text-2xl font-semibold text-foreground">Vandaag</p>
-          </div>
-        </div>
-      }
-    >
+      metric={
+        <CareMetricBadge>
+          {reportTemplates.length} templates · {readyCount} exporteerbaar
+        </CareMetricBadge>
+      }    >
       <CareSection>
         <CareSectionHeader
           className="lg:flex-col lg:items-stretch"
-          title="Werkvoorraad"
+          title="Exportcatalogus"
           meta={(
             <div className="w-full min-w-0 space-y-2">
-              <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
+              <span className="inline-flex w-fit items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
                 {filteredReports.length} rapportages
               </span>
               <CareSearchFiltersBar

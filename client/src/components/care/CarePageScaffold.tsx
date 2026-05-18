@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { cn } from "../ui/utils";
+import { CARE_RHYTHM } from "../../lib/operationalRhythm";
 import { CarePageTemplate, CareUnifiedHeader } from "./CareUnifiedPage";
+import type { CarePageArchetype } from "../../lib/pageArchetypes";
 
-/** Page archetypes for analytics, E2E, and generator docs — not a behavioral switch inside the scaffold. */
-export type CarePageArchetype = "decision" | "worklist" | "signal-action" | "exception";
+export type { CarePageArchetype } from "../../lib/pageArchetypes";
 
 export type CarePageScaffoldProps = {
   archetype: CarePageArchetype;
@@ -62,7 +63,7 @@ export function CarePageScaffold({
 }: CarePageScaffoldProps) {
   const attention =
     dominantAction || kpiStrip ? (
-      <div className={cn("space-y-4", dominantAction && kpiStrip && "pb-0.5")}>
+      <div className={cn(CARE_RHYTHM.attentionStack, dominantAction && kpiStrip && "pb-0.5")}>
         {dominantAction}
         {kpiStrip ? <div className="opacity-95">{kpiStrip}</div> : null}
       </div>

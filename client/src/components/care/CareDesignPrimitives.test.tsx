@@ -43,7 +43,7 @@ describe("CareDesignPrimitives", () => {
   it("LoadingState sets busy status", () => {
     render(<LoadingState title="Aanvragen laden…" copy="Even geduld." />);
     expect(screen.getByTestId("care-loading-state")).toHaveAttribute("aria-busy", "true");
-    expect(screen.getByRole("status")).toHaveTextContent("Aanvragen laden…");
+    expect(screen.getByTestId("care-loading-state")).toHaveTextContent("Aanvragen laden…");
   });
 
   it("ErrorState is an alert", () => {

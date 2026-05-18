@@ -312,7 +312,7 @@ test.describe("Regiekamer adaptive modes (SPA)", () => {
     await expect(page.getByTestId("regiekamer-insight-flow")).toHaveCount(0);
   });
 
-  test("optimization: Analyseer doorstroom + phase board (no legacy insight panels)", async ({ page }) => {
+  test("coordination: doorstroom-coördinatie + phase board (no legacy insight panels)", async ({ page }) => {
     await darkTheme(page);
     await installCareApiStubs(page, {
       regiekamerOverview: {
@@ -330,8 +330,8 @@ test.describe("Regiekamer adaptive modes (SPA)", () => {
     await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /Regiekamer/i, level: 1 })).toBeVisible({ timeout: 45_000 });
     const panel = page.getByTestId("regiekamer-dominant-action");
-    await expect(panel).toHaveAttribute("data-regiekamer-mode", "optimization");
-    await expect(page.getByTestId("regiekamer-dominant-primary-cta")).toHaveText(/Analyseer doorstroom|Open doorstroomrapport/);
+    await expect(panel).toHaveAttribute("data-regiekamer-mode", "coordination");
+    await expect(page.getByTestId("regiekamer-dominant-primary-cta")).toHaveText(/knelpunt in stroom|Open aanvragen/);
     await expect(page.getByTestId("regiekamer-phase-board")).toBeVisible();
     await expect(page.getByTestId("regiekamer-uitvoerlijst")).toBeVisible();
     await expect(page.getByTestId("regiekamer-insight-why")).toHaveCount(0);

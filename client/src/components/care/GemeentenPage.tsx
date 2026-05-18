@@ -20,20 +20,21 @@ import {
   Building2,
 } from "lucide-react";
 import { Button } from "../ui/button";
+import { cn } from "../ui/utils";
 import {
   CareAttentionBar,
   CareFilterTabButton,
   CareFilterTabGroup,
   CareInfoPopover,
   CarePageScaffold,
-  CareSection,
-  CareSectionBody,
   CareSectionHeader,
   CareSearchFiltersBar,
+  CareWorkspaceSection,
+  CareQueueInlineAction,
+  CARE_RHYTHM,
   EmptyState,
   ErrorState,
   LoadingState,
-  PrimaryActionButton,
 } from "./CareDesignPrimitives";
 import { useMunicipalities } from "../../hooks/useMunicipalities";
 
@@ -108,7 +109,7 @@ export function GemeentenPage({ onGemeenteClick }: GemeentenPageProps = {}) {
 
   return (
     <CarePageScaffold
-      archetype="worklist"
+      archetype="network"
       className="pb-8"
       title={
         <span className="inline-flex flex-wrap items-center gap-2">
@@ -130,214 +131,205 @@ export function GemeentenPage({ onGemeenteClick }: GemeentenPageProps = {}) {
                 : `${totals.totalUrgent} urgente casussen — opvolging nodig`
           }
           action={
-            <PrimaryActionButton onClick={() => setSelectedStatus(totals.totalBlocked > 0 ? "blocked" : "urgent")}>
+            <CareQueueInlineAction onClick={() => setSelectedStatus(totals.totalBlocked > 0 ? "blocked" : "urgent")}>
               {totals.totalBlocked > 0 ? "Open blokkades" : "Open urgentie"}
-            </PrimaryActionButton>
+            </CareQueueInlineAction>
           }
         />
       }
+      actions={
+        <Button variant="outline" onClick={() => void refetch()}>
+          Ververs
+        </Button>
+      }
     >
-      <CareSection>
-        <CareSectionHeader
-          className="lg:flex-col lg:items-stretch"
-          title="Werkvoorraad"
-          meta={(
-            <div className="w-full min-w-0 space-y-2">
-              <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
-                {filteredGemeenten.length} zichtbaar · {totals.totalCases} casussen · {totals.avgWaitTime}d
-              </span>
-              <CareSearchFiltersBar
-                className="px-0"
-                tabs={
-                  <CareFilterTabGroup aria-label="Status gemeenten">
-                    <CareFilterTabButton selected={selectedStatus === "all"} onClick={() => setSelectedStatus("all")}>
-                      Alle
-                    </CareFilterTabButton>
-                    <CareFilterTabButton selected={selectedStatus === "shortage"} onClick={() => setSelectedStatus("shortage")}>
-                      Tekort
-                    </CareFilterTabButton>
-                    <CareFilterTabButton selected={selectedStatus === "urgent"} onClick={() => setSelectedStatus("urgent")}>
-                      Urgent
-                    </CareFilterTabButton>
-                    <CareFilterTabButton selected={selectedStatus === "blocked"} onClick={() => setSelectedStatus("blocked")}>
-                      Geblokkeerd
-                    </CareFilterTabButton>
-                  </CareFilterTabGroup>
-                }
-                searchValue={searchQuery}
-                onSearchChange={setSearchQuery}
-                searchPlaceholder="Zoeken op gemeente of regio..."
-                showSecondaryFilters={showSecondaryFilters}
-                onToggleSecondaryFilters={() => setShowSecondaryFilters((current) => !current)}
-                secondaryFiltersLabel="Filters"
-                secondaryFilters={(
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Status
-                      <select
-                        aria-label="Status"
-                        value={selectedStatus}
-                        onChange={(event) => setSelectedStatus(event.target.value)}
-                        className="h-10 w-full rounded-xl border border-border/80 bg-background px-3 text-sm text-foreground"
+      <CareWorkspaceSection
+        testId="gemeenten-netwerk"
+        aria-labelledby="gemeenten-netwerk-heading"
+        bodyBleedX
+        header={
+          <CareSectionHeader
+            className="lg:flex-col lg:items-stretch"
+            title={<span id="gemeenten-netwerk-heading">Netwerkoverzicht</span>}
+            meta={
+              <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
+                <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
+                  {filteredGemeenten.length} zichtbaar · {totals.totalCases} casussen · {totals.avgWaitTime}d
+                </span>
+                <CareSearchFiltersBar
+                  className="px-0"
+                  tabs={
+                    <CareFilterTabGroup aria-label="Status gemeenten">
+                      <CareFilterTabButton selected={selectedStatus === "all"} onClick={() => setSelectedStatus("all")}>
+                        Alle
+                      </CareFilterTabButton>
+                      <CareFilterTabButton selected={selectedStatus === "shortage"} onClick={() => setSelectedStatus("shortage")}>
+                        Tekort
+                      </CareFilterTabButton>
+                      <CareFilterTabButton selected={selectedStatus === "urgent"} onClick={() => setSelectedStatus("urgent")}>
+                        Urgent
+                      </CareFilterTabButton>
+                      <CareFilterTabButton selected={selectedStatus === "blocked"} onClick={() => setSelectedStatus("blocked")}>
+                        Geblokkeerd
+                      </CareFilterTabButton>
+                    </CareFilterTabGroup>
+                  }
+                  searchValue={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Zoeken op gemeente of regio..."
+                  showSecondaryFilters={showSecondaryFilters}
+                  onToggleSecondaryFilters={() => setShowSecondaryFilters((current) => !current)}
+                  secondaryFiltersLabel="Filters"
+                  secondaryFilters={(
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                        Status
+                        <select
+                          aria-label="Status"
+                          value={selectedStatus}
+                          onChange={(event) => setSelectedStatus(event.target.value)}
+                          className="h-10 w-full rounded-xl border border-border/80 bg-background px-3 text-sm text-foreground"
+                        >
+                          <option value="all">Alle</option>
+                          <option value="shortage">Tekort</option>
+                          <option value="urgent">Urgent</option>
+                          <option value="blocked">Geblokkeerd</option>
+                        </select>
+                      </label>
+                    </div>
+                  )}
+                />
+              </div>
+            }
+          />
+        }
+      >
+          {loading && (
+            <LoadingState title="Gemeenten laden…" copy="Overzicht wordt opgebouwd." />
+          )}
+          {!loading && error && (
+            <ErrorState
+              title="Kon gemeenten niet laden"
+              copy={error}
+              action={<Button variant="outline" size="sm" onClick={refetch}>Opnieuw proberen</Button>}
+            />
+          )}
+          {!loading && !error && filteredGemeenten.length === 0 && (
+            <EmptyState
+              title="Geen gemeenten"
+              copy="Er zijn geen gemeenten die passen bij de huidige filters."
+            />
+          )}
+          {!loading && !error && filteredGemeenten.length > 0 && (
+            <div className="overflow-hidden rounded-xl border border-border/55 bg-card/30">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="p-4 text-left text-sm font-semibold text-muted-foreground">Gemeente</th>
+                      <th className="p-4 text-left text-sm font-semibold text-muted-foreground">Regio</th>
+                      <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Casussen</th>
+                      <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Urgent</th>
+                      <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Geblokkeerd</th>
+                      <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Wachttijd</th>
+                      <th className="p-4 text-center text-sm font-semibold text-muted-foreground">Status</th>
+                      <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Wacht op</th>
+                      <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Eigenaar</th>
+                      <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Volgende stap</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredGemeenten.map((gemeente) => (
+                      <tr
+                        key={gemeente.id}
+                        className="border-b border-border/40 transition-colors hover:bg-muted/10 cursor-pointer"
+                        onClick={() => onGemeenteClick?.(gemeente.id)}
                       >
-                        <option value="all">Alle</option>
-                        <option value="shortage">Tekort</option>
-                        <option value="urgent">Urgent</option>
-                        <option value="blocked">Geblokkeerd</option>
-                      </select>
-                    </label>
-                  </div>
-                )}
-              />
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                              <MapPin className="text-primary" size={20} />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">{gemeente.name}</p>
+                              <p className="text-xs text-muted-foreground">{gemeente.population.toLocaleString()} inwoners</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <p className="text-sm text-muted-foreground">{gemeente.region}</p>
+                        </td>
+                        <td className="p-4 text-right">
+                          <p className="font-semibold text-foreground">{gemeente.casesCount}</p>
+                          <p className="text-xs text-muted-foreground">{gemeente.activeCases} actief</p>
+                        </td>
+                        <td className="p-4 text-right">
+                          {gemeente.urgentCases > 0 ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-500">
+                              <AlertTriangle size={12} />
+                              {gemeente.urgentCases}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">-</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          {gemeente.blockedCases > 0 ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-500">
+                              {gemeente.blockedCases}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">-</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          <p className="text-sm font-medium text-foreground">{gemeente.avgWaitingTime}d</p>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex justify-center">
+                            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${getStatusColor(gemeente.capacityStatus)}`}>
+                              {getStatusLabel(gemeente.capacityStatus)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex justify-end">
+                            <span className="text-xs text-muted-foreground">
+                              {gemeente.blockedCases > 0
+                                ? "Blokkades oplossen"
+                                : gemeente.urgentCases > 0
+                                  ? "Urgente opvolging"
+                                  : "Reguliere doorstroom"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex justify-end text-xs text-muted-foreground">
+                            {gemeente.blockedCases > 0 ? "Gemeente" : "Gemeente + aanbieder"}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex justify-end">
+                            <Button
+                              size="sm"
+                              variant={gemeente.blockedCases > 0 || gemeente.urgentCases > 0 ? "outline" : "ghost"}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onGemeenteClick?.(gemeente.id);
+                              }}
+                            >
+                              Open
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
-        />
-        <CareSectionBody className="space-y-4">
-      {loading && (
-        <LoadingState title="Gemeenten laden…" copy="Overzicht wordt opgebouwd." />
-      )}
-      {!loading && error && (
-        <ErrorState
-          title="Kon gemeenten niet laden"
-          copy={error}
-          action={<Button variant="outline" size="sm" onClick={refetch}>Opnieuw proberen</Button>}
-        />
-      )}
-      {!loading && !error && filteredGemeenten.length === 0 && (
-        <EmptyState
-          title="Geen gemeenten"
-          copy="Er zijn geen gemeenten die passen bij de huidige filters."
-        />
-      )}
-      {!loading && !error && filteredGemeenten.length > 0 && (
-        <div className="panel-surface overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
-                  Gemeente
-                </th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
-                  Regio
-                </th>
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground">
-                  Casussen
-                </th>
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground">
-                  Urgent
-                </th>
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground">
-                  Geblokkeerd
-                </th>
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground">
-                  Wachttijd
-                </th>
-                <th className="text-center p-4 text-sm font-semibold text-muted-foreground">
-                  Status
-                </th>
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground">
-                  Wacht op
-                </th>
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground">Eigenaar</th>
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground">Volgende stap</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredGemeenten.map((gemeente) => (
-                <tr 
-                  key={gemeente.id}
-                  className="border-b border-border hover:bg-card/50 transition-colors cursor-pointer"
-                  onClick={() => onGemeenteClick?.(gemeente.id)}
-                >
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <MapPin className="text-primary" size={20} />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-foreground">{gemeente.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {gemeente.population.toLocaleString()} inwoners
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <p className="text-sm text-muted-foreground">{gemeente.region}</p>
-                  </td>
-                  <td className="p-4 text-right">
-                    <p className="font-semibold text-foreground">{gemeente.casesCount}</p>
-                    <p className="text-xs text-muted-foreground">{gemeente.activeCases} actief</p>
-                  </td>
-                  <td className="p-4 text-right">
-                    {gemeente.urgentCases > 0 ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/10 text-red-500 text-xs font-semibold">
-                        <AlertTriangle size={12} />
-                        {gemeente.urgentCases}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
-                    )}
-                  </td>
-                  <td className="p-4 text-right">
-                    {gemeente.blockedCases > 0 ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-500 text-xs font-semibold">
-                        {gemeente.blockedCases}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
-                    )}
-                  </td>
-                  <td className="p-4 text-right">
-                    <p className="text-sm font-medium text-foreground">{gemeente.avgWaitingTime}d</p>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex justify-center">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(gemeente.capacityStatus)}`}>
-                        {getStatusLabel(gemeente.capacityStatus)}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex justify-end">
-                      <span className="text-xs text-muted-foreground">
-                        {gemeente.blockedCases > 0
-                          ? "Blokkades oplossen"
-                          : gemeente.urgentCases > 0
-                            ? "Urgente opvolging"
-                            : "Reguliere doorstroom"}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex justify-end text-xs text-muted-foreground">
-                      {gemeente.blockedCases > 0 ? "Gemeente" : "Gemeente + aanbieder"}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex justify-end">
-                      <Button
-                        size="sm"
-                        variant={gemeente.blockedCases > 0 || gemeente.urgentCases > 0 ? "default" : "ghost"}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onGemeenteClick?.(gemeente.id);
-                        }}
-                      >
-                        Open
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-      </CareSectionBody>
-      </CareSection>
+        </CareWorkspaceSection>
     </CarePageScaffold>
   );
 }

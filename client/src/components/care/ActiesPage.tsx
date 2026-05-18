@@ -28,12 +28,12 @@ import {
   CareMetricBadge,
   CarePageScaffold,
   CarePrimaryList,
-  CareSection,
-  CareSectionBody,
   CareSectionHeader,
+  CareWorkspaceSection,
   CareSearchFiltersBar,
   CareOperationalQueueHeader,
   CareWorkListCard,
+  CARE_RHYTHM,
   CareWorkRow,
   EmptyState,
   ErrorState,
@@ -339,14 +339,18 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
         </CareMetricBadge>
       }
     >
-      <CareSection testId="acties-uitvoerlijst" aria-labelledby="acties-werkvoorraad-heading">
+      <CareWorkspaceSection
+        testId="acties-uitvoerlijst"
+        aria-labelledby="acties-werkvoorraad-heading"
+        bodyBleedX
+        header={(
         <CareSectionHeader
           className="lg:flex-col lg:items-stretch"
           title={
             <span id="acties-werkvoorraad-heading">Werkvoorraad</span>
           }
           meta={
-            <div className="w-full min-w-0 space-y-2">
+            <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
               <span className="inline-flex w-fit items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
                 {loading ? "…" : `${sortedTasks.length} acties`}
               </span>
@@ -451,8 +455,9 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
             </div>
           }
         />
-        <CareSectionBody className="space-y-3">
-          <div id="acties-werklijst" data-testid="acties-werklijst">
+        )}
+      >
+          <div id="acties-werklijst" data-testid="acties-werklijst" className={CARE_RHYTHM.zoneStack}>
             {loading && <LoadingState title="Acties laden…" copy="Takenlijst wordt opgebouwd." />}
             {!loading && error && (
               <ErrorState
@@ -547,8 +552,7 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
               />
             )}
           </div>
-        </CareSectionBody>
-      </CareSection>
+      </CareWorkspaceSection>
     </CarePageScaffold>
   );
 }

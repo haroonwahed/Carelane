@@ -89,7 +89,10 @@ export function WorkflowCaseCard({ item, onOpen }: WorkflowCaseCardProps) {
         <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-muted-foreground">
           <div>
             <p>Match</p>
-            <p className="mt-1 text-sm font-medium text-foreground">{item.matchConfidenceLabel ?? "Nog niet berekend"}</p>
+            <p className="mt-1 text-sm font-medium text-foreground">{item.matchConfidenceLabel ?? "Nog geen matchadvies"}</p>
+            {item.matchAdvisoryHint ? (
+              <p className="mt-0.5 text-xs text-muted-foreground">{item.matchAdvisoryHint}</p>
+            ) : null}
           </div>
           <div>
             <p>Aanbiederstatus</p>

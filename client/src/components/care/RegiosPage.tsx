@@ -23,18 +23,19 @@ import {
   Activity,
 } from "lucide-react";
 import { Button } from "../ui/button";
+import { cn } from "../ui/utils";
 import {
   CareAttentionBar,
   CareInfoPopover,
   CarePageScaffold,
-  CareSection,
-  CareSectionBody,
   CareSectionHeader,
   CareSearchFiltersBar,
+  CareWorkspaceSection,
+  CareQueueInlineAction,
+  CARE_RHYTHM,
   EmptyState,
   ErrorState,
   LoadingState,
-  PrimaryActionButton,
 } from "./CareDesignPrimitives";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
@@ -202,7 +203,7 @@ export function RegiosPage({
 
   return (
     <CarePageScaffold
-      archetype="worklist"
+      archetype="network"
       className="pb-8"
       title="Regio's"
       subtitleInfoTestId="regios-page-info"
@@ -222,19 +223,28 @@ export function RegiosPage({
                 : `${systemState.highWaitRegions.length} regio's hebben hogere wachttijd`
           }
           action={
-            <PrimaryActionButton onClick={openSignalen}>
+            <CareQueueInlineAction onClick={openSignalen}>
               Ga naar signalen
-            </PrimaryActionButton>
+            </CareQueueInlineAction>
           }
         />
       }
+      actions={
+        <Button variant="outline" onClick={() => void refetch()}>
+          Ververs
+        </Button>
+      }
     >
-      <CareSection>
+      <CareWorkspaceSection
+        testId="regios-netwerk"
+        aria-labelledby="regios-netwerk-heading"
+        bodyBleedX
+        header={
         <CareSectionHeader
           className="lg:flex-col lg:items-stretch"
-          title="Werkvoorraad"
+          title={<span id="regios-netwerk-heading">Netwerkoverzicht</span>}
           meta={(
-            <div className="w-full min-w-0 space-y-2">
+            <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
               <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
                 {filteredRegions.length} zichtbaar · {systemState.totalCases} casussen · {systemState.systemUtilization}% bezetting
               </span>
@@ -276,165 +286,165 @@ export function RegiosPage({
             </div>
           )}
         />
-        <CareSectionBody className="space-y-4">
-      <div className={`${regionOverviewShell} p-4`}>
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-foreground">Signalen</h2>
-          <Button type="button" variant="outline" size="sm" className="h-8 shrink-0 text-xs" onClick={openSignalen}>
-            Ga naar signalen
-          </Button>
-        </div>
-
-        {regieSignals.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Geen signalen in dit overzicht.</p>
-        ) : (
-          <div className="space-y-2">
-            {regieSignals.map((signal) => (
-              <div
-                key={signal.id}
-                className="flex flex-col gap-2 rounded-lg border border-border/55 bg-muted/15 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
-              >
-                <p className="min-w-0 flex-1 text-sm text-foreground">{signal.message}</p>
-                {signal.onAction && signal.actionLabel ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-full shrink-0 px-3 text-xs sm:w-auto"
-                    onClick={signal.onAction}
-                  >
-                    {signal.actionLabel}
-                  </Button>
-                ) : null}
+        }
+      >
+        <div className="space-y-4">
+            <div className={`${regionOverviewShell} p-4`}>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-foreground">Signalen</h2>
+                <Button type="button" variant="outline" size="sm" className="h-8 shrink-0 text-xs" onClick={openSignalen}>
+                  Ga naar signalen
+                </Button>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      <div className={`${regionOverviewShell} p-4`}>
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-sm font-bold text-foreground">Capaciteit verdeling</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Bezetting per regio: hoeveel capaciteit in gebruik is versus beschikbaar.
-            </p>
-          </div>
-          <div className="hidden items-center gap-3 text-[11px] text-muted-foreground sm:flex">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-green-400" /> Normaal
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-amber-400" /> Druk
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-red-400" /> Tekort
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-red-600" /> Kritiek
-            </span>
-          </div>
-        </div>
-
-        {filteredRegions.length === 0 ? (
-          <div className="rounded-xl border border-border/55 bg-card/30 p-4 text-center">
-            <p className="text-sm font-medium text-foreground">Geen capaciteitsdata</p>
-            <p className="mt-1 text-xs text-muted-foreground">Koppel aanbieders om de verdeling te tonen.</p>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-              <Button variant="outline" size="sm" onClick={openZorgaanbieders}>Ga naar zorgaanbieders</Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredRegions.map((region) => {
-              const utilization = region.totalCapacity > 0
-                ? Math.round((region.usedCapacity / region.totalCapacity) * 100)
-                : 0;
-
-              return (
-                <div key={region.id} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">{region.name}</span>
-                    <span className="text-sm text-muted-foreground">{utilization}%</span>
-                  </div>
-
-                  <div className="relative h-2 bg-muted/20 rounded-full overflow-hidden">
+              {regieSignals.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Geen signalen in dit overzicht.</p>
+              ) : (
+                <div className="space-y-2">
+                  {regieSignals.map((signal) => (
                     <div
-                      className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
-                        region.status === "kritiek" ? "bg-red-600" :
-                        utilization >= 90 ? "bg-red-400" :
-                        utilization >= 75 ? "bg-amber-400" :
-                        "bg-green-400"
-                      }`}
-                      style={{ width: `${utilization}%` }}
-                    />
-                  </div>
+                      key={signal.id}
+                      className="flex flex-col gap-2 rounded-lg border border-border/55 bg-muted/15 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                    >
+                      <p className="min-w-0 flex-1 text-sm text-foreground">{signal.message}</p>
+                      {signal.onAction && signal.actionLabel ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-full shrink-0 px-3 text-xs sm:w-auto"
+                          onClick={signal.onAction}
+                        >
+                          {signal.actionLabel}
+                        </Button>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{region.usedCapacity} gebruikt</span>
-                    <span>{Math.max(region.totalCapacity - region.usedCapacity, 0)} beschikbaar</span>
+            <div className={`${regionOverviewShell} p-4`}>
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-sm font-bold text-foreground">Capaciteit verdeling</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Bezetting per regio: hoeveel capaciteit in gebruik is versus beschikbaar.
+                  </p>
+                </div>
+                <div className="hidden items-center gap-3 text-[11px] text-muted-foreground sm:flex">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-green-400" /> Normaal
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-amber-400" /> Druk
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-red-400" /> Tekort
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-red-600" /> Kritiek
+                  </span>
+                </div>
+              </div>
+
+              {filteredRegions.length === 0 ? (
+                <div className="rounded-xl border border-border/55 bg-card/30 p-4 text-center">
+                  <p className="text-sm font-medium text-foreground">Geen capaciteitsdata</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Koppel aanbieders om de verdeling te tonen.</p>
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                    <Button variant="outline" size="sm" onClick={openZorgaanbieders}>Ga naar zorgaanbieders</Button>
                   </div>
                 </div>
-              );
-            })}
+              ) : (
+                <div className="space-y-3">
+                  {filteredRegions.map((region) => {
+                    const utilization = region.totalCapacity > 0
+                      ? Math.round((region.usedCapacity / region.totalCapacity) * 100)
+                      : 0;
+
+                    return (
+                      <div key={region.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-foreground">{region.name}</span>
+                          <span className="text-sm text-muted-foreground">{utilization}%</span>
+                        </div>
+
+                        <div className="relative h-2 overflow-hidden rounded-full bg-muted/20">
+                          <div
+                            className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
+                              region.status === "kritiek" ? "bg-red-600" :
+                              utilization >= 90 ? "bg-red-400" :
+                              utilization >= 75 ? "bg-amber-400" :
+                              "bg-green-400"
+                            }`}
+                            style={{ width: `${utilization}%` }}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{region.usedCapacity} gebruikt</span>
+                          <span>{Math.max(region.totalCapacity - region.usedCapacity, 0)} beschikbaar</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-foreground">Alle regio's</h2>
+                <span className="text-sm text-muted-foreground">
+                  {filteredRegions.length} {filteredRegions.length === 1 ? "regio" : "regio's"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {filteredRegions.map((region) => (
+                  <RegionCard
+                    key={region.id}
+                    region={region}
+                    onClick={() => onRegionClick(region.id)}
+                    onViewGemeenten={() => onViewGemeenten(region.id)}
+                    onViewProviders={() => onViewProviders(region.id)}
+                  />
+                ))}
+              </div>
+
+              {loading && (
+                <LoadingState title="Regio's laden…" copy="Overzicht wordt opgebouwd." />
+              )}
+              {!loading && error && (
+                <ErrorState
+                  title="Kon regio's niet laden"
+                  copy={error}
+                  action={<Button variant="outline" size="sm" onClick={refetch}>Opnieuw proberen</Button>}
+                />
+              )}
+              {!loading && !error && filteredRegions.length === 0 && (
+                <EmptyState
+                  title="Geen regio's"
+                  copy="Er zijn geen regio's die passen bij de huidige filters."
+                  action={(
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setCapacityFilter("all");
+                    }}
+                  >
+                    Wis filters
+                  </Button>
+                  )}
+                />
+              )}
+            </div>
           </div>
-        )}
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-foreground">
-            Alle regio's
-          </h2>
-          <span className="text-sm text-muted-foreground">
-            {filteredRegions.length} {filteredRegions.length === 1 ? 'regio' : 'regio\'s'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredRegions.map((region) => (
-            <RegionCard
-              key={region.id}
-              region={region}
-              onClick={() => onRegionClick(region.id)}
-              onViewGemeenten={() => onViewGemeenten(region.id)}
-              onViewProviders={() => onViewProviders(region.id)}
-            />
-          ))}
-        </div>
-
-        {loading && (
-          <LoadingState title="Regio's laden…" copy="Overzicht wordt opgebouwd." />
-        )}
-        {!loading && error && (
-          <ErrorState
-            title="Kon regio's niet laden"
-            copy={error}
-            action={<Button variant="outline" size="sm" onClick={refetch}>Opnieuw proberen</Button>}
-          />
-        )}
-        {!loading && !error && filteredRegions.length === 0 && (
-          <EmptyState
-            title="Geen regio's"
-            copy="Er zijn geen regio's die passen bij de huidige filters."
-            action={(
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={() => {
-                setSearchQuery("");
-                setCapacityFilter("all");
-              }}
-            >
-              Wis filters
-            </Button>
-            )}
-          />
-        )}
-      </div>
-      </CareSectionBody>
-      </CareSection>
+        </CareWorkspaceSection>
     </CarePageScaffold>
   );
 }

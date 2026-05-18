@@ -29,6 +29,7 @@ from contracts.workflow_state_machine import (
     derive_workflow_state,
     resolve_actor_role,
 )
+from contracts.workflow_summary_gate import workflow_summary_can_bootstrap
 
 
 def _safe_related(instance: Any, attr: str) -> Any:
@@ -1278,6 +1279,7 @@ def _evaluate_action_policy(
     placement: PlacementRequest | None,
     required_data_complete: bool,
     has_summary: bool,
+    has_matching_result: bool,
     matching_ready: bool,
     latest_match_confidence: float | None,
     provider_response_pending_sla_breached: bool,
@@ -1317,10 +1319,22 @@ def _evaluate_action_policy(
     if action_code == "START_MATCHING":
         if actor_role not in {WorkflowRole.GEMEENTE, WorkflowRole.ADMIN}:
             return False, "Alleen gemeente of admin kan matching starten."
-        if not has_summary:
-            return False, "Samenvatting ontbreekt."
-        if current_state not in {WorkflowState.DRAFT_CASE, WorkflowState.SUMMARY_READY}:
-            return False, "Matching kan alleen starten vanuit de samenvattingsfase."
+        if intake is None:
+            return False, "Casus ontbreekt."
+        if not workflow_summary_can_bootstrap(assessment=assessment, intake=intake):
+            return False, (
+                "Voltooi de gestructureerde samenvatting vóór matching."
+                if assessment is not None
+                else "Samenvatting ontbreekt."
+            )
+        if current_state == WorkflowState.MATCHING_READY and has_matching_result:
+            return False, "Matchadvies is al beschikbaar; valideer matching."
+        if current_state not in {
+            WorkflowState.DRAFT_CASE,
+            WorkflowState.SUMMARY_READY,
+            WorkflowState.MATCHING_READY,
+        }:
+            return False, "Matching kan alleen starten vanuit de samenvattings- of matchingfase."
         return True, ""
 
     if action_code == "SEND_TO_PROVIDER":
@@ -1452,6 +1466,7 @@ def _build_blockers_and_alerts(
     placement: PlacementRequest | None,
     required_data_complete: bool,
     has_summary: bool,
+    matching_summary_ready: bool,
     has_matching_result: bool,
     latest_match_confidence: float | None,
     provider_rejection_count: int,
@@ -1550,13 +1565,17 @@ def _build_blockers_and_alerts(
         )
         return blockers, risks, alerts, {"provider_pending_sla_breached": False}
 
-    if current_state in {WorkflowState.SUMMARY_READY, WorkflowState.DRAFT_CASE} and has_summary:
+    if (
+        current_state in {WorkflowState.SUMMARY_READY, WorkflowState.DRAFT_CASE}
+        and matching_summary_ready
+        and not has_matching_result
+    ):
         blockers.append(
             _serialize_blocker(
                 "MATCHING_NOT_READY",
                 "high",
                 "Matching is nog niet gestart of nog niet gereed.",
-                ["VALIDATE_MATCHING", "SEND_TO_PROVIDER", "PROVIDER_ACCEPT", "PROVIDER_REJECT"],
+                ["START_MATCHING", "VALIDATE_MATCHING", "SEND_TO_PROVIDER"],
             )
         )
         add_alert(
@@ -1564,7 +1583,23 @@ def _build_blockers_and_alerts(
                 "NO_MATCH_AVAILABLE",
                 "high",
                 "Nog geen matchingresultaat",
-                "Werk het matchadvies uit voordat gemeentevalidatie en aanbiederbeoordeling mogelijk zijn.",
+                "Start matching om het advies op te bouwen; daarna volgt gemeentevalidatie.",
+                "START_MATCHING",
+                {"has_matching_result": False},
+            )
+        )
+
+    if (
+        current_state == WorkflowState.MATCHING_READY
+        and matching_summary_ready
+        and not has_matching_result
+    ):
+        add_alert(
+            _serialize_alert(
+                "NO_MATCH_AVAILABLE",
+                "high",
+                "Matchadvies ontbreekt",
+                "Herstart matching om het matchadvies vast te leggen.",
                 "START_MATCHING",
                 {"has_matching_result": False},
             )
@@ -1745,6 +1780,8 @@ def _next_best_action(
     current_state: str,
     required_data_complete: bool,
     has_summary: bool,
+    matching_summary_ready: bool,
+    has_matching_result: bool,
     provider_pending_sla_breached: bool,
     provider_rejection_count: int,
     placement_confirmed: bool,
@@ -1766,14 +1803,24 @@ def _next_best_action(
         action = "GENERATE_SUMMARY"
         priority = "medium"
         reason = "Samenvatting ontbreekt."
-    elif current_state == WorkflowState.SUMMARY_READY:
-        action = "START_MATCHING"
-        priority = "high"
-        reason = "Samenvatting is compleet; start matching."
+    elif current_state in {WorkflowState.DRAFT_CASE, WorkflowState.SUMMARY_READY}:
+        if not matching_summary_ready:
+            action = "GENERATE_SUMMARY"
+            priority = "high"
+            reason = "Voltooi de gestructureerde samenvatting vóór matching."
+        elif not has_matching_result:
+            action = "START_MATCHING"
+            priority = "high"
+            reason = "Samenvatting is gereed; matchadvies wordt opgebouwd."
     elif current_state == WorkflowState.MATCHING_READY:
-        action = "VALIDATE_MATCHING"
-        priority = "high"
-        reason = "Gemeentevalidatie is verplicht vóór versturen naar aanbieder."
+        if not has_matching_result:
+            action = "START_MATCHING"
+            priority = "high"
+            reason = "Matchadvies ontbreekt; start matching opnieuw."
+        else:
+            action = "VALIDATE_MATCHING"
+            priority = "high"
+            reason = "Gemeentevalidatie is verplicht vóór versturen naar aanbieder."
     elif current_state == WorkflowState.GEMEENTE_VALIDATED:
         action = "SEND_TO_PROVIDER"
         priority = "high"
@@ -1831,6 +1878,10 @@ def _next_best_action(
         priority = "low"
         reason = "Actieve plaatsing: plan evaluaties en volg doorstroom."
 
+    return _build_next_best_action_payload(action=action, priority=priority, reason=reason)
+
+
+def _build_next_best_action_payload(*, action: str, priority: str, reason: str) -> dict[str, Any]:
     return {
         "action": action,
         "label": {
@@ -1859,6 +1910,74 @@ def _next_best_action(
         }.get(priority, "low"),
         "reason": reason,
     }
+
+
+_NBA_ACTION_PRIORITY: tuple[str, ...] = (
+    "COMPLETE_CASE_DATA",
+    "GENERATE_SUMMARY",
+    "START_MATCHING",
+    "VALIDATE_MATCHING",
+    "SEND_TO_PROVIDER",
+    "FOLLOW_UP_PROVIDER",
+    "REMATCH_CASE",
+    "CONFIRM_PLACEMENT",
+    "START_INTAKE",
+    "BUDGET_APPROVE",
+    "BUDGET_REJECT",
+    "BUDGET_REQUEST_INFO",
+    "BUDGET_DEFER",
+    "COMPLETE_WIJKTEAM_INTAKE",
+    "COMPLETE_ZORGVRAAG_ASSESSMENT",
+    "ACTIVATE_PLACEMENT_MONITORING",
+    "WAIT_PROVIDER_RESPONSE",
+    "PROVIDER_ACCEPT",
+    "PROVIDER_REJECT",
+    "PROVIDER_REQUEST_INFO",
+    "MONITOR_CASE",
+    "ARCHIVE_CASE",
+)
+
+_NBA_PRIORITY_BY_ACTION: dict[str, str] = {
+    "COMPLETE_CASE_DATA": "medium",
+    "GENERATE_SUMMARY": "high",
+    "START_MATCHING": "high",
+    "VALIDATE_MATCHING": "high",
+    "SEND_TO_PROVIDER": "high",
+    "FOLLOW_UP_PROVIDER": "critical",
+    "REMATCH_CASE": "high",
+    "CONFIRM_PLACEMENT": "high",
+    "START_INTAKE": "high",
+    "WAIT_PROVIDER_RESPONSE": "medium",
+    "MONITOR_CASE": "low",
+    "ARCHIVE_CASE": "low",
+}
+
+
+def _sync_next_best_action_with_allowed(
+    next_best_action: dict[str, Any] | None,
+    *,
+    allowed_actions: list[dict[str, Any]],
+    fallback_reason: str,
+) -> dict[str, Any] | None:
+    """Ensure the surfaced NBA is executable under current policy."""
+    allowed_codes = {str(row.get("action") or "") for row in allowed_actions}
+    if next_best_action:
+        code = str(next_best_action.get("action") or "")
+        if code in allowed_codes:
+            return next_best_action
+    for code in _NBA_ACTION_PRIORITY:
+        if code not in allowed_codes:
+            continue
+        label = next((str(row.get("label") or code) for row in allowed_actions if row.get("action") == code), code)
+        reason = fallback_reason
+        if next_best_action and str(next_best_action.get("action") or "") == code:
+            reason = str(next_best_action.get("reason") or fallback_reason)
+        return _build_next_best_action_payload(
+            action=code,
+            priority=_NBA_PRIORITY_BY_ACTION.get(code, "medium"),
+            reason=reason,
+        )
+    return None
 
 
 def evaluate_case(case: Any, actor: Any | None = None, actor_role: str | None = None) -> dict[str, Any]:
@@ -1902,6 +2021,11 @@ def evaluate_case(case: Any, actor: Any | None = None, actor_role: str | None = 
     required_data_complete = _required_data_complete(intake, case_record)
     summary_text = _summary_text(intake=intake, case_record=case_record, assessment=assessment)
     has_summary = bool(summary_text)
+    matching_summary_ready = (
+        workflow_summary_can_bootstrap(assessment=assessment, intake=intake)
+        if intake is not None
+        else False
+    )
     has_matching_result = bool(match_result)
     latest_match_confidence = _confidence_to_score(match_result)
     provider_review_status = _clean(placement.provider_response_status) if placement else ""
@@ -1957,6 +2081,7 @@ def evaluate_case(case: Any, actor: Any | None = None, actor_role: str | None = 
         placement=placement,
         required_data_complete=required_data_complete,
         has_summary=has_summary,
+        matching_summary_ready=matching_summary_ready,
         has_matching_result=has_matching_result,
         latest_match_confidence=latest_match_confidence,
         provider_rejection_count=provider_rejection_count,
@@ -1981,6 +2106,8 @@ def evaluate_case(case: Any, actor: Any | None = None, actor_role: str | None = 
         current_state=current_state,
         required_data_complete=required_data_complete,
         has_summary=has_summary,
+        matching_summary_ready=matching_summary_ready,
+        has_matching_result=has_matching_result,
         provider_pending_sla_breached=provider_pending_sla_breached,
         provider_rejection_count=provider_rejection_count,
         placement_confirmed=placement_confirmed,
@@ -2037,6 +2164,7 @@ def evaluate_case(case: Any, actor: Any | None = None, actor_role: str | None = 
             placement=placement,
             required_data_complete=required_data_complete,
             has_summary=has_summary,
+            has_matching_result=has_matching_result,
             matching_ready=current_state in {WorkflowState.MATCHING_READY, WorkflowState.PROVIDER_REVIEW_PENDING, WorkflowState.PROVIDER_ACCEPTED, WorkflowState.PROVIDER_REJECTED, WorkflowState.PLACEMENT_CONFIRMED, WorkflowState.INTAKE_STARTED},
             latest_match_confidence=latest_match_confidence,
             provider_response_pending_sla_breached=provider_pending_sla_breached,
@@ -2046,6 +2174,12 @@ def evaluate_case(case: Any, actor: Any | None = None, actor_role: str | None = 
             allowed_actions.append(payload)
         else:
             blocked_actions.append(payload)
+
+    next_best_action = _sync_next_best_action_with_allowed(
+        next_best_action,
+        allowed_actions=allowed_actions,
+        fallback_reason=str((next_best_action or {}).get("reason") or "Monitor de casus."),
+    )
 
     timeline_signals = {
         "latest_event_type": case_logs[0].event_type if case_logs else "",
@@ -2064,6 +2198,7 @@ def evaluate_case(case: Any, actor: Any | None = None, actor_role: str | None = 
     decision_context = {
         "required_data_complete": required_data_complete,
         "has_summary": has_summary,
+        "matching_summary_ready": matching_summary_ready,
         "has_matching_result": has_matching_result,
         "matching_outcome": matching_outcome,
         "latest_match_confidence": latest_match_confidence,

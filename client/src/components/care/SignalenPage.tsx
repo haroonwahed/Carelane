@@ -15,12 +15,12 @@ import {
   CareMetricBadge,
   CarePageScaffold,
   CarePrimaryList,
-  CareSection,
-  CareSectionBody,
   CareSectionHeader,
+  CareWorkspaceSection,
   CareSearchFiltersBar,
   CareOperationalQueueHeader,
   CareWorkListCard,
+  CARE_RHYTHM,
   CareWorkRow,
   CareQueueInlineAction,
   EmptyState,
@@ -418,12 +418,12 @@ export function SignalenPage({ onOpenCase, onNavigateToWorkflow }: SignalenPageP
       }
       actions={headerActions}
     >
-      <CareSection>
+      <CareWorkspaceSection testId="signalen-uitvoerlijst" bodyBleedX header={(
         <CareSectionHeader
           className="lg:flex-col lg:items-stretch"
           title="Werkvoorraad"
           meta={(
-            <div className="w-full min-w-0 space-y-2">
+            <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
               <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
                 {filteredSignals.length} signalen
               </span>
@@ -461,7 +461,7 @@ export function SignalenPage({ onOpenCase, onNavigateToWorkflow }: SignalenPageP
             </div>
           )}
         />
-        <CareSectionBody className="space-y-3">
+      )}>
           {loading && (
             <LoadingState title="Signalen laden…" copy="Overzicht wordt opgebouwd." />
           )}
@@ -508,8 +508,7 @@ export function SignalenPage({ onOpenCase, onNavigateToWorkflow }: SignalenPageP
               )}
             />
           )}
-        </CareSectionBody>
-      </CareSection>
+      </CareWorkspaceSection>
     </CarePageScaffold>
   );
 }

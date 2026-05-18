@@ -2,7 +2,7 @@ import type { RegiekamerDecisionOverviewTotals } from "./regiekamerDecisionOverv
 
 /**
  * Deterministic Regiekamer Next Best Action (no AI).
- * Priority: 1 blokkades → 2 SLA → 3 matching → 4 intake → (then risico’s, stable, optimization).
+ * Priority: 1 blokkades → 2 SLA → 3 matching → 4 intake → risico’s → doorstroom-coördinatie → stabiel.
  */
 export type RegiekamerNbaActionKey =
   | "FOCUS_BLOCKERS"
@@ -11,19 +11,19 @@ export type RegiekamerNbaActionKey =
   | "FOCUS_INTAKE"
   | "FOCUS_RISKS"
   | "OPEN_WORKQUEUE"
-  | "OPEN_REPORTS"
+  | "FOCUS_PIPELINE"
   | "REVIEW_STABLE"
   /** SLA + aanbieder-fase — zelfde gedrag als bestaande “reminders” flow. */
   | "SLA_PROVIDER_REMINDERS";
 
-export type RegiekamerNbaUiMode = "crisis" | "intervention" | "stable" | "optimization";
+export type RegiekamerNbaUiMode = "crisis" | "intervention" | "stable" | "coordination";
 
 export type DominantNbaTone = "calm" | "attention" | "urgent";
 
 /** Risico’s uit totals tellen mee vanaf deze drempel (eenvoudige regel). */
 export const REGIEKAMER_NBA_RISK_THRESHOLD = 1;
-/** Genoeg volume om optimalisatie / analyse te rechtvaardigen. */
-export const REGIEKAMER_NBA_OPTIMIZATION_MIN_ACTIVE = 8;
+/** Genoeg volume om doorstroom-coördinatie (geen rapportages) te rechtvaardigen. */
+export const REGIEKAMER_NBA_COORDINATION_MIN_ACTIVE = 8;
 
 function r(n: number): number {
   return Math.max(0, Math.round(n));
@@ -159,9 +159,11 @@ export function computeRegiekamerNextBestAction(input: RegiekamerNbaInput): Regi
 
   // 1 — Blokkades
   if (b > 0) {
-    const title =
-      b === 1 ? "1 kritieke blokkade actief" : `${b} kritieke blokkades actief`;
-    const description = "Los dit eerst op om de doorstroom te herstellen.";
+    const title = "Verhoogde regie-aandacht";
+    const description =
+      b === 1
+        ? "1 aanvraag vraagt directe afstemming."
+        : `${b} aanvragen vragen directe afstemming.`;
     const impactHint =
       s > 0
         ? `Daarnaast: ${s} SLA-signal(en) — plan regie zodra de blokkade is opgelost.`
@@ -185,8 +187,8 @@ export function computeRegiekamerNextBestAction(input: RegiekamerNbaInput): Regi
   // 2 — SLA breaches
   if (s > 0) {
     return {
-      title: `${s} SLA-signal(en) vragen directe regie`,
-      description: "Reactietijd of capaciteit schuurt tegen de afspraak.",
+      title: "Verhoogde regie-aandacht",
+      description: `${s} SLA-signal(en) vragen directe afstemming.`,
       reasons: slaReasons(s, ex),
       primaryAction: { label: "Bekijk kritieke aanvragen", actionKey: "FOCUS_SLA" },
       secondaryAction: { label: "Open werkvoorraad", actionKey: "OPEN_WORKQUEUE" },
@@ -237,7 +239,7 @@ export function computeRegiekamerNextBestAction(input: RegiekamerNbaInput): Regi
   // Risico’s (na de vier prioritaire signalen)
   if (risks >= REGIEKAMER_NBA_RISK_THRESHOLD) {
     return {
-      title: nlMetVerhoogdRisicoHeading(risks),
+      title: "Verhoogde regie-aandacht",
       description: "",
       reasons: [],
       primaryAction: { label: "Bekijk kritieke aanvragen", actionKey: "FOCUS_RISKS" },
@@ -254,19 +256,19 @@ export function computeRegiekamerNextBestAction(input: RegiekamerNbaInput): Regi
     };
   }
 
-  // Volume-kansen
-  if (active >= REGIEKAMER_NBA_OPTIMIZATION_MIN_ACTIVE) {
+  // Hoge doorstroom zonder acute signalen — coördineer knelpunten (geen rapportages/BI)
+  if (active >= REGIEKAMER_NBA_COORDINATION_MIN_ACTIVE) {
     return {
-      title: "Hoge doorstroom — scan kansen",
-      description: `${active} actieve aanvragen — waar kun je tijd of capaciteit winnen?`,
+      title: "Hoge doorstroom — coördineer knelpunten",
+      description: `${active} actieve aanvragen — richt regie op wachtposities en doorstroom.`,
       reasons: [`${active} actieve aanvragen in doorstroom`],
-      primaryAction: { label: "Open doorstroomrapport", actionKey: "OPEN_REPORTS" },
-      secondaryAction: { label: "Open werkvoorraad", actionKey: "OPEN_WORKQUEUE" },
+      primaryAction: { label: "Bekijk knelpunt in stroom", actionKey: "FOCUS_PIPELINE" },
+      secondaryAction: { label: "Open aanvragen", actionKey: "OPEN_WORKQUEUE" },
       panel: {
         tone: "calm",
         linkCount: 0,
         showCasesLink: false,
-        uiMode: "optimization",
+        uiMode: "coordination",
       },
     };
   }
@@ -275,7 +277,7 @@ export function computeRegiekamerNextBestAction(input: RegiekamerNbaInput): Regi
     title: "Keten stabiel",
     description: "Geen blokkades of SLA-druk; risico's zijn beperkt.",
     reasons: [],
-    primaryAction: { label: "Open werkvoorraad", actionKey: "REVIEW_STABLE" },
+    primaryAction: { label: "Bekijk aanvragen", actionKey: "REVIEW_STABLE" },
     panel: {
       tone: "calm",
       linkCount: 0,

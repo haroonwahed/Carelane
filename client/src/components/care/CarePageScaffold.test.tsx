@@ -5,12 +5,12 @@ import { CarePageScaffold } from "./CarePageScaffold";
 describe("CarePageScaffold", () => {
   it("exposes stable test ids, archetype, and one h1", () => {
     render(
-      <CarePageScaffold archetype="worklist" title="Titel" subtitle="Ondertitel">
+      <CarePageScaffold archetype="queue" title="Titel" subtitle="Ondertitel">
         <p>Inhoud</p>
       </CarePageScaffold>,
     );
     const root = screen.getByTestId("care-page-scaffold");
-    expect(root).toHaveAttribute("data-care-page-archetype", "worklist");
+    expect(root).toHaveAttribute("data-care-page-archetype", "queue");
     expect(screen.getByTestId("care-page-header")).toBeInTheDocument();
     expect(screen.getByTestId("care-unified-header")).toBeInTheDocument();
     expect(screen.getByTestId("care-page-content")).toBeInTheDocument();
@@ -22,7 +22,7 @@ describe("CarePageScaffold", () => {
   it("renders optional dominantAction, kpiStrip, filters, and insights only when provided", () => {
     render(
       <CarePageScaffold
-        archetype="decision"
+        archetype="workspace"
         title="X"
         dominantAction={<div data-testid="nba-mock">NBA</div>}
         kpiStrip={<div data-testid="kpi-mock">KPI</div>}
@@ -41,10 +41,10 @@ describe("CarePageScaffold", () => {
 
   it("supports custom root testId", () => {
     render(
-      <CarePageScaffold archetype="signal-action" testId="acties-page-root" title="Acties">
+      <CarePageScaffold archetype="command" testId="acties-page-root" title="Acties">
         —
       </CarePageScaffold>,
     );
-    expect(screen.getByTestId("acties-page-root")).toHaveAttribute("data-care-page-archetype", "signal-action");
+    expect(screen.getByTestId("acties-page-root")).toHaveAttribute("data-care-page-archetype", "command");
   });
 });

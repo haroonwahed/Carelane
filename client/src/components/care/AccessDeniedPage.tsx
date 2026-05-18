@@ -57,7 +57,7 @@ export function AccessDeniedPage({ onGoDashboard, onGoCasussen }: AccessDeniedPa
 
   return (
     <CarePageScaffold
-      archetype="worklist"
+      archetype="exception"
       className="pb-8"
       title={copy.title}
       subtitle={copy.message}

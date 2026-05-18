@@ -70,6 +70,7 @@ import {
   type RegiekamerFlowPhase,
 } from "../../lib/regiekamerCommandCenter";
 import { tokens } from "../../design/tokens";
+import { CARE_RHYTHM } from "../../lib/operationalRhythm";
 import {
   buildRegiekamerNbaInstrumentationPayload,
   emitRegiekamerNbaEvent,
@@ -259,6 +260,19 @@ const ISSUE_LABELS: Record<IssueFilter, string> = {
   rejection: "Afwijzing",
   intake: "Intake",
 };
+
+const REGIEKAMER_COORDINATION_LIST_CAP = 12;
+
+function itemNeedsCoordinationAttention(item: RegiekamerDecisionOverviewItem): boolean {
+  if (item.top_blocker || item.top_alert) {
+    return true;
+  }
+  if (item.priority_score >= 70) {
+    return true;
+  }
+  const riskSeverity = (item.top_risk?.severity ?? "").toLowerCase();
+  return riskSeverity === "high" || riskSeverity === "critical";
+}
 
 const OWNERSHIP_LABELS: Record<OwnershipFilter, string> = {
   all: "Alles",
@@ -498,6 +512,10 @@ function normalizeWorklistActionLabel(item: RegiekamerDecisionOverviewItem, labe
 }
 
 function actionableProblemLabel(item: RegiekamerDecisionOverviewItem): string {
+  const nbaReason = item.next_best_action?.reason?.trim();
+  if (nbaReason) {
+    return getShortReasonLabel(nbaReason, 72);
+  }
   const code = item.top_blocker?.code ?? item.top_alert?.code ?? item.top_risk?.code ?? "";
   const nextAction = (item.next_best_action?.action ?? "").toUpperCase();
   const summaryState = summaryWorkflowState(item);
@@ -513,16 +531,16 @@ function actionableProblemLabel(item: RegiekamerDecisionOverviewItem): string {
       if (nextAction === "START_MATCHING") {
         return "Matching & validatie";
       }
-      return "🟡 Geen aanbieder toegewezen";
+      return "Geen aanbieder toegewezen";
     case "PROVIDER_REVIEW_PENDING_SLA":
-      return "🟡 Wacht op aanbieder";
+      return "Wacht op aanbieder";
     case "REPEATED_PROVIDER_REJECTIONS":
-      return "🔴 Herhaalde afwijzingen";
+      return "Herhaalde afwijzingen";
     case "INTAKE_NOT_STARTED":
     case "INTAKE_DELAYED":
-      return "🟡 Wacht op intake";
+      return "Wacht op intake";
     default:
-      return `🟡 ${getShortReasonLabel(primaryProblemText(item), 28)}`;
+      return getShortReasonLabel(primaryProblemText(item), 72);
   }
 }
 
@@ -806,6 +824,18 @@ export function SystemAwarenessPage({
     issueFilter !== "all" ||
     phaseFilter !== "all" ||
     ownershipFilter !== "all";
+
+  const coordinationListItems = useMemo(() => {
+    if (filtersActive) {
+      return visibleItems;
+    }
+    const attention = visibleItems.filter(itemNeedsCoordinationAttention);
+    const base = attention.length > 0 ? attention : visibleItems;
+    return base.slice(0, REGIEKAMER_COORDINATION_LIST_CAP);
+  }, [visibleItems, filtersActive]);
+
+  const coordinationListCapped = !filtersActive && visibleItems.length > coordinationListItems.length;
+
   const criticalBlockers = data?.totals.critical_blockers ?? 0;
   const highPriorityAlerts = data?.totals.high_priority_alerts ?? 0;
   const providerSlaBreaches = data?.totals.provider_sla_breaches ?? 0;
@@ -834,15 +864,55 @@ export function SystemAwarenessPage({
       return null;
     }
     const q = data.governance_queues;
-    const segments: { key: string; label: string; ids: string[] }[] = [
-      { key: "wijkteam", label: "Wijkteam", ids: q.wijkteam_intakes_needing_assessment },
-      { key: "zorgvraag", label: "Zorgvraag", ids: q.zorgvraag_beoordeling_open },
-      { key: "gemeente", label: "Validatie", ids: q.cases_waiting_gemeente_validation },
-      { key: "budget", label: "Budget", ids: q.budget_approvals_pending },
-      { key: "transitie", label: "Transitie", ids: q.provider_transition_requests_pending },
-      { key: "eval_komend", label: "Evaluaties", ids: q.evaluations_upcoming },
-      { key: "eval_te_laat", label: "Evaluaties te laat", ids: q.evaluations_overdue },
-      { key: "intensiteit", label: "Intensiteit", ids: q.active_placements_care_intensity_changed },
+    const segments: { key: string; label: string; help: string; ids: string[] }[] = [
+      {
+        key: "wijkteam",
+        label: "Wijkteam-intake",
+        help: "Aanvragen via wijkteam die nog intake of beoordeling nodig hebben.",
+        ids: q.wijkteam_intakes_needing_assessment,
+      },
+      {
+        key: "zorgvraag",
+        label: "Zorgvraagbeoordeling",
+        help: "Aanvragen in zorgvraagbeoordeling vóór matching.",
+        ids: q.zorgvraag_beoordeling_open,
+      },
+      {
+        key: "gemeente",
+        label: "Gemeentelijke validatie",
+        help: "Aanvragen waarbij matching gereed is en de gemeente het arrangement, budget of de vervolgstap moet valideren.",
+        ids: q.cases_waiting_gemeente_validation,
+      },
+      {
+        key: "budget",
+        label: "Budgetgoedkeuring",
+        help: "Plaatsingsaanvragen met open budgetcontrole door de gemeente.",
+        ids: q.budget_approvals_pending,
+      },
+      {
+        key: "transitie",
+        label: "Aanbieder-transitie",
+        help: "Open verzoeken tot overdracht of transitie tussen aanbieders.",
+        ids: q.provider_transition_requests_pending,
+      },
+      {
+        key: "eval_komend",
+        label: "Evaluaties gepland",
+        help: "Actieve plaatsingen met een geplande evaluatie.",
+        ids: q.evaluations_upcoming,
+      },
+      {
+        key: "eval_te_laat",
+        label: "Evaluaties te laat",
+        help: "Evaluaties waar de geplande datum is verstreken.",
+        ids: q.evaluations_overdue,
+      },
+      {
+        key: "intensiteit",
+        label: "Intensiteitswijziging",
+        help: "Actieve plaatsingen met gewijzigde of risicovolle zorgintensiteit.",
+        ids: q.active_placements_care_intensity_changed,
+      },
     ];
     const active = segments.filter((s) => s.ids.length > 0);
     if (active.length === 0) {
@@ -853,18 +923,31 @@ export function SystemAwarenessPage({
         data-testid="regiekamer-governance-queues"
         className="flex max-h-16 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-muted/20 px-3 py-2 shadow-sm"
       >
-        <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          Levenscyclus
+        <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          Wachtrijen
+          <CareInfoPopover
+            ariaLabel="Uitleg wachtrijen"
+            testId="regiekamer-governance-queues-info"
+            triggerClassName="h-5 w-5"
+          >
+            <p className="text-muted-foreground">
+              Operationele wachtrijen: waar aanvragen vastliggen binnen dezelfde doorstroom. Geen apart proces naast
+              Doorstroom — klik een wachtrij om de eerste aanvraag te openen.
+            </p>
+          </CareInfoPopover>
         </span>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {active.map((s) => {
             const first = s.ids[0];
+            const count = s.ids.length;
             return (
               <button
                 key={s.key}
                 type="button"
-                className="rounded-full bg-muted/35 px-2.5 py-1 text-left text-[12px] font-medium text-foreground hover:bg-muted/55 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex max-w-full items-center gap-0.5 rounded-full border border-transparent bg-muted/35 px-2.5 py-1 text-left text-[12px] font-medium text-foreground underline-offset-2 hover:border-border/60 hover:bg-muted/55 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!first}
+                title={s.help}
+                aria-label={`Open eerste aanvraag in wachtrij ${s.label} (${count})`}
                 onClick={() => {
                   if (first) {
                     onCaseClick(String(first));
@@ -872,8 +955,9 @@ export function SystemAwarenessPage({
                 }}
                 data-testid={`regiekamer-governance-${s.key}`}
               >
-                {s.label}{" "}
-                <span className="tabular-nums text-muted-foreground">({s.ids.length})</span>
+                <span className="truncate">{s.label}</span>{" "}
+                <span className="shrink-0 tabular-nums text-muted-foreground">({count})</span>
+                <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
               </button>
             );
           })}
@@ -989,8 +1073,12 @@ export function SystemAwarenessPage({
         case "OPEN_WORKQUEUE":
           onAppNavigate?.("/casussen");
           break;
-        case "OPEN_REPORTS":
-          onAppNavigate?.("/rapportages");
+        case "FOCUS_PIPELINE":
+          if (dominantPhaseColumn) {
+            applyPhaseBoardFilter(dominantPhaseColumn.phase);
+          } else {
+            applyFiltersAll();
+          }
           break;
         case "REVIEW_STABLE":
           onAppNavigate?.("/casussen");
@@ -1002,7 +1090,7 @@ export function SystemAwarenessPage({
           break;
       }
     },
-    [actionRematch, actionReminders, applyFiltersAll, onAppNavigate],
+    [actionRematch, actionReminders, applyFiltersAll, applyPhaseBoardFilter, dominantPhaseColumn, onAppNavigate],
   );
 
   const runModePrimary = useCallback(() => {
@@ -1069,10 +1157,15 @@ export function SystemAwarenessPage({
   }, [hasActiveData, regiekamerNba, uiMode]);
 
   const dominantPanelDescription = formatRegiekamerDominantDescription(regiekamerNba);
-  const dominantMetric = Math.max(criticalBlockers, regiekamerNba.panel.linkCount || criticalBlockers);
-  const dominantAlertTitle = uiMode === "crisis" ? "Kritieke blokkades actief" : regiekamerNba.title;
+  const showDominantHeroMetric =
+    uiMode === "crisis" && (regiekamerNba.panel.linkCount > 0 || criticalBlockers > 0);
+  const dominantMetric = showDominantHeroMetric
+    ? Math.max(criticalBlockers, regiekamerNba.panel.linkCount || criticalBlockers)
+    : 0;
   const gemeenteActieLine =
-    dominantMetric === 1 ? "1 aanvraag — vervolgactie nodig" : `${dominantMetric} aanvragen — vervolgactie nodig`;
+    dominantMetric === 1
+      ? "1 aanvraag vraagt directe afstemming"
+      : `${dominantMetric} aanvragen vragen directe afstemming`;
   const dominantAlertDescription =
     uiMode === "crisis" ? gemeenteActieLine : dominantPanelDescription;
   const dominantPrimaryLabel = regiekamerNba.primaryAction.label;
@@ -1090,7 +1183,7 @@ export function SystemAwarenessPage({
   const showRegiekamerPhaseBoard = !loading && !error && hasActiveData && allOverviewItems.length > 0;
 
   return (
-    <div className="flex w-full flex-col gap-8 xl:flex-row xl:items-start xl:gap-8">
+    <div className="flex w-full flex-col gap-6 xl:flex-row xl:items-start xl:gap-6">
       <div className="min-w-0 flex-1">
         <CarePageScaffold
           archetype="command"
@@ -1128,6 +1221,16 @@ export function SystemAwarenessPage({
                   <RefreshCw size={14} />
                   Ververs
                 </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="gap-2 xl:hidden"
+                  onClick={() => setRailSheetOpen(true)}
+                  data-testid="regiekamer-mobile-regie-panel"
+                >
+                  <PanelRight size={14} aria-hidden />
+                  Regie-paneel
+                </Button>
                 <RegieRailToggleButton
                   collapsed={railCollapsed}
                   onToggle={toggleRail}
@@ -1140,7 +1243,7 @@ export function SystemAwarenessPage({
             </div>
           )}
           dominantAction={
-            <div className="space-y-3">
+            <div className={CARE_RHYTHM.attentionStack}>
           {hasActiveData && (
             <CareAlertCard
               density="compact"
@@ -1153,9 +1256,10 @@ export function SystemAwarenessPage({
                     ? "warning"
                     : "info"
               }
-              icon={<AlertCircle size={24} />}
+              icon={<AlertCircle size={showDominantHeroMetric ? 22 : 18} />}
               metric={dominantMetric}
-              title={dominantAlertTitle}
+              showMetric={showDominantHeroMetric}
+              title={regiekamerNba.title}
               description={dominantAlertDescription}
               supportingLink={
                 regiekamerNba.panel.showCasesLink && regiekamerNba.panel.linkCount > 0 ? (
@@ -1211,7 +1315,7 @@ export function SystemAwarenessPage({
       }
       kpiStrip={
         showRegiekamerPhaseBoard || governanceQueuesStrip ? (
-          <div className="space-y-3">
+          <div className={CARE_RHYTHM.zoneStack}>
             {governanceQueuesStrip}
             {showRegiekamerPhaseBoard ? (
               <CareSection tone="context" testId="regiekamer-phase-board" aria-label="Aantallen per beslisstap">
@@ -1352,7 +1456,7 @@ export function SystemAwarenessPage({
         />
       )}
 
-      {!loading && !error && visibleItems.length > 0 && (
+      {!loading && !error && coordinationListItems.length > 0 && (
         <CareWorkspaceSection
           testId="regiekamer-uitvoerlijst"
           aria-labelledby="regiekamer-uitvoerlijst-heading"
@@ -1361,13 +1465,18 @@ export function SystemAwarenessPage({
           <CareSectionHeader
             className="lg:flex-col lg:items-stretch"
             title={
-              <span id="regiekamer-uitvoerlijst-heading">Werkvoorraad</span>
+              <span id="regiekamer-uitvoerlijst-heading">Coördinatielijst</span>
             }
             meta={
-              <div className="w-full min-w-0 space-y-2">
+              <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
                 <span className="inline-flex w-fit items-center rounded-full bg-muted/35 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
-                  {visibleItems.length} aanvragen
+                  {coordinationListItems.length} in regie-aandacht
                 </span>
+                {coordinationListCapped ? (
+                  <p className="text-xs text-muted-foreground" data-testid="regiekamer-coordination-hint">
+                    Eerste regie-aandacht — volledige werkvoorraad staat onder Aanvragen.
+                  </p>
+                ) : null}
                 <CareSearchFiltersBar
                   variant="workspace"
                   className="px-0"
@@ -1445,7 +1554,7 @@ export function SystemAwarenessPage({
                   onClick={() => onAppNavigate("/casussen")}
                   data-testid="regiekamer-bekijk-alle-casussen"
                 >
-                  Bekijk alle {visibleItems.length} aanvragen
+                  Volledige werkvoorraad in Aanvragen
                   <ChevronDown size={16} aria-hidden />
                 </Button>
               </div>
@@ -1460,7 +1569,7 @@ export function SystemAwarenessPage({
             }
           >
             <div className="divide-y divide-border/40">
-              {visibleItems.map((item) => (
+              {coordinationListItems.map((item) => (
                 <RegiekamerWorkItemCard
                   key={item.case_id}
                   item={item}
@@ -1506,23 +1615,6 @@ export function SystemAwarenessPage({
           )}
 
           <div className="contents xl:hidden">
-            <Button
-              type="button"
-              variant="default"
-              size="lg"
-              className="fixed right-5 z-40 h-12 gap-2 rounded-full px-5 shadow-lg md:right-6"
-              style={{
-                bottom: "max(1.25rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem))",
-              }}
-              aria-expanded={railSheetOpen}
-              aria-controls="regiekamer-rail-sheet"
-              data-testid="regiekamer-rail-open"
-              onClick={() => setRailSheetOpen(true)}
-            >
-              <PanelRight size={18} aria-hidden />
-              Regie-paneel
-            </Button>
-
             <Sheet open={railSheetOpen} onOpenChange={setRailSheetOpen}>
               <SheetContent
                 id="regiekamer-rail-sheet"
@@ -1604,7 +1696,7 @@ function RegiekamerInsightsPanels({
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Gem. doorlooptijd</dt>
-                <dd className="tabular-nums font-semibold text-foreground">{avgDoorloopDays} dagen</dd>
+                <dd className="tabular-nums text-sm text-muted-foreground">{avgDoorloopDays} dagen</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Doorlooptijd {'>'} SLA</dt>
@@ -1620,16 +1712,16 @@ function RegiekamerInsightsPanels({
                 onNavigateCasussen();
                 done?.();
               }}
-              data-testid="regiekamer-bekijk-regiemetrics"
+              data-testid="regiekamer-bekijk-aanvragen-rail"
             >
-              Bekijk regiemetrics
+              Naar aanvragen
             </button>
           </div>
         </div>
       </section>
 
       <section className="rounded-xl border border-border/50 bg-card/40 p-4 shadow-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Snel naar</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Regie-snelkoppelingen</p>
         <ul className="mt-3 space-y-2">
           <li>
             <button

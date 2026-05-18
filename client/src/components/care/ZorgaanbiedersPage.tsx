@@ -11,14 +11,14 @@ import {
   CareAttentionBar,
   CareInfoPopover,
   CarePageScaffold,
-  CareSection,
-  CareSectionBody,
   CareSectionHeader,
   CareSearchFiltersBar,
+  CareWorkspaceSection,
+  CareQueueInlineAction,
+  CARE_RHYTHM,
   EmptyState,
   ErrorState,
   LoadingState,
-  PrimaryActionButton,
 } from "./CareDesignPrimitives";
 
 type ProviderSortOption = "best-match" | "shortest-wait" | "most-capacity" | "nearby";
@@ -296,7 +296,7 @@ export function ZorgaanbiedersPage({
 
   return (
     <CarePageScaffold
-      archetype="worklist"
+      archetype="network"
       className="pb-8"
       title={
         <span className="inline-flex flex-wrap items-center gap-2">
@@ -319,113 +319,124 @@ export function ZorgaanbiedersPage({
               : `${sortedProviders.length} aanbieders in beeld · verken capaciteit, dekking en de beste vervolgroute`
           }
           action={
-            <PrimaryActionButton onClick={hasActiveFilters ? resetFilters : showBestAlternatives}>
+            <CareQueueInlineAction onClick={hasActiveFilters ? resetFilters : showBestAlternatives}>
               {dominantActionLabel}
-            </PrimaryActionButton>
+            </CareQueueInlineAction>
           }
         />
       }
+      actions={
+        <Button variant="outline" onClick={() => void refetch()}>
+          Ververs
+        </Button>
+      }
     >
-      <CareSection>
-        <CareSectionHeader
-          className="lg:flex-col lg:items-stretch"
-          title="Werkvoorraad"
-          meta={
-            <div className="w-full min-w-0 space-y-2">
-              <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
-                {visibleCountValue} zichtbaar · {availableCapacityValue} plekken · {waitDaysLabel}
-                {lastUpdatedLabel ? ` · ${lastUpdatedLabel}` : ""}
-              </span>
-              <CareSearchFiltersBar
-                className="px-0"
-                searchValue={searchQuery}
-                onSearchChange={setSearchQuery}
-                searchPlaceholder="Zoek op naam, specialisatie of regio..."
-                showSecondaryFilters={showFilters}
-                onToggleSecondaryFilters={() => setShowFilters((current) => !current)}
-                secondaryFiltersLabel="Meer filters"
-                secondaryFilters={
-                  <div className="grid grid-cols-1 gap-3 pt-1 md:grid-cols-3">
-                    <div>
-                      <label className="mb-2 block text-xs font-medium text-muted-foreground">Regio</label>
-                      <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                        <SelectTrigger className={cn("h-10 w-full", selectTriggerClass)}>
-                          <SelectValue placeholder="Alle regio's" />
+      <CareWorkspaceSection
+        testId="zorgaanbieders-netwerk"
+        aria-labelledby="zorgaanbieders-netwerk-heading"
+        bodyBleedX
+        header={
+          <CareSectionHeader
+            className="lg:flex-col lg:items-stretch"
+            title={<span id="zorgaanbieders-netwerk-heading">Netwerkoverzicht</span>}
+            meta={
+              <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
+                <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
+                  {visibleCountValue} zichtbaar · {availableCapacityValue} plekken · {waitDaysLabel}
+                  {lastUpdatedLabel ? ` · ${lastUpdatedLabel}` : ""}
+                </span>
+                <CareSearchFiltersBar
+                  className="px-0"
+                  searchValue={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Zoek op naam, specialisatie of regio..."
+                  showSecondaryFilters={showFilters}
+                  onToggleSecondaryFilters={() => setShowFilters((current) => !current)}
+                  secondaryFiltersLabel="Meer filters"
+                  secondaryFilters={
+                    <div className="grid grid-cols-1 gap-3 pt-1 md:grid-cols-3">
+                      <div>
+                        <label className="mb-2 block text-xs font-medium text-muted-foreground">Regio</label>
+                        <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                          <SelectTrigger className={cn("h-10 w-full", selectTriggerClass)}>
+                            <SelectValue placeholder="Alle regio's" />
+                          </SelectTrigger>
+                          <SelectContent className="border-border bg-card text-foreground">
+                            {regionOptions.map((region) => (
+                              <SelectItem
+                                key={region}
+                                className="text-foreground focus:bg-muted focus:text-foreground"
+                                value={region}
+                              >
+                                {region === "all" ? "Alle regio's" : region}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-medium text-muted-foreground">Type zorg</label>
+                        <Select value={selectedType} onValueChange={setSelectedType}>
+                          <SelectTrigger className={cn("h-10 w-full", selectTriggerClass)}>
+                            <SelectValue placeholder="Alle types" />
+                          </SelectTrigger>
+                          <SelectContent className="border-border bg-card text-foreground">
+                            <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="all">Alle types</SelectItem>
+                            <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="residentieel">Residentieel</SelectItem>
+                            <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="ambulant">Ambulant</SelectItem>
+                            <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="dagbehandeling">Dagbehandeling</SelectItem>
+                            <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="crisis">Crisis</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-medium text-muted-foreground">Capaciteit</label>
+                        <Select value={selectedCapacity} onValueChange={setSelectedCapacity}>
+                          <SelectTrigger className={cn("h-10 w-full", selectTriggerClass)}>
+                            <SelectValue placeholder="Alle niveaus" />
+                          </SelectTrigger>
+                          <SelectContent className="border-border bg-card text-foreground">
+                            <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="all">Alle niveaus</SelectItem>
+                            <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="available">Beschikbaar (3+)</SelectItem>
+                            <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="limited">Beperkt (1-2)</SelectItem>
+                            <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="full">Vol</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  }
+                  rightAction={
+                    <>
+                      <Select value={sortBy} onValueChange={(value) => setSortBy(value as ProviderSortOption)}>
+                        <SelectTrigger className={cn("h-10 min-w-[170px]", selectTriggerClass)}>
+                          <SelectValue placeholder="Sorteer op" />
                         </SelectTrigger>
                         <SelectContent className="border-border bg-card text-foreground">
-                          {regionOptions.map((region) => (
-                            <SelectItem
-                              key={region}
-                              className="text-foreground focus:bg-muted focus:text-foreground"
-                              value={region}
-                            >
-                              {region === "all" ? "Alle regio's" : region}
-                            </SelectItem>
-                          ))}
+                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="best-match">Beste match</SelectItem>
+                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="shortest-wait">Kortste wachttijd</SelectItem>
+                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="most-capacity">Meeste capaciteit</SelectItem>
+                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="nearby">Dichtbij</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-xs font-medium text-muted-foreground">Type zorg</label>
-                      <Select value={selectedType} onValueChange={setSelectedType}>
-                        <SelectTrigger className={cn("h-10 w-full", selectTriggerClass)}>
-                          <SelectValue placeholder="Alle types" />
-                        </SelectTrigger>
-                        <SelectContent className="border-border bg-card text-foreground">
-                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="all">Alle types</SelectItem>
-                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="residentieel">Residentieel</SelectItem>
-                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="ambulant">Ambulant</SelectItem>
-                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="dagbehandeling">Dagbehandeling</SelectItem>
-                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="crisis">Crisis</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-xs font-medium text-muted-foreground">Capaciteit</label>
-                      <Select value={selectedCapacity} onValueChange={setSelectedCapacity}>
-                        <SelectTrigger className={cn("h-10 w-full", selectTriggerClass)}>
-                          <SelectValue placeholder="Alle niveaus" />
-                        </SelectTrigger>
-                        <SelectContent className="border-border bg-card text-foreground">
-                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="all">Alle niveaus</SelectItem>
-                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="available">Beschikbaar (3+)</SelectItem>
-                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="limited">Beperkt (1-2)</SelectItem>
-                          <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="full">Vol</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                }
-                rightAction={
-                  <>
-                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as ProviderSortOption)}>
-                      <SelectTrigger className={cn("h-10 min-w-[170px]", selectTriggerClass)}>
-                        <SelectValue placeholder="Sorteer op" />
-                      </SelectTrigger>
-                      <SelectContent className="border-border bg-card text-foreground">
-                        <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="best-match">Beste match</SelectItem>
-                        <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="shortest-wait">Kortste wachttijd</SelectItem>
-                        <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="most-capacity">Meeste capaciteit</SelectItem>
-                        <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="nearby">Dichtbij</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-10 shrink-0 border-border"
-                      onClick={() => setMapView((current) => (current === "split" ? "full" : "split"))}
-                    >
-                      <Maximize2 size={16} className="mr-2" />
-                      {mapView === "split" ? "Kaart" : "Split view"}
-                    </Button>
-                  </>
-                }
-              />
-            </div>
-          }
-        />
-        <CareSectionBody className="space-y-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-10 shrink-0 border-border"
+                        onClick={() => setMapView((current) => (current === "split" ? "full" : "split"))}
+                      >
+                        <Maximize2 size={16} className="mr-2" />
+                        {mapView === "split" ? "Kaart" : "Split view"}
+                      </Button>
+                    </>
+                  }
+                />
+              </div>
+            }
+          />
+        }
+      >
+        <div className="space-y-4">
       {mapView === "full" ? (
         <div className={cn(networkResultsShell, "overflow-hidden")}>
           <div className="border-b border-border/50 bg-muted/40 px-4 py-3">
@@ -466,9 +477,9 @@ export function ZorgaanbiedersPage({
                   title="Geen directe match gevonden"
                   copy={hiddenProvidersCount > 0 ? "Er zijn aanbieders buiten de huidige filters." : "Er zijn geen zichtbare aanbieders in deze selectie."}
                   action={
-                    <PrimaryActionButton onClick={hasActiveFilters ? resetFilters : showBestAlternatives}>
+                    <CareQueueInlineAction onClick={hasActiveFilters ? resetFilters : showBestAlternatives}>
                       {hasActiveFilters ? "Wis filters" : "Selecteer alternatief"}
-                    </PrimaryActionButton>
+                    </CareQueueInlineAction>
                   }
                 />
               )}
@@ -660,8 +671,8 @@ export function ZorgaanbiedersPage({
             </div>
           </div>
       )}
-        </CareSectionBody>
-      </CareSection>
+        </div>
+      </CareWorkspaceSection>
     </CarePageScaffold>
   );
 }

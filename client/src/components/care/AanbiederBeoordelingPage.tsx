@@ -57,6 +57,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { cn } from "../ui/utils";
+import { advisoryQualitativeFromNumericScore } from "../../lib/matchingAdvisory";
 import {
   CareAlertCard,
   CareAttentionBar,
@@ -72,10 +73,12 @@ import {
   CareSearchFiltersBar,
   CareQueueInlineAction,
   CareWorkListCard,
+  CARE_RHYTHM,
   CareWorkRow,
   CareSection,
   CareSectionBody,
   CareSectionHeader,
+  CareWorkspaceSection,
   EmptyState,
   ErrorState,
   LoadingState,
@@ -83,9 +86,7 @@ import {
   OPERATIONAL_QUEUE_HEADER_GRID_CLASS,
 } from "./CareDesignPrimitives";
 import { tokens } from "../../design/tokens";
-import { RegieRailEdgeTab, RegieRailToggleButton } from "./RegieRailControls";
 import { useCases } from "../../hooks/useCases";
-import { useRailCollapsed } from "../../hooks/useRailCollapsed";
 import { useProviderEvaluations } from "../../hooks/useProviderEvaluations";
 import type {
   EvaluationDecisionPayload,
@@ -268,7 +269,7 @@ function providerEvaluationActionComplete(ev: ProviderEvaluation | undefined): b
   );
 }
 
-function buildEvaluationMap(rows: ProviderEvaluation[]): Map<string, ProviderEvaluation> {
+function buildEvaluationMap(rows: ProviderEvaluation[] = []): Map<string, ProviderEvaluation> {
   const m = new Map<string, ProviderEvaluation>();
   for (const row of rows) {
     if (row.caseId) m.set(row.caseId, row);
@@ -284,15 +285,6 @@ function urgencyLabel(urgency: SpaCase["urgency"]): string {
     case "warning":  return "Hoog";
     case "normal":   return "Normaal";
     default:         return "Laag";
-  }
-}
-
-function urgencyToneTextClass(urgency: SpaCase["urgency"]): string {
-  switch (urgency) {
-    case "critical": return "text-destructive";
-    case "warning":  return "text-amber-300";
-    case "normal":   return "text-blue-300";
-    default:         return "text-muted-foreground";
   }
 }
 
@@ -372,7 +364,6 @@ function ProviderReviewWhyUsBlock({ evaluation }: { evaluation: ProviderEvaluati
           <span className="font-medium text-foreground/80">Advies match: </span>
           {evaluation!.matchFitSummary!.trim()}
           {evaluation?.matchTradeOffsHint?.trim() ? ` · ${evaluation.matchTradeOffsHint.trim()}` : ""}
-          {evaluation?.matchScore != null ? ` · Score-indicator: ${evaluation.matchScore}` : ""}
           <span className="block mt-0.5 text-[10px] text-muted-foreground/90">{PROVIDER_MATCH_ADVISORY_FOOTNOTE}</span>
         </p>
       ) : null}
@@ -397,6 +388,27 @@ function ProviderReviewWhyUsBlock({ evaluation }: { evaluation: ProviderEvaluati
       ) : null}
     </div>
   );
+}
+
+function reviewCaseMetaLines(
+  caseItem: SpaCase,
+  evaluation: ProviderEvaluation | null | undefined,
+): ReactNode[] {
+  const meta: ReactNode[] = [
+    <CareMetaChip key="regio">{caseItem.regio || "Regio onbekend"}</CareMetaChip>,
+    <CareMetaChip key="urgency">{urgencyLabel(caseItem.urgency)}</CareMetaChip>,
+    <CareMetaChip key="wait">{caseItem.wachttijd}d in wachtrij</CareMetaChip>,
+  ];
+
+  if (evaluation?.daysPending != null) {
+    meta.push(<CareMetaChip key="pending">{evaluation.daysPending}d sinds uitnodiging</CareMetaChip>);
+  }
+
+  if (formatNlDateTime(evaluation?.slaDeadlineAt)) {
+    meta.push(<CareMetaChip key="deadline">Deadline {formatNlDateTime(evaluation?.slaDeadlineAt)}</CareMetaChip>);
+  }
+
+  return meta;
 }
 
 // ─── Info request modal ───────────────────────────────────────────────────────
@@ -649,8 +661,8 @@ function evaluationToGemeenteRows(ev: ProviderEvaluation): ProviderInviteRow[] {
       statusLabel,
       statusMeta,
       response: responseText,
-      fitLabel: ev.matchScore != null ? "Matchscore" : "—",
-      fitPct: ev.matchScore,
+      fitLabel: advisoryQualitativeFromNumericScore(ev.matchScore) ?? "—",
+      fitPct: null,
       actionLabel: "Open casus",
       logo: <User size={20} className="text-muted-foreground" aria-hidden />,
     },
@@ -732,15 +744,8 @@ function ProviderInviteWorkRow({
         </div>
 
         <div className="min-w-0">
-          {row.fitPct != null ? (
-            <div className="space-y-1">
-              <p className="text-[11px] font-semibold text-foreground">
-                {row.fitPct}% <span className="font-medium text-muted-foreground">{row.fitLabel}</span>
-              </p>
-              <div className="h-1 w-full max-w-[7rem] overflow-hidden rounded-full bg-muted/50">
-                <div className="h-full rounded-full bg-primary" style={{ width: `${row.fitPct}%` }} />
-              </div>
-            </div>
+          {row.fitLabel !== "—" ? (
+            <p className="text-[11px] font-semibold leading-snug text-foreground">{row.fitLabel}</p>
           ) : (
             <span className="text-[11px] text-muted-foreground">—</span>
           )}
@@ -849,8 +854,6 @@ function GemeenteView({
   onNavigateToCasussen,
 }: GemeenteViewProps) {
   const [activeTab, setActiveTab] = useState<"overzicht" | "aanbieders" | "berichten" | "bestanden">("overzicht");
-  const { collapsed: railCollapsed, toggle: toggleRail, setCollapsed: setRailCollapsed } = useRailCollapsed();
-
   const reviewCasesAll = useMemo(
     () => cases.filter(c => c.status === "provider_beoordeling" || c.status === "plaatsing"),
     [cases],
@@ -911,11 +914,11 @@ function GemeenteView({
   return (
     <div
       data-testid="aanbieder-beoordeling-gemeente-root"
-      className="flex w-full flex-col gap-8 xl:flex-row xl:items-start xl:gap-8"
+      className="flex w-full flex-col gap-6"
     >
       <div className="min-w-0 flex-1">
         <CarePageScaffold
-          archetype="workspace"
+          archetype="queue"
           className="pb-8"
           title={(
             <span className="inline-flex flex-wrap items-center gap-2">
@@ -965,16 +968,9 @@ function GemeenteView({
                   <RefreshCw size={14} aria-hidden />
                   Ververs
                 </Button>
-                {showMainGrid ? (
-                  <RegieRailToggleButton
-                    collapsed={railCollapsed}
-                    onToggle={toggleRail}
-                    testId="aanbieder-beoordeling-rail-toggle"
-                  />
-                ) : null}
               </div>
             </div>
-          )}
+        )}
           dominantAction={
             shellExtrasReady ? (
               <CareAlertCard
@@ -999,16 +995,6 @@ function GemeenteView({
                   </CareQueueInlineAction>
                 )}
               />
-            ) : undefined
-          }
-          kpiStrip={
-            shellExtrasReady ? (
-              <CareSection testId="aanbieder-beoordeling-keten" aria-label="Voortgang keten">
-                <CareSectionHeader title="Voortgang keten" />
-                <CareSectionBody className="mt-3">
-                  <GemeenteBeoordelingStepper embedded />
-                </CareSectionBody>
-              </CareSection>
             ) : undefined
           }
           filters={
@@ -1134,85 +1120,73 @@ function GemeenteView({
             </CareSection>
           )}
         </CarePageScaffold>
-      </div>
 
-      {showMainGrid ? (
-        <aside
-          data-testid="aanbieder-beoordeling-right-rail"
-          className={cn(
-            "w-full shrink-0 space-y-4 xl:w-[300px] xl:pt-1",
-            railCollapsed && "xl:hidden",
-          )}
-        >
-          <section className="rounded-xl border border-border/50 bg-card/40 p-4 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-border/50 pb-3">
-              <FileText size={16} className="text-primary" aria-hidden />
-              <h2 className="text-[13px] font-semibold text-foreground">Casus informatie</h2>
-            </div>
-            <div className="space-y-4 pt-4">
-              <div className="flex gap-3">
-                <div
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/40 to-primary/10 text-sm font-semibold text-primary-foreground"
-                  aria-hidden
-                >
-                  {focusCase ? formatClientReference(focusCase.id).slice(0, 2) : "CL"}
-                </div>
-                <div className="min-w-0 space-y-0.5">
-                  <p className="text-[15px] font-semibold text-foreground">
-                    {focusCase ? formatClientReference(focusCase.id) : "CLI-ONBEKEND"}
+        {showMainGrid ? (
+          <CareWorkspaceSection
+            testId="aanbieder-beoordeling-context"
+            aria-labelledby="aanbieder-context-heading"
+            header={
+              <CareSectionHeader
+                title={<span id="aanbieder-context-heading">Casuscontext</span>}
+                meta={
+                  <div className="flex flex-wrap items-center gap-2">
+                    {focusCase ? <CareMetaChip>{formatClientReference(focusCase.id)}</CareMetaChip> : null}
+                    {focusCase ? <CareMetaChip>{urgencyLabel(focusCase.urgency)}</CareMetaChip> : null}
+                    {focusCase?.regio ? <CareMetaChip>{focusCase.regio}</CareMetaChip> : null}
+                  </div>
+                }
+                action={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-9 gap-2 text-[13px] font-semibold"
+                    onClick={() => onCaseClick(focusCase?.id ?? displayCaseId)}
+                  >
+                    Bekijk casusdetails
+                    <ArrowRight size={16} aria-hidden />
+                  </Button>
+                }
+              />
+            }
+          >
+            <div className={CARE_RHYTHM.zoneStack}>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-xl border border-border/50 bg-background/40 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Betrokkene</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">
+                    {maskParticipantIdentity(focusCase?.title?.trim() || "Betrokkene")}
                   </p>
-                  {focusCase?.regio ? (
-                    <p className="text-[12px] text-muted-foreground">{focusCase.regio}</p>
-                  ) : null}
-                  {focusCase ? (
-                    <p className="text-[12px] text-muted-foreground">
-                      Urgentie:{" "}
-                      <span className={cn("font-semibold", urgencyToneTextClass(focusCase.urgency))}>
-                        {urgencyLabel(focusCase.urgency)}
-                      </span>
-                    </p>
-                  ) : null}
-                  <p className="text-[11px] text-muted-foreground">
-                    Betrokkene: {maskParticipantIdentity(focusCase?.title?.trim() || "Betrokkene")}
+                </div>
+                <div className="rounded-xl border border-border/50 bg-background/40 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Hulpvraag</p>
+                  <p className="mt-1 text-sm text-foreground">
+                    {focusCase?.systemInsight?.trim() || "Hulpvraag volgt via casusdossier."}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-border/50 bg-background/40 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Start / termijn</p>
+                  <p className="mt-1 text-sm text-foreground">
+                    {focusCase?.intakeStartDate ? `Gewenste start: ${focusCase.intakeStartDate}` : "Geen startdatum vastgelegd"}
+                  </p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Beoordelingsperiode maximaal 72 uur.
                   </p>
                 </div>
               </div>
-              {focusCase?.systemInsight?.trim() ? (
-                <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Hulpvraag</p>
-                  <p className="text-[13px] leading-relaxed text-foreground">
-                    {focusCase.systemInsight.trim()}
-                  </p>
-                </div>
-              ) : null}
-              {focusCase?.intakeStartDate ? (
-                <div className="flex items-start gap-2 text-[13px] text-muted-foreground">
-                  <CalendarDays size={16} className="mt-0.5 shrink-0 text-primary" aria-hidden />
-                  <span>
-                    Gewenste start: <span className="font-medium text-foreground">{focusCase.intakeStartDate}</span>
-                  </span>
-                </div>
-              ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                className="h-9 w-full justify-between text-[13px] font-semibold"
-                onClick={() => onCaseClick(focusCase?.id ?? displayCaseId)}
-              >
-                Bekijk casusdetails
-                <ArrowRight size={16} aria-hidden />
-              </Button>
+              <CareAttentionBar
+                layout="compact"
+                tone="info"
+                icon={<CalendarDays size={16} aria-hidden />}
+                message={dominantActionDeadlineText}
+              />
+              <div className="hidden md:block">
+                <GemeenteBeoordelingStepper embedded />
+              </div>
             </div>
-          </section>
-        </aside>
-      ) : null}
+          </CareWorkspaceSection>
+        ) : null}
+      </div>
 
-      {showMainGrid && railCollapsed ? (
-        <RegieRailEdgeTab
-          onExpand={() => setRailCollapsed(false)}
-          testId="aanbieder-beoordeling-rail-edge-tab"
-        />
-      ) : null}
     </div>
   );
 }
@@ -1544,76 +1518,68 @@ function ProviderReviewCaseCard({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div
-        className="min-w-0 overflow-hidden rounded-xl surface-workspace" data-testid="provider-review-workspace"
+      <CareWorkspaceSection
+        testId="provider-review-workspace"
         aria-busy={submitting}
+        bodyBleedX
+        header={(
+          <CareSectionHeader
+            className="lg:flex-col lg:items-stretch"
+            title={formatClientReference(caseItem.id)}
+            description="Judgement-heavy reactieflow. Kies eerst de richting, werk daarna het besluit zorgvuldig af."
+            meta={
+              <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
+                <div className="flex flex-wrap items-center gap-2">
+                  {reviewCaseMetaLines(caseItem, evaluation)}
+                  {evaluation && !outcome ? (
+                    <CareMetaChip>{EVALUATION_STATUS_LABELS[evaluation.status]}</CareMetaChip>
+                  ) : null}
+                </div>
+                <p className="text-[12px] leading-snug text-muted-foreground">
+                  {maskParticipantIdentity(caseItem.title?.trim() || caseItem.id)} · {caseItem.zorgtype || "Zorgtype onbekend"}
+                </p>
+              </div>
+            }
+            action={(
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant={panelMode === "accept" ? "default" : "outline"}
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setPanelMode("accept")}
+                  disabled={submitting}
+                >
+                  <CheckCircle2 size={16} />
+                  Accepteren
+                </Button>
+                <Button
+                  type="button"
+                  variant={panelMode === "reject" ? "default" : "outline"}
+                  size="sm"
+                  className={cn("gap-2", panelMode === "reject" && "border-destructive/35 bg-destructive/10 text-destructive")}
+                  onClick={() => setPanelMode("reject")}
+                  disabled={submitting}
+                >
+                  <XCircle size={16} />
+                  Afwijzen
+                </Button>
+              </div>
+            )}
+          />
+        )}
       >
-        <div className="border-b border-border/40 px-4 py-3 md:px-5 surface-workspace-header">
-          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
-            {formatClientReference(caseItem.id)}
-          </h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">
-            {maskParticipantIdentity(caseItem.title?.trim() || caseItem.id)} · {caseItem.regio} · {urgencyLabel(caseItem.urgency)} · {caseItem.wachttijd}d · {caseItem.zorgtype}
-          </p>
-          {evaluation && !outcome ? (
-            <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
-              <span className="font-medium text-foreground/90">{EVALUATION_STATUS_LABELS[evaluation.status]}</span>
-              {formatNlDateTime(evaluation.slaDeadlineAt) ? (
-                <> · Deadline {formatNlDateTime(evaluation.slaDeadlineAt)}</>
-              ) : null}
-              {evaluation.daysPending > 0 ? <> · {evaluation.daysPending}d sinds uitnodiging</> : null}
-            </p>
-          ) : null}
+        <div className={CARE_RHYTHM.zoneStack}>
+          <CareAttentionBar
+            layout="compact"
+            tone="info"
+            icon={<Lock size={16} />}
+            message="Identiteit blijft afgeschermd tot geautoriseerde fase-overgang; het besluit is auditbaar en terug te voeren op reden en timing."
+            action={<CareQueueInlineAction type="button" onClick={() => onCaseClick(caseItem.id)}>Open casus</CareQueueInlineAction>}
+          />
           <ProviderReviewWhyUsBlock evaluation={evaluation} />
-          <p className="mt-2 text-[12px] text-muted-foreground">
-            Jouw besluit: acceptatie {"->"} gemeenteplaatsing; afwijzing {"->"} hermatching.
-          </p>
-          <p className="mt-1 text-[12px] text-muted-foreground">
-            Identiteit blijft afgeschermd tot geautoriseerde fase-overgang; reveal wordt auditbaar vastgelegd.
-          </p>
-        </div>
 
-        <div
-          className="sticky z-20 border-b border-border/40 bg-muted/15 px-4 py-2.5 md:px-5"
-          style={{ top: tokens.layout.edgeZero }}
-        >
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant={panelMode === "idle" ? "default" : panelMode === "accept" ? "outline" : "ghost"}
-              size={panelMode === "idle" ? "lg" : "default"}
-              className={cn(
-                "gap-2",
-                panelMode === "idle" && "shadow-sm",
-                panelMode === "accept" && "ring-2 ring-primary/40 ring-offset-2 ring-offset-background border-primary/35",
-                panelMode === "reject" && "h-10 px-3 text-muted-foreground hover:text-foreground",
-              )}
-              onClick={() => setPanelMode("accept")}
-              disabled={submitting}
-            >
-              <CheckCircle2 size={18} />
-              Accepteren
-            </Button>
-            <Button
-              type="button"
-              variant={panelMode === "idle" ? "outline" : panelMode === "reject" ? "outline" : "ghost"}
-              size="default"
-              className={cn(
-                "h-10 gap-2",
-                panelMode === "idle" &&
-                  "border-destructive/25 text-destructive hover:bg-destructive/10 hover:text-destructive",
-                panelMode === "accept" && "text-destructive/85 hover:bg-destructive/10 hover:text-destructive",
-                panelMode === "reject" &&
-                  "border-destructive/30 text-destructive ring-2 ring-destructive/20 ring-offset-2 ring-offset-background hover:bg-destructive/10",
-              )}
-              onClick={() => setPanelMode("reject")}
-              disabled={submitting}
-            >
-              <XCircle size={18} />
-              Afwijzen
-            </Button>
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1">
             <Button
               type="button"
               variant="ghost"
@@ -1635,57 +1601,58 @@ function ProviderReviewCaseCard({
               <ArrowRight size={12} className="shrink-0 opacity-80" />
             </Button>
           </div>
-        </div>
 
-        <div className="px-4 py-4 sm:px-5 space-y-4">
           {panelMode === "idle" && (
             <p className="text-sm text-muted-foreground" data-testid="provider-review-idle-hint">
               Kies accepteren of afwijzen.
             </p>
           )}
           {panelMode === "accept" && (
-            <div className="space-y-4" data-testid="provider-review-accept-panel">
-              <div className="border border-border/40 bg-muted/10 px-3 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-2">
-                  Capaciteit (indicatie)
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {(["vol", "beperkt", "beschikbaar"] as const).map((key) => (
-                    <Button
-                      key={key}
-                      type="button"
-                      size="sm"
-                      variant={capacitySignal === key ? "default" : "outline"}
-                      className="h-9 text-xs"
-                      onClick={() => setCapacitySignal(key)}
-                    >
-                      {key === "vol" && "Vol"}
-                      {key === "beperkt" && "Beperkt"}
-                      {key === "beschikbaar" && "Beschikbaar"}
-                    </Button>
-                  ))}
+            <CareSection tone="muted" className="space-y-4" testId="provider-review-accept-panel">
+              <CareSectionHeader title="Accepteren" description="Bevestig capaciteit, startdatum en intake-haalbaarheid." />
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="space-y-3 rounded-xl border border-border/50 bg-background/40 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Capaciteit (indicatie)
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {(["vol", "beperkt", "beschikbaar"] as const).map((key) => (
+                      <Button
+                        key={key}
+                        type="button"
+                        size="sm"
+                        variant={capacitySignal === key ? "default" : "outline"}
+                        className="h-9 text-xs"
+                        onClick={() => setCapacitySignal(key)}
+                      >
+                        {key === "vol" && "Vol"}
+                        {key === "beperkt" && "Beperkt"}
+                        {key === "beschikbaar" && "Beschikbaar"}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id={`cap-${caseItem.id}`}
-                    checked={confirmCapacity}
-                    onCheckedChange={v => setConfirmCapacity(v === true)}
-                  />
-                  <Label htmlFor={`cap-${caseItem.id}`} className="text-sm font-normal leading-snug cursor-pointer">
-                    Capaciteit beschikbaar
-                  </Label>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id={`intake-${caseItem.id}`}
-                    checked={confirmIntake}
-                    onCheckedChange={v => setConfirmIntake(v === true)}
-                  />
-                  <Label htmlFor={`intake-${caseItem.id}`} className="text-sm font-normal leading-snug cursor-pointer">
-                    Intake mogelijk binnen termijn
-                  </Label>
+                <div className="space-y-3 rounded-xl border border-border/50 bg-background/40 p-3">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id={`cap-${caseItem.id}`}
+                      checked={confirmCapacity}
+                      onCheckedChange={v => setConfirmCapacity(v === true)}
+                    />
+                    <Label htmlFor={`cap-${caseItem.id}`} className="text-sm font-normal leading-snug cursor-pointer">
+                      Capaciteit beschikbaar
+                    </Label>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id={`intake-${caseItem.id}`}
+                      checked={confirmIntake}
+                      onCheckedChange={v => setConfirmIntake(v === true)}
+                    />
+                    <Label htmlFor={`intake-${caseItem.id}`} className="text-sm font-normal leading-snug cursor-pointer">
+                      Intake mogelijk binnen termijn
+                    </Label>
+                  </div>
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -1725,11 +1692,12 @@ function ProviderReviewCaseCard({
                 Bevestig acceptatie
                 <ArrowRight size={16} />
               </Button>
-            </div>
+            </CareSection>
           )}
 
           {panelMode === "reject" && (
-            <div className="space-y-4">
+            <CareSection tone="muted" className="space-y-4" testId="provider-review-reject-panel">
+              <CareSectionHeader title="Afwijzen" description="Leg vast waarom de casus niet past en wat dat betekent voor matching." />
               <RadioGroup
                 value={rejectCode || undefined}
                 onValueChange={v => setRejectCode(v as RejectionReasonCode)}
@@ -1785,10 +1753,10 @@ function ProviderReviewCaseCard({
                 Bevestig afwijzing
                 <ArrowRight size={16} />
               </Button>
-            </div>
+            </CareSection>
           )}
         </div>
-      </div>
+      </CareWorkspaceSection>
     </>
   );
 }
@@ -2007,7 +1975,7 @@ function ProviderView({
         )}
 
         {!loading && !error && pendingCases.length > 0 && (
-          <div className="space-y-8">
+          <div className={CARE_RHYTHM.zoneStack}>
             {activeQueue.length > 0 && (
               <section className="space-y-2" key={focusToken} data-testid="provider-beoordeling-actieve-sectie">
                 <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">

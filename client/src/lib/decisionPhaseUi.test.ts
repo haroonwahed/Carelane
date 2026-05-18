@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   mapApiPhaseToDecisionUiPhase,
   normalizeRegiekamerPhaseQueryParam,
+  resolveCaseExecutionPhasePresentation,
 } from "./decisionPhaseUi";
 
 describe("normalizeRegiekamerPhaseQueryParam", () => {
@@ -25,5 +26,39 @@ describe("normalizeRegiekamerPhaseQueryParam", () => {
 describe("mapApiPhaseToDecisionUiPhase", () => {
   it("maps legacy wacht_op_validatie id to klaar_voor_matching", () => {
     expect(mapApiPhaseToDecisionUiPhase("wacht_op_validatie")).toBe("klaar_voor_matching");
+  });
+
+  it("does not treat WorkflowState enum as API phase (would fall back to casus_gestart)", () => {
+    expect(mapApiPhaseToDecisionUiPhase("MATCHING_READY")).toBe("casus_gestart");
+  });
+});
+
+describe("resolveCaseExecutionPhasePresentation", () => {
+  it("uses evaluation phase when present", () => {
+    const result = resolveCaseExecutionPhasePresentation({
+      evaluationPhase: "matching",
+      currentState: "DRAFT_CASE",
+    });
+    expect(result.apiPhase).toBe("matching");
+    expect(result.decisionUiPhaseId).toBe("klaar_voor_matching");
+    expect(result.badgeLabel).toBe("Matching & validatie");
+  });
+
+  it("derives API phase from canonical workflow state when evaluation phase absent", () => {
+    const result = resolveCaseExecutionPhasePresentation({
+      evaluationPhase: null,
+      currentState: "MATCHING_READY",
+    });
+    expect(result.apiPhase).toBe("matching");
+    expect(result.decisionUiPhaseId).toBe("klaar_voor_matching");
+  });
+
+  it("surfaces gemeente validatie sub-status on merged bucket", () => {
+    const result = resolveCaseExecutionPhasePresentation({
+      evaluationPhase: "gemeente_validatie",
+      currentState: "GEMEENTE_VALIDATED",
+    });
+    expect(result.subStatusLabel).toBeTruthy();
+    expect(result.decisionUiPhaseId).toBe("klaar_voor_matching");
   });
 });

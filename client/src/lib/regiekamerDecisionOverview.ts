@@ -52,7 +52,7 @@ export interface RegiekamerDecisionOverviewTotals {
   intake_delays: number;
 }
 
-/** Operationele wachtrijen (gemeente levenscyclus) — backend `governance_queues`. */
+/** Operationele wachtrijen op Coördinatie — backend `governance_queues`. */
 export interface RegiekamerGovernanceQueues {
   wijkteam_intakes_needing_assessment: string[];
   zorgvraag_beoordeling_open: string[];

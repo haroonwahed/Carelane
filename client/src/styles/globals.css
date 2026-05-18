@@ -1197,6 +1197,294 @@ select:not([multiple]):not([size]):disabled {
     0 18px 44px rgba(0, 0, 0, 0.28);
 }
 
+.care-alert-shell {
+  --care-alert-accent: var(--yellow-base);
+  --care-alert-accent-soft: var(--primary);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  backdrop-filter: blur(14px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 4%, transparent),
+    0 18px 44px rgba(11, 16, 32, 0.18);
+}
+
+.care-alert-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      color-mix(in srgb, var(--care-alert-accent) 18%, transparent),
+      transparent 56%
+    ),
+    radial-gradient(
+      circle at 88% 0%,
+      color-mix(in srgb, var(--care-alert-accent-soft) 12%, transparent),
+      transparent 52%
+    ),
+    radial-gradient(
+      circle at 50% 120%,
+      color-mix(in srgb, var(--care-alert-accent) 10%, transparent),
+      transparent 48%
+    );
+  opacity: 0.9;
+}
+
+.dark .care-alert-shell {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 3%, transparent),
+    0 20px 48px rgba(0, 0, 0, 0.3);
+}
+
+.care-alert-shell--critical {
+  --care-alert-accent: var(--yellow-base);
+  --care-alert-accent-soft: var(--red-base);
+  border: 1px solid color-mix(in srgb, var(--yellow-border) 48%, var(--red-border) 16%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--yellow-light) 34%, var(--surface-2) 66%),
+    color-mix(in srgb, var(--surface-2) 78%, var(--background) 22%)
+  );
+}
+
+.dark .care-alert-shell--critical {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--yellow-light) 42%, var(--surface-2) 58%),
+    color-mix(in srgb, var(--surface-2) 84%, var(--background) 16%)
+  );
+}
+
+.care-alert-shell--warning {
+  --care-alert-accent: var(--yellow-base);
+  --care-alert-accent-soft: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--yellow-border) 46%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--yellow-light) 30%, var(--surface-2) 70%),
+    color-mix(in srgb, var(--surface-2) 82%, var(--background) 18%)
+  );
+}
+
+.dark .care-alert-shell--warning {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--yellow-light) 38%, var(--surface-2) 62%),
+    color-mix(in srgb, var(--surface-2) 86%, var(--background) 14%)
+  );
+}
+
+.care-alert-shell--info {
+  --care-alert-accent: var(--blue-base);
+  --care-alert-accent-soft: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--blue-border) 44%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--blue-light) 28%, var(--surface-2) 72%),
+    color-mix(in srgb, var(--surface-2) 82%, var(--background) 18%)
+  );
+}
+
+.dark .care-alert-shell--info {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--blue-light) 38%, var(--surface-2) 62%),
+    color-mix(in srgb, var(--surface-2) 86%, var(--background) 14%)
+  );
+}
+
+.care-alert-shell--success {
+  --care-alert-accent: var(--green-base);
+  --care-alert-accent-soft: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--green-border) 44%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--green-light) 28%, var(--surface-2) 72%),
+    color-mix(in srgb, var(--surface-2) 82%, var(--background) 18%)
+  );
+}
+
+.dark .care-alert-shell--success {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--green-light) 38%, var(--surface-2) 62%),
+    color-mix(in srgb, var(--surface-2) 86%, var(--background) 14%)
+  );
+}
+
+/* --------------------------------------------------------------------------
+   Operational spacing rhythm (CareOn list/command pages)
+   Compact throughput + intentional pauses between zones — not card padding.
+   -------------------------------------------------------------------------- */
+:root {
+  --care-rhythm-page: 1.5rem;
+  --care-rhythm-page-mobile: 1.25rem;
+  --care-rhythm-section: 1.25rem;
+  --care-rhythm-section-mobile: 1rem;
+  --care-rhythm-quiet: 1.25rem;
+  --care-rhythm-band: 1rem;
+  --care-rhythm-control: 0.75rem;
+  --care-rhythm-filter-queue: 0.75rem;
+  --care-rhythm-queue-lead: 0.625rem;
+  --care-rhythm-queue-header: 0.5rem;
+  --care-rhythm-empty: 1rem;
+  --care-rhythm-layout-rail: 1.5rem;
+}
+
+.care-page-rhythm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--care-rhythm-page);
+}
+
+@media (max-width: 767px) {
+  .care-page-rhythm {
+    gap: var(--care-rhythm-page-mobile);
+  }
+}
+
+.care-op-zone {
+  min-width: 0;
+}
+
+.care-op-zone--header {
+  padding-bottom: var(--care-rhythm-control);
+}
+
+.care-op-zone--alert:not(:empty) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--care-rhythm-band);
+}
+
+.care-op-zone--control:not(:empty) {
+  padding-bottom: var(--care-rhythm-filter-queue);
+}
+
+.care-op-zone--main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--care-rhythm-section);
+}
+
+@media (max-width: 767px) {
+  .care-op-zone--main {
+    gap: var(--care-rhythm-section-mobile);
+  }
+}
+
+.care-attention-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--care-rhythm-band);
+}
+
+.care-zone-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--care-rhythm-section);
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .care-zone-stack {
+    gap: var(--care-rhythm-section-mobile);
+  }
+}
+
+.care-meta-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--care-rhythm-control);
+  width: 100%;
+  min-width: 0;
+}
+
+.care-search-control-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--care-rhythm-control);
+  min-width: 0;
+}
+
+.care-quiet-gap {
+  margin-top: var(--care-rhythm-quiet);
+}
+
+.care-section-header {
+  row-gap: var(--care-rhythm-control);
+  column-gap: var(--care-rhythm-section);
+}
+
+.care-section-body {
+  margin-top: var(--care-rhythm-section);
+}
+
+.care-workspace-section__body.care-section-body {
+  margin-top: var(--care-rhythm-filter-queue);
+}
+
+.care-empty-zone {
+  padding-block: var(--care-rhythm-empty);
+}
+
+.care-layout-with-rail {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--care-rhythm-layout-rail);
+}
+
+@media (min-width: 1280px) {
+  .care-layout-with-rail {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--care-rhythm-layout-rail);
+  }
+
+  .care-layout-with-rail > .care-layout-with-rail__main {
+    min-width: 0;
+    flex: 1 1 0%;
+  }
+
+  .care-layout-with-rail > .care-layout-with-rail__rail {
+    width: 300px;
+    flex-shrink: 0;
+  }
+}
+
+.care-queue-shell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.care-queue-shell__toolbar {
+  padding-bottom: var(--care-rhythm-queue-lead);
+}
+
+.care-queue-shell__header {
+  padding-top: var(--care-rhythm-queue-lead);
+  padding-bottom: var(--care-rhythm-queue-header);
+}
+
+.care-queue-shell__rows {
+  min-width: 0;
+}
+
+.surface-workspace-header.care-queue-shell__header {
+  padding-inline: 1rem;
+}
+
+@media (min-width: 768px) {
+  .surface-workspace-header.care-queue-shell__header {
+    padding-inline: 1.25rem;
+  }
+}
+
 /* Workspace section rhythm (header / body / footer without ad-hoc wrappers) */
 .care-workspace-section__header {
   padding: 1rem 1rem 0;

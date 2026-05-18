@@ -127,6 +127,9 @@ DEBUG = _bool_env('DJANGO_DEBUG', default=_bool_env('DEBUG', default=False))
 ENABLE_DJANGO_BROWSER_RELOAD = _bool_env('ENABLE_DJANGO_BROWSER_RELOAD', default=False)
 
 ALLOWED_HOSTS = _csv_env('ALLOWED_HOSTS', default=['*'])
+if '*' not in ALLOWED_HOSTS:
+    _LOCAL_ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+    ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, *_LOCAL_ALLOWED_HOSTS]))
 
 _LOCAL_CSRF_ORIGINS = [
     'http://localhost:3000',

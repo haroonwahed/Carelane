@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "../ui/button";
+import { cn } from "../ui/utils";
 import {
   CareAttentionBar,
   CareQueueInlineAction,
@@ -13,12 +14,12 @@ import {
   CareMetaChip,
   CarePageScaffold,
   CarePrimaryList,
-  CareSection,
-  CareSectionBody,
   CareSectionHeader,
+  CareWorkspaceSection,
   CareSearchFiltersBar,
   CareOperationalQueueHeader,
   CareWorkListCard,
+  CARE_RHYTHM,
   CareWorkRow,
   EmptyState,
   ErrorState,
@@ -89,6 +90,24 @@ export function PlacementTrackingPage({ onCaseClick, onNavigateToMatching }: Pla
     () => placementCases.filter((item) => placementTrackingSubstepAmbiguous(item)).length,
     [placementCases],
   );
+  const attentionTone = intakeStallCount > 0 ? "warning" : ambiguousPlacementCount > 0 ? "info" : "info";
+  const attentionMessage =
+    ambiguousPlacementCount > 0 || intakeStallCount > 0
+      ? [
+          ambiguousPlacementCount > 0
+            ? ambiguousPlacementCount === 1
+              ? "1 casus heeft geen duidelijk placement-signaal (workflow/arrangement/placement-record)."
+              : `${ambiguousPlacementCount} casussen hebben geen duidelijk placement-signaal (workflow/arrangement/placement-record).`
+            : null,
+          intakeStallCount > 0
+            ? intakeStallCount === 1
+              ? "1 plaatsing staat ≥5 dagen zonder duidelijke intake."
+              : `${intakeStallCount} plaatsingen staan ≥5 dagen zonder duidelijke intake.`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : "Plaatsing volgt op provideracceptatie; gebruik dit overzicht om bevestiging, intake en doorlooptijd te bewaken.";
 
   const emptyCopy = {
     "te-bevestigen": "Bevestig plaatsing en plan intake zodra de aanbieder heeft geaccepteerd.",
@@ -133,43 +152,33 @@ export function PlacementTrackingPage({ onCaseClick, onNavigateToMatching }: Pla
       dominantAction={
         <CareAttentionBar
           layout="compact"
-          tone="info"
-          message="Plaatsingen zijn het gevolg van provideracceptatie. Gebruik dit overzicht om bevestiging, intake en vertragingen te bewaken."
+          tone={attentionTone}
+          message={attentionMessage}
           action={onNavigateToMatching ? <CareQueueInlineAction onClick={onNavigateToMatching}>Bekijk matching</CareQueueInlineAction> : undefined}
         />
       }
     >
-      <CareAttentionBar
-        visible={ambiguousPlacementCount > 0}
-        tone="info"
-        message={
-          ambiguousPlacementCount === 1
-            ? "1 casus heeft geen duidelijk placement-signaal (workflow/arrangement/placement-record) — open de casus voor de exacte tussenstap."
-            : `${ambiguousPlacementCount} casussen hebben geen duidelijk placement-signaal (workflow/arrangement/placement-record) — open de casus voor de exacte tussenstap.`
-        }
-      />
-      <CareAttentionBar
-        visible={intakeStallCount > 0}
-        tone="warning"
-        message={`${intakeStallCount} plaatsing${intakeStallCount === 1 ? "" : "en"} staat${intakeStallCount === 1 ? "" : "en"} ≥5 dagen in plaatsing zonder duidelijke intake — plan intake of escaleer via coördinatie.`}
-      />
-
       {loading && <LoadingState title="Plaatsingen laden…" copy="De lijst wordt opgebouwd." />}
       {!loading && error && (
         <ErrorState title="Laden mislukt" copy={error} action={<Button variant="outline" onClick={refetch}>Opnieuw</Button>} />
       )}
 
       {!loading && !error && (
-        <CareSection testId="plaatsingen-uitvoerlijst" aria-labelledby="plaatsingen-werkvoorraad-heading">
+        <CareWorkspaceSection
+          testId="plaatsingen-uitvoerlijst"
+          aria-labelledby="plaatsingen-werkvoorraad-heading"
+          bodyBleedX
+          header={(
           <CareSectionHeader
             className="lg:flex-col lg:items-stretch"
             title={<span id="plaatsingen-werkvoorraad-heading">Werkvoorraad</span>}
             meta={
-              <div className="w-full min-w-0 space-y-2">
+              <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
                 <span className="inline-flex w-fit items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
                   {visibleCases.length} plaatsingen
                 </span>
                 <CareSearchFiltersBar
+                  variant="workspace"
                   className="px-0"
                   tabs={
                     <CareFilterTabGroup aria-label="Plaatsing-status">
@@ -187,7 +196,8 @@ export function PlacementTrackingPage({ onCaseClick, onNavigateToMatching }: Pla
               </div>
             }
           />
-          <CareSectionBody className="space-y-3">
+          )}
+        >
             {visibleCases.length === 0 ? (
               <EmptyState
                 title="Geen plaatsingen in dit overzicht"
@@ -241,8 +251,7 @@ export function PlacementTrackingPage({ onCaseClick, onNavigateToMatching }: Pla
                 </div>
               </CareWorkListCard>
             )}
-          </CareSectionBody>
-        </CareSection>
+        </CareWorkspaceSection>
       )}
 
       <CareContextHint

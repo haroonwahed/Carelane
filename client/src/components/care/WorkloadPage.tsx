@@ -30,6 +30,7 @@ import {
   CareWorkListCard,
   CareWorkRow,
   CareWorkspaceSection,
+  CARE_RHYTHM,
   EmptyState,
   ErrorState,
   LoadingState,
@@ -766,8 +767,8 @@ export function WorkloadPage({
   })();
 
   return (
-    <div className="flex w-full flex-col gap-8 xl:flex-row xl:items-start xl:gap-8">
-      <div className="min-w-0 flex-1">
+    <div className={CARE_RHYTHM.layoutWithRail}>
+      <div className="care-layout-with-rail__main min-w-0 flex-1">
     <CarePageScaffold
       archetype="queue"
       className="pb-8"
@@ -815,7 +816,6 @@ export function WorkloadPage({
       <CareWorkspaceSection
         testId="casussen-uitvoerlijst"
         aria-labelledby="casussen-werkvoorraad-heading"
-        bodyClassName="space-y-3"
         header={(
         <CareSectionHeader
           className="lg:flex-col lg:items-stretch"
@@ -823,7 +823,7 @@ export function WorkloadPage({
             <span id="casussen-werkvoorraad-heading">Werkvoorraad</span>
           }
           meta={
-            <div className="w-full min-w-0 space-y-2">
+            <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
               <span className="inline-flex w-fit items-center rounded-full bg-muted/35 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
                 {filteredItems.length} aanvragen
               </span>
@@ -953,7 +953,7 @@ export function WorkloadPage({
           )}
 
           {!loading && !error && filteredItems.length > 0 && (
-            <div data-testid="worklist" data-density="operational" data-layout="queue" className="space-y-3">
+            <div data-testid="worklist" data-density="operational" data-layout="queue" className={CARE_RHYTHM.zoneStack}>
               {groupedPageSections.length === 0 ? (
                 <p className="text-[13px] text-muted-foreground">Geen aanvragen op deze pagina.</p>
               ) : (
@@ -1085,7 +1085,7 @@ export function WorkloadPage({
       {!railCollapsed && (
         <aside
           data-testid="casussen-right-rail"
-          className="hidden w-[300px] shrink-0 space-y-4 pt-1 xl:block xl:sticky xl:top-4 xl:z-10 xl:overflow-y-auto xl:self-start"
+          className="care-layout-with-rail__rail hidden space-y-4 pt-1 xl:sticky xl:top-4 xl:z-10 xl:block xl:overflow-y-auto xl:self-start"
           style={{ maxHeight: tokens.layout.regiekamerRailMaxHeight }}
         >
           <CasussenInsightsPanels

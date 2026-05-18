@@ -175,3 +175,23 @@ export function canonicalPhaseForCaseExecution(args: {
   }
   return canonicalPhaseFromWorkflowState(args.currentState);
 }
+
+/** Case detail + workspace header — never pass raw `WorkflowState` into `mapApiPhaseToDecisionUiPhase`. */
+export function resolveCaseExecutionPhasePresentation(args: {
+  evaluationPhase?: string | null;
+  currentState: string;
+}): {
+  apiPhase: string;
+  decisionUiPhaseId: DecisionUiPhaseId;
+  badgeLabel: string;
+  subStatusLabel: string | null;
+} {
+  const apiPhase = canonicalPhaseForCaseExecution(args);
+  const decisionUiPhaseId = mapApiPhaseToDecisionUiPhase(apiPhase);
+  return {
+    apiPhase,
+    decisionUiPhaseId,
+    badgeLabel: decisionUiPhaseBadgeLabel(decisionUiPhaseId),
+    subStatusLabel: canonicalPhaseSubStatusLabel(apiPhase),
+  };
+}

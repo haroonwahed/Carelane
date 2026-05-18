@@ -106,6 +106,7 @@ class DecisionEngineTests(TestCase):
         assessment_status=None,
         matching_ready=False,
         assessment_notes="",
+        workflow_summary=None,
         provider_response_status=None,
         placement_status=None,
         title="Besliscasus",
@@ -134,6 +135,7 @@ class DecisionEngineTests(TestCase):
                 matching_ready=matching_ready,
                 assessed_by=self.gemeente_user,
                 notes=assessment_notes,
+                workflow_summary=workflow_summary or {},
             )
 
         placement = None
@@ -160,10 +162,31 @@ class DecisionEngineTests(TestCase):
             any(blocker["code"] in {"MISSING_SUMMARY", "MISSING_REQUIRED_CASE_DATA"} for blocker in result["blockers"])
         )
 
+    def test_draft_case_with_intake_summary_returns_start_matching(self):
+        intake, case_record, _, _ = self._create_case()
+        intake.assessment_summary = (
+            "Intake samenvatting met voldoende context om matching veilig te starten vanuit casusdetail."
+        )
+        intake.save(update_fields=["assessment_summary", "updated_at"])
+
+        result = evaluate_case(case_record, actor=self.gemeente_user)
+
+        self.assertEqual(result["current_state"], "DRAFT_CASE")
+        self.assertTrue(result["decision_context"]["matching_summary_ready"])
+        self.assertEqual(result["next_best_action"]["action"], "START_MATCHING")
+        self.assertTrue(any(action["action"] == "START_MATCHING" and action["allowed"] for action in result["allowed_actions"]))
+
     def test_summary_ready_case_returns_start_matching(self):
         _, case_record, _, _ = self._create_case(
             assessment_status=CaseAssessment.AssessmentStatus.UNDER_REVIEW,
             assessment_notes="Samenvatting gereed voor matching.",
+            workflow_summary={
+                "context": "Samenvatting gereed voor matching met voldoende context.",
+                "urgency": CaseIntakeProcess.Urgency.MEDIUM,
+                "risks": [],
+                "missing_information": "",
+                "risks_none_ack": True,
+            },
         )
 
         result = evaluate_case(case_record, actor=self.gemeente_user)

@@ -205,7 +205,7 @@ export function PlacementPage({
   if (isConfirmed) {
     return (
       <CarePageScaffold
-        archetype="decision"
+        archetype="workspace"
         className="pb-8"
         title={
           <span className="inline-flex flex-wrap items-center gap-2">
@@ -252,7 +252,7 @@ export function PlacementPage({
 
   return (
     <CarePageScaffold
-      archetype="decision"
+      archetype="workspace"
       className="pb-8"
       title={
         <span className="inline-flex flex-wrap items-center gap-2">
