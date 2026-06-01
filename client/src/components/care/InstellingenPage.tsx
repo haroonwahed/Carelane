@@ -36,7 +36,7 @@ export function InstellingenPage() {
     ? { label: "Kritieke signalen uit — het team ziet blokkades niet direct.", warn: true }
     : autoEscalation
       ? { label: "Automatische escalatie staat aan; stilstand in de keten wordt beperkt.", warn: false }
-      : { label: "Escalatie deels handmatig — controleer eigenaarschap in de regiekamer.", warn: false };
+      : { label: "Escalatie deels handmatig — controleer eigenaarschap in de coördinatie-omgeving.", warn: false };
 
   const activeToggles = [dailyDigest, criticalAlerts, mfaRequired, autoEscalation].filter(Boolean).length;
 

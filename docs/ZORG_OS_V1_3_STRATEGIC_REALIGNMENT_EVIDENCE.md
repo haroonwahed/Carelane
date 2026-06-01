@@ -125,7 +125,7 @@ Not captured in this evidence run (headless). Recommend manual capture: Coördin
 | No persisted `UITSTROOM` enum | **Product mapping:** `ARCHIVED` documented as *uitstroom* in `FOUNDATION_LOCK.md`; **UI:** uitstroom banner on case detail when `current_state === ARCHIVED` (`CaseExecutionPage`). |
 | Arrangement intelligence | **Mitigated:** `GET /care/api/cases/<id>/arrangement-alignment/` (read-only, deterministic staging) + `ArrangementAlignmentPanel` on case detail for gemeente/admin; contract in `client/src/lib/arrangementAlignmentContract.ts`. |
 | Mixed English/Dutch in code comments | **Unchanged (low):** gradual cleanup when touching files. |
-| Internal keys `regiekamer`, test ids `regiekamer-*` | **Deferred:** rename only in a dedicated refactor (high blast radius on e2e). |
+| Internal keys `regiekamer`, test ids `regiekamer-*` | **Deferred:** rename only in a dedicated refactor (high blast radius on e2e). See [`docs/STRUCTURAL_RENAME_DEFERRED.md`](./STRUCTURAL_RENAME_DEFERRED.md). |
 
 ---
 

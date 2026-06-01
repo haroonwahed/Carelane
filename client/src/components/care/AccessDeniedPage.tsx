@@ -84,7 +84,7 @@ export function AccessDeniedPage({ onGoDashboard, onGoCasussen }: AccessDeniedPa
             </PrimaryActionButton>
             {onGoCasussen ? (
               <Button type="button" variant="outline" className="rounded-xl" onClick={onGoCasussen}>
-                Naar casussen
+                Naar aanvragen
               </Button>
             ) : null}
           </div>

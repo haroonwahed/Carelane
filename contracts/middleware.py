@@ -75,6 +75,16 @@ def _should_render_safe_error_page(request, response):
     return True
 
 
+def _should_redirect_spa_forbidden(request):
+    """Keep direct 403s on mutation/edit endpoints; redirect ordinary page navigations."""
+    if request.method != 'GET':
+        return False
+    terminal_segment = request.path.rstrip('/').rsplit('/', 1)[-1]
+    if terminal_segment in {'edit', 'action', 'update', 'complete', 'status'}:
+        return False
+    return True
+
+
 class AuditLogMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -180,6 +190,7 @@ class SpaShellMigrationMiddleware:
     )
     EXCLUDED_EXACT = {
         '/care/organizations/activity/export/',
+        '/care/casussen/new/',
     }
     SHELL_PATHS = {
         '/dashboard/',
@@ -306,7 +317,9 @@ class SpaShellMigrationMiddleware:
 
         if _should_render_safe_error_page(request, response):
             if response.status_code == 403:
-                return spa_error_redirect(request, status_code=403)
+                if _should_redirect_spa_forbidden(request):
+                    return spa_error_redirect(request, status_code=403)
+                return response
             return render_safe_error_page(request, response.status_code, f'{response.status_code}.html')
         return response
 

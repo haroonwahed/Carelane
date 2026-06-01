@@ -20,6 +20,23 @@ function urgencyBadgeClasses(urgency: WorkflowCaseView["urgency"]): string {
       return "border-amber-500/35 bg-amber-500/10 text-amber-300";
     case "normal":
       return "border-blue-500/35 bg-blue-500/10 text-blue-300";
+    case "stable":
+      return "border-emerald-500/25 bg-emerald-500/10 text-emerald-300";
+    default:
+      return "border-border bg-muted/30 text-muted-foreground";
+  }
+}
+
+function placementPressureBadgeClasses(band: WorkflowCaseView["placementPressureBand"]): string {
+  switch (band) {
+    case "critical":
+      return "border-red-500/35 bg-red-500/10 text-red-300";
+    case "high":
+      return "border-amber-500/35 bg-amber-500/10 text-amber-300";
+    case "normal":
+      return "border-blue-500/35 bg-blue-500/10 text-blue-300";
+    case "low":
+      return "border-emerald-500/25 bg-emerald-500/10 text-emerald-300";
     default:
       return "border-border bg-muted/30 text-muted-foreground";
   }
@@ -80,7 +97,9 @@ export function ActionCaseDecisionCard({ item, decision, role, onOpen, onNavigat
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-border bg-background/65 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{item.id}</span>
             <span className="rounded-full border border-border bg-background/65 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{item.phaseLabel}</span>
-            <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${urgencyBadgeClasses(item.urgency)}`}>{item.urgencyLabel}</span>
+            <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${placementPressureBadgeClasses(item.placementPressureBand)}`}>
+              {item.placementPressureLabel ?? item.urgencyLabel}
+            </span>
             <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${severityChipClasses(decision.severity)}`}>{decision.statusLabel}</span>
           </div>
           <h3 className="text-[17px] font-semibold leading-tight text-foreground">{item.clientLabel}</h3>
@@ -111,6 +130,12 @@ export function ActionCaseDecisionCard({ item, decision, role, onOpen, onNavigat
         <span>•</span>
         <span>Provider: {item.recommendedProviderName ?? "Nog niet gekozen"}</span>
       </div>
+
+      {item.placementPressureReason ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          {getShortReasonLabel(item.placementPressureReason, 112)}
+        </p>
+      ) : null}
 
       <div className="mt-3 grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
         <section className="rounded-2xl border border-border/70 bg-background/40 px-4 py-3">

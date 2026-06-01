@@ -503,7 +503,7 @@ function computeAllowedActions(casus: Casus, role: UserRole): CasusAction[] {
         add("select_provider",  "Selecteer aanbieder",    "primary");
         add("rerun_matching",   "Herstart matching",      "secondary");
         add("expand_radius",    "Vergroot zoekgebied",    "secondary");
-        add("escalate_case",    "Escaleer casus",         "destructive");
+        add("escalate_case",    "Escaleer casus",      "destructive");
       }
       break;
 
@@ -516,7 +516,7 @@ function computeAllowedActions(casus: Casus, role: UserRole): CasusAction[] {
         } else {
           add("select_provider",  "Aanbieder selecteren",   "primary");
         }
-        add("escalate_case",      "Escaleer casus",         "destructive");
+        add("escalate_case",      "Escaleer casus",      "destructive");
       }
       break;
 
@@ -525,7 +525,7 @@ function computeAllowedActions(casus: Casus, role: UserRole): CasusAction[] {
         add("follow_up_provider", "Volg op bij aanbieder", "primary");
         add("view_handover",      "Bekijk overdracht",     "secondary");
         add("return_to_matching", "Herstart matching",     "secondary");
-        add("escalate_case",      "Escaleer casus",        "destructive");
+        add("escalate_case",      "Escaleer casus",      "destructive");
       }
       if (role === "zorgaanbieder" || role === "admin") {
         add("provider_accept_case",    "Accepteren",                "primary");
@@ -539,7 +539,7 @@ function computeAllowedActions(casus: Casus, role: UserRole): CasusAction[] {
       if (role === "gemeente" || role === "admin") {
         add("follow_up_provider", "Volg op bij aanbieder", "primary");
         add("view_handover",      "Bekijk overdracht",     "secondary");
-        add("escalate_case",      "Escaleer casus",        "destructive");
+        add("escalate_case",      "Escaleer casus",      "destructive");
       }
       if (role === "zorgaanbieder" || role === "admin") {
         add("plan_intake",           "Plan intake",          "primary");
@@ -550,7 +550,7 @@ function computeAllowedActions(casus: Casus, role: UserRole): CasusAction[] {
       break;
 
     case "afgerond":
-      add("archive_case",    "Archiveer casus",   "secondary");
+      add("archive_case",    "Archiveer casus", "secondary");
       add("review_outcome",  "Bekijk uitkomst",   "secondary");
       if (role === "admin") {
         add("reopen_case", "Heropen casus", "destructive");
@@ -559,7 +559,7 @@ function computeAllowedActions(casus: Casus, role: UserRole): CasusAction[] {
 
     case "geblokkeerd":
       if (role !== "zorgaanbieder") {
-        add("escalate_case",           "Escaleer casus",          "primary");
+        add("escalate_case",           "Escaleer casus",       "primary");
         add("request_manual_review",   "Vraag handmatige review", "secondary");
         add("return_to_previous_phase","Terug naar vorige fase",   "secondary");
       }

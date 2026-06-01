@@ -154,9 +154,9 @@ function SectionHeader({
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-3 text-sm">
-      <span className="text-muted-foreground shrink-0">{label}</span>
-      <span className="font-medium text-right">{value}</span>
+    <div className="flex min-w-0 items-start justify-between gap-3 text-sm">
+      <span className="min-w-0 shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 break-words text-right font-medium">{value}</span>
     </div>
   );
 }
@@ -390,7 +390,7 @@ function ContextPanel({ casus }: { casus: Casus }) {
           </div>
         </div>
         <div className="space-y-3">
-          <Row label="Casus ID" value={<span className="font-mono text-xs">{casus.id}</span>} />
+          <Row label="Casus-ID" value={<span className="font-mono text-xs">{casus.id}</span>} />
           <Row label="Regio" value={<span className="flex items-center gap-1"><MapPin size={12} />{casus.region}</span>} />
           <Row label="Type zorg" value={casus.careType} />
           <Row label="Wachttijd" value={
@@ -479,19 +479,12 @@ function IntakeInitialPanel({
           <Row label="Type zorg" value={casus.careType} />
           <Row label="Regio" value={casus.region} />
           <Row label="Aanvrager" value="Gemeente — Jeugdteam" />
-          <Row label="Aanvraagdatum" value={new Date(casus.createdAt).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })} />
+          <Row label="Casusdatum" value={new Date(casus.createdAt).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })} />
         </div>
       </div>
 
       <div className="panel-surface p-4">
         <SectionHeader icon={<Zap size={16} className="text-primary" />} title="Volgende stap" />
-        <p className="text-sm text-muted-foreground mb-4">Beoordeling nodig voor matching.</p>
-        <details className="mb-4 rounded-lg border border-border/80 bg-background/60 px-3 py-2 text-sm">
-          <summary className="cursor-pointer list-none font-medium text-foreground">Details</summary>
-          <p className="mt-2 text-muted-foreground leading-relaxed">
-            Wijs een beoordelaar toe en bepaal urgentie, complexiteit en zorgtype.
-          </p>
-        </details>
         {primaryAction && (
           <ActionButton action={primaryAction} onClick={() => onAction(primaryAction.type)} fullWidth />
         )}
@@ -813,7 +806,7 @@ function PlaatsingPanel({
             <p className="font-semibold">{placement.providerName}</p>
             <p className="text-sm text-muted-foreground">{provider?.type} · {provider?.region}</p>
           </div>
-          <div className="text-right shrink-0 max-w-[8rem]">
+          <div className="min-w-0 shrink-0 max-w-[8rem] text-right">
             <p className="text-[12px] font-semibold leading-snug text-foreground">{advisoryLabel}</p>
             <p className="text-xs text-muted-foreground">Matchadvies</p>
           </div>
@@ -1250,7 +1243,7 @@ export function CasusControlCenter({
       <div className="flex items-center justify-center min-h-[320px]">
         <div className="text-center space-y-3">
           <p className="text-muted-foreground">Casus niet gevonden: {caseId}</p>
-          <Button variant="outline" onClick={onBack}>Terug naar Regiekamer</Button>
+          <Button variant="outline" onClick={onBack}>Terug naar coördinatie</Button>
         </div>
       </div>
     );
@@ -1275,10 +1268,10 @@ export function CasusControlCenter({
           className="flex items-center gap-1.5 hover:text-foreground transition-colors"
         >
           <ArrowLeft size={14} />
-          Regiekamer
+          Coördinatie
         </button>
         <ChevronRight size={14} />
-        <span>Urgente casussen</span>
+        <span>Urgente aanvragen</span>
         <ChevronRight size={14} />
         <span className="text-foreground font-medium font-mono">{casus.id}</span>
       </nav>

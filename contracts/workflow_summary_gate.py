@@ -6,6 +6,16 @@ from contracts.models import CaseAssessment, CaseIntakeProcess
 MIN_SUMMARY_CONTEXT_LEN = 24
 
 
+def _resolved_intake_urgency(intake: CaseIntakeProcess) -> str:
+    urgency = (getattr(intake, "urgency", "") or "").strip()
+    if urgency:
+        return urgency
+    try:
+        return (intake.derive_operational_urgency() or "").strip()
+    except Exception:
+        return ""
+
+
 def workflow_summary_complete(
     *,
     assessment: CaseAssessment | None,
@@ -20,7 +30,7 @@ def workflow_summary_complete(
         return False, (
             f'Samenvatting (context) moet minstens {MIN_SUMMARY_CONTEXT_LEN} tekens bevatten vóór matching.'
         )
-    if not (intake.urgency or '').strip():
+    if not _resolved_intake_urgency(intake):
         return False, 'Urgentie is verplicht op de casus.'
     if 'risks' not in ws:
         return False, "Vul het veld risico's in (of vink aan: geen aanvullende risico's)."
@@ -41,7 +51,7 @@ def workflow_summary_can_bootstrap(
     if assessment is not None and workflow_summary_complete(assessment=assessment, intake=intake)[0]:
         return True
     context = _intake_summary_bootstrap_text(intake)
-    return len(context) >= MIN_SUMMARY_CONTEXT_LEN and bool((intake.urgency or '').strip())
+    return len(context) >= MIN_SUMMARY_CONTEXT_LEN and bool(_resolved_intake_urgency(intake))
 
 
 def ensure_workflow_summary_for_matching(
@@ -59,7 +69,8 @@ def ensure_workflow_summary_for_matching(
         return False, (
             f'Samenvatting (context) moet minstens {MIN_SUMMARY_CONTEXT_LEN} tekens bevatten vóór matching.'
         )
-    if not (intake.urgency or '').strip():
+    urgency = _resolved_intake_urgency(intake)
+    if not urgency:
         return False, 'Urgentie is verplicht op de casus.'
 
     ws = dict(assessment.workflow_summary or {})
@@ -73,7 +84,7 @@ def ensure_workflow_summary_for_matching(
     if len(ws['risks']) == 0 and not ws.get('risks_none_ack'):
         ws['risks_none_ack'] = True
     if not (ws.get('urgency') or '').strip():
-        ws['urgency'] = (intake.urgency or '').strip()
+        ws['urgency'] = urgency
     ws.setdefault('missing_information', str(ws.get('missing_information') or '').strip())
     assessment.workflow_summary = ws
     return workflow_summary_complete(assessment=assessment, intake=intake)

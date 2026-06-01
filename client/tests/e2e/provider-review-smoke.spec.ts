@@ -33,7 +33,7 @@ async function login(page: import("@playwright/test").Page, username: string, pa
   await page.getByLabel("Gebruikersnaam").fill(username);
   await page.getByLabel("Wachtwoord").fill(password);
   await page.getByRole("button", { name: "Inloggen" }).click();
-  await page.waitForLoadState("networkidle");
+  await page.waitForURL(/\/dashboard\/?(\?.*)?$/, { timeout: 45_000 });
   await expect(
     page.getByText("Ongeldige gebruikersnaam of wachtwoord. Probeer opnieuw."),
     "Login failed — run ./scripts/prepare_pilot_e2e.sh and use E2E_DEMO_PASSWORD / demo provider users.",
@@ -136,7 +136,7 @@ test("provider smoke: active review shows handoff read-model line when pending",
 
   const whyUs = section.getByTestId("provider-review-why-us-block");
   await expect(whyUs).toBeVisible({ timeout: 45_000 });
-  await expect(whyUs).toContainText(/Waarom deze aanvraag bij jullie ligt/i);
+  await expect(whyUs).toContainText(/Waarom deze casus bij jullie ligt/i);
   await expect(whyUs).toContainText(/geen automatische toewijzing/i);
 
   const handoff = whyUs.getByTestId("provider-review-handoff-context");

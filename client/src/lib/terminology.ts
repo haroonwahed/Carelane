@@ -1,13 +1,13 @@
 export const CARE_TERMS = {
   workflow: {
-    casus: "Aanvraag",
+    casus: "Casus",
     samenvatting: "Zorgvraag",
     matching: "Matching",
     gemeenteValidatie: "Gemeentelijke validatie",
     aanbiederBeoordeling: "Aanbieder reacties",
     plaatsing: "Plaatsing",
     intake: "Intake",
-    plaatsingEnIntake: "Plaatsing & uitstroom",
+    plaatsingEnIntake: "Plaatsing & intake",
   },
   roles: {
     aanmelder: "Aanmelder",

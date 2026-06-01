@@ -59,6 +59,8 @@ interface Document {
   status: DocumentStatus;
   fileSize: string;
   fileType: string;
+  hasStoredFile: boolean;
+  externalHandoffReference?: string;
 }
 
 
@@ -101,6 +103,8 @@ export function DocumentenPage() {
         status: (d.status === "archived" ? "gearchiveerd" : "actief") as DocumentStatus,
         fileSize: d.fileSize,
         fileType: d.mimeType.split("/")[1]?.toUpperCase() ?? d.mimeType,
+        hasStoredFile: d.hasStoredFile,
+        externalHandoffReference: d.externalHandoffReference,
       })));
     }
   }, [apiDocuments]);
@@ -167,7 +171,7 @@ export function DocumentenPage() {
       currentDocuments.map((item) => (item.id === document.id ? updatedDocument : item))
     );
     setSelectedDocument(updatedDocument);
-    setLastActionMessage(`${document.id} gekoppeld aan casus`);
+      setLastActionMessage(`${document.id} gekoppeld aan casus`);
   };
 
   const handleArchive = (document: Document) => {
@@ -222,6 +226,7 @@ export function DocumentenPage() {
         <CareSectionHeader
           className="lg:flex-col lg:items-stretch"
           title="Werkvoorraad"
+          description="Zoek, filter, bekijk en koppel documenten zonder de context uit het oog te verliezen."
           meta={(
             <div className="w-full min-w-0 space-y-2">
               <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
@@ -231,7 +236,7 @@ export function DocumentenPage() {
                 className="px-0"
                 searchValue={searchQuery}
                 onSearchChange={setSearchQuery}
-                searchPlaceholder="Zoeken op document, casus ID of gebruiker..."
+                searchPlaceholder="Zoeken op document, casus-ID of gebruiker..."
                 showSecondaryFilters={showFilters}
                 onToggleSecondaryFilters={() => setShowFilters((current) => !current)}
                 secondaryFiltersLabel="Filters"
@@ -287,84 +292,84 @@ export function DocumentenPage() {
           )}
         />
         <CareSectionBody className="space-y-4">
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className={selectedDocument ? "xl:col-span-2" : "xl:col-span-3"}>
-          <div className="panel-surface overflow-hidden">
-            <div className="grid grid-cols-12 gap-4 p-4 border-b border-border bg-muted/30">
-              <div className="col-span-4 text-xs font-semibold text-muted-foreground uppercase">
-                Document
-              </div>
-              <div className="col-span-2 text-xs font-semibold text-muted-foreground uppercase">
-                Type
-              </div>
-              <div className="col-span-2 text-xs font-semibold text-muted-foreground uppercase">
-                Gekoppeld aan
-              </div>
-              <div className="col-span-2 text-xs font-semibold text-muted-foreground uppercase">
-                Upload
-              </div>
-              <div className="col-span-2 text-xs font-semibold text-muted-foreground uppercase">
-                Acties
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+            <div className={selectedDocument ? "xl:col-span-2" : "xl:col-span-3"}>
+              <div className="overflow-hidden rounded-[24px] border border-border/60 bg-card/45 shadow-sm">
+                <div className="sticky top-0 z-10 grid grid-cols-12 gap-4 border-b border-border/60 bg-card/75 px-4 py-3 backdrop-blur">
+                  <div className="col-span-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Document
+                  </div>
+                  <div className="col-span-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Type
+                  </div>
+                  <div className="col-span-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Gekoppeld aan
+                  </div>
+                  <div className="col-span-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Upload
+                  </div>
+                  <div className="col-span-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Acties
+                  </div>
+                </div>
+
+                <div className="divide-y divide-border/40">
+                  {filteredDocuments.map((doc) => (
+                    <DocumentRow
+                      key={doc.id}
+                      document={doc}
+                      isSelected={selectedDocument?.id === doc.id}
+                      onSelect={() => setSelectedDocument(doc)}
+                      onView={() => handleView(doc)}
+                      onDownload={() => handleDownload(doc)}
+                      onLink={() => handleLink(doc)}
+                      onArchive={() => handleArchive(doc)}
+                    />
+                  ))}
+                </div>
+
+                {loading && (
+                  <LoadingState title="Documenten laden…" copy="Bestandenlijst wordt opgebouwd." />
+                )}
+                {!loading && error && (
+                  <ErrorState
+                    title="Kon documenten niet laden"
+                    copy={error}
+                    action={<Button variant="outline" size="sm" onClick={refetch}>Opnieuw proberen</Button>}
+                  />
+                )}
+                {!loading && !error && filteredDocuments.length === 0 && (
+                  <EmptyState
+                    title="Geen documenten"
+                    copy="Er zijn geen documenten die passen bij de huidige filters."
+                    action={(
+                      <Button variant="outline" onClick={() => {
+                        setSearchQuery("");
+                        setTypeFilter("all");
+                        setLinkedToFilter("all");
+                        setStatusFilter("all");
+                      }}
+                      >
+                        Wis filters
+                      </Button>
+                    )}
+                  />
+                )}
               </div>
             </div>
 
-            <div className="divide-y divide-border">
-              {filteredDocuments.map((doc) => (
-                <DocumentRow
-                  key={doc.id}
-                  document={doc}
-                  isSelected={selectedDocument?.id === doc.id}
-                  onSelect={() => setSelectedDocument(doc)}
-                  onView={() => handleView(doc)}
-                  onDownload={() => handleDownload(doc)}
-                  onLink={() => handleLink(doc)}
-                  onArchive={() => handleArchive(doc)}
+            {selectedDocument && (
+              <div className="xl:col-span-1">
+                <DocumentPreview
+                  document={selectedDocument}
+                  onDownload={() => handleDownload(selectedDocument)}
+                  onLink={() => handleLink(selectedDocument)}
+                  onArchive={() => handleArchive(selectedDocument)}
+                  onClose={() => setSelectedDocument(null)}
                 />
-              ))}
-            </div>
-
-            {loading && (
-              <LoadingState title="Documenten laden…" copy="Bestandenlijst wordt opgebouwd." />
-            )}
-            {!loading && error && (
-              <ErrorState
-                title="Kon documenten niet laden"
-                copy={error}
-                action={<Button variant="outline" size="sm" onClick={refetch}>Opnieuw proberen</Button>}
-              />
-            )}
-            {!loading && !error && filteredDocuments.length === 0 && (
-              <EmptyState
-                  title="Geen documenten"
-                  copy="Er zijn geen documenten die passen bij de huidige filters."
-                  action={(
-                    <Button variant="outline" onClick={() => {
-                      setSearchQuery("");
-                      setTypeFilter("all");
-                      setLinkedToFilter("all");
-                      setStatusFilter("all");
-                    }}
-                    >
-                      Wis filters
-                    </Button>
-                  )}
-              />
+              </div>
             )}
           </div>
-        </div>
-
-        {selectedDocument && (
-          <div className="xl:col-span-1">
-            <DocumentPreview
-              document={selectedDocument}
-              onDownload={() => handleDownload(selectedDocument)}
-              onLink={() => handleLink(selectedDocument)}
-              onArchive={() => handleArchive(selectedDocument)}
-              onClose={() => setSelectedDocument(null)}
-            />
-          </div>
-        )}
-      </div>
       </CareSectionBody>
       </CareSection>
     </CarePageScaffold>
@@ -396,9 +401,9 @@ function DocumentRow({
   return (
     <div 
       className={`
-        grid grid-cols-12 gap-4 p-4 cursor-pointer transition-colors
-        hover:bg-muted/50
-        ${isSelected ? "bg-primary/5 border-l-4 border-primary" : ""}
+        grid grid-cols-12 gap-4 px-4 py-4 cursor-pointer transition-colors
+        hover:bg-muted/35
+        ${isSelected ? "border-l-4 border-primary bg-primary/5" : ""}
       `}
       onClick={onSelect}
     >
@@ -412,9 +417,18 @@ function DocumentRow({
             <p className="font-medium text-foreground truncate">
               {document.name}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {document.fileType} · {document.fileSize}
-            </p>
+            <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+              {document.hasStoredFile ? (
+                <span>{document.fileType} · {document.fileSize}</span>
+              ) : (
+                <span>Extern opgeslagen</span>
+              )}
+              {document.externalHandoffReference && (
+                <span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
+                  Externe handoff
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -527,7 +541,7 @@ function DocumentPreview({
   const linkedConfig = linkedEntityConfig[document.linkedTo.type];
 
   return (
-    <div className="panel-surface p-4 space-y-3 sticky" style={{ top: tokens.layout.edgeZero }}>
+    <div className="sticky space-y-3 rounded-[24px] border border-border/60 bg-card/45 p-4 shadow-sm backdrop-blur" style={{ top: tokens.layout.edgeZero }}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <h3 className="font-semibold">Document</h3>
@@ -541,7 +555,7 @@ function DocumentPreview({
         </Button>
       </div>
 
-      <div className="aspect-[3/4] bg-muted/30 rounded-lg border border-border flex items-center justify-center">
+      <div className="aspect-[3/4] rounded-2xl border border-border/60 bg-muted/30 flex items-center justify-center">
         <div className="text-center">
           <FileText size={48} className="mx-auto text-muted-foreground/30 mb-2" />
           <p className="text-sm text-muted-foreground">Documentweergave</p>
@@ -564,14 +578,18 @@ function DocumentPreview({
           </div>
           <div>
             <span className="text-muted-foreground text-xs">Bestand</span>
-            <p className="font-medium mt-1">{document.fileType}</p>
+            <p className="font-medium mt-1">
+              {document.hasStoredFile ? document.fileType : "Extern opgeslagen"}
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
             <span className="text-muted-foreground text-xs">Grootte</span>
-            <p className="font-medium mt-1">{document.fileSize}</p>
+            <p className="font-medium mt-1">
+              {document.hasStoredFile ? document.fileSize : "Niet lokaal opgeslagen"}
+            </p>
           </div>
           <div>
             <span className="text-muted-foreground text-xs">Status</span>
@@ -586,6 +604,13 @@ function DocumentPreview({
           <p className="font-medium mt-1">{document.uploadDate}</p>
         </div>
 
+        {document.externalHandoffReference && (
+          <div>
+            <span className="text-muted-foreground text-xs">Externe handoff</span>
+            <p className="font-medium mt-1 break-all">{document.externalHandoffReference}</p>
+          </div>
+        )}
+
         <div>
           <span className="text-muted-foreground text-xs">Geüpload door</span>
           <p className="font-medium mt-1">{document.uploadedBy}</p>
@@ -594,7 +619,7 @@ function DocumentPreview({
         {document.linkedTo.type !== "geen" && (
           <div>
             <span className="text-muted-foreground text-xs">Gekoppeld aan</span>
-            <div className="mt-1 p-2 bg-muted/30 rounded-lg">
+            <div className="mt-1 rounded-xl border border-border/60 bg-muted/25 p-3">
               <span className={`text-xs font-medium ${linkedConfig.color}`}>
                 {linkedConfig.label}
               </span>
@@ -612,16 +637,24 @@ function DocumentPreview({
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col gap-2 pt-4 border-t border-border">
-        <Button className="w-full bg-primary hover:bg-primary/90 gap-2" onClick={onDownload}>
-          <Download size={16} />
-          Download
-        </Button>
-        <Button variant="outline" className="w-full gap-2" onClick={onDownload}>
-          <ExternalLink size={16} />
-          Bekijk in nieuw tabblad
-        </Button>
-        {document.linkedTo.type === "geen" && (
+      <div className="flex flex-col gap-2 border-t border-border/60 pt-4">
+        {document.hasStoredFile ? (
+          <>
+            <Button className="w-full bg-primary hover:bg-primary/90 gap-2" onClick={onDownload}>
+              <Download size={16} />
+              Download
+            </Button>
+            <Button variant="outline" className="w-full gap-2" onClick={onDownload}>
+              <ExternalLink size={16} />
+              Bekijk in nieuw tabblad
+            </Button>
+          </>
+        ) : (
+          <div className="rounded-lg border border-border/70 bg-muted/30 p-3 text-xs text-muted-foreground">
+            Geen lokaal bestand opgeslagen. Gebruik de externe handoffreferentie voor veilige uitwisseling buiten CareOn.
+          </div>
+        )}
+        {document.linkedTo.type === "geen" && document.hasStoredFile && (
           <Button variant="outline" className="w-full gap-2" onClick={onLink}>
             <Link2 size={16} />
             Koppel aan casus

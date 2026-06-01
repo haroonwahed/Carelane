@@ -27,6 +27,7 @@ from contracts.observability import log_escalation_hint
 from contracts.arrangement_alignment import build_arrangement_alignment_payload
 from contracts.decision_engine import build_regiekamer_decision_overview, evaluate_case
 from contracts.governance import AuditLoggingError, log_case_decision_event
+from contracts.zorgbehoefte_taxonomy import format_taxonomy_explainability
 from contracts.provider_location import provider_location_payload as _provider_location_payload
 from contracts.care_lifecycle_v12 import (
     sync_placement_budget_review_flags,
@@ -113,6 +114,16 @@ _SPA_INFO_REQUEST_TYPES = frozenset({
     'andere_informatie',
 })
 _INFO_TYPE_NOTES_PREFIX = re.compile(r'^\[INFO_TYPE:([a-z0-9_]+)\]\s*\n?', re.IGNORECASE)
+
+
+def _resolved_intake_urgency(intake) -> str:
+    urgency = (getattr(intake, 'urgency', '') or '').strip()
+    if urgency:
+        return urgency
+    try:
+        return (intake.derive_operational_urgency() or '').strip()
+    except Exception:
+        return ''
 
 
 def _compose_provider_info_request_notes(*, info_type: str, body: str) -> str:
@@ -417,9 +428,21 @@ def _minimal_case_list_entry(case: CareCase) -> dict:
         "urgency_validated": False,
         "urgency_document_present": False,
         "urgency_granted_date": None,
+        "urgency_applied": False,
+        "urgency_applied_since": None,
+        "placement_pressure_horizon": "",
+        "safety_pressure": False,
+        "time_sensitive_arrangement": False,
+        "escalation_needed": False,
+        "placement_pressure_notes": "",
+        "placement_pressure_band": None,
+        "placement_pressure_label": None,
+        "placement_pressure_reason": None,
+        "placement_pressure_implication": None,
         "placement_request_status": None,
         "placement_provider_response_status": None,
         "has_case_geo": False,
+        "routing": {},
     }
 
 
@@ -452,6 +475,7 @@ def _build_case_data(case, *, include_geo=False):
     intake = _safe_case_intake(case)
     # Intake-backed fields for SPA (placement inference + urgency) when older clients omit workflow_state.
     if intake is not None:
+        placement_pressure = intake.placement_pressure_assessment()
         result['arrangement_type_code'] = (getattr(intake, 'arrangement_type_code', '') or '').strip()
         result['arrangement_provider'] = (getattr(intake, 'arrangement_provider', '') or '').strip()
         result['arrangement_end_date'] = (
@@ -463,6 +487,19 @@ def _build_case_data(case, *, include_geo=False):
         result['urgency_granted_date'] = (
             intake.urgency_granted_date.isoformat() if getattr(intake, 'urgency_granted_date', None) else None
         )
+        result['urgency_applied'] = bool(getattr(intake, 'urgency_applied', False))
+        result['urgency_applied_since'] = (
+            intake.urgency_applied_since.isoformat() if getattr(intake, 'urgency_applied_since', None) else None
+        )
+        result['placement_pressure_horizon'] = getattr(intake, 'placement_pressure_horizon', '') or ''
+        result['safety_pressure'] = bool(getattr(intake, 'safety_pressure', False))
+        result['time_sensitive_arrangement'] = bool(getattr(intake, 'time_sensitive_arrangement', False))
+        result['escalation_needed'] = bool(getattr(intake, 'escalation_needed', False))
+        result['placement_pressure_notes'] = (getattr(intake, 'placement_pressure_notes', '') or '').strip()
+        result['placement_pressure_band'] = placement_pressure['band']
+        result['placement_pressure_label'] = placement_pressure['label']
+        result['placement_pressure_reason'] = placement_pressure['reason']
+        result['placement_pressure_implication'] = placement_pressure['implication']
         # Latest placement row (same signals as derive_workflow_state) for SPA when workflow_state is absent/stale.
         try:
             placement_rows = list(intake.indications.all())
@@ -475,6 +512,21 @@ def _build_case_data(case, *, include_geo=False):
             logger.exception("case_placement_snapshot_failed case_id=%s", getattr(case, "pk", "?"))
             result['placement_request_status'] = None
             result['placement_provider_response_status'] = None
+        care_category_main = getattr(intake, 'care_category_main', None)
+        care_category_sub = getattr(intake, 'care_category_sub', None)
+        result['routing'] = intake.routing_summary if hasattr(intake, 'routing_summary') else {}
+        taxonomie_lijn, taxonomie_code_lijn = format_taxonomy_explainability(
+            getattr(care_category_main, 'name', '') or '',
+            getattr(care_category_main, 'code', '') or '',
+            getattr(care_category_sub, 'name', '') or '',
+            getattr(care_category_sub, 'code', '') or '',
+        )
+        result['zorgbehoefte_categorie'] = getattr(care_category_main, 'name', '') or ''
+        result['zorgbehoefte_categorie_code'] = getattr(care_category_main, 'code', '') or ''
+        result['zorgbehoefte_specifiek'] = getattr(care_category_sub, 'name', '') or ''
+        result['zorgbehoefte_specifiek_code'] = getattr(care_category_sub, 'code', '') or ''
+        result['taxonomie_lijn'] = taxonomie_lijn
+        result['taxonomie_code_lijn'] = taxonomie_code_lijn
     else:
         result['arrangement_type_code'] = ''
         result['arrangement_provider'] = ''
@@ -483,19 +535,44 @@ def _build_case_data(case, *, include_geo=False):
         result['urgency_validated'] = False
         result['urgency_document_present'] = False
         result['urgency_granted_date'] = None
+        result['urgency_applied'] = False
+        result['urgency_applied_since'] = None
+        result['placement_pressure_horizon'] = ''
+        result['safety_pressure'] = False
+        result['time_sensitive_arrangement'] = False
+        result['escalation_needed'] = False
+        result['placement_pressure_notes'] = ''
+        result['placement_pressure_band'] = None
+        result['placement_pressure_label'] = None
+        result['placement_pressure_reason'] = None
+        result['placement_pressure_implication'] = None
         result['placement_request_status'] = None
         result['placement_provider_response_status'] = None
+        result['routing'] = {}
+        result['zorgbehoefte_categorie'] = ''
+        result['zorgbehoefte_categorie_code'] = ''
+        result['zorgbehoefte_specifiek'] = ''
+        result['zorgbehoefte_specifiek_code'] = ''
+        result['taxonomie_lijn'] = ''
+        result['taxonomie_code_lijn'] = ''
     has_case_geo = bool(
         intake and getattr(intake, 'latitude', None) is not None and getattr(intake, 'longitude', None) is not None
     )
     result['has_case_geo'] = has_case_geo
-    if include_geo:
-        result['case_geo'] = {
-            'postcode': str(getattr(intake, 'postcode', '') or '') if intake is not None else '',
-            'latitude': getattr(intake, 'latitude', None) if intake is not None else None,
-            'longitude': getattr(intake, 'longitude', None) if intake is not None else None,
-            'has_coordinates': has_case_geo,
+    if include_geo and intake is not None:
+        controlled_link_states = {
+            WorkflowState.PLACEMENT_CONFIRMED,
+            WorkflowState.INTAKE_STARTED,
+            WorkflowState.ACTIVE_PLACEMENT,
+            WorkflowState.ARCHIVED,
         }
+        if getattr(intake, 'workflow_state', '') in controlled_link_states:
+            result['case_geo'] = {
+                'postcode': str(getattr(intake, 'postcode', '') or ''),
+                'latitude': getattr(intake, 'latitude', None),
+                'longitude': getattr(intake, 'longitude', None),
+                'has_coordinates': has_case_geo,
+            }
     return result
 
 
@@ -538,6 +615,27 @@ def contracts_api(request):
 
         if params.status:
             queryset = queryset.filter(status__in=params.status)
+
+        responsible_municipality = str(request.GET.get('verantwoordelijke_gemeente') or '').strip()
+        zorgregio_filter = str(request.GET.get('zorgregio') or '').strip()
+        plaatsingsregio_filter = str(request.GET.get('plaatsingsregio') or '').strip()
+        verblijfsgemeente_filter = str(request.GET.get('verblijfsgemeente') or '').strip()
+        escalatie_regio_filter = str(request.GET.get('escalatie_regio') or '').strip()
+        requires_revalidation = str(request.GET.get('requires_revalidation') or '').strip().lower() in {'1', 'true', 'yes', 'on'}
+        cross_region_only = str(request.GET.get('cross_region') or '').strip().lower() in {'1', 'true', 'yes', 'on'}
+
+        if responsible_municipality.isdigit():
+            queryset = queryset.filter(verantwoordelijke_gemeente_id=int(responsible_municipality))
+        if zorgregio_filter.isdigit():
+            queryset = queryset.filter(zorgregio_id=int(zorgregio_filter))
+        if plaatsingsregio_filter.isdigit():
+            queryset = queryset.filter(plaatsingsregio_id=int(plaatsingsregio_filter))
+        if verblijfsgemeente_filter.isdigit():
+            queryset = queryset.filter(verblijfsgemeente_id=int(verblijfsgemeente_filter))
+        if escalatie_regio_filter.isdigit():
+            queryset = queryset.filter(escalatie_regio_id=int(escalatie_regio_filter))
+        if requires_revalidation or cross_region_only:
+            queryset = queryset.filter(requires_revalidation=True)
 
         if params.sort == 'updated_asc':
             queryset = queryset.order_by('updated_at')
@@ -818,6 +916,61 @@ def _serialize_model_choices(field):
     ]
 
 
+def _serialize_taxonomy_choices(field):
+    serialized = []
+    for obj in field.queryset:
+        payload = {
+            'value': str(obj.pk),
+            'label': str(field.label_from_instance(obj)),
+            'code': getattr(obj, 'code', '') or '',
+            'visibleInMvp': bool(getattr(obj, 'visible_in_mvp', True)),
+            'sortOrder': int(getattr(obj, 'order', 0) or 0),
+        }
+        main_category = getattr(obj, 'main_category', None)
+        if main_category is not None:
+            payload['mainCategoryId'] = str(main_category.pk)
+            payload['parentCategory'] = {
+                'id': str(main_category.pk),
+                'code': getattr(main_category, 'code', '') or '',
+                'label': getattr(main_category, 'name', '') or '',
+            }
+        serialized.append(payload)
+    return serialized
+
+
+def _serialize_unique_municipality_choices(field):
+    serialized = []
+    seen = set()
+    for obj in field.queryset:
+        label = (getattr(obj, 'municipality_name', '') or str(field.label_from_instance(obj))).strip()
+        dedupe_key = label.casefold()
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        serialized.append({
+            'value': str(obj.pk),
+            'label': label,
+            'urgencyDocumentRequestUrl': getattr(obj, 'urgency_document_request_url', '') or '',
+        })
+    return serialized
+
+
+def _serialize_unique_region_choices(field):
+    serialized = []
+    seen = set()
+    for obj in field.queryset:
+        label = (getattr(obj, 'region_name', '') or str(field.label_from_instance(obj))).strip()
+        dedupe_key = label.casefold()
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        serialized.append({
+            'value': str(obj.pk),
+            'label': label,
+        })
+    return serialized
+
+
 def _flatten_form_errors(form):
     errors = {}
     for field_name, field_errors in form.errors.items():
@@ -832,17 +985,16 @@ def _build_intake_form_payload(form, coordinator_field):
     care_category_sub = []
     care_category_sub_field = form.fields.get('care_category_sub')
     if care_category_sub_field is not None:
-        for subcategory in care_category_sub_field.queryset:
-            care_category_sub.append({
-                'value': str(subcategory.pk),
-                'label': str(care_category_sub_field.label_from_instance(subcategory)),
-                'mainCategoryId': str(subcategory.main_category_id),
-            })
+        care_category_sub = _serialize_taxonomy_choices(care_category_sub_field)
 
     def _model_options(field_name):
         field = form.fields.get(field_name)
         if field is None:
             return []
+        if field_name == 'gemeente':
+            return _serialize_unique_municipality_choices(field)
+        if field_name in {'regio', 'preferred_region'}:
+            return _serialize_unique_region_choices(field)
         return _serialize_model_choices(field)
 
     def _simple_options(field_name):
@@ -854,6 +1006,7 @@ def _build_intake_form_payload(form, coordinator_field):
     return {
         'initial_values': {
             'title': '',
+            'source_reference': '',
             'start_date': date.today().isoformat(),
             'target_completion_date': '',
             'care_category_main': str(form.initial.get('care_category_main') or ''),
@@ -863,12 +1016,18 @@ def _build_intake_form_payload(form, coordinator_field):
             'regio': '',
             'urgency': CaseIntakeProcess.Urgency.MEDIUM,
             'complexity': CaseIntakeProcess.Complexity.SIMPLE,
+            'placement_pressure_horizon': CaseIntakeProcess.PlacementPressureHorizon.MORE_THAN_TWO_WEEKS,
+            'safety_pressure': False,
+            'time_sensitive_arrangement': False,
+            'escalation_needed': False,
+            'placement_pressure_notes': '',
+            'has_urgency_declaration': False,
             'urgency_applied': False,
             'urgency_applied_since': '',
             'diagnostiek': [],
             'zorgvorm_gewenst': CaseIntakeProcess.CareForm.OUTPATIENT,
             'preferred_care_form': CaseIntakeProcess.CareForm.OUTPATIENT,
-            'preferred_region_type': form.initial.get('preferred_region_type', 'GEMEENTELIJK'),
+            'preferred_region_type': form.initial.get('preferred_region_type', 'JEUGDREGIO'),
             'preferred_region': '',
             'max_toelaatbare_wachttijd_dagen': '',
             'leeftijd': '',
@@ -885,12 +1044,13 @@ def _build_intake_form_payload(form, coordinator_field):
             'description': '',
         },
         'options': {
-            'care_category_main': _model_options('care_category_main'),
+            'care_category_main': _serialize_taxonomy_choices(form.fields['care_category_main']) if form.fields.get('care_category_main') is not None else [],
             'care_category_sub': care_category_sub,
             'gemeente': _model_options('gemeente'),
             'regio': _model_options('regio'),
             'urgency': _simple_options('urgency'),
             'complexity': _simple_options('complexity'),
+            'placement_pressure_horizon': _simple_options('placement_pressure_horizon'),
             'diagnostiek': _simple_options('diagnostiek'),
             'zorgvorm_gewenst': _simple_options('zorgvorm_gewenst'),
             'preferred_care_form': _simple_options('preferred_care_form'),
@@ -911,18 +1071,32 @@ def _build_match_context_from_intake(intake, organization):
         region_ref = intake.preferred_region.region_code or intake.preferred_region.region_name or ''
 
     contra = [token.strip() for token in str(getattr(intake, 'contra_indicaties', '') or '').split(',') if token.strip()]
+    zorgregio = getattr(intake, 'zorgregio', None)
+    plaatsingsregio = getattr(intake, 'plaatsingsregio', None)
+    contractregio = getattr(intake, 'contractregio', None)
+    escalatie_regio = getattr(intake, 'escalatie_regio', None)
     return MatchContext(
         zorgvorm=(getattr(intake, 'zorgvorm_gewenst', '') or intake.preferred_care_form or '').lower(),
         leeftijd=getattr(intake, 'leeftijd', None),
         regio=region_ref,
         gemeente=(intake.gemeente.municipality_name if getattr(intake, 'gemeente', None) else ''),
+        herkomst_gemeente=(intake.herkomst_gemeente.municipality_name if getattr(intake, 'herkomst_gemeente', None) else ''),
+        verantwoordelijke_gemeente=(
+            intake.verantwoordelijke_gemeente.municipality_name if getattr(intake, 'verantwoordelijke_gemeente', None) else ''
+        ),
+        verblijfsgemeente=(intake.verblijfsgemeente.municipality_name if getattr(intake, 'verblijfsgemeente', None) else ''),
+        zorgregio=(zorgregio.region_code or zorgregio.region_name or '') if zorgregio else '',
+        plaatsingsregio=(plaatsingsregio.region_code or plaatsingsregio.region_name or '') if plaatsingsregio else '',
+        contractregio=(contractregio.region_code or contractregio.region_name or '') if contractregio else '',
+        escalatie_regio=(escalatie_regio.region_code or escalatie_regio.region_name or '') if escalatie_regio else '',
         complexiteit=(intake.complexity or '').lower(),
-        urgentie=(intake.urgency or '').lower(),
+        urgentie=((intake.urgency or '').lower() or _resolved_intake_urgency(intake).lower()),
         problematiek=list(getattr(intake, 'problematiek_types', []) or []),
-        crisisopvang_vereist=(intake.urgency == CaseIntakeProcess.Urgency.CRISIS),
+        crisisopvang_vereist=(_resolved_intake_urgency(intake) == CaseIntakeProcess.Urgency.CRISIS),
         setting_voorkeur=getattr(intake, 'setting_voorkeur', '') or '',
         contra_indicaties=contra,
         max_toelaatbare_wachttijd_dagen=getattr(intake, 'max_toelaatbare_wachttijd_dagen', None),
+        requires_revalidation=bool(getattr(intake, 'requires_revalidation', False)),
         organization=organization,
     )
 
@@ -1036,6 +1210,12 @@ def matching_candidates_api(request, case_id):
     ctx = _build_match_context_from_intake(intake, organization)
     limit = int(request.GET.get('limit', 10) or 10)
     results = MatchEngine.run(ctx=ctx, casus=intake, max_results=max(limit, 10), persist=False)
+    taxonomie_lijn, taxonomie_code_lijn = format_taxonomy_explainability(
+        ctx.zorgbehoefte_categorie,
+        ctx.zorgbehoefte_categorie_code,
+        ctx.zorgbehoefte_specifiek,
+        ctx.zorgbehoefte_specifiek_code,
+    )
 
     payload = []
     for rank, row in enumerate(results, start=1):
@@ -1063,6 +1243,12 @@ def matching_candidates_api(request, case_id):
             'fit_samenvatting': row.fit_samenvatting or '',
             'trade_offs': trade_offs,
             'verificatie_advies': row.verificatie_advies or '',
+            'zorgbehoefte_categorie': ctx.zorgbehoefte_categorie or '',
+            'zorgbehoefte_categorie_code': ctx.zorgbehoefte_categorie_code or '',
+            'zorgbehoefte_specifiek': ctx.zorgbehoefte_specifiek or '',
+            'zorgbehoefte_specifiek_code': ctx.zorgbehoefte_specifiek_code or '',
+            'taxonomie_lijn': taxonomie_lijn,
+            'taxonomie_code_lijn': taxonomie_code_lijn,
             'uitgesloten': bool(row.uitgesloten),
             'uitsluitreden': row.uitsluitreden or '',
             'ranking': row.ranking or rank,
@@ -1126,12 +1312,12 @@ def _assessment_decision_payload(*, case_record, intake, assessment):
         'assessmentId': str(assessment.pk),
         'form': {
             'decision': decision_key,
-            'urgency': intake.urgency,
+            'urgency': _resolved_intake_urgency(intake) or intake.urgency,
             'zorgtype': intake.zorgvorm_gewenst or intake.preferred_care_form,
             'shortDescription': assessment.notes or intake.assessment_summary or '',
             'workflowSummary': {
                 'context': ws.get('context', ''),
-                'urgency': ws.get('urgency', '') or intake.urgency or '',
+                'urgency': ws.get('urgency', '') or _resolved_intake_urgency(intake) or intake.urgency or '',
                 'risks': ws.get('risks', []) if isinstance(ws.get('risks'), list) else [],
                 'missing_information': ws.get('missing_information', ''),
                 'risks_none_ack': bool(ws.get('risks_none_ack')),
@@ -1139,13 +1325,13 @@ def _assessment_decision_payload(*, case_record, intake, assessment):
         },
         'summary': {
             'title': intake.title,
-            'urgency': intake.urgency,
+            'urgency': _resolved_intake_urgency(intake) or intake.urgency,
             'matchingReady': bool(assessment.matching_ready),
         },
         'hints': {
             'suggestedUrgency': {
-                'value': intake.urgency,
-                'label': intake.get_urgency_display(),
+                'value': _resolved_intake_urgency(intake) or intake.urgency,
+                'label': intake.get_urgency_display() or (_resolved_intake_urgency(intake) or intake.urgency),
             },
         },
         'consequences': [
@@ -1735,6 +1921,15 @@ def case_placement_detail_api(request, case_id):
     if placement is None:
         return JsonResponse({'caseId': str(intake.pk), 'placement': {}}, status=200)
 
+    care_category_main = getattr(intake, 'care_category_main', None)
+    care_category_sub = getattr(intake, 'care_category_sub', None)
+    taxonomie_lijn, taxonomie_code_lijn = format_taxonomy_explainability(
+        getattr(care_category_main, 'name', '') or '',
+        getattr(care_category_main, 'code', '') or '',
+        getattr(care_category_sub, 'name', '') or '',
+        getattr(care_category_sub, 'code', '') or '',
+    )
+
     return JsonResponse({
         'caseId': str(intake.pk),
         'placement': {
@@ -1749,6 +1944,12 @@ def case_placement_detail_api(request, case_id):
             'providerResponseNotes': placement.provider_response_notes,
             'budgetReviewStatus': getattr(placement, 'budget_review_status', '') or '',
             'budgetReviewNote': getattr(placement, 'budget_review_note', '') or '',
+            'zorgbehoefteCategorie': getattr(care_category_main, 'name', '') or '',
+            'zorgbehoefteCategorieCode': getattr(care_category_main, 'code', '') or '',
+            'zorgbehoefteSpecifiek': getattr(care_category_sub, 'name', '') or '',
+            'zorgbehoefteSpecifiekCode': getattr(care_category_sub, 'code', '') or '',
+            'taxonomieLijn': taxonomie_lijn,
+            'taxonomieCodeLijn': taxonomie_code_lijn,
         },
     })
 
@@ -1792,7 +1993,7 @@ def _provider_decision_api_inner(request, case_id):
 
         placement = (
             PlacementRequest.objects
-            .select_for_update()
+            .select_for_update(of=('self',))
             .filter(due_diligence_process=intake)
             .select_related('selected_provider', 'proposed_provider')
             .order_by('-updated_at')
@@ -1978,7 +2179,7 @@ def _placement_action_api_inner(request, case_id):
 
         placement = (
             PlacementRequest.objects
-            .select_for_update()
+            .select_for_update(of=('self',))
             .filter(due_diligence_process=intake)
             .select_related('selected_provider', 'proposed_provider')
             .order_by('-updated_at')
@@ -2098,7 +2299,7 @@ def _intake_action_api_inner(request, case_id):
 
         placement = (
             PlacementRequest.objects
-            .select_for_update()
+            .select_for_update(of=('self',))
             .filter(due_diligence_process=intake)
             .order_by('-updated_at')
             .first()
@@ -2164,7 +2365,12 @@ def _intake_action_api_inner(request, case_id):
 @require_http_methods(["POST"])
 def intake_create_api(request):
     try:
-        payload = json.loads(request.body or '{}')
+        if request.FILES:
+            payload = request.POST
+            uploaded_files = request.FILES
+        else:
+            payload = json.loads(request.body or '{}')
+            uploaded_files = None
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Ongeldige JSON payload.'}, status=400)
 
@@ -2177,7 +2383,10 @@ def intake_create_api(request):
     if role_error is not None:
         return role_error
 
-    form = CaseIntakeProcessForm(data=payload, organization=organization)
+    if uploaded_files is not None:
+        form = CaseIntakeProcessForm(data=payload, files=uploaded_files, organization=organization)
+    else:
+        form = CaseIntakeProcessForm(data=payload, organization=organization)
 
     coordinator_field = form.fields['case_coordinator']
     if organization:
@@ -2241,8 +2450,10 @@ def intake_create_api(request):
             'ok': True,
             'id': intake.pk,
             'title': intake.title,
+            'source_reference': intake.source_reference,
             'case_id': str(case_record.pk) if case_record else '',
             'redirect_url': f'/care/cases/{case_pk}/',
+            'routing': intake.routing_summary,
         })
     except AuditLoggingError as exc:
         logger.exception(
@@ -2485,6 +2696,8 @@ def _serialize_document_row(d):
         'fileSize': d.file_size,
         'mimeType': d.mime_type,
         'version': d.version,
+        'hasStoredFile': bool(d.file),
+        'externalHandoffReference': d.external_handoff_reference,
         'isConfidential': d.is_confidential,
     }
 
@@ -2755,10 +2968,15 @@ def municipalities_api(request):
                 'id': str(m.id),
                 'name': m.municipality_name,
                 'code': m.municipality_code,
+                'brpCode': m.brp_code,
                 'status': m.status,
+                'active': bool(getattr(m, 'active', False)),
                 'maxWaitDays': m.max_wait_days,
                 'providerCount': m.provider_count,
                 'coordinator': m.responsible_coordinator.get_full_name() if m.responsible_coordinator else '',
+                'woonplaatsbeginselContact': m.woonplaatsbeginsel_contact.get_full_name() if m.woonplaatsbeginsel_contact else '',
+                'budgetOwner': m.budget_owner,
+                'contractPolicies': m.contract_policies or [],
             })
         return JsonResponse({'municipalities': data, 'total_count': paginator.count, 'page': page, 'total_pages': paginator.num_pages})
     except Exception:
@@ -3110,6 +3328,14 @@ def _serialize_provider_evaluation_row(placement: PlacementRequest) -> dict:
         else ''
     )
     case_coordinator_label = _case_coordinator_display(intake)
+    care_category_main = getattr(intake, 'care_category_main', None)
+    care_category_sub = getattr(intake, 'care_category_sub', None)
+    taxonomie_lijn, taxonomie_code_lijn = format_taxonomy_explainability(
+        getattr(care_category_main, 'name', '') or '',
+        getattr(care_category_main, 'code', '') or '',
+        getattr(care_category_sub, 'name', '') or '',
+        getattr(care_category_sub, 'code', '') or '',
+    )
 
     return {
         'id': str(placement.pk),
@@ -3133,6 +3359,12 @@ def _serialize_provider_evaluation_row(placement: PlacementRequest) -> dict:
         'matchTradeOffsHint': match_trade_offs_hint,
         'arrangementHintLine': arrangement_hint,
         'arrangementHintDisclaimer': arrangement_disclaimer,
+        'zorgbehoefteCategorie': getattr(care_category_main, 'name', '') or '',
+        'zorgbehoefteCategorieCode': getattr(care_category_main, 'code', '') or '',
+        'zorgbehoefteSpecifiek': getattr(care_category_sub, 'name', '') or '',
+        'zorgbehoefteSpecifiekCode': getattr(care_category_sub, 'code', '') or '',
+        'taxonomieLijn': taxonomie_lijn,
+        'taxonomieCodeLijn': taxonomie_code_lijn,
         'selectedMatchId': None,
         'status': _spa_evaluation_status_from_placement(placement),
         'rejectionReasonCode': rejection,
@@ -3245,10 +3477,12 @@ def regions_api(request):
                 'code': r.region_code,
                 'regionType': r.region_type,
                 'status': r.status,
+                'active': bool(getattr(r, 'active', False)),
                 'maxWaitDays': r.max_wait_days,
                 'providerCount': r.provider_count,
                 'municipalityCount': r.municipality_count,
                 'coordinator': r.responsible_coordinator.get_full_name() if r.responsible_coordinator else '',
+                'escalatieContact': r.escalatie_contact.get_full_name() if r.escalatie_contact else '',
             })
         return JsonResponse({'regions': data, 'total_count': paginator.count, 'page': page, 'total_pages': paginator.num_pages})
     except Exception:
@@ -3337,10 +3571,12 @@ def regions_health_api(request):
                 'code': region.region_code,
                 'regionType': region.region_type,
                 'configurationStatus': region.status,
+                'active': bool(getattr(region, 'active', False)),
                 'maxWaitDays': region.max_wait_days,
                 'providerCount': region.provider_count,
                 'municipalityCount': region.municipality_count,
                 'coordinator': region.responsible_coordinator.get_full_name() if region.responsible_coordinator else '',
+                'escalatieContact': region.escalatie_contact.get_full_name() if region.escalatie_contact else '',
                 'province': region.province,
                 'regionTypeLabel': RegionType(region.region_type).label if region.region_type in RegionType.values else region.region_type,
                 **health,

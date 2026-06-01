@@ -31,7 +31,7 @@ Current product completeness baseline: **88-92%**
 
 ### Sprint D: Confidence and Hardening
 - [x] Expand route smoke coverage for landing -> login -> dashboard -> logout.
-- [ ] Expand browser smoke coverage for landing -> login -> dashboard -> logout.
+- [x] Expand browser smoke coverage for landing -> login -> dashboard -> logout.
 - [ ] Keep workflow gating tests green as the codebase changes.
 - [ ] Keep the client build green.
 
@@ -109,7 +109,7 @@ Goal:
 - make the system feel complete under real use
 
 Current work items:
-- add or maintain browser smoke tests for landing, login, dashboard, logout
+- browser smoke tests for landing, login, dashboard, logout are present and should stay green
 - keep workflow gating tests passing
 - keep build and release checks green
 - address any small performance or bundle-size issues if they become user-visible
@@ -139,7 +139,7 @@ If we keep working immediately, the highest-value next slice is:
 
 1. Finish the visible workflow vocabulary sweep on any remaining live templates or helper text.
 2. Mark archive material clearly as historical where it still matters.
-3. Expand the browser smoke checks to cover the public landing -> login -> dashboard -> logout round trip.
+3. Browser smoke checks already cover the public landing -> login -> dashboard -> logout round trip; keep them green as the codebase changes.
 
 That order preserves product clarity first, then repository clarity, then proof.
 

@@ -1,5 +1,5 @@
 import { Children, Fragment, type ComponentProps, type ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
+import { AlertTriangle, ChevronRight } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { cn } from "../ui/utils";
@@ -156,14 +156,40 @@ export function PrimaryActionButton({ className, children, ...props }: Component
   );
 }
 
+export function BlockingNotice({
+  title = "Je kunt nog niet verder",
+  message,
+  className,
+}: {
+  title?: ReactNode;
+  message: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      role="alert"
+      className={cn(
+        "flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3",
+        className,
+      )}
+    >
+      <AlertTriangle size={16} className="mt-0.5 shrink-0 text-destructive" aria-hidden />
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="mt-1 text-sm text-destructive/90">{message}</p>
+      </div>
+    </div>
+  );
+}
+
 type CareSectionTone = "default" | "muted" | "context" | "workspace";
 type CareAlertTone = "critical" | "warning" | "info" | "success";
 
 const CARE_SECTION_TONE_CLASSES: Record<CareSectionTone, string> = {
-  default: "surface-section",
-  muted: "rounded-xl bg-muted/15 p-4 md:p-5",
-  context: "surface-context",
-  workspace: "surface-workspace overflow-hidden",
+  default: "surface-section border border-border/60 bg-card/45 shadow-sm",
+  muted: "rounded-[22px] border border-border/60 bg-card/40 p-4 shadow-sm md:p-5",
+  context: "surface-context border border-border/60 bg-card/40 shadow-sm",
+  workspace: "surface-workspace overflow-hidden border border-border/60 bg-card/45 shadow-sm",
 };
 
 const CARE_ALERT_TONE_CLASSES: Record<
@@ -211,7 +237,7 @@ export function CareSection({
   return (
     <section
       data-testid={testId}
-      className={cn("rounded-xl p-4 md:p-5", CARE_SECTION_TONE_CLASSES[tone], className)}
+      className={cn("rounded-[22px] p-4 md:p-5", CARE_SECTION_TONE_CLASSES[tone], className)}
       {...props}
     >
       {children}
@@ -232,7 +258,7 @@ export function CarePanel({
   return (
     <section
       data-testid={testId}
-      className={cn("panel-surface rounded-xl border border-border/70 bg-card/70", className)}
+      className={cn("panel-surface rounded-[22px] border border-border/60 bg-card/50 shadow-sm", className)}
       {...props}
     >
       {children}
@@ -305,7 +331,7 @@ export function CareOperationalSelect({ className, ...props }: ComponentProps<"s
 
 /**
  * Primary work surface — header / body / footer padding without manual `p-0` splits.
- * Use `bodyBleedX` when the list card should span edge-to-edge (e.g. Regiekamer grid).
+ * Use `bodyBleedX` when the list card should span edge-to-edge (e.g. coördinatie grid).
  */
 export function CareWorkspaceSection({
   header,
@@ -496,7 +522,7 @@ export function CareFlowBoard({
   children: ReactNode;
   className?: string;
   testId?: string;
-  /** `pipeline`: horizontal orchestration lane (Regiekamer / Casussen doorstroom). */
+  /** `pipeline`: horizontal orchestration lane (coördinatie / Casussen doorstroom). */
   variant?: "grid" | "pipeline";
   /** Highlights left-to-right progression on the connective track (0-based). */
   activeStepIndex?: number;
@@ -567,7 +593,7 @@ export function CareWorkListCard({
       className={cn(
         CARE_RHYTHM.queueShell,
         // `min-w-0` + horizontal scroll: wide grid rows (e.g. Werkvoorraad min-w-[980px]) stay usable beside rails / narrow main columns.
-        "overflow-x-auto rounded-xl surface-workspace",
+        "overflow-x-auto rounded-[22px] border border-border/60 bg-card/45 shadow-sm surface-workspace",
         className,
       )}
     >

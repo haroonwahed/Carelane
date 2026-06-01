@@ -52,11 +52,14 @@ export function PageHeader({
   };
 
   return (
-    <div className="border-b border-border bg-background pb-6 mb-8">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 sm:gap-6 mb-6">
-        <div>
-          <h1 className="text-foreground mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">
+    <div className="mb-8 rounded-[28px] border border-border/60 bg-card/45 px-5 py-5 shadow-sm backdrop-blur-[2px]">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Dashboard
+          </p>
+          <h1 className="text-foreground">Dashboard</h1>
+          <p className="max-w-2xl text-muted-foreground">
             {dateRange === "today" 
               ? "24-hour hourly analytics from midnight to midnight"
               : dateRange === "yesterday"
@@ -66,12 +69,12 @@ export function PageHeader({
           </p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 sm:justify-end">
           <Select value={dateRange} onValueChange={(val) => onDateRangeChange(val as DateRange)}>
-            <SelectTrigger className="w-full sm:w-[180px] rounded-2xl">
+            <SelectTrigger className="h-10 w-full rounded-2xl border-border/70 bg-background sm:w-[180px]">
               <SelectValue />
             </SelectTrigger>
-              <SelectContent className="rounded-2xl">
+              <SelectContent className="rounded-2xl border-border/60 bg-popover">
                 <SelectItem value="today">Today</SelectItem>
                 <SelectItem value="yesterday">Yesterday</SelectItem>
                 <SelectItem value="7days">Last 7 days</SelectItem>
@@ -83,14 +86,14 @@ export function PageHeader({
           
           <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="rounded-2xl gap-2">
+              <Button variant="outline" className="h-10 gap-2 rounded-2xl border-border/70 bg-background">
                 <Filter className="h-4 w-4" />
                 Accounts ({selectedAccounts.length})
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 rounded-2xl p-4" align="end">
+            <PopoverContent className="w-64 rounded-2xl border-border/60 bg-popover p-4 shadow-md" align="end">
               <div className="space-y-4">
-                <h4 className="mb-3">Filter by Account</h4>
+                <h4 className="mb-3 text-sm font-semibold text-foreground">Filter by Account</h4>
                 
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -103,7 +106,7 @@ export function PageHeader({
                   </Label>
                 </div>
                 
-                <div className="border-t border-border pt-3 space-y-3">
+                <div className="space-y-3 border-t border-border/60 pt-3">
                   {ACCOUNTS.map((account) => (
                     <div key={account} className="flex items-center space-x-2">
                       <Checkbox
@@ -121,7 +124,7 @@ export function PageHeader({
             </PopoverContent>
           </Popover>
           
-          <Button variant="outline" className="rounded-2xl gap-2">
+          <Button variant="outline" className="h-10 gap-2 rounded-2xl border-border/70 bg-background">
             <Download className="h-4 w-4" />
             Export
           </Button>

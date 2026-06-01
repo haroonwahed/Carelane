@@ -246,7 +246,7 @@ export function RegiosPage({
           meta={(
             <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
               <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
-                {filteredRegions.length} zichtbaar · {systemState.totalCases} casussen · {systemState.systemUtilization}% bezetting
+                {filteredRegions.length} zichtbaar · {systemState.totalCases} aanvragen · {systemState.systemUtilization}% bezetting
               </span>
               <CareSearchFiltersBar
                 className="px-0"
@@ -272,10 +272,10 @@ export function RegiosPage({
                     </Select>
                     <Select value={sortBy} onValueChange={(v: string) => setSortBy(v as "cases" | "capacity" | "waittime")}>
                       <SelectTrigger className="h-10 w-full border-border bg-card text-foreground hover:bg-muted/35 focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/30">
-                        <SelectValue placeholder="Sorteer op casussen" />
+                        <SelectValue placeholder="Sorteer op aanvragen" />
                       </SelectTrigger>
                       <SelectContent className="border-border bg-card text-foreground">
-                        <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="cases">Sorteer op casussen</SelectItem>
+                        <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="cases">Sorteer op aanvragen</SelectItem>
                         <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="capacity">Sorteer op bezetting</SelectItem>
                         <SelectItem className="text-foreground focus:bg-muted focus:text-foreground" value="waittime">Sorteer op wachttijd</SelectItem>
                       </SelectContent>
@@ -529,7 +529,7 @@ function RegionCard({ region, onClick, onViewGemeenten, onViewProviders }: Regio
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <p className="text-xs text-muted-foreground mb-1">Casussen</p>
+          <p className="text-xs text-muted-foreground mb-1">Aanvragen</p>
           <p className="text-xl font-bold text-foreground">{region.actieve_casussen}</p>
         </div>
         

@@ -27,10 +27,21 @@ CONFIDENCE_MIDDEL_THRESHOLD = 55.0
 
 @dataclass
 class MatchContext:
+    zorgbehoefte_categorie: str = ""
+    zorgbehoefte_categorie_code: str = ""
+    zorgbehoefte_specifiek: str = ""
+    zorgbehoefte_specifiek_code: str = ""
     zorgvorm: str = ""
     leeftijd: int | None = None
     regio: str = ""
     gemeente: str = ""
+    herkomst_gemeente: str = ""
+    verantwoordelijke_gemeente: str = ""
+    verblijfsgemeente: str = ""
+    zorgregio: str = ""
+    plaatsingsregio: str = ""
+    contractregio: str = ""
+    escalatie_regio: str = ""
     complexiteit: str = ""
     urgentie: str = ""
     problematiek: list[str] = field(default_factory=list)
@@ -39,6 +50,7 @@ class MatchContext:
     setting_voorkeur: str = ""
     contra_indicaties: list[str] = field(default_factory=list)
     max_toelaatbare_wachttijd_dagen: int | None = None
+    requires_revalidation: bool = False
     organization: Organization | None = None
 
 
@@ -52,10 +64,62 @@ def _split_tokens(raw: str) -> list[str]:
     return [part.strip().lower() for part in str(raw or "").split(",") if part.strip()]
 
 
+def _clean_label(value: Any) -> str:
+    return str(value or "").strip()
+
+
+def _normalized_region_candidates(ctx: MatchContext) -> list[str]:
+    candidates: list[str] = []
+    for value in (
+        ctx.contractregio,
+        ctx.plaatsingsregio,
+        ctx.zorgregio,
+        ctx.regio,
+        ctx.escalatie_regio,
+    ):
+        cleaned = _clean_label(value)
+        if cleaned:
+            key = cleaned.casefold()
+            if key not in candidates:
+                candidates.append(key)
+    return candidates
+
+
+def _normalized_municipality_candidates(ctx: MatchContext) -> list[str]:
+    candidates: list[str] = []
+    for value in (
+        ctx.verantwoordelijke_gemeente,
+        ctx.herkomst_gemeente,
+        ctx.verblijfsgemeente,
+        ctx.gemeente,
+    ):
+        cleaned = _clean_label(value)
+        if cleaned:
+            key = cleaned.casefold()
+            if key not in candidates:
+                candidates.append(key)
+    return candidates
+
+
+def _matches_any_label(value: str, candidates: list[str]) -> bool:
+    cleaned = _clean_label(value).casefold()
+    return bool(cleaned) and any(cleaned == candidate or cleaned in candidate or candidate in cleaned for candidate in candidates)
+
+
 def _profile_owner(profiel: Zorgprofiel):
     if profiel.aanbieder_vestiging:
         return profiel.aanbieder_vestiging.zorgaanbieder, profiel.aanbieder_vestiging
     return profiel.zorgaanbieder, None
+
+
+def _iter_related_items(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    if hasattr(value, "all") and callable(value.all):
+        return list(value.all())
+    if isinstance(value, (list, tuple, set)):
+        return list(value)
+    return [value]
 
 
 def _resolve_case_fk(casus: Any):
@@ -80,16 +144,28 @@ def _latest_capacity(profiel: Zorgprofiel, vestiging: AanbiederVestiging | None)
 def _find_contract(ctx: MatchContext, zorgaanbieder):
     if not ctx.organization or zorgaanbieder is None:
         return None
-    qs = ContractRelatie.objects.filter(zorgaanbieder=zorgaanbieder, organization=ctx.organization)
-    if ctx.regio:
-        exact = qs.filter(regio__iexact=ctx.regio, actief_contract=True).order_by("-updated_at").first()
+    qs = ContractRelatie.objects.filter(zorgaanbieder=zorgaanbieder, organization=ctx.organization, actief_contract=True)
+    region_candidates = _normalized_region_candidates(ctx)
+    municipality_candidates = _normalized_municipality_candidates(ctx)
+    if region_candidates:
+        region_q = Q()
+        for candidate in region_candidates:
+            region_q |= Q(regio__iexact=candidate)
+        exact = qs.filter(region_q).order_by("-updated_at").first()
         if exact:
             return exact
-    return qs.filter(actief_contract=True).order_by("-updated_at").first()
+    if municipality_candidates:
+        municipality_q = Q()
+        for candidate in municipality_candidates:
+            municipality_q |= Q(gemeente__iexact=candidate)
+        exact = qs.filter(municipality_q).order_by("-updated_at").first()
+        if exact:
+            return exact
+    return qs.order_by("-updated_at").first()
 
 
 def _find_coverage(ctx: MatchContext, zorgaanbieder, vestiging: AanbiederVestiging | None):
-    if not ctx.regio or zorgaanbieder is None:
+    if not _normalized_region_candidates(ctx) or zorgaanbieder is None:
         return None
     qs = ProviderRegioDekking.objects.filter(
         zorgaanbieder=zorgaanbieder,
@@ -98,9 +174,11 @@ def _find_coverage(ctx: MatchContext, zorgaanbieder, vestiging: AanbiederVestigi
     )
     if vestiging is not None:
         qs = qs.filter(Q(aanbieder_vestiging=vestiging) | Q(aanbieder_vestiging__isnull=True))
-    return qs.filter(Q(regio__region_code__iexact=ctx.regio) | Q(regio__region_name__iexact=ctx.regio)).order_by(
-        "-is_primair_dekkingsgebied", "-updated_at"
-    ).first()
+    region_candidates = _normalized_region_candidates(ctx)
+    region_q = Q()
+    for candidate in region_candidates:
+        region_q |= Q(regio__region_code__iexact=candidate) | Q(regio__region_name__iexact=candidate)
+    return qs.filter(region_q).order_by("-is_primair_dekkingsgebied", "-updated_at").first()
 
 
 def _capacity_waitlistable(capaciteit: CapaciteitRecord | None, max_wait_days: int) -> bool:
@@ -123,10 +201,23 @@ def _check_hard_exclusions(profiel, ctx, vestiging, capaciteit, contract, covera
     if vestiging is not None and not vestiging.is_active:
         raise HardExclusion("Vestiging is niet actief")
 
-    if ctx.organization and (contract is None or not contract.actief_contract):
-        raise HardExclusion("Geen actief contract in regio")
-    if ctx.regio and coverage is None:
-        raise HardExclusion("Geen actieve regiodekking")
+    if ctx.organization:
+        region_candidates = _normalized_region_candidates(ctx)
+        municipality_candidates = _normalized_municipality_candidates(ctx)
+        if region_candidates:
+            contract_matches = contract is not None and (
+                _matches_any_label(contract.regio, region_candidates)
+                or _matches_any_label(contract.gemeente, municipality_candidates)
+            )
+            if not contract_matches:
+                raise HardExclusion("Geen actief contract in contract- of plaatsingsregio")
+        elif contract is None:
+            raise HardExclusion("Geen actief contract in regio")
+
+        if region_candidates and coverage is None:
+            raise HardExclusion("Geen actieve regiodekking")
+        if ctx.requires_revalidation and coverage is None:
+            raise HardExclusion("Herbeoordeling vereist voor kruisregio-route")
 
     if ctx.leeftijd is not None:
         if profiel.doelgroep_leeftijd_van is not None and ctx.leeftijd < profiel.doelgroep_leeftijd_van:
@@ -197,15 +288,47 @@ def _score_inhoudelijke_fit(profiel, ctx):
         reasons.append("Problematiek-overlap")
 
     requested_specs = [s.strip().lower() for s in ctx.specialisaties_gevraagd if str(s).strip()]
-    if requested_specs and profiel.specialisaties:
+    for taxonomy_term in (
+        ctx.zorgbehoefte_categorie,
+        ctx.zorgbehoefte_categorie_code,
+        ctx.zorgbehoefte_specifiek,
+        ctx.zorgbehoefte_specifiek_code,
+    ):
+        cleaned = str(taxonomy_term or "").strip().lower()
+        if cleaned and cleaned not in requested_specs:
+            requested_specs.append(cleaned)
+    taxonomy_codes = {
+        code
+        for code in (
+            ctx.zorgbehoefte_categorie_code,
+            ctx.zorgbehoefte_specifiek_code,
+        )
+        if str(code or "").strip()
+    }
+    profile_category_codes = {
+        str(category.code or "").strip().upper()
+        for category in _iter_related_items(getattr(profiel, "target_care_categories", None))
+        if str(getattr(category, "code", "") or "").strip()
+    }
+    profile_subcategory_codes = {
+        str(subcategory.code or "").strip().upper()
+        for subcategory in _iter_related_items(getattr(profiel, "target_care_subcategories", None))
+        if str(getattr(subcategory, "code", "") or "").strip()
+    }
+    code_matches = len({code.upper() for code in taxonomy_codes} & profile_category_codes) + len({code.upper() for code in taxonomy_codes} & profile_subcategory_codes)
+    if code_matches:
+        score += min(8, code_matches * 4)
+        reasons.append("Taxonomiecode match")
+    elif requested_specs and profiel.specialisaties:
         matched = [s for s in requested_specs if s in profiel.specialisaties.lower()]
         if matched:
             score += min(6, (len(matched) / len(requested_specs)) * 6)
             reasons.append("Specialisatie-overlap")
 
-    if (ctx.urgentie or "").strip().lower() in {"hoog", "crisis"} and (profiel.intensiteit or "").strip().lower() in {"intensief", "hoog_intensief"}:
+    urgency = (ctx.urgentie or "").strip().lower()
+    if urgency in {"hoog", "crisis"} and (profiel.intensiteit or "").strip().lower() in {"intensief", "hoog_intensief"}:
         score += 5
-    elif (ctx.urgentie or "").strip().lower() in {"laag", "middel"}:
+    elif urgency in {"laag", "middel"}:
         score += 3
 
     if ctx.setting_voorkeur and (profiel.setting_type or "").strip().lower() == ctx.setting_voorkeur.strip().lower():
@@ -223,8 +346,8 @@ def _score_regio_contract_fit(ctx, contract, coverage):
     bonus_penalty = 0.0
 
     if coverage is not None:
-        score += 9
-        reasons.append("Exacte regiodekking")
+        score += 8
+        reasons.append("Actieve regiodekking")
         if coverage.is_primair_dekkingsgebied:
             score += 3
             bonus_penalty += 2
@@ -234,11 +357,25 @@ def _score_regio_contract_fit(ctx, contract, coverage):
             score += 4
 
     if contract is not None and contract.actief_contract:
-        score += 4
-        reasons.append("Actieve contracteerbaarheid")
-        if ctx.gemeente and contract.gemeente and contract.gemeente.strip().lower() == ctx.gemeente.strip().lower():
+        score += 5
+        contract_region_candidates = _normalized_region_candidates(ctx)
+        municipality_candidates = _normalized_municipality_candidates(ctx)
+        if ctx.contractregio and _matches_any_label(contract.regio, [_clean_label(ctx.contractregio).casefold()]):
+            score += 4
+            reasons.append("Contract actief in contractregio")
+        elif ctx.plaatsingsregio and _matches_any_label(contract.regio, [_clean_label(ctx.plaatsingsregio).casefold()]):
+            score += 2
+            reasons.append("Contract actief in plaatsingsregio")
+        elif ctx.gemeente and contract.gemeente and _matches_any_label(contract.gemeente, municipality_candidates):
             score += 1
             bonus_penalty += 1
+            reasons.append("Gemeentelijke contractmatch")
+        else:
+            reasons.append("Actieve contracteerbaarheid")
+
+    if ctx.requires_revalidation and coverage is not None:
+        bonus_penalty -= 1
+        reasons.append("Herbeoordelingroute")
 
     return min(score, 20.0), reasons, bonus_penalty
 
@@ -250,6 +387,7 @@ def _score_capaciteit_wachttijd_fit(capaciteit, ctx, coverage):
     score = 0.0
     reasons = []
     bonus_penalty = 0.0
+    urgency = (ctx.urgentie or "").strip().lower()
 
     beschikbare = max(capaciteit.beschikbare_capaciteit or capaciteit.open_slots or 0, 0)
     wachtlijst = capaciteit.wachtlijst_aantal or capaciteit.waiting_list_size or 0
@@ -257,15 +395,26 @@ def _score_capaciteit_wachttijd_fit(capaciteit, ctx, coverage):
 
     if capaciteit.direct_pleegbaar or beschikbare > 0:
         score += 8
+        if urgency in {"hoog", "crisis"}:
+            score += 3
+            reasons.append("Directe capaciteit telt zwaarder door plaatsingsdruk")
     elif wachtlijst >= 0:
         score += 3
+        if urgency in {"hoog", "crisis"}:
+            bonus_penalty -= 3
+            reasons.append("Wachtlijst is minder passend bij hoge plaatsingsdruk")
 
     max_wait = int(ctx.max_toelaatbare_wachttijd_dagen or 42)
     if wachttijd <= max_wait:
         score += 7
+        if urgency in {"hoog", "crisis"} and wachttijd <= 14:
+            score += 2
+            reasons.append("Wachttijd sluit aan op versnelde plaatsing")
     else:
         score += 2
         bonus_penalty -= 4
+        if urgency in {"hoog", "crisis"}:
+            bonus_penalty -= 2
 
     reliability = capaciteit.betrouwbaarheid_score
     if reliability is not None:
@@ -280,6 +429,11 @@ def _score_capaciteit_wachttijd_fit(capaciteit, ctx, coverage):
     if wachttijd <= 14:
         score += 2
     elif wachttijd <= 28:
+        score += 1
+
+    if urgency in {"laag", "middel"}:
+        score += 1
+    elif urgency in {"hoog", "crisis"} and wachttijd <= max_wait:
         score += 1
 
     if coverage is not None and not coverage.capaciteit_meerekenen:
@@ -388,8 +542,12 @@ class MatchEngine:
             qs = qs.filter(Q(doelgroep_leeftijd_van__isnull=True) | Q(doelgroep_leeftijd_van__lte=ctx.leeftijd)).filter(
                 Q(doelgroep_leeftijd_tot__isnull=True) | Q(doelgroep_leeftijd_tot__gte=ctx.leeftijd)
             )
-        if ctx.regio:
-            qs = qs.filter(Q(regio_codes__icontains=ctx.regio) | Q(regio_codes=""))
+        region_candidates = _normalized_region_candidates(ctx)
+        if region_candidates:
+            region_q = Q(regio_codes="")
+            for candidate in region_candidates:
+                region_q |= Q(regio_codes__icontains=candidate)
+            qs = qs.filter(region_q)
         return list(qs[:limit])
 
     @staticmethod

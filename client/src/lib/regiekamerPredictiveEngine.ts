@@ -198,7 +198,7 @@ export function buildRegiekamerPredictiveSummary(
     signals.push({
       key: "assessment_delay",
       title: "Voorspeld: beoordelingsachterstand",
-      text: `${assessmentDelayIds.length} casussen dreigen te blijven hangen in beoordeling`,
+      text: `${assessmentDelayIds.length} aanvragen dreigen te blijven hangen in beoordeling`,
       severity: assessmentDelayIds.length > 3 ? "critical" : "warning",
       affected_case_ids: assessmentDelayIds,
       target_stage: "beoordelingen",
@@ -209,7 +209,7 @@ export function buildRegiekamerPredictiveSummary(
     signals.push({
       key: "match_failure",
       title: "Voorspeld: matching loopt vast",
-      text: `${matchFailureIds.length} casussen hebben verhoogde kans op match-failure`,
+      text: `${matchFailureIds.length} aanvragen hebben verhoogde kans op match-failure`,
       severity: matchFailureIds.length > 2 ? "critical" : "warning",
       affected_case_ids: matchFailureIds,
       target_stage: "matching",
@@ -220,7 +220,7 @@ export function buildRegiekamerPredictiveSummary(
     signals.push({
       key: "sla_breach",
       title: "Voorspeld: SLA-overschrijding",
-      text: `${slaBreachIds.length} casussen overschrijden of naderen de wachttijdnorm`,
+      text: `${slaBreachIds.length} aanvragen overschrijden of naderen de wachttijdnorm`,
       severity: slaBreachIds.length > 3 ? "critical" : "warning",
       affected_case_ids: slaBreachIds,
       target_stage: "casussen",
@@ -242,7 +242,7 @@ export function buildRegiekamerPredictiveSummary(
     signals.push({
       key: "escalation",
       title: "Voorspeld: escalatie-risico",
-      text: `${escalationIds.length} casussen hebben hoog escalatierisico`,
+      text: `${escalationIds.length} aanvragen hebben hoog escalatierisico`,
       severity: escalationIds.length > 2 ? "critical" : "warning",
       affected_case_ids: escalationIds,
       target_stage: "casussen",
@@ -253,7 +253,7 @@ export function buildRegiekamerPredictiveSummary(
     signals.push({
       key: "capacity_pressure",
       title: "Voorspeld: capaciteitsdruk",
-      text: `${capacityPressureIds.length} casussen hebben beperkte kans op directe plaatsing`,
+      text: `${capacityPressureIds.length} aanvragen hebben beperkte kans op directe plaatsing`,
       severity: capacityPressureIds.length > 2 ? "critical" : "warning",
       affected_case_ids: capacityPressureIds,
       target_stage: "matching",

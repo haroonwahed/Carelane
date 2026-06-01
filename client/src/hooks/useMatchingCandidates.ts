@@ -20,6 +20,12 @@ export interface MatchingCandidateRow {
   fit_samenvatting: string;
   trade_offs: string[];
   verificatie_advies: string;
+  zorgbehoefte_categorie?: string;
+  zorgbehoefte_categorie_code?: string;
+  zorgbehoefte_specifiek?: string;
+  zorgbehoefte_specifiek_code?: string;
+  taxonomie_lijn?: string;
+  taxonomie_code_lijn?: string;
   uitgesloten: boolean;
   uitsluitreden: string;
   ranking: number;

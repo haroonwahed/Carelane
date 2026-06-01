@@ -283,7 +283,7 @@ export const mockSignals: SystemSignal[] = [
     type: "capacity",
     severity: "critical",
     title: "Capaciteitstekort crisisopvang Amsterdam",
-    description: "Alle crisisplaatsen bezet. 3 urgente casussen in wachtlijst.",
+    description: "Alle crisisplaatsen bezet. 3 urgente aanvragen in wachtlijst.",
     affectedCases: 3,
     region: "Amsterdam"
   },
@@ -299,8 +299,8 @@ export const mockSignals: SystemSignal[] = [
     id: "S-003",
     type: "risk",
     severity: "critical",
-    title: "Hoog-risico casussen zonder match",
-    description: "2 casussen met hoog risico nog geen aanbieder gevonden.",
+    title: "Hoog-risico aanvragen zonder match",
+    description: "2 aanvragen met hoog risico nog geen aanbieder gevonden.",
     affectedCases: 2
   },
   {

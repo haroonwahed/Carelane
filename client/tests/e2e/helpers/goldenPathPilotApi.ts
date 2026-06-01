@@ -98,7 +98,7 @@ export async function loginAs(page: import("@playwright/test").Page, username: s
   await page.getByLabel("Gebruikersnaam").fill(username);
   await page.getByLabel("Wachtwoord").fill(password);
   await page.getByRole("button", { name: "Inloggen" }).click();
-  await page.waitForLoadState("networkidle");
+  await page.waitForURL(/\/dashboard\/?(\?.*)?$/, { timeout: 45_000 });
   await expect(
     page.getByText("Ongeldige gebruikersnaam of wachtwoord. Probeer opnieuw."),
   ).toHaveCount(0);

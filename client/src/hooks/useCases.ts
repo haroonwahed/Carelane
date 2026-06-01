@@ -27,12 +27,29 @@ interface ApiCase {
   urgency_validated?: boolean;
   urgency_document_present?: boolean;
   urgency_granted_date?: string | null;
+  urgency_applied?: boolean;
+  urgency_applied_since?: string | null;
+  placement_pressure_horizon?: string;
+  safety_pressure?: boolean;
+  time_sensitive_arrangement?: boolean;
+  escalation_needed?: boolean;
+  placement_pressure_notes?: string;
+  placement_pressure_band?: "low" | "normal" | "high" | "critical" | null;
+  placement_pressure_label?: "Laag" | "Normaal" | "Hoog" | "Spoed" | null;
+  placement_pressure_reason?: string | null;
+  placement_pressure_implication?: string | null;
   waitlist_bucket?: number;          // 0 = validated urgent, 1 = FCFS
   intake_start_date?: string | null; // aanmeldingsdatum
   // Arrangement metadata
   arrangement_type_code?: string;
   arrangement_provider?: string;
   arrangement_end_date?: string | null;
+  zorgbehoefte_categorie?: string;
+  zorgbehoefte_categorie_code?: string;
+  zorgbehoefte_specifiek?: string;
+  zorgbehoefte_specifiek_code?: string;
+  taxonomie_lijn?: string;
+  taxonomie_code_lijn?: string;
   workflow_state?: string;
   /** Latest placement request (matches derive_workflow_state signals). */
   placement_request_status?: string | null;
@@ -71,12 +88,29 @@ export interface SpaCase {
   urgencyValidated: boolean;
   urgencyDocumentPresent: boolean;
   urgencyGrantedDate: string | null;
+  urgencyApplied?: boolean;
+  urgencyAppliedSince?: string | null;
+  placementPressureHorizon?: string;
+  safetyPressure?: boolean;
+  timeSensitiveArrangement?: boolean;
+  escalationNeeded?: boolean;
+  placementPressureNotes?: string;
+  placementPressureBand?: "low" | "normal" | "high" | "critical" | null;
+  placementPressureLabel?: "Laag" | "Normaal" | "Hoog" | "Spoed" | null;
+  placementPressureReason?: string | null;
+  placementPressureImplication?: string | null;
   waitlistBucket: number;           // 0 = validated urgent first, 1 = FCFS
   intakeStartDate: string | null;   // aanmeldingsdatum (startdatum casus)
   // Arrangement metadata
   arrangementTypeCode: string;
   arrangementProvider: string;
   arrangementEndDate: string | null;
+  zorgbehoefteCategorie?: string;
+  zorgbehoefteCategorieCode?: string;
+  zorgbehoefteSpecifiek?: string;
+  zorgbehoefteSpecifiekCode?: string;
+  taxonomieLijn?: string;
+  taxonomieCodeLijn?: string;
   workflowState?: CanonicalWorkflowState;
   /** Mirrors PlacementRequest.status / provider_response_status when API sends them. */
   placementRequestStatus?: string | null;
@@ -177,12 +211,29 @@ function mapApiCase(c: ApiCase): SpaCase {
     urgencyValidated: c.urgency_validated ?? false,
     urgencyDocumentPresent: c.urgency_document_present ?? false,
     urgencyGrantedDate: c.urgency_granted_date ?? null,
+    urgencyApplied: c.urgency_applied ?? false,
+    urgencyAppliedSince: c.urgency_applied_since ?? null,
+    placementPressureHorizon: c.placement_pressure_horizon ?? "",
+    safetyPressure: c.safety_pressure ?? false,
+    timeSensitiveArrangement: c.time_sensitive_arrangement ?? false,
+    escalationNeeded: c.escalation_needed ?? false,
+    placementPressureNotes: c.placement_pressure_notes ?? "",
+    placementPressureBand: c.placement_pressure_band ?? null,
+    placementPressureLabel: c.placement_pressure_label ?? null,
+    placementPressureReason: c.placement_pressure_reason ?? null,
+    placementPressureImplication: c.placement_pressure_implication ?? null,
     waitlistBucket: c.waitlist_bucket ?? 1,
     intakeStartDate: c.intake_start_date ?? null,
     // Arrangement metadata
     arrangementTypeCode: c.arrangement_type_code ?? '',
     arrangementProvider: c.arrangement_provider ?? '',
     arrangementEndDate: c.arrangement_end_date ?? null,
+    zorgbehoefteCategorie: c.zorgbehoefte_categorie ?? '',
+    zorgbehoefteCategorieCode: c.zorgbehoefte_categorie_code ?? '',
+    zorgbehoefteSpecifiek: c.zorgbehoefte_specifiek ?? '',
+    zorgbehoefteSpecifiekCode: c.zorgbehoefte_specifiek_code ?? '',
+    taxonomieLijn: c.taxonomie_lijn ?? '',
+    taxonomieCodeLijn: c.taxonomie_code_lijn ?? '',
     placementRequestStatus: c.placement_request_status ?? null,
     placementProviderResponseStatus: c.placement_provider_response_status ?? null,
     workflowState,

@@ -358,7 +358,7 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
                 className="px-0"
                 searchValue={searchQuery}
                 onSearchChange={setSearchQuery}
-                searchPlaceholder="Zoek acties of casus ID..."
+                searchPlaceholder="Zoek acties of casus-ID..."
                 showSecondaryFilters={showSecondaryFilters}
                 onToggleSecondaryFilters={() => setShowSecondaryFilters((current) => !current)}
                 secondaryFiltersLabel="Filters"
@@ -399,7 +399,7 @@ export function ActiesPage({ onCaseClick, onNavigateToCasussen }: ActiesPageProp
                           <SelectContent className="border-border bg-card text-foreground">
                             <SelectItem value="urgency">Urgentie</SelectItem>
                             <SelectItem value="due">Vervaldatum</SelectItem>
-                            <SelectItem value="case">Casus ID</SelectItem>
+                            <SelectItem value="case">Casus-ID</SelectItem>
                           </SelectContent>
                         </Select>
                       </label>

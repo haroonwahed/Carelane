@@ -17,6 +17,8 @@ export interface SpaDocument {
   fileSize: number | null;
   mimeType: string;
   version: number;
+  hasStoredFile: boolean;
+  externalHandoffReference?: string;
   isConfidential: boolean;
 }
 

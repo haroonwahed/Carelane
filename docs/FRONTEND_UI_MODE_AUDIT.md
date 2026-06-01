@@ -6,7 +6,7 @@
 
 | Pattern | Allowed routes / surfaces |
 |---------|----------------------------|
-| **Metric / KPI strip** (`CareKPICard`, `OperationalSignalStrip`, Regiekamer metrics) | **Operationele coördinatie** — primary: `/regiekamer` (`SystemAwarenessPage` via shell). |
+| **Metric / KPI strip** (`CareKPICard`, `OperationalSignalStrip`, operationele coördinatie metrics) | **Operationele coördinatie** — primary: `/regiekamer` (`SystemAwarenessPage` via shell). |
 | **Worklist** | **Aanvragen-werkvoorraad** — e.g. `/casussen`, matching queue patterns that are list-first. |
 | **`NextBestAction` + `ProcessTimeline` design components** | **Aanvraag detail / execution** only (`CaseExecutionPage` — verified: only consumer of `NextBestAction` / `ProcessTimeline` imports in `client/src`). |
 
@@ -29,3 +29,4 @@ Live provider pages (no `ProviderIntakeDashboard`): **`intake`** → `IntakeList
 1. Before adding screens: grep for `CareKPICard`, `NextBestAction`, `ProcessTimeline` and assert route matches table above.
 2. Prefer **one dominant CTA** per region (`Careon_Operational_Constitution_v2.md` §9.2).
 3. **Import boundary:** `tests/test_product_architecture_guardrails.py` fails if design `NextBestAction` / `ProcessTimeline` are imported outside `CaseExecutionPage.tsx`.
+4. Structural `regiekamer` rename remains deferred; see [`docs/STRUCTURAL_RENAME_DEFERRED.md`](./STRUCTURAL_RENAME_DEFERRED.md).

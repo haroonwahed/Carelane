@@ -7,6 +7,7 @@ import {
   CareFlowBoard,
   CareFlowStepCard,
   CareSearchFiltersBar,
+  BlockingNotice,
   CasusWorkspaceStatusBadges,
   EmptyState,
   ErrorState,
@@ -61,6 +62,12 @@ describe("CareDesignPrimitives", () => {
     expect(screen.getByRole("button", { name: "Volgende stap" })).toHaveClass("rounded-xl");
   });
 
+  it("BlockingNotice renders an alert near the action it blocks", () => {
+    render(<BlockingNotice message="Vul het persoonsbeeld in om door te gaan." />);
+    expect(screen.getByRole("alert")).toHaveTextContent("Je kunt nog niet verder");
+    expect(screen.getByRole("alert")).toHaveTextContent("Vul het persoonsbeeld in om door te gaan.");
+  });
+
   it("CareSearchFiltersBar exposes expanded state for secondary filters", () => {
     function Harness() {
       const [open, setOpen] = React.useState(false);
@@ -68,7 +75,7 @@ describe("CareDesignPrimitives", () => {
         <CareSearchFiltersBar
           searchValue=""
           onSearchChange={() => undefined}
-          searchPlaceholder="Zoek casussen"
+          searchPlaceholder="Zoek aanvragen"
           showSecondaryFilters={open}
           onToggleSecondaryFilters={() => setOpen((current) => !current)}
           secondaryFiltersLabel="Filters"

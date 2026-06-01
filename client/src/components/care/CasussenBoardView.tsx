@@ -72,7 +72,7 @@ export function CasussenBoardView({ cases, onViewCase, onTakeAction }: CasussenB
               {columnCases.length === 0 ? (
                 <div className="panel-surface p-4 text-center">
                   <p className="text-sm text-muted-foreground">
-                    Geen casussen in deze fase
+                    Geen aanvragen in deze fase
                   </p>
                 </div>
               ) : (

@@ -1,0 +1,46 @@
+# CareOn documentation index
+
+This is the **short entry point** for the currently active documentation set.
+
+## Start here
+
+- [`START_HERE.md`](START_HERE.md) — canonical reading order and shipping path
+- [`Careon_Operational_Constitution_v2.md`](Careon_Operational_Constitution_v2.md) — product doctrine and UX law
+- [`FOUNDATION_LOCK.md`](FOUNDATION_LOCK.md) — workflow states, technical contract, and endpoint boundaries
+- [`PILOT_PROOF_PACKAGE.md`](PILOT_PROOF_PACKAGE.md) — rehearsal / GO-NO-GO evidence chain
+- [`PRODUCT_ENGINEERING_BACKLOG_PRIORITIZED.md`](PRODUCT_ENGINEERING_BACKLOG_PRIORITIZED.md) — current prioritised execution backlog
+
+## Operational references
+
+- [`PRODUCTION_RUNBOOK.md`](PRODUCTION_RUNBOOK.md)
+- [`ROLLBACK_RUNBOOK.md`](ROLLBACK_RUNBOOK.md)
+- [`OBSERVABILITY_BOOTSTRAP.md`](OBSERVABILITY_BOOTSTRAP.md)
+- [`SECRET_INVENTORY.md`](SECRET_INVENTORY.md)
+- [`TERMINOLOGY.md`](TERMINOLOGY.md)
+- [`MATCHING_EXPLAINABILITY.md`](MATCHING_EXPLAINABILITY.md)
+- [`REGIEKAMER_NBA_TELEMETRY.md`](REGIEKAMER_NBA_TELEMETRY.md)
+- [`OPERATIONAL_DECISION_CONTRACT.md`](OPERATIONAL_DECISION_CONTRACT.md)
+- [`CAREON_OPERATIONAL_GUIDANCE_LAYER_V1.md`](CAREON_OPERATIONAL_GUIDANCE_LAYER_V1.md)
+
+## Governance and architecture
+
+- [`AANMELDER_WORKFLOWROLE_MAPPING.md`](AANMELDER_WORKFLOWROLE_MAPPING.md)
+- [`ACTOR_PROFILES_ROADMAP.md`](ACTOR_PROFILES_ROADMAP.md)
+- [`ARRANGEMENT_OFFICIAL_SOURCES.md`](ARRANGEMENT_OFFICIAL_SOURCES.md)
+- [`CAREON_UI_GOVERNANCE_WORKFLOW.md`](CAREON_UI_GOVERNANCE_WORKFLOW.md)
+- [`CAREON_VISUAL_DOCTRINE.md`](CAREON_VISUAL_DOCTRINE.md)
+- [`CARE_SPA_PAGE_LAYOUTS.md`](CARE_SPA_PAGE_LAYOUTS.md)
+- [`CASE_TIMELINE_V1.md`](CASE_TIMELINE_V1.md)
+- [`CONTRACT_FRICTION_PLAN.md`](CONTRACT_FRICTION_PLAN.md)
+- [`COPILOT_EXECUTION_CONTRACT.md`](COPILOT_EXECUTION_CONTRACT.md)
+- [`DESIGN_SYSTEM_INHERITANCE_MODEL.md`](DESIGN_SYSTEM_INHERITANCE_MODEL.md)
+- [`DESIGN_SYSTEM_PATTERN_REFERENCE.md`](DESIGN_SYSTEM_PATTERN_REFERENCE.md)
+- [`DESIGN_SYSTEM_REMEDIATION_MATRIX.md`](DESIGN_SYSTEM_REMEDIATION_MATRIX.md)
+
+## Archived / consolidated material
+
+Older implementation snapshots, page-by-page design notes, and historical summaries that are no longer part of the active docs set have been moved to:
+
+- [`docs/archive/docs-consolidation-2026-05-21/README.md`](archive/docs-consolidation-2026-05-21/README.md)
+
+If you are looking for old client-side design notes or root-level implementation summaries, start there. Treat that archive as read-only reference material, not active product guidance.

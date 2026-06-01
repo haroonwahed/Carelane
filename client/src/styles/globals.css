@@ -281,6 +281,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
+    background-image:
+      radial-gradient(circle at 10% 0%, var(--glow-primary) 0%, transparent 34%),
+      radial-gradient(circle at 90% 0%, var(--glow-primary-soft) 0%, transparent 28%);
+    background-repeat: no-repeat;
   }
 }
 
@@ -324,9 +328,11 @@
     }
 
     label {
-      font-size: 0.875rem;
-      font-weight: var(--font-weight-medium);
-      line-height: 1.5;
+      font-size: 0.9375rem !important;
+      font-weight: var(--font-weight-semibold) !important;
+      line-height: 1.35;
+      letter-spacing: -0.01em;
+      color: hsl(var(--foreground));
     }
 
     button {

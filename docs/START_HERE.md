@@ -2,6 +2,8 @@
 
 This repository is **CareOn (Zorg OS)**: a **regulated operational coordination layer** for care placement under scarcity. It is **not** a generic SaaS bundle, municipal ERP, or permanent youth-care dossier.
 
+For a compact view of the active document set, also see [`INDEX.md`](./INDEX.md).
+
 ## Read first (canonical)
 
 | Document | Use when |

@@ -11,7 +11,7 @@ import { tokens } from "../../design/tokens";
 export function CareAppFrame({
   children,
   className,
-  /** When set, overrides the default `tokens.layout.pageMaxWidth` (e.g. Regiekamer + right rail). */
+  /** When set, overrides the default `tokens.layout.pageMaxWidth` (e.g. coördinatie + right rail). */
   layoutMaxWidth,
 }: {
   children: ReactNode;

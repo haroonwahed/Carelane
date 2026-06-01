@@ -1,3 +1,9 @@
+import re
+import shutil
+import subprocess
+import zipfile
+from tempfile import NamedTemporaryFile
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
@@ -21,6 +27,166 @@ TAILWIND_SELECT = 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring
 TAILWIND_TEXTAREA = 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm'
 TAILWIND_CHECKBOX = 'h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
 TAILWIND_FILE = 'w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100'
+
+_PII_PATTERNS = {
+    'email': re.compile(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+', re.IGNORECASE),
+    'phone': re.compile(r'(?<!\d)(?:\+31|0)\s?(?:\d[\s-]?){8,10}(?!\d)'),
+    'bsn': re.compile(r'(?<!\d)\d{9}(?!\d)'),
+    'postcode': re.compile(r'\b\d{4}\s?[A-Z]{2}\b', re.IGNORECASE),
+}
+_SENSITIVE_FILENAME_MARKERS = (
+    'bsn',
+    'burgerservicenummer',
+    'paspoort',
+    'passport',
+    'id-kaart',
+    'idkaart',
+    'identiteitsbewijs',
+    'identification',
+    'adres',
+    'address',
+    'telefoon',
+    'phone',
+    'email',
+    'mail',
+    'contact',
+)
+_IMAGE_FILE_EXTENSIONS = (
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.gif',
+    '.bmp',
+    '.tif',
+    '.tiff',
+    '.webp',
+    '.heic',
+    '.heif',
+)
+_STRICT_EXTERNAL_HANDOFF_TYPES = {
+    Document.DocType.CONTRACT,
+    Document.DocType.AMENDMENT,
+    Document.DocType.CORRESPONDENCE,
+}
+
+
+def _find_direct_identifier(text: str) -> str | None:
+    value = (text or '').strip()
+    if not value:
+        return None
+    for label, pattern in _PII_PATTERNS.items():
+        if pattern.search(value):
+            return label
+    return None
+
+
+def _scan_uploaded_file_for_direct_identifiers(uploaded_file) -> str | None:
+    if uploaded_file is None:
+        return None
+
+    content_type = (getattr(uploaded_file, 'content_type', '') or '').lower()
+    filename = (getattr(uploaded_file, 'name', '') or '').lower()
+    file_size = int(getattr(uploaded_file, 'size', 0) or 0)
+    max_bytes = min(max(file_size, 0), 512_000) if file_size else 512_000
+
+    def _scan_text(payload: bytes) -> str | None:
+        for encoding in ('utf-8', 'utf-16', 'latin1'):
+            try:
+                decoded = payload.decode(encoding, errors='ignore')
+            except Exception:
+                continue
+            identifier = _find_direct_identifier(decoded)
+            if identifier is not None:
+                return identifier
+        return None
+
+    if content_type.startswith('image/') or filename.endswith(_IMAGE_FILE_EXTENSIONS):
+        return 'image'
+
+    if content_type == 'application/pdf' or filename.endswith('.pdf'):
+        pdf_text = None
+        pdftotext_path = shutil.which('pdftotext')
+        if pdftotext_path:
+            try:
+                uploaded_file.seek(0)
+            except Exception:
+                pass
+            with NamedTemporaryFile(suffix='.pdf', delete=True) as temp_file:
+                try:
+                    for chunk in iter(lambda: uploaded_file.read(1024 * 1024), b''):
+                        temp_file.write(chunk)
+                    temp_file.flush()
+                    result = subprocess.run(
+                        [pdftotext_path, temp_file.name, '-'],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                        check=False,
+                    )
+                    if result.returncode == 0:
+                        pdf_text = result.stdout or ''
+                except Exception:
+                    pdf_text = None
+        else:
+            return 'scan'
+        try:
+            uploaded_file.seek(0)
+        except Exception:
+            pass
+        if pdf_text is None:
+            return 'scan'
+        identifier = _find_direct_identifier(pdf_text)
+        if identifier is not None:
+            return identifier
+        if not pdf_text.strip():
+            return 'scan'
+        return None
+
+    if filename.endswith(('.docx', '.xlsx', '.pptx', '.odt', '.ods', '.odp', '.zip')):
+        try:
+            with zipfile.ZipFile(uploaded_file) as archive:
+                for info in archive.infolist():
+                    if info.file_size <= 0 or info.file_size > 512_000:
+                        continue
+                    if not info.filename.lower().endswith(('.xml', '.txt', '.csv', '.json', '.html', '.htm')):
+                        continue
+                    with archive.open(info) as handle:
+                        identifier = _scan_text(handle.read(512_000))
+                        if identifier is not None:
+                            return identifier
+        except Exception:
+            pass
+        finally:
+            try:
+                uploaded_file.seek(0)
+            except Exception:
+                pass
+
+    try:
+        payload = uploaded_file.read(max_bytes)
+    except Exception:
+        try:
+            uploaded_file.seek(0)
+            payload = uploaded_file.read(max_bytes)
+        except Exception:
+            return None
+    finally:
+        try:
+            uploaded_file.seek(0)
+        except Exception:
+            pass
+
+    identifier = _scan_text(payload or b'')
+    if identifier is not None:
+        return identifier
+
+    if any(marker in filename for marker in _SENSITIVE_FILENAME_MARKERS):
+        return 'filename'
+
+    if content_type.startswith('text/') or content_type in {'application/json', 'application/xml', 'text/xml'}:
+        return _scan_text(payload or b'')
+
+    return None
 
 
 class UserProfileForm(forms.ModelForm):
@@ -158,13 +324,31 @@ class CareConfigurationForm(forms.ModelForm):
 class DocumentForm(forms.ModelForm):
     class Meta:
         model = Document
-        fields = ['title', 'document_type', 'status', 'description', 'file',
-                  'contract', 'matter', 'client', 'tags', 'is_privileged', 'is_confidential']
+        fields = [
+            'title',
+            'document_type',
+            'status',
+            'description',
+            'external_handoff_reference',
+            'file',
+            'contract',
+            'matter',
+            'client',
+            'tags',
+            'is_privileged',
+            'is_confidential',
+        ]
         widgets = {
             'title': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
             'document_type': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'status': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'description': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 3}),
+            'external_handoff_reference': forms.TextInput(
+                attrs={
+                    'class': TAILWIND_INPUT,
+                    'placeholder': 'Veilige referentie in extern systeem of beveiligde uitwisseling',
+                }
+            ),
             'file': forms.FileInput(attrs={'class': TAILWIND_FILE}),
             'contract': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'matter': forms.Select(attrs={'class': TAILWIND_SELECT}),
@@ -178,6 +362,7 @@ class DocumentForm(forms.ModelForm):
             'document_type': 'Documentsoort',
             'status': 'Documentstatus',
             'description': 'Omschrijving',
+            'external_handoff_reference': 'Externe handoffreferentie',
             'file': 'Bestand',
             'contract': 'Casus',
             'matter': 'Configuratie',
@@ -186,6 +371,55 @@ class DocumentForm(forms.ModelForm):
             'is_privileged': 'Beperkte inzage',
             'is_confidential': 'Vertrouwelijk',
         }
+        help_texts = {
+            'title': 'Gebruik een operationele titel. Geen namen, BSN of contactgegevens.',
+            'description': 'Vat de inhoud kort samen zonder direct herleidbare persoonsgegevens.',
+            'external_handoff_reference': 'Verplicht voor gevoelige documenttypes. Gebruik alleen een veilige verwijzing, geen persoonsgegevens.',
+            'file': 'Upload alleen tekstuele operationele documenten. Afbeeldingen en scan-PDF\'s gaan via externe handoff.',
+            'tags': 'Gebruik functionele tags, geen persoonsgegevens.',
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        title = str(cleaned_data.get('title') or '')
+        description = str(cleaned_data.get('description') or '')
+        tags = str(cleaned_data.get('tags') or '')
+        external_handoff_reference = str(cleaned_data.get('external_handoff_reference') or '').strip()
+        file_obj = cleaned_data.get('file')
+        document_type = cleaned_data.get('document_type')
+
+        for field_name, value in (('title', title), ('description', description), ('tags', tags)):
+            if _find_direct_identifier(value) is not None:
+                self.add_error(
+                    field_name,
+                    'Verwijder direct herleidbare persoonsgegevens zoals e-mail, telefoonnummer, BSN of postcode.',
+                )
+
+        if document_type in _STRICT_EXTERNAL_HANDOFF_TYPES:
+            if file_obj is not None:
+                self.add_error(
+                    'file',
+                    'Voor dit documenttype sla je alleen een externe handoffreferentie op. Het bestand zelf hoort in het externe systeem.',
+                )
+            if not external_handoff_reference:
+                self.add_error(
+                    'external_handoff_reference',
+                    'Vul een veilige externe verwijzing in voor dit documenttype.',
+                )
+        elif file_obj is not None:
+            identifier = _scan_uploaded_file_for_direct_identifiers(file_obj)
+            if identifier in {'image', 'scan'}:
+                self.add_error(
+                    'file',
+                    'Afbeeldingen en scan-PDF\'s worden niet in CareOn opgeslagen. Gebruik een externe beveiligde handoff.',
+                )
+            elif identifier is not None:
+                self.add_error(
+                    'file',
+                    'Dit bestand lijkt direct herleidbare persoonsgegevens te bevatten. Upload alleen een operationeel document of anonimiseer het bestand eerst.',
+                )
+
+        return cleaned_data
 
 
 class TrustAccountForm(forms.ModelForm):
@@ -373,6 +607,43 @@ class OrganizationInvitationForm(forms.ModelForm):
 
 
 class CaseIntakeProcessForm(forms.ModelForm):
+    source_reference = forms.CharField(required=False, widget=forms.HiddenInput())
+    placement_pressure_horizon = forms.ChoiceField(
+        required=False,
+        choices=CaseIntakeProcess.PlacementPressureHorizon.choices,
+        widget=forms.Select(attrs={'class': TAILWIND_SELECT}),
+        label='Huidige situatie houdbaar tot',
+    )
+    safety_pressure = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+        label='Veiligheidsdruk',
+    )
+    time_sensitive_arrangement = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+        label='Tijdskritisch arrangement',
+    )
+    escalation_needed = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+        label='Escalatie nodig',
+    )
+    placement_pressure_notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 3}),
+        label='Toelichting plaatsingsdruk',
+    )
+    has_urgency_declaration = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+        label='Client heeft al een urgentieverklaring',
+    )
+    urgency_document = forms.FileField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'class': TAILWIND_INPUT, 'accept': '.pdf,image/*'}),
+        label='Urgentieverklaring',
+    )
     urgency_applied = forms.BooleanField(
         required=False,
         widget=forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
@@ -405,10 +676,20 @@ class CaseIntakeProcessForm(forms.ModelForm):
         model = CaseIntakeProcess
         fields = [
             'title',
+            'source_reference',
             'start_date',
             'target_completion_date',
             'care_category_main',
             'care_category_sub',
+            'placement_pressure_horizon',
+            'safety_pressure',
+            'time_sensitive_arrangement',
+            'escalation_needed',
+            'placement_pressure_notes',
+            'has_urgency_declaration',
+            'urgency_applied',
+            'urgency_applied_since',
+            'urgency_document',
             'assessment_summary',
             'gemeente',
             'regio',
@@ -441,7 +722,7 @@ class CaseIntakeProcessForm(forms.ModelForm):
             'assessment_summary': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 4}),
             'gemeente': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'regio': forms.Select(attrs={'class': TAILWIND_SELECT}),
-            'urgency': forms.Select(attrs={'class': TAILWIND_SELECT}),
+            'urgency': forms.HiddenInput(),
             'complexity': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'zorgvorm_gewenst': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'preferred_care_form': forms.Select(attrs={'class': TAILWIND_SELECT}),
@@ -461,16 +742,21 @@ class CaseIntakeProcessForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 4}),
         }
         labels = {
-            'title': 'Client',
-            'start_date': 'Startdatum casus',
-            'target_completion_date': 'Doeldatum matchbesluit',
-            'care_category_main': 'Hoofdcategorie zorgvraag',
-            'care_category_sub': 'Subcategorie zorgvraag',
-            'assessment_summary': 'Intake samenvatting',
+            'title': 'Casuslabel',
+            'start_date': 'Gewenste startdatum',
+            'target_completion_date': 'Uiterste plaatsingsdatum',
+            'care_category_main': 'Zorgbehoefte categorie',
+            'care_category_sub': 'Specifieke zorgbehoefte',
+            'assessment_summary': 'Persoonsbeeld',
             'gemeente': 'Gemeente',
             'regio': 'Regio (automatisch bepaald)',
-            'urgency': 'Urgentie',
             'complexity': 'Complexiteit',
+            'placement_pressure_horizon': 'Huidige situatie houdbaar tot',
+            'safety_pressure': 'Veiligheidsdruk',
+            'time_sensitive_arrangement': 'Tijdskritisch arrangement',
+            'escalation_needed': 'Escalatie nodig',
+            'placement_pressure_notes': 'Toelichting plaatsingsdruk',
+            'urgency': 'Urgentieadvies',
             'zorgvorm_gewenst': 'Gewenste zorgvorm (matching)',
             'preferred_care_form': 'Gewenste zorgvorm',
             'preferred_region_type': 'Voorkeur regiotype',
@@ -488,6 +774,13 @@ class CaseIntakeProcessForm(forms.ModelForm):
             'case_coordinator': 'Casusregisseur',
             'description': 'Aanvullende opmerkingen',
         }
+        help_texts = {
+            'title': 'Gebruik een pseudoniem of operationeel label. Geen naam, initialen of andere identificerende gegevens.',
+            'assessment_summary': 'Beschrijf alleen het persoonsbeeld zonder direct herleidbare persoonsgegevens.',
+            'placement_pressure_notes': 'Gebruik alleen operationele context. Geen namen, adressen, telefoonnummers, e-mailadressen of BSN.',
+            'description': 'Alleen aanvullende operationele context. Geen namen, adressen, telefoonnummers of BSN.',
+            'school_work_status': 'Beschrijf de onderwijs- of dagstructuur zonder schoolnaam of persoonsnamen.',
+        }
 
     def __init__(self, *args, organization=None, **kwargs):
         # `organization` scopes Regio/Voorkeursregio querysets to the requesting tenant
@@ -496,55 +789,22 @@ class CaseIntakeProcessForm(forms.ModelForm):
         self._organization = organization
         super().__init__(*args, **kwargs)
 
-        main_name = 'Woonvoorziening'
-        subcategory_names = [
-            'Begeleid wonen',
-            'Intens begeleid wonen',
-            'Kamertraining',
-        ]
-
-        # Ensure requested care categories exist for intake creation.
-        main_category, _ = CareCategoryMain.objects.get_or_create(
-            name=main_name,
-            defaults={
-                'description': 'Woonvoorziening gerelateerde zorgvraag',
-                'order': 10,
-                'is_active': True,
-            },
-        )
-
-        if not main_category.is_active:
-            main_category.is_active = True
-            main_category.save(update_fields=['is_active'])
-
-        for index, sub_name in enumerate(subcategory_names, start=1):
-            CareCategorySubcategory.objects.get_or_create(
-                main_category=main_category,
-                name=sub_name,
-                defaults={
-                    'description': f'Subcategorie voor {main_name}',
-                    'order': index,
-                    'is_active': True,
-                },
-            )
-
         self.fields['care_category_main'].queryset = CareCategoryMain.objects.filter(
             is_active=True,
-            id=main_category.id,
+            visible_in_mvp=True,
         ).order_by('order', 'name')
 
         self.fields['care_category_sub'].queryset = CareCategorySubcategory.objects.filter(
             is_active=True,
-            main_category=main_category,
-            name__in=subcategory_names,
-        ).order_by('order', 'name')
+            visible_in_mvp=True,
+        ).select_related('main_category').order_by('main_category__order', 'order', 'name')
 
         # Resolve the region type the user is currently working with. Defaults to
-        # GEMEENTELIJK so the dropdown opens with municipality-level rows on first load.
+        # JEUGDREGIO so the dropdown opens with actual youth-region rows on first load.
         selected_region_type = (
             self.data.get('preferred_region_type')
             or self.initial.get('preferred_region_type')
-            or 'GEMEENTELIJK'
+            or 'JEUGDREGIO'
         )
         if not self.initial.get('preferred_region_type'):
             self.initial['preferred_region_type'] = selected_region_type
@@ -572,9 +832,6 @@ class CaseIntakeProcessForm(forms.ModelForm):
         ).order_by('municipality_name')
         self.fields['regio'].required = False
 
-        if not self.initial.get('care_category_main'):
-            self.initial['care_category_main'] = main_category.id
-
         if self.instance and isinstance(self.instance.problematiek_types, list):
             self.initial['problematiek_types'] = ', '.join(
                 [str(item).strip() for item in self.instance.problematiek_types if str(item).strip()]
@@ -585,6 +842,43 @@ class CaseIntakeProcessForm(forms.ModelForm):
         if not raw:
             return []
         return [part.strip() for part in str(raw).split(',') if part.strip()]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name in ('title', 'assessment_summary', 'description', 'other_support_description', 'school_work_status', 'contra_indicaties'):
+            value = cleaned_data.get(field_name)
+            if not value:
+                continue
+            identifier = _find_direct_identifier(str(value))
+            if identifier is not None:
+                self.add_error(
+                    field_name,
+                    'Gebruik geen direct herleidbare persoonsgegevens zoals e-mail, telefoonnummer, BSN of postcode.',
+                )
+        placement_pressure_notes = cleaned_data.get('placement_pressure_notes')
+        if placement_pressure_notes:
+            identifier = _find_direct_identifier(str(placement_pressure_notes))
+            if identifier is not None:
+                self.add_error(
+                    'placement_pressure_notes',
+                    'Gebruik geen direct herleidbare persoonsgegevens zoals e-mail, telefoonnummer, BSN of postcode.',
+                )
+
+        pressure_assessment = CaseIntakeProcess.derive_placement_pressure(
+            horizon=cleaned_data.get('placement_pressure_horizon'),
+            target_completion_date=cleaned_data.get('target_completion_date'),
+            start_date=cleaned_data.get('start_date'),
+            safety_pressure=bool(cleaned_data.get('safety_pressure')),
+            time_sensitive_arrangement=bool(cleaned_data.get('time_sensitive_arrangement')),
+            escalation_needed=bool(cleaned_data.get('escalation_needed')),
+        )
+        cleaned_data['urgency'] = pressure_assessment['urgency']
+
+        has_urgency_declaration = bool(cleaned_data.get('has_urgency_declaration'))
+        urgency_document = cleaned_data.get('urgency_document')
+        if pressure_assessment['urgency'] in {CaseIntakeProcess.Urgency.HIGH, CaseIntakeProcess.Urgency.CRISIS} and has_urgency_declaration and not urgency_document:
+            self.add_error('urgency_document', 'Voeg een urgentieverklaring toe bij hoge urgentie.')
+        return cleaned_data
 
     def clean_latitude(self):
         latitude = self.cleaned_data.get('latitude')
@@ -839,31 +1133,41 @@ class MunicipalityConfigurationForm(forms.ModelForm):
     class Meta:
         model = MunicipalityConfiguration
         fields = [
-            'municipality_name', 'municipality_code', 'status',
+            'municipality_name', 'municipality_code', 'brp_code', 'status',
             'care_domains', 'linked_providers',
-            'max_wait_days', 'priority_rules',
-            'responsible_coordinator', 'notes'
+            'max_wait_days', 'priority_rules', 'urgency_document_request_url',
+            'responsible_coordinator', 'woonplaatsbeginsel_contact', 'budget_owner', 'contract_policies', 'notes'
         ]
         widgets = {
             'municipality_name': forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'Bijv. Amsterdam'}),
             'municipality_code': forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'Bijv. 0363'}),
+            'brp_code': forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'Bijv. 0363'}),
             'status': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'care_domains': forms.CheckboxSelectMultiple(attrs={'class': 'h-4 w-4'}),
             'linked_providers': forms.CheckboxSelectMultiple(attrs={'class': 'h-4 w-4'}),
             'max_wait_days': forms.NumberInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'Bijv. 14'}),
             'priority_rules': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 4, 'placeholder': 'Prioriteringsregels...'}),
+            'urgency_document_request_url': forms.URLInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'https://...'}),
             'responsible_coordinator': forms.Select(attrs={'class': TAILWIND_SELECT}),
+            'woonplaatsbeginsel_contact': forms.Select(attrs={'class': TAILWIND_SELECT}),
+            'budget_owner': forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'Bijv. Sociaal domein'}),
+            'contract_policies': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 3, 'placeholder': 'JSON of beleidstekst'}),
             'notes': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 3, 'placeholder': 'Aanvullende notities...'}),
         }
         labels = {
             'municipality_name': 'Gemeente',
             'municipality_code': 'Gemeentecode',
+            'brp_code': 'BRP-code',
             'status': 'Status',
             'care_domains': 'Zorgdomeinen',
             'linked_providers': 'Gekoppelde aanbieders',
             'max_wait_days': 'Maximale wachttijd (dagen)',
             'priority_rules': 'Prioriteringsregels',
+            'urgency_document_request_url': 'Link urgentieverklaring aanvragen',
             'responsible_coordinator': 'Verantwoordelijke',
+            'woonplaatsbeginsel_contact': 'Woonplaatsbeginsel contact',
+            'budget_owner': 'Budgetverantwoordelijke',
+            'contract_policies': 'Contractpolicies',
             'notes': 'Notities',
         }
 
@@ -875,7 +1179,7 @@ class RegionalConfigurationForm(forms.ModelForm):
             'region_type', 'region_name', 'region_code', 'status',
             'served_municipalities', 'care_domains', 'linked_providers',
             'max_wait_days', 'priority_rules',
-            'responsible_coordinator', 'notes'
+            'responsible_coordinator', 'escalatie_contact', 'notes'
         ]
         widgets = {
             'region_type': forms.Select(attrs={'class': TAILWIND_SELECT}),
@@ -888,6 +1192,7 @@ class RegionalConfigurationForm(forms.ModelForm):
             'max_wait_days': forms.NumberInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'Bijv. 14'}),
             'priority_rules': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 4, 'placeholder': 'Prioriteringsregels...'}),
             'responsible_coordinator': forms.Select(attrs={'class': TAILWIND_SELECT}),
+            'escalatie_contact': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'notes': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 3, 'placeholder': 'Aanvullende notities...'}),
         }
         labels = {
@@ -901,6 +1206,7 @@ class RegionalConfigurationForm(forms.ModelForm):
             'max_wait_days': 'Maximale wachttijd (dagen)',
             'priority_rules': 'Prioriteringsregels',
             'responsible_coordinator': 'Verantwoordelijke',
+            'escalatie_contact': 'Escalatiecontact',
             'notes': 'Notities',
         }
 

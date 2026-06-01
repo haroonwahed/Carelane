@@ -3,7 +3,7 @@ import { AlertTriangle, ArrowLeft, CalendarClock, CheckCircle2, Clock3, Loader2,
 import { Button } from '../ui/button';
 import { useAssessmentDecision } from '../../hooks/useAssessmentDecision';
 import { tokens } from '../../design/tokens';
-import { CareAttentionBar, CareInfoPopover, CarePageScaffold } from './CareDesignPrimitives';
+import { BlockingNotice, CareAttentionBar, CareInfoPopover, CarePageScaffold } from './CareDesignPrimitives';
 
 interface AssessmentDecisionPageProps {
   caseId: string;
@@ -110,7 +110,7 @@ export function AssessmentDecisionPage({ caseId, onBack, onSaved }: AssessmentDe
   };
 
   if (loading) {
-    return <div className="rounded-2xl border bg-card p-4 text-center text-muted-foreground">Aanbieder beoordeling laden…</div>;
+    return <div className="rounded-2xl border bg-card p-4 text-center text-muted-foreground">Beoordeling laden…</div>;
   }
 
   if (error || !data || !formState) {
@@ -121,7 +121,7 @@ export function AssessmentDecisionPage({ caseId, onBack, onSaved }: AssessmentDe
           Terug naar casussen
         </Button>
         <div className="rounded-xl border bg-card p-4 text-center space-y-3">
-          <p className="text-lg font-semibold text-foreground">Aanbieder beoordeling niet beschikbaar</p>
+          <p className="text-lg font-semibold text-foreground">Beoordeling niet beschikbaar</p>
           <p className="text-sm text-muted-foreground">{error ?? 'Deze casus kon niet geladen worden.'}</p>
           <Button variant="outline" onClick={refetch}>Opnieuw proberen</Button>
         </div>
@@ -162,17 +162,17 @@ export function AssessmentDecisionPage({ caseId, onBack, onSaved }: AssessmentDe
         <div className="space-y-1.5">
           <section className="rounded-xl border border-border bg-card p-3">
             <div className="mb-4 flex items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">Samenvatting</p>
                 <h1 className="mt-1.5 text-2xl font-semibold text-foreground">Aanbieder beoordeling</h1>
                 <p className="mt-1.5 text-xs leading-5 text-muted-foreground" style={{ maxWidth: tokens.layout.contentMeasure }}>
                   Controleer of deze casus klaar is voor acceptatie of afwijzing. Vul alleen de informatie in die nodig is om die stap verantwoord te zetten.
                 </p>
               </div>
-              <div className="rounded-2xl border border-border bg-muted/20 px-3 py-2.5 text-right">
+              <div className="min-w-0 rounded-2xl border border-border bg-muted/20 px-3 py-2.5 text-right">
                 <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Casus</p>
-                <p className="mt-0.5 text-sm font-semibold text-foreground">{data.summary.caseId}</p>
-                <p className="text-xs text-muted-foreground">{data.summary.title}</p>
+                <p className="mt-0.5 break-words text-sm font-semibold text-foreground">{data.summary.caseId}</p>
+                <p className="break-words text-xs text-muted-foreground">{data.summary.title}</p>
               </div>
             </div>
 
@@ -311,7 +311,11 @@ export function AssessmentDecisionPage({ caseId, onBack, onSaved }: AssessmentDe
               <div>
                 <p className="text-sm font-semibold text-foreground">Bevestig</p>
                 <p className="text-sm text-muted-foreground">{formState.decision ? data.consequences[formState.decision]?.title : 'Selecteer eerst een beslissing om verder te gaan.'}</p>
-                {submitError && <p className="mt-1 text-sm text-red-300">{submitError}</p>}
+                {submitError && (
+                  <div className="mt-3">
+                    <BlockingNotice message={submitError} />
+                  </div>
+                )}
               </div>
               <Button onClick={handleSubmit} disabled={!isValid || saving} className="min-w-[220px] gap-2">
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
@@ -369,15 +373,15 @@ export function AssessmentDecisionPage({ caseId, onBack, onSaved }: AssessmentDe
               <h2 className="text-base font-semibold text-foreground">Hints</h2>
             </div>
             <div className="mt-4 space-y-1.5 text-sm">
-              <div className="rounded-2xl border border-border bg-muted/20 p-3">
+              <div className="min-w-0 rounded-2xl border border-border bg-muted/20 p-3">
                 <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Voorgestelde urgentie</p>
-                <p className="mt-1 font-semibold text-foreground">{data.hints.suggestedUrgency.label}</p>
-                <p className="mt-1 text-muted-foreground">{data.hints.suggestedUrgency.reason}</p>
+                <p className="mt-1 break-words font-semibold text-foreground">{data.hints.suggestedUrgency.label}</p>
+                <p className="mt-1 break-words text-muted-foreground">{data.hints.suggestedUrgency.reason}</p>
               </div>
-              <div className="rounded-2xl border border-border bg-muted/20 p-3">
+              <div className="min-w-0 rounded-2xl border border-border bg-muted/20 p-3">
                 <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Moeilijkheid</p>
-                <p className="mt-1 font-semibold text-foreground">{data.hints.matchingDifficulty.level}</p>
-                <p className="mt-1 text-muted-foreground">{data.hints.matchingDifficulty.detail}</p>
+                <p className="mt-1 break-words font-semibold text-foreground">{data.hints.matchingDifficulty.level}</p>
+                <p className="mt-1 break-words text-muted-foreground">{data.hints.matchingDifficulty.detail}</p>
               </div>
             </div>
           </section>
@@ -392,12 +396,12 @@ export function AssessmentDecisionPage({ caseId, onBack, onSaved }: AssessmentDe
                 <p className="text-sm text-muted-foreground">Geen actieve signalen voor deze casus.</p>
               )}
               {data.signals.map((signal) => (
-                <div key={signal.id} className={`rounded-2xl border px-3 py-3 text-sm ${signalClasses(signal.severity)}`}>
+                <div key={signal.id} className={`min-w-0 rounded-2xl border px-3 py-3 text-sm ${signalClasses(signal.severity)}`}>
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-foreground">{signal.title}</p>
+                    <p className="min-w-0 break-words font-semibold text-foreground">{signal.title}</p>
                     <span className="text-xs uppercase tracking-[0.08em] text-muted-foreground">{signal.status}</span>
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">{signal.description}</p>
+                  <p className="mt-1 break-words text-sm text-muted-foreground">{signal.description}</p>
                 </div>
               ))}
             </div>
@@ -414,8 +418,8 @@ export function AssessmentDecisionPage({ caseId, onBack, onSaved }: AssessmentDe
                   <div className={`mt-1 rounded-full px-2 py-1 text-[11px] font-semibold ${timelineToneClasses(item.tone)}`}>
                     <Clock3 size={12} />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{item.label}</p>
+                  <div className="min-w-0">
+                    <p className="break-words text-sm font-medium text-foreground">{item.label}</p>
                     <p className="text-xs text-muted-foreground">{formatDateLabel(item.date)}</p>
                   </div>
                 </div>

@@ -38,6 +38,8 @@ Use consistently across SPA, templates, and operator-facing docs:
 - **Documenten**  
 - **Audittrail**
 
+Structural `regiekamer`/route renames remain deferred for now; see [`docs/STRUCTURAL_RENAME_DEFERRED.md`](./STRUCTURAL_RENAME_DEFERRED.md).
+
 ## Implementation note
 
 API identifiers such as `phase: "gemeente_validatie"` may remain stable while UI shows **gemeentelijke validatie**. Document mapping: `docs/FOUNDATION_LOCK.md`.

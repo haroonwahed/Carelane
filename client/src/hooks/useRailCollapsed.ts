@@ -2,8 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "careon.rail.collapsed";
 
-function readInitial(): boolean {
+function shouldAvoidLocalStorage(): boolean {
   if (typeof window === "undefined") {
+    return true;
+  }
+  if (import.meta.env.MODE === "test") {
+    return true;
+  }
+  return /jsdom/i.test(window.navigator.userAgent ?? "");
+}
+
+function readInitial(): boolean {
+  if (shouldAvoidLocalStorage()) {
     return false;
   }
   try {
@@ -14,7 +24,7 @@ function readInitial(): boolean {
 }
 
 function writeValue(next: boolean): void {
-  if (typeof window === "undefined") {
+  if (shouldAvoidLocalStorage()) {
     return;
   }
   try {

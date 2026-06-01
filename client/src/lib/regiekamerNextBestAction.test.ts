@@ -85,7 +85,7 @@ describe("computeRegiekamerNextBestAction", () => {
     expect(r.primaryAction.actionKey).toBe("FOCUS_RISKS");
     expect(r.secondaryAction?.actionKey).toBe("SLA_PROVIDER_REMINDERS");
     expect(r.panel.uiMode).toBe("intervention");
-    expect(r.title).toBe("Aanvraag met verhoogd risico");
+    expect(r.title).toBe("Casus met verhoogd risico");
     expect(r.description).toBe("");
     expect(r.reasons).toEqual([]);
     expect(formatRegiekamerDominantDescription(r)).toBe("");
@@ -156,7 +156,7 @@ describe("computeRegiekamerNextBestAction", () => {
     });
     expect(r.reasons).toEqual([
       "2 aanvragen wachten upstream",
-      "1 aanvraag blokkeert bij aanbieder",
+      "1 casus blokkeert bij aanbieder",
     ]);
   });
 

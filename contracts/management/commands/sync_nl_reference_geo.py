@@ -100,6 +100,13 @@ PROVINCE_DEFAULT_ZORGREGIO_KEY = {
     "Noord-Holland": "noordwest",
 }
 
+_URGENCY_REQUEST_URLS = {
+    "Aalten": "https://www.aalten.nl/ontwerp-volkshuisvestingsprogramma",
+    "Utrecht": "https://www.utrecht.nl/wonen-en-leven/wonen/woning-zoeken/urgentie-voor-een-woning/",
+    "Amsterdam": "https://www.amsterdam.nl/wonen-bouwen-verbouwen/woonruimte-vinden/urgentieverklaring-aanvragen/",
+    "Rotterdam": "https://www.rotterdam.nl/sociaal-medische-advisering",
+}
+
 
 def _fetch_text(url: str) -> str:
     try:
@@ -292,9 +299,11 @@ def _upsert_for_org(
     municipalities: Iterable[MunicipalityRef],
     zorgregios: Iterable[ZorgregioRef],
     replace_links: bool,
-) -> tuple[int, int, int, int, LinkStats]:
+) -> tuple[int, int, int, int, int, int, LinkStats]:
     created_municipalities = 0
     updated_municipalities = 0
+    created_municipality_regions = 0
+    updated_municipality_regions = 0
     created_regions = 0
     updated_regions = 0
 
@@ -305,15 +314,47 @@ def _upsert_for_org(
             defaults={
                 "municipality_name": ref.name,
                 "status": MunicipalityConfiguration.Status.ACTIVE,
+                "urgency_document_request_url": _URGENCY_REQUEST_URLS.get(ref.name, ""),
             },
         )
         if created:
             created_municipalities += 1
-        elif obj.municipality_name != ref.name or obj.status != MunicipalityConfiguration.Status.ACTIVE:
+        elif (
+            obj.municipality_name != ref.name
+            or obj.status != MunicipalityConfiguration.Status.ACTIVE
+            or obj.urgency_document_request_url != _URGENCY_REQUEST_URLS.get(ref.name, "")
+        ):
             obj.municipality_name = ref.name
             obj.status = MunicipalityConfiguration.Status.ACTIVE
-            obj.save(update_fields=["municipality_name", "status", "updated_at"])
+            obj.urgency_document_request_url = _URGENCY_REQUEST_URLS.get(ref.name, "")
+            obj.save(update_fields=["municipality_name", "status", "urgency_document_request_url", "updated_at"])
             updated_municipalities += 1
+
+        municipality_region, created_region = RegionalConfiguration.objects.get_or_create(
+            organization=organization,
+            region_code=ref.code,
+            defaults={
+                "region_name": ref.name,
+                "region_type": RegionType.GEMEENTELIJK,
+                "status": RegionalConfiguration.Status.ACTIVE,
+                "province": ref.province,
+            },
+        )
+        if created_region:
+            created_municipality_regions += 1
+        elif (
+            municipality_region.region_name != ref.name
+            or municipality_region.region_type != RegionType.GEMEENTELIJK
+            or municipality_region.status != RegionalConfiguration.Status.ACTIVE
+            or municipality_region.province != ref.province
+        ):
+            municipality_region.region_name = ref.name
+            municipality_region.region_type = RegionType.GEMEENTELIJK
+            municipality_region.status = RegionalConfiguration.Status.ACTIVE
+            municipality_region.province = ref.province
+            municipality_region.save(update_fields=["region_name", "region_type", "status", "province", "updated_at"])
+            updated_municipality_regions += 1
+        municipality_region.served_municipalities.set([obj])
 
     for ref in zorgregios:
         obj, created = RegionalConfiguration.objects.get_or_create(
@@ -344,7 +385,15 @@ def _upsert_for_org(
         replace_links=replace_links,
     )
 
-    return created_municipalities, updated_municipalities, created_regions, updated_regions, link_stats
+    return (
+        created_municipalities,
+        updated_municipalities,
+        created_municipality_regions,
+        updated_municipality_regions,
+        created_regions,
+        updated_regions,
+        link_stats,
+    )
 
 
 class Command(BaseCommand):
@@ -391,6 +440,8 @@ class Command(BaseCommand):
         totals = {
             "created_municipalities": 0,
             "updated_municipalities": 0,
+            "created_municipality_regions": 0,
+            "updated_municipality_regions": 0,
             "created_regions": 0,
             "updated_regions": 0,
             "added_links": 0,
@@ -399,9 +450,11 @@ class Command(BaseCommand):
         }
 
         for org in organizations:
-            cm, um, cr, ur, link_stats = _upsert_for_org(org, municipalities, zorgregios, replace_links)
+            cm, um, cmr, umr, cr, ur, link_stats = _upsert_for_org(org, municipalities, zorgregios, replace_links)
             totals["created_municipalities"] += cm
             totals["updated_municipalities"] += um
+            totals["created_municipality_regions"] += cmr
+            totals["updated_municipality_regions"] += umr
             totals["created_regions"] += cr
             totals["updated_regions"] += ur
             totals["added_links"] += link_stats.added_links
@@ -410,6 +463,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 "Org "
                 f"{org.id} ({org.name}): gemeenten +{cm} / ~{um}, "
+                f"gemeentelijke regio's +{cmr} / ~{umr}, "
                 f"zorgregio's +{cr} / ~{ur}, koppelingen +{link_stats.added_links}, "
                 f"onopgelost {link_stats.unresolved_municipalities}, "
                 f"ambigu (default gekozen) {link_stats.ambiguous_municipalities}"
@@ -419,6 +473,7 @@ class Command(BaseCommand):
             self.style.SUCCESS(
                 "Synchronisatie afgerond. "
                 f"Gemeenten: +{totals['created_municipalities']} nieuw, {totals['updated_municipalities']} bijgewerkt. "
+                f"Gemeentelijke regio's: +{totals['created_municipality_regions']} nieuw, {totals['updated_municipality_regions']} bijgewerkt. "
                 f"Zorgregio's: +{totals['created_regions']} nieuw, {totals['updated_regions']} bijgewerkt. "
                 f"Gemeente-zorgregio koppelingen toegevoegd: {totals['added_links']}. "
                 f"Onopgelost: {totals['unresolved']}. Ambigu (default gekozen): {totals['ambiguous']}."

@@ -16,7 +16,7 @@ export function RegieNotesPanel({ testId, onAfterAction }: RegieNotesPanelProps)
         <div className="min-w-0 space-y-3">
           <p className="text-sm font-semibold leading-tight text-foreground">Notities en opvolging</p>
           <p className="text-sm text-muted-foreground">
-            Vastleggen van werknotities en opvolging volgt in een volgende stap van de regie-rail.
+            Vastleggen van werknotities en opvolging volgt in een volgende stap van de coördinatie-rail.
           </p>
           <Button
             type="button"
@@ -31,4 +31,3 @@ export function RegieNotesPanel({ testId, onAfterAction }: RegieNotesPanelProps)
     </section>
   );
 }
-

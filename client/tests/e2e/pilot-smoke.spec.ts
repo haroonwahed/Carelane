@@ -124,7 +124,7 @@ async function loginAs(page: import("@playwright/test").Page, username: string, 
   await page.getByLabel("Gebruikersnaam").fill(username);
   await page.getByLabel("Wachtwoord").fill(password);
   await page.getByRole("button", { name: "Inloggen" }).click();
-  await page.waitForLoadState("networkidle");
+  await page.waitForURL(/\/dashboard\/?(\?.*)?$/, { timeout: 45_000 });
   await expect(
     page.getByText("Ongeldige gebruikersnaam of wachtwoord. Probeer opnieuw."),
     "Login failed. Run ./scripts/prepare_pilot_e2e.sh (seeds e2e_owner); set E2E_SMOKE_PASSWORD / E2E_USERNAME. See docs/E2E_RUNBOOK.md.",

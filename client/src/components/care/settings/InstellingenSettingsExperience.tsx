@@ -88,9 +88,9 @@ export function InstellingenSettingsExperience({
   const [gebruikersRiskFilter, setGebruikersRiskFilter] = useState<"all" | "hoog" | "middel" | "beperkt zicht">("all");
 
   const gebruikersRolRows = [
-    { role: "Regisseur", scope: "Casussen, matching, plaatsing, signalen", risk: "Hoog" },
+    { role: "Regisseur", scope: "Aanvragen, matching, plaatsing, signalen", risk: "Hoog" },
     { role: "Gemeente validator", scope: "Validatie na matching", risk: "Middel" },
-    { role: "Zorgaanbieder", scope: "Alleen toegewezen casussen", risk: "Beperkt zicht" },
+    { role: "Zorgaanbieder", scope: "Alleen toegewezen aanvragen", risk: "Beperkt zicht" },
     { role: "Beheerder", scope: "Platform, integraties, audit", risk: "Hoog" },
   ];
 
@@ -121,7 +121,7 @@ export function InstellingenSettingsExperience({
         <header className="mb-8 border-b border-border/30 pb-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Instellingen</p>
           <h1 className="mt-1 text-[clamp(1.35rem,2.5vw,1.65rem)] font-semibold tracking-[-0.02em] text-foreground">
-            Operationele regie
+            Operationele coördinatie
           </h1>
           <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-muted-foreground">
             Configureer hoe CareOn besluitvorming ondersteunt: zichtbaarheid, ketenlogica, matching en verantwoording.
@@ -176,7 +176,7 @@ export function InstellingenSettingsExperience({
                 <span className="font-medium text-foreground">Wat is hier actief:</span> alleen <strong className="font-medium text-foreground">organisatienaam</strong> kun je in dit blok aanpassen; kies <strong className="font-medium text-foreground">Basis voorkeuren vastleggen</strong> om te bevestigen (nu lokaal in deze browser; serveropslag volgt).{" "}
                 <strong className="font-medium text-foreground">Thema</strong> wissel je met het zonnetje in de kopbalk.{" "}
                 <strong className="font-medium text-foreground">Taal</strong> en <strong className="font-medium text-foreground">tijdzone</strong> staan in deze release vast.{" "}
-                Meldingen (digest, kritieke alerts), MFA en escalatie vind je onder <strong className="font-medium text-foreground">Meldingen</strong>, <strong className="font-medium text-foreground">Gebruikers & rollen</strong> en <strong className="font-medium text-foreground">Workflow & regie</strong>.
+                Meldingen (digest, kritieke alerts), MFA en escalatie vind je onder <strong className="font-medium text-foreground">Meldingen</strong>, <strong className="font-medium text-foreground">Gebruikers & rollen</strong> en <strong className="font-medium text-foreground">Workflow & coördinatie</strong>.
               </p>
               <SettingsCluster title="Identiteit in het werkstation">
                 <Field label="Organisatienaam" hint="Zichtbaar voor geautoriseerde gebruikers.">
@@ -213,9 +213,9 @@ export function InstellingenSettingsExperience({
               <SettingsCluster title="Workspace" hint="Vastgelegde ontwerpmodus beïnvloedt waar gebruikers werken.">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <p className="text-sm font-medium text-foreground">Regie-omgeving (SPA)</p>
+                    <p className="text-sm font-medium text-foreground">Coördinatie-omgeving (SPA)</p>
                     <p className="mt-1 text-[13px] text-muted-foreground">
-                      Moderne werkruimte voor casussen, matching en plaatsing.
+                      Moderne werkruimte voor aanvragen, matching en plaatsing.
                     </p>
                   </div>
                   <Button
@@ -241,7 +241,7 @@ export function InstellingenSettingsExperience({
           {activeSection === "organisatie" && (
             <SettingsSection
               title="Organisatie"
-              lede="Regionale context en standaarden. Dit stuurt geen individuele casussen aan, maar wel de standaard lens waaronder teams werken."
+              lede="Regionale context en standaarden. Dit stuurt geen individuele aanvragen aan, maar wel de standaard lens waaronder teams werken."
               primaryAction={
                 <Button type="button" onClick={onOrgProfileSave} className="gap-2 rounded-xl">
                   <Building2 className="size-4" />
@@ -250,7 +250,7 @@ export function InstellingenSettingsExperience({
               }
             >
               <SettingsCluster title="Regio & jurisdictie">
-                <Field label="Standaard regio" hint="Voor nieuwe casussen en matching zonder expliciete override.">
+                <Field label="Standaard regio" hint="Voor nieuwe aanvragen en matching zonder expliciete override.">
                   <select
                     value={defaultRegion}
                     onChange={(e) => onDefaultRegionChange(e.target.value)}
@@ -270,7 +270,7 @@ export function InstellingenSettingsExperience({
                 </summary>
                 <p className="text-[13px] leading-relaxed text-muted-foreground">
                   Koppel afspraken over wachttijden en escalatie aan je regio wanneer dit formeel is vastgelegd. Tot die tijd
-                  blijft de keten onder gemeentelijke regie.
+                  blijft de keten onder gemeentelijke coördinatie.
                 </p>
               </details>
             </SettingsSection>
@@ -279,7 +279,7 @@ export function InstellingenSettingsExperience({
           {activeSection === "gebruikers-rollen" && (
             <SettingsSection
               title="Gebruikers & rollen"
-              lede="Wie mag wat zien en doen. Zorgaanbieders zien uitsluitend gekoppelde casussen — dat is geen beperking, maar zichtbaarheidsbeleid."
+              lede="Wie mag wat zien en doen. Zorgaanbieders zien uitsluitend gekoppelde aanvragen — dat is geen beperking, maar zichtbaarheidsbeleid."
               primaryAction={
                 <Button
                   type="button"
@@ -295,7 +295,7 @@ export function InstellingenSettingsExperience({
             >
               <GovernanceCallout
                 title="Zichtbaarheid voor aanbieders"
-                copy="Provideraccounts hebben geen toegang tot de volledige werkvoorraad. Alleen toegekende casussen na gemeentelijke regie — zo blijft de keten auditbaar."
+                copy="Provideraccounts hebben geen toegang tot de volledige werkvoorraad. Alleen toegekende aanvragen na gemeentelijke coördinatie — zo blijft de keten auditbaar."
               />
               <SettingsCluster title="Rollenmatrix">
                 <CareSection>
@@ -372,7 +372,7 @@ export function InstellingenSettingsExperience({
 
           {activeSection === "workflow-regie" && (
             <SettingsSection
-              title="Workflow & regie"
+              title="Workflow & coördinatie"
               lede="De keten is vastgelegd: geen overslaan van stappen. Hier stuur je operationele drempels — SLA’s, herinneringen en escalatie — zonder de juridische volgorde te doorbreken."
               primaryAction={
                 <Button type="button" className="gap-2 rounded-xl" onClick={onOrgProfileSave}>
@@ -397,7 +397,7 @@ export function InstellingenSettingsExperience({
                       <span className="text-[13px] text-muted-foreground">uur</span>
                     </div>
                   </Field>
-                  <Field label="Escaleer na" hint="Na deze termijn naar regiekamer-eigenaar.">
+                  <Field label="Escaleer na" hint="Na deze termijn naar coördinatie-eigenaar.">
                     <div className="flex items-center gap-2">
                       <input
                         type="number"
@@ -410,7 +410,7 @@ export function InstellingenSettingsExperience({
                 </div>
                 <ToggleRow
                   label="Herinnering bij onvolledige casusgegevens"
-                  description="Casusgegevens onvolledig — blokkeer geen stap, maar signaleer aan regisseur."
+                  description="Casusgegevens onvolledig — blokkeer geen stap, maar signaleer aan coördinatie."
                   checked
                   onCheckedChange={() => undefined}
                 />
@@ -560,7 +560,7 @@ export function InstellingenSettingsExperience({
           {activeSection === "integraties" && (
             <SettingsSection
               title="Integraties"
-              lede="Verbindingen met e-mail, identiteit en bronsystemen. Gezondheid en laatste synchronisatie eerst — details op aanvraag."
+              lede="Verbindingen met e-mail, identiteit en bronsystemen. Gezondheid en laatste synchronisatie eerst — details op casus."
               primaryAction={
                 <Button
                   type="button"

@@ -257,7 +257,7 @@ export function buildRegiekamerDecisionSummary(
     };
 
     recommended_action = {
-      label: "Pak langst wachtende casussen eerst op",
+      label: "Pak langst wachtende aanvragen eerst op",
       target_view: "casussen",
       target_filter: "waitingOverdue",
       reason: `Normtijd van ${slaDays} dagen wordt overschreden`,
@@ -446,7 +446,7 @@ export function buildRegiekamerDecisionSummary(
     signal_strips.push({
       key: "monitor",
       tone: "info",
-      text: "Geen extra blokkades. Blijf actieve casussen monitoren",
+      text: "Geen extra blokkades. Blijf actieve aanvragen monitoren",
       action: { target_view: "plaatsingen", target_filter: "placement" },
     });
   }

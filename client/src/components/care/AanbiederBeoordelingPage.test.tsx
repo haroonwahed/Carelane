@@ -278,9 +278,9 @@ describe("AanbiederBeoordelingPage (gemeente)", () => {
       />,
     );
 
-    expect(screen.getByText("Geen aanvragen in deze fase")).toBeInTheDocument();
+    expect(screen.getByText("Geen casussen in deze fase")).toBeInTheDocument();
     expect(
-      screen.getByText(/nog geen aanvragen naar een aanbieder verzonden/i),
+      screen.getByText(/nog geen casussen naar een aanbieder verzonden/i),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Naar matching" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Terug naar werkvoorraad" })).toBeInTheDocument();
@@ -330,7 +330,8 @@ describe("AanbiederBeoordelingPage (zorgaanbieder)", () => {
     render(<AanbiederBeoordelingPage role="zorgaanbieder" onCaseClick={vi.fn()} />);
 
     expect(screen.getByTestId("provider-review-why-us-block")).toBeInTheDocument();
-    expect(screen.getByText(/Waarom deze aanvraag bij jullie ligt/i)).toBeInTheDocument();
+    expect(screen.getByText(/Waarom deze casus bij jullie ligt/i)).toBeInTheDocument();
+    expect(screen.getByText(/Handig om te weten/i)).toBeInTheDocument();
     const ctx = screen.getByTestId("provider-review-handoff-context");
     expect(ctx).toHaveTextContent("Gemeente: Utrecht (test)");
     expect(ctx).toHaveTextContent("Instroom: Wijkteam intake");
@@ -346,6 +347,8 @@ describe("AanbiederBeoordelingPage (zorgaanbieder)", () => {
         matchFitSummary: "Sterke fit op regio en specialisatie.",
         matchTradeOffsHint: "Capaciteit beperkt in piekperiode.",
         matchScore: 82,
+        taxonomieLijn: "Taxonomie: Wonen & verblijf → Woonvoorziening",
+        taxonomieCodeLijn: "Taxonomiecode: WONEN_VERBLIJF → WONEN_VERBLIJF_WOONVOORZIENING",
         arrangementHintLine: "Arrangement (indicatief): PGB",
         arrangementHintDisclaimer:
           "Indicatief arrangement — geen budget- of tarieftoezegging; bevestig financiering in eigen proces.",
@@ -363,6 +366,8 @@ describe("AanbiederBeoordelingPage (zorgaanbieder)", () => {
     const matchHint = screen.getByTestId("provider-review-match-hint");
     expect(matchHint).toHaveTextContent(/Advies match:/);
     expect(matchHint).toHaveTextContent(/score en fit zijn indicatief/i);
+    expect(screen.getByTestId("provider-review-taxonomy-line")).toHaveTextContent(/Taxonomie:/i);
+    expect(screen.getByTestId("provider-review-taxonomy-code-line")).toHaveTextContent(/Taxonomiecode:/i);
     expect(screen.getByTestId("provider-review-arrangement-disclaimer")).toHaveTextContent(/geen budget/i);
   });
 

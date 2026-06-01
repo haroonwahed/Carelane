@@ -3,8 +3,8 @@
  * Used by Regiekamer and casus execution; must stay aligned with API action codes.
  */
 export const NBA_IMPERATIVE_LABELS: Record<string, string> = {
-  COMPLETE_CASE_DATA: "Vul aanvraag aan",
-  GENERATE_SUMMARY: "Vul aanvraag aan",
+  COMPLETE_CASE_DATA: "Vul casus aan",
+  GENERATE_SUMMARY: "Vul casus aan",
   START_MATCHING: "Zoek zorgcapaciteit",
   VALIDATE_MATCHING: "Controleer matchvoorstel",
   SEND_TO_PROVIDER: "Vraag reactie aanbieder",
@@ -36,8 +36,8 @@ export const NBA_IMPERATIVE_LABELS: Record<string, string> = {
  * a status display instead of a manual-looking button.
  */
 const LEGACY_AUTOMATION_LABEL_REWRITES: Array<[RegExp, string | null]> = [
-  [/genereer\s+samenvatting/i, "Vul aanvraag aan"],
-  [/samenvatting\s+genereren/i, "Vul aanvraag aan"],
+  [/genereer\s+samenvatting/i, "Vul casus aan"],
+  [/samenvatting\s+genereren/i, "Vul casus aan"],
   [/genereer\s+rapportage/i, null],
   [/rapportage\s+genereren/i, null],
   [/start\s+ai[-\s]?verwerking/i, null],

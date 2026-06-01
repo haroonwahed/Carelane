@@ -11,6 +11,7 @@ from contracts.models import (
     AanbiederVestiging,
     CareCase,
     CareCategoryMain,
+    CareCategorySubcategory,
     CareSignal,
     CaseAssessment,
     CaseIntakeProcess,
@@ -29,6 +30,7 @@ from contracts.models import (
     Zorgprofiel,
     TrustAccount,
 )
+from contracts.zorgbehoefte_taxonomy import ensure_zorgbehoefte_taxonomy, provider_subcategory_codes_for_category
 
 
 User = get_user_model()
@@ -146,15 +148,16 @@ class Command(BaseCommand):
 		return user
 
 	def _ensure_categories(self):
-		names = ['Jeugd GGZ', 'Gezinsondersteuning', 'Wmo begeleiding']
-		categories = []
-		for index, name in enumerate(names, start=1):
-			category, _ = CareCategoryMain.objects.get_or_create(
-				name=name,
-				defaults={'order': index, 'is_active': True},
-			)
-			categories.append(category)
-		return categories
+		ensure_zorgbehoefte_taxonomy()
+		category_map = {
+			category.name: category
+			for category in CareCategoryMain.objects.filter(visible_in_mvp=True, is_active=True)
+		}
+		return [
+			category_map['Psychosociaal & begeleiding'],
+			category_map['Gezin & opvoeding'],
+			category_map['Regie & complexe casus'],
+		]
 
 	def _provider_specs(self):
 		return [
@@ -276,6 +279,13 @@ class Command(BaseCommand):
 				},
 			)
 			profile.target_care_categories.set(categories)
+			if hasattr(profile, 'target_care_subcategories'):
+				selected_subcategory_codes = []
+				for category in categories:
+					selected_subcategory_codes.extend(provider_subcategory_codes_for_category(category))
+				profile.target_care_subcategories.set(
+					CareCategorySubcategory.objects.filter(code__in=selected_subcategory_codes)
+				)
 			providers.append(provider)
 		return providers
 
@@ -370,6 +380,11 @@ class Command(BaseCommand):
 		return bundles
 
 	def _ensure_network_configuration(self, *, org, user, categories, providers):
+		urgency_request_urls = {
+			"Utrecht": "https://www.utrecht.nl/wonen-en-leven/wonen/woning-zoeken/urgentie-voor-een-woning/",
+			"Amsterdam": "https://www.amsterdam.nl/wonen-bouwen-verbouwen/woonruimte-vinden/urgentieverklaring-aanvragen/",
+			"Rotterdam": "https://www.rotterdam.nl/sociaal-medische-advisering",
+		}
 		municipalities = []
 		for idx, name in enumerate(['Utrecht', 'Amersfoort'], start=1):
 			config, _ = MunicipalityConfiguration.objects.get_or_create(
@@ -381,6 +396,7 @@ class Command(BaseCommand):
 					'responsible_coordinator': user,
 					'created_by': user,
 					'max_wait_days': 21,
+					'urgency_document_request_url': urgency_request_urls.get(name, ''),
 				},
 			)
 			config.care_domains.set(categories)
@@ -726,7 +742,7 @@ class Command(BaseCommand):
 			'complexity': spec['complexity'],
 			'preferred_care_form': spec['care_form'],
 			'zorgvorm_gewenst': spec['care_form'],
-			'preferred_region_type': 'GEMEENTELIJK',
+			'preferred_region_type': 'JEUGDREGIO',
 			'preferred_region': None,
 			'gemeente': self._municipality_for_name(org, spec['municipality']),
 			'care_category_main': spec['category'],

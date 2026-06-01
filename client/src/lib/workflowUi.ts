@@ -63,6 +63,10 @@ export interface WorkflowCaseView {
   lastUpdatedLabel: string;
   urgency: SpaCase["urgency"];
   urgencyLabel: string;
+  placementPressureBand: SpaCase["placementPressureBand"];
+  placementPressureLabel: SpaCase["placementPressureLabel"];
+  placementPressureReason: SpaCase["placementPressureReason"];
+  placementPressureImplication: SpaCase["placementPressureImplication"];
   phase: SpaCase["status"];
   phaseLabel: string;
   boardColumn: WorkflowBoardColumn;
@@ -101,6 +105,8 @@ export interface WorkflowCaseView {
   providerStatusTone: WorkflowDecisionBadgeTone | null;
   waitlistBucket: number;
   urgencyGrantedDate: string | null;
+  urgencyApplied?: boolean;
+  urgencyAppliedSince?: string | null;
   intakeStartDate: string | null;
   /** Intake arrangement metadata (legacy/missing workflow_state inference). */
   arrangementTypeCode: string;
@@ -108,6 +114,12 @@ export interface WorkflowCaseView {
   arrangementEndDate: string | null;
   placementRequestStatus: string | null;
   placementProviderResponseStatus: string | null;
+  zorgbehoefteCategorie?: string;
+  zorgbehoefteCategorieCode?: string;
+  zorgbehoefteSpecifiek?: string;
+  zorgbehoefteSpecifiekCode?: string;
+  taxonomieLijn?: string;
+  taxonomieCodeLijn?: string;
 }
 
 export type CaseDecisionRole = "gemeente" | "zorgaanbieder" | "admin";
@@ -154,6 +166,37 @@ function urgencyLabel(urgency: SpaCase["urgency"]): string {
   }
 }
 
+function placementPressureLabel(band: SpaCase["placementPressureBand"], fallbackUrgency: SpaCase["urgency"]): string {
+  if (band === "critical") {
+    return "Spoed";
+  }
+  if (band === "high") {
+    return "Hoog";
+  }
+  if (band === "normal") {
+    return "Normaal";
+  }
+  if (band === "low") {
+    return "Laag";
+  }
+  return urgencyLabel(fallbackUrgency);
+}
+
+function placementPressureTone(band: SpaCase["placementPressureBand"]): WorkflowDecisionBadgeTone {
+  switch (band) {
+    case "critical":
+      return "critical";
+    case "high":
+      return "warning";
+    case "normal":
+      return "info";
+    case "low":
+      return "good";
+    default:
+      return "neutral";
+  }
+}
+
 function boardColumnLabel(column: WorkflowBoardColumn): string {
   switch (column) {
     case "casus":
@@ -190,18 +233,24 @@ function nextActionTarget(column: WorkflowBoardColumn): WorkflowCaseView["nextBe
 }
 
 function buildTags(spaCase: SpaCase): string[] {
-  const tags = [spaCase.zorgtype, ...spaCase.problems.map((problem) => problem.label)]
+  const taxonomyTags = [
+    spaCase.zorgbehoefteCategorie,
+    spaCase.zorgbehoefteSpecifiek,
+    spaCase.taxonomieLijn,
+    spaCase.taxonomieCodeLijn,
+  ];
+  const tags = [spaCase.zorgtype, ...taxonomyTags, ...spaCase.problems.map((problem) => problem.label)]
     .map((value) => value?.trim())
     .filter((value): value is string => Boolean(value));
 
-  return Array.from(new Set(tags)).slice(0, 3);
+  return Array.from(new Set(tags)).slice(0, 4);
 }
 
 function buildMissingDataItems(spaCase: SpaCase): string[] {
   const missing: string[] = [];
 
   if (!spaCase.urgencyValidated) {
-    missing.push("Urgentie is nog niet gevalideerd");
+    missing.push(spaCase.urgencyApplied ? "Urgentieverklaring aangevraagd" : "Urgentie is nog niet gevalideerd");
   }
 
   if (!spaCase.urgencyDocumentPresent) {
@@ -222,15 +271,20 @@ function buildSummarySnippet(spaCase: SpaCase, missingDataItems: string[]): stri
     return insight.length > 120 ? `${insight.slice(0, 117).trim()}...` : insight;
   }
 
+  const pressureLabel = placementPressureLabel(spaCase.placementPressureBand, spaCase.urgency);
+  const pressureReason = (spaCase.placementPressureReason || "").trim();
   const parts = [
     `${spaCase.zorgtype || "Zorgvraag"} · ${spaCase.regio || "Onbekende regio"}.`,
-    `Urgentie: ${urgencyLabel(spaCase.urgency).toLowerCase()}.`,
+    spaCase.placementPressureReason
+      ? `Plaatsingsdruk: ${pressureLabel.toLowerCase()}.`
+      : `Urgentie: ${urgencyLabel(spaCase.urgency).toLowerCase()}.`,
+    pressureReason ? pressureReason : "",
     missingDataItems.length > 0
       ? `Nog ${missingDataItems.length} punt${missingDataItems.length === 1 ? "" : "en"} nodig.`
       : "Zoek passende zorgcapaciteit.",
   ];
 
-  return parts.join(" ");
+  return parts.filter(Boolean).join(" ");
 }
 
 function buildRegionalMatches(spaCase: SpaCase, providers: SpaProvider[]): SpaProvider[] {
@@ -443,6 +497,9 @@ function buildDecisionBadges(
   const badges: WorkflowDecisionBadgeView[] = [];
 
   if (column === "samenvatting") {
+    if (spaCase.placementPressureBand) {
+      badges.push({ label: `Plaatsingsdruk ${placementPressureLabel(spaCase.placementPressureBand, spaCase.urgency)}`, tone: placementPressureTone(spaCase.placementPressureBand) });
+    }
     if (missingDataItems.length > 0) {
       badges.push({ label: "Info ontbreekt", tone: spaCase.urgency === "critical" ? "critical" : "warning" });
     }
@@ -468,6 +525,14 @@ function buildDecisionBadges(
 
   if (spaCase.problems.some((problem) => problem.type === "delayed")) {
     badges.push({ label: "Wachttijd", tone: spaCase.urgency === "critical" ? "critical" : "warning" });
+  }
+
+  if (spaCase.urgencyApplied && !spaCase.urgencyValidated) {
+    badges.push({ label: "Urgentie aangevraagd", tone: spaCase.urgency === "critical" ? "critical" : "warning" });
+  }
+
+  if (!badges.some((badge) => badge.label.startsWith("Plaatsingsdruk")) && spaCase.placementPressureBand) {
+    badges.push({ label: `Plaatsingsdruk ${placementPressureLabel(spaCase.placementPressureBand, spaCase.urgency)}`, tone: placementPressureTone(spaCase.placementPressureBand) });
   }
 
   return badges.slice(0, 4);
@@ -508,6 +573,17 @@ function buildSignals(
       severity: item.daysInCurrentPhase > 7 ? "warning" : "info",
       title: "Reactie open",
       description: "Wacht op reactie.",
+      isResolved: false,
+    });
+  }
+
+  if (spaCase.placementPressureBand === "high" || spaCase.placementPressureBand === "critical") {
+    signals.push({
+      id: `${item.id}-placement-pressure`,
+      type: "matching",
+      severity: spaCase.placementPressureBand === "critical" ? "critical" : "warning",
+      title: `Plaatsingsdruk ${placementPressureLabel(spaCase.placementPressureBand, spaCase.urgency)}`,
+      description: spaCase.placementPressureReason ?? spaCase.placementPressureImplication ?? "Versnelde opvolging nodig.",
       isResolved: false,
     });
   }
@@ -642,6 +718,10 @@ export function buildWorkflowCase(spaCase: SpaCase, providers: SpaProvider[] = [
     lastUpdatedLabel: spaCase.wachttijd === 0 ? "Vandaag" : `${spaCase.wachttijd} dag${spaCase.wachttijd === 1 ? "" : "en"} geleden`,
     urgency: spaCase.urgency,
     urgencyLabel: urgencyLabel(spaCase.urgency),
+    placementPressureBand: spaCase.placementPressureBand,
+    placementPressureLabel: spaCase.placementPressureLabel,
+    placementPressureReason: spaCase.placementPressureReason,
+    placementPressureImplication: spaCase.placementPressureImplication,
     phase: spaCase.status,
     phaseLabel: label,
     boardColumn,
@@ -686,12 +766,20 @@ export function buildWorkflowCase(spaCase: SpaCase, providers: SpaProvider[] = [
     providerStatusTone: providerStatus.tone,
     waitlistBucket: spaCase.waitlistBucket,
     urgencyGrantedDate: spaCase.urgencyGrantedDate,
+    urgencyApplied: spaCase.urgencyApplied,
+    urgencyAppliedSince: spaCase.urgencyAppliedSince,
     intakeStartDate: spaCase.intakeStartDate,
     arrangementTypeCode: spaCase.arrangementTypeCode ?? "",
     arrangementProvider: spaCase.arrangementProvider ?? "",
     arrangementEndDate: spaCase.arrangementEndDate ?? null,
     placementRequestStatus: spaCase.placementRequestStatus ?? null,
     placementProviderResponseStatus: spaCase.placementProviderResponseStatus ?? null,
+    zorgbehoefteCategorie: spaCase.zorgbehoefteCategorie ?? "",
+    zorgbehoefteCategorieCode: spaCase.zorgbehoefteCategorieCode ?? "",
+    zorgbehoefteSpecifiek: spaCase.zorgbehoefteSpecifiek ?? "",
+    zorgbehoefteSpecifiekCode: spaCase.zorgbehoefteSpecifiekCode ?? "",
+    taxonomieLijn: spaCase.taxonomieLijn ?? "",
+    taxonomieCodeLijn: spaCase.taxonomieCodeLijn ?? "",
   };
 
   view.workflowState = buildWorkflowState(spaCase, view);

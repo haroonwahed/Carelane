@@ -229,7 +229,7 @@ export function AudittrailPage({ onOpenEntity }: AudittrailPageProps) {
                 className="px-0"
                 searchValue={searchQuery}
                 onSearchChange={setSearchQuery}
-                searchPlaceholder="Zoeken op casus ID, gebruiker of actie..."
+                searchPlaceholder="Zoeken op casus-ID, gebruiker of actie..."
                 showSecondaryFilters={showFilters}
                 onToggleSecondaryFilters={() => setShowFilters((current) => !current)}
                 secondaryFiltersLabel="Filters"

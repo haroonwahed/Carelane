@@ -24,6 +24,11 @@ import {
 import { cn } from "../ui/utils";
 import { CareInfoPopover } from "./CareUnifiedPage";
 import {
+  GuidanceContextBanner,
+  InlineHelpChip,
+} from "../guidance";
+import { FieldHelperBox } from "../ui/form";
+import {
   CareMetaChip,
   CarePageScaffold,
   CareAlertCard,
@@ -98,6 +103,7 @@ interface SystemAwarenessPageProps {
 
 type PriorityFilter = "all" | "critical" | "high" | "medium";
 type IssueFilter = "all" | "blockers" | "risks" | "alerts" | "SLA" | "rejection" | "intake";
+type TaxonomyFilter = "all" | string;
 type PhaseFilter =
   | "all"
   | DecisionUiPhaseId
@@ -143,6 +149,8 @@ function filtersFromSearchString(search: string): {
   issueFilter: IssueFilter;
   phaseFilter: PhaseFilter;
   ownershipFilter: OwnershipFilter;
+  categoryFilter: TaxonomyFilter;
+  subcategoryFilter: TaxonomyFilter;
 } {
   const params = new URLSearchParams(search);
   const searchQuery = (params.get("q") ?? "").trim();
@@ -157,7 +165,9 @@ function filtersFromSearchString(search: string): {
       : "all";
   const ow = params.get("ownership") as OwnershipFilter;
   const ownershipFilter = OWNERSHIP_PARAM_VALUES.has(ow) ? ow : "all";
-  return { searchQuery, priorityFilter, issueFilter, phaseFilter, ownershipFilter };
+  const categoryFilter = (params.get("care_category") ?? "all").trim() || "all";
+  const subcategoryFilter = (params.get("care_subcategory") ?? "all").trim() || "all";
+  return { searchQuery, priorityFilter, issueFilter, phaseFilter, ownershipFilter, categoryFilter, subcategoryFilter };
 }
 
 function readFiltersFromUrl(): {
@@ -166,6 +176,8 @@ function readFiltersFromUrl(): {
   issueFilter: IssueFilter;
   phaseFilter: PhaseFilter;
   ownershipFilter: OwnershipFilter;
+  categoryFilter: TaxonomyFilter;
+  subcategoryFilter: TaxonomyFilter;
 } {
   if (typeof window === "undefined") {
     return {
@@ -174,6 +186,8 @@ function readFiltersFromUrl(): {
       issueFilter: "all",
       phaseFilter: "all",
       ownershipFilter: "all",
+      categoryFilter: "all",
+      subcategoryFilter: "all",
     };
   }
   if (!isRegiekamerPath(window.location.pathname)) {
@@ -183,6 +197,8 @@ function readFiltersFromUrl(): {
       issueFilter: "all",
       phaseFilter: "all",
       ownershipFilter: "all",
+      categoryFilter: "all",
+      subcategoryFilter: "all",
     };
   }
   return filtersFromSearchString(window.location.search);
@@ -194,6 +210,8 @@ function buildRegiekamerUrl(parts: {
   issueFilter: IssueFilter;
   phaseFilter: PhaseFilter;
   ownershipFilter: OwnershipFilter;
+  categoryFilter: TaxonomyFilter;
+  subcategoryFilter: TaxonomyFilter;
 }): string {
   const params = new URLSearchParams();
   if (parts.searchQuery.trim()) {
@@ -210,6 +228,12 @@ function buildRegiekamerUrl(parts: {
   }
   if (parts.ownershipFilter !== "all") {
     params.set("ownership", parts.ownershipFilter);
+  }
+  if (parts.categoryFilter !== "all") {
+    params.set("care_category", parts.categoryFilter);
+  }
+  if (parts.subcategoryFilter !== "all") {
+    params.set("care_subcategory", parts.subcategoryFilter);
   }
   const qs = params.toString();
   return qs ? `${CARE_PATHS.REGIEKAMER}?${qs}` : CARE_PATHS.REGIEKAMER;
@@ -278,7 +302,7 @@ const OWNERSHIP_LABELS: Record<OwnershipFilter, string> = {
   all: "Alles",
   gemeente: "Gemeente",
   zorgaanbieder: "Zorgaanbieder",
-  regie: "Regie",
+  regie: "Coördinatie",
 };
 
 function priorityBand(score: number): RegiekamerPriorityBand {
@@ -443,11 +467,11 @@ function summaryWorkflowState(item: RegiekamerDecisionOverviewItem): {
     };
   }
 
-  return {
-    statusLabel: "Aanvraag onvolledig",
-    actionLabel: "Vul aanvraag aan",
-    processing: false,
-  };
+    return {
+      statusLabel: "Casus onvolledig",
+      actionLabel: "Vul casus aan",
+      processing: false,
+    };
 }
 
 function normalizeWorklistActionLabel(item: RegiekamerDecisionOverviewItem, label: string | null): string | null {
@@ -493,11 +517,11 @@ function normalizeWorklistActionLabel(item: RegiekamerDecisionOverviewItem, labe
     return "Bekijk status";
   }
   if (summaryRelated) {
-    return "Vul aanvraag aan";
+    return "Vul casus aan";
   }
 
   if (lower.includes("samenvatting")) {
-    return "Vul aanvraag aan";
+    return "Vul casus aan";
   }
   if (lower.includes("intake") || lower.includes("matching") || lower.includes("start")) {
     return `Start ${label.replace(/^(start|starten)\s+/i, "").trim()}`.trim();
@@ -524,7 +548,7 @@ function actionableProblemLabel(item: RegiekamerDecisionOverviewItem): string {
   }
   switch (code) {
     case "MISSING_SUMMARY":
-      return "Aanvraag onvolledig";
+      return "Casus onvolledig";
     case "GEMEENTE_VALIDATION_REQUIRED":
       return "Matching wacht op gemeente";
     case "NO_MATCH_AVAILABLE":
@@ -589,12 +613,12 @@ function primaryProblemText(item: RegiekamerDecisionOverviewItem): string {
   if (item.top_risk?.title) {
     return item.top_risk.title;
   }
-  return "Geen signaal vastgelegd — open de aanvraag.";
+  return "Geen signaal vastgelegd — open de casus.";
 }
 
 function ownerLabel(item: RegiekamerDecisionOverviewItem): string {
   const role = (item.responsible_role ?? "regie") as OwnershipFilter;
-  return OWNERSHIP_LABELS[role] ?? "Regie";
+  return OWNERSHIP_LABELS[role] ?? "Coördinatie";
 }
 
 function matchesIssueFilter(item: RegiekamerDecisionOverviewItem, filter: IssueFilter) {
@@ -621,6 +645,12 @@ function searchText(item: RegiekamerDecisionOverviewItem) {
     item.current_state,
     item.phase,
     item.assigned_provider,
+    item.zorgbehoefte_categorie,
+    item.zorgbehoefte_categorie_code,
+    item.zorgbehoefte_specifiek,
+    item.zorgbehoefte_specifiek_code,
+    item.taxonomie_lijn,
+    item.taxonomie_code_lijn,
     item.next_best_action?.label,
     item.next_best_action?.reason,
     item.top_blocker?.message,
@@ -630,6 +660,53 @@ function searchText(item: RegiekamerDecisionOverviewItem) {
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+}
+
+function collectTaxonomyCategoryOptions(items: RegiekamerDecisionOverviewItem[]) {
+  const map = new Map<string, string>();
+  for (const item of items) {
+    const code = (item.zorgbehoefte_categorie_code ?? "").trim();
+    const label = (item.zorgbehoefte_categorie ?? "").trim();
+    if (!code || !label) {
+      continue;
+    }
+    if (!map.has(code)) {
+      map.set(code, label);
+    }
+  }
+  return Array.from(map.entries())
+    .map(([value, label]) => ({ value, label }))
+    .sort((left, right) => left.label.localeCompare(right.label, "nl"));
+}
+
+function collectTaxonomySubcategoryOptions(items: RegiekamerDecisionOverviewItem[], categoryFilter: TaxonomyFilter) {
+  const map = new Map<string, string>();
+  for (const item of items) {
+    const categoryCode = (item.zorgbehoefte_categorie_code ?? "").trim();
+    const code = (item.zorgbehoefte_specifiek_code ?? "").trim();
+    const label = (item.zorgbehoefte_specifiek ?? "").trim();
+    if (!code || !label) {
+      continue;
+    }
+    if (categoryFilter !== "all" && categoryCode !== categoryFilter) {
+      continue;
+    }
+    if (!map.has(code)) {
+      map.set(code, label);
+    }
+  }
+  return Array.from(map.entries())
+    .map(([value, label]) => ({ value, label }))
+    .sort((left, right) => left.label.localeCompare(right.label, "nl"));
+}
+
+function buildTaxonomySummaryLabel(item: RegiekamerDecisionOverviewItem): string {
+  const category = (item.zorgbehoefte_categorie ?? "").trim();
+  const specific = (item.zorgbehoefte_specifiek ?? "").trim();
+  if (category && specific) {
+    return `${category} · ${specific}`;
+  }
+  return category || specific || "";
 }
 
 export function SystemAwarenessPage({
@@ -646,6 +723,8 @@ export function SystemAwarenessPage({
   const [issueFilter, setIssueFilter] = useState<IssueFilter>(initialFromUrl.issueFilter);
   const [phaseFilter, setPhaseFilter] = useState<PhaseFilter>(initialFromUrl.phaseFilter);
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>(initialFromUrl.ownershipFilter);
+  const [categoryFilter, setCategoryFilter] = useState<TaxonomyFilter>(initialFromUrl.categoryFilter);
+  const [subcategoryFilter, setSubcategoryFilter] = useState<TaxonomyFilter>(initialFromUrl.subcategoryFilter);
   const [showSecondaryFilters, setShowSecondaryFilters] = useState(false);
   const [railSheetOpen, setRailSheetOpen] = useState(false);
   const { collapsed: railCollapsed, toggle: toggleRail, setCollapsed: setRailCollapsed } = useRailCollapsed();
@@ -663,13 +742,15 @@ export function SystemAwarenessPage({
       issueFilter,
       phaseFilter,
       ownershipFilter,
+      categoryFilter,
+      subcategoryFilter,
     });
     const current = `${window.location.pathname}${window.location.search}`;
     if (current === next) {
       return;
     }
     window.history.replaceState(window.history.state, "", next);
-  }, [searchQuery, priorityFilter, issueFilter, phaseFilter, ownershipFilter]);
+  }, [searchQuery, priorityFilter, issueFilter, phaseFilter, ownershipFilter, categoryFilter, subcategoryFilter]);
 
   useEffect(() => {
     const onPop = () => {
@@ -682,6 +763,8 @@ export function SystemAwarenessPage({
       setIssueFilter(parsed.issueFilter);
       setPhaseFilter(parsed.phaseFilter);
       setOwnershipFilter(parsed.ownershipFilter);
+      setCategoryFilter(parsed.categoryFilter);
+      setSubcategoryFilter(parsed.subcategoryFilter);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -694,6 +777,8 @@ export function SystemAwarenessPage({
       setIssueFilter(snapshot.issue as IssueFilter);
       setPhaseFilter(snapshot.phase as PhaseFilter);
       setOwnershipFilter("all");
+      setCategoryFilter("all");
+      setSubcategoryFilter("all");
     },
     [],
   );
@@ -708,6 +793,8 @@ export function SystemAwarenessPage({
           issueFilter: "all",
           phaseFilter: phase as PhaseFilter,
           ownershipFilter: "all",
+          categoryFilter: "all",
+          subcategoryFilter: "all",
         });
         window.history.pushState(window.history.state, "", next);
       }
@@ -736,6 +823,12 @@ export function SystemAwarenessPage({
         if (!matchesOwnershipFilter(item, ownershipFilter)) {
           return false;
         }
+        if (categoryFilter !== "all" && (item.zorgbehoefte_categorie_code ?? "") !== categoryFilter) {
+          return false;
+        }
+        if (subcategoryFilter !== "all" && (item.zorgbehoefte_specifiek_code ?? "") !== subcategoryFilter) {
+          return false;
+        }
         return true;
       })
       .sort((left, right) => {
@@ -747,7 +840,7 @@ export function SystemAwarenessPage({
         const leftHours = left.hours_in_current_state ?? 0;
         return rightHours - leftHours;
       });
-  }, [data?.items, issueFilter, ownershipFilter, phaseFilter, priorityFilter, searchQuery]);
+  }, [data?.items, issueFilter, ownershipFilter, phaseFilter, priorityFilter, searchQuery, categoryFilter, subcategoryFilter]);
 
   const lastUpdateLabel = useMemo(() => {
     if (!data?.generated_at) {
@@ -804,6 +897,8 @@ export function SystemAwarenessPage({
     setIssueFilter("blockers");
     setPhaseFilter("all");
     setOwnershipFilter("all");
+    setCategoryFilter("all");
+    setSubcategoryFilter("all");
     setSearchQuery("");
     if (typeof window !== "undefined" && isRegiekamerPath(window.location.pathname)) {
       const next = buildRegiekamerUrl({
@@ -812,6 +907,8 @@ export function SystemAwarenessPage({
         issueFilter: "blockers",
         phaseFilter: "all",
         ownershipFilter: "all",
+        categoryFilter: "all",
+        subcategoryFilter: "all",
       });
       window.history.pushState(window.history.state, "", next);
     }
@@ -823,7 +920,9 @@ export function SystemAwarenessPage({
     priorityFilter !== "all" ||
     issueFilter !== "all" ||
     phaseFilter !== "all" ||
-    ownershipFilter !== "all";
+    ownershipFilter !== "all" ||
+    categoryFilter !== "all" ||
+    subcategoryFilter !== "all";
 
   const coordinationListItems = useMemo(() => {
     if (filtersActive) {
@@ -840,8 +939,23 @@ export function SystemAwarenessPage({
   const highPriorityAlerts = data?.totals.high_priority_alerts ?? 0;
   const providerSlaBreaches = data?.totals.provider_sla_breaches ?? 0;
   const intakeDelaysTotal = data?.totals.intake_delays ?? 0;
+  const urgencyApplicationsOpen = data?.totals.urgency_applications_open ?? 0;
 
   const allOverviewItems = data?.items ?? [];
+  const taxonomyCategoryOptions = useMemo(() => collectTaxonomyCategoryOptions(allOverviewItems), [allOverviewItems]);
+  const taxonomySubcategoryOptions = useMemo(
+    () => collectTaxonomySubcategoryOptions(allOverviewItems, categoryFilter),
+    [allOverviewItems, categoryFilter],
+  );
+  useEffect(() => {
+    if (subcategoryFilter === "all") {
+      return;
+    }
+    const allowed = taxonomySubcategoryOptions.some((option) => option.value === subcategoryFilter);
+    if (!allowed) {
+      setSubcategoryFilter("all");
+    }
+  }, [subcategoryFilter, taxonomySubcategoryOptions]);
   const noMatchUrgentCount = useMemo(
     () =>
       allOverviewItems.filter(
@@ -932,7 +1046,7 @@ export function SystemAwarenessPage({
           >
             <p className="text-muted-foreground">
               Operationele wachtrijen: waar aanvragen vastliggen binnen dezelfde doorstroom. Geen apart proces naast
-              Doorstroom — klik een wachtrij om de eerste aanvraag te openen.
+              Doorstroom — klik een wachtrij om de eerste casus te openen.
             </p>
           </CareInfoPopover>
         </span>
@@ -947,7 +1061,7 @@ export function SystemAwarenessPage({
                 className="inline-flex max-w-full items-center gap-0.5 rounded-full border border-transparent bg-muted/35 px-2.5 py-1 text-left text-[12px] font-medium text-foreground underline-offset-2 hover:border-border/60 hover:bg-muted/55 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!first}
                 title={s.help}
-                aria-label={`Open eerste aanvraag in wachtrij ${s.label} (${count})`}
+                aria-label={`Open eerste casus in wachtrij ${s.label} (${count})`}
                 onClick={() => {
                   if (first) {
                     onCaseClick(String(first));
@@ -1164,7 +1278,7 @@ export function SystemAwarenessPage({
     : 0;
   const gemeenteActieLine =
     dominantMetric === 1
-      ? "1 aanvraag vraagt directe afstemming"
+      ? "1 casus vraagt directe afstemming"
       : `${dominantMetric} aanvragen vragen directe afstemming`;
   const dominantAlertDescription =
     uiMode === "crisis" ? gemeenteActieLine : dominantPanelDescription;
@@ -1178,6 +1292,8 @@ export function SystemAwarenessPage({
     setIssueFilter("all");
     setPhaseFilter("all");
     setOwnershipFilter("all");
+    setCategoryFilter("all");
+    setSubcategoryFilter("all");
   };
 
   const showRegiekamerPhaseBoard = !loading && !error && hasActiveData && allOverviewItems.length > 0;
@@ -1190,12 +1306,12 @@ export function SystemAwarenessPage({
           className="pb-8"
           title={
             <span className="inline-flex flex-wrap items-center gap-2">
-              Coördinatie
+              Operationele coördinatie
               <CareInfoPopover ariaLabel="Uitleg coördinatie" testId="regiekamer-page-info">
                 <div className="space-y-2 text-muted-foreground">
                   <p>
                     Operationele coördinatie: actieve aanvragen, open matching, reacties van aanbieders, wachtende validaties
-                    en de eerstvolgende veilige stap — compact, zonder governance-dashboardruis.
+                    en de eerstvolgende veilige stap — compact, zonder dashboardruis.
                   </p>
                   <p>Gebruik dit overzicht om snel te zien wat wacht, wie eigenaar is en wat de volgende actie is.</p>
                 </div>
@@ -1214,7 +1330,7 @@ export function SystemAwarenessPage({
                   // Demoted to outline so the dominantAction below holds the operational focus.
                   // Outline in header when data exists; empty-state uses restrained default CTA.
                   <Button variant="outline" onClick={onCreateCase} className="gap-2">
-                    Nieuwe aanvraag
+                    Nieuwe casus
                   </Button>
                 ) : null}
                 <Button variant="outline" onClick={refetch} className="gap-2">
@@ -1229,7 +1345,7 @@ export function SystemAwarenessPage({
                   data-testid="regiekamer-mobile-regie-panel"
                 >
                   <PanelRight size={14} aria-hidden />
-                  Regie-paneel
+                  Coördinatiepaneel
                 </Button>
                 <RegieRailToggleButton
                   collapsed={railCollapsed}
@@ -1238,7 +1354,14 @@ export function SystemAwarenessPage({
                 />
               </div>
               {lastUpdateLabel ? (
-                <p className="text-xs text-muted-foreground">{lastUpdateLabel}</p>
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <p className="text-xs text-muted-foreground">{lastUpdateLabel}</p>
+                  {urgencyApplicationsOpen > 0 ? (
+                    <CareMetaChip className="h-6 rounded-full px-2.5 text-[11px] font-medium text-amber-300">
+                      Urgentie aangevraagd: {urgencyApplicationsOpen}
+                    </CareMetaChip>
+                  ) : null}
+                </div>
               ) : null}
             </div>
           )}
@@ -1295,6 +1418,12 @@ export function SystemAwarenessPage({
               }
             />
           )}
+
+          {hasActiveData && criticalBlockers > 0 ? (
+            <GuidanceContextBanner testId="regiekamer-blokkades-banner">
+              Los blokkades eerst op om doorstroom te behouden.
+            </GuidanceContextBanner>
+          ) : null}
 
           {hasActiveData &&
             criticalBlockers === 0 &&
@@ -1420,7 +1549,7 @@ export function SystemAwarenessPage({
                   className="h-9 min-h-9 rounded-lg px-4 text-[13px] font-semibold shadow-sm"
                   onClick={onCreateCase}
                 >
-                  Nieuwe aanvraag
+                  Nieuwe casus
                 </Button>
                 <Button type="button" variant="outline" onClick={() => onAppNavigate("/casussen")}>
                   Open aanvragen
@@ -1433,7 +1562,7 @@ export function SystemAwarenessPage({
                 className="h-9 min-h-9 rounded-lg px-4 text-[13px] font-semibold shadow-sm"
                 onClick={onCreateCase}
               >
-                Nieuwe aanvraag
+                Nieuwe casus
               </Button>
             ) : onAppNavigate ? (
               <Button type="button" variant="outline" onClick={() => onAppNavigate("/casussen")}>
@@ -1465,17 +1594,17 @@ export function SystemAwarenessPage({
           <CareSectionHeader
             className="lg:flex-col lg:items-stretch"
             title={
-              <span id="regiekamer-uitvoerlijst-heading">Coördinatielijst</span>
+              <span id="regiekamer-uitvoerlijst-heading">Werkvoorraad</span>
             }
             meta={
               <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
                 <span className="inline-flex w-fit items-center rounded-full bg-muted/35 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
-                  {coordinationListItems.length} in regie-aandacht
+                  {coordinationListItems.length} in coördinatie-aandacht
                 </span>
                 {coordinationListCapped ? (
-                  <p className="text-xs text-muted-foreground" data-testid="regiekamer-coordination-hint">
-                    Eerste regie-aandacht — volledige werkvoorraad staat onder Aanvragen.
-                  </p>
+                  <FieldHelperBox className="mt-0" data-testid="regiekamer-coordination-hint">
+                    <p>Eerste coördinatie-aandacht — volledige werkvoorraad staat onder Aanvragen.</p>
+                  </FieldHelperBox>
                 ) : null}
                 <CareSearchFiltersBar
                   variant="workspace"
@@ -1487,9 +1616,19 @@ export function SystemAwarenessPage({
                   onToggleSecondaryFilters={() => setShowSecondaryFilters((current) => !current)}
                   secondaryFiltersLabel="Filters"
                   secondaryFilters={(
+                    <>
                     <div className="grid items-end gap-2 md:grid-cols-2 xl:grid-cols-4">
                       <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                        Prioriteit
+                        <span className="inline-flex flex-wrap items-center gap-1.5">
+                          Prioriteit
+                          <InlineHelpChip
+                            title="Waarom staat dit bovenaan?"
+                            triggerLabel="Uitleg"
+                            testId="regiekamer-prioriteit-help"
+                          >
+                            <p>Items worden geprioriteerd op urgentie, blokkades en benodigde actie.</p>
+                          </InlineHelpChip>
+                        </span>
                         <CareOperationalSelect
                           aria-label="Prioriteit"
                           value={priorityFilter}
@@ -1538,6 +1677,39 @@ export function SystemAwarenessPage({
                         </CareOperationalSelect>
                       </label>
                     </div>
+                    <div className="grid items-end gap-2 md:grid-cols-2">
+                      <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                        Zorgbehoefte categorie
+                        <CareOperationalSelect
+                          aria-label="Zorgbehoefte categorie"
+                          value={categoryFilter}
+                          onChange={(event) => {
+                            setCategoryFilter(event.target.value);
+                            setSubcategoryFilter("all");
+                          }}
+                        >
+                          <option value="all">Alle categorieën</option>
+                          {taxonomyCategoryOptions.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </CareOperationalSelect>
+                      </label>
+                      <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                        Specifieke zorgbehoefte
+                        <CareOperationalSelect
+                          aria-label="Specifieke zorgbehoefte"
+                          value={subcategoryFilter}
+                          disabled={categoryFilter === "all" || taxonomySubcategoryOptions.length === 0}
+                          onChange={(event) => setSubcategoryFilter(event.target.value)}
+                        >
+                          <option value="all">Alle specifieke behoeften</option>
+                          {taxonomySubcategoryOptions.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </CareOperationalSelect>
+                      </label>
+                    </div>
+                    </>
                   )}
                 />
               </div>
@@ -1561,6 +1733,15 @@ export function SystemAwarenessPage({
             ) : undefined
           }
         >
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <InlineHelpChip
+              title="Waarom wachten?"
+              triggerLabel="Waarom wachten?"
+              testId="regiekamer-wachten-help"
+            >
+              <p>Er is nu geen actie nodig totdat externe opvolging of reactie binnenkomt.</p>
+            </InlineHelpChip>
+          </div>
           <CareWorkListCard
             header={
               <CareOperationalQueueHeader
@@ -1588,22 +1769,24 @@ export function SystemAwarenessPage({
           {!railCollapsed && (
             <aside
               data-testid="regiekamer-right-rail"
-              className="hidden w-[300px] shrink-0 space-y-4 pt-1 xl:block xl:sticky xl:top-4 xl:z-10 xl:overflow-y-auto xl:self-start"
+              className="hidden w-[300px] shrink-0 rounded-[28px] border border-border/60 bg-card/35 p-3 shadow-sm backdrop-blur xl:block xl:sticky xl:top-4 xl:z-10 xl:overflow-y-auto xl:self-start"
               style={{ maxHeight: tokens.layout.regiekamerRailMaxHeight }}
             >
-              <RegiekamerInsightsPanels
-                gemeenteDisplayName={gemeenteDisplayName}
-                activeCasesTotal={activeCasesTotal}
-                avgDoorloopDays={avgDoorloopDays}
-                slaRiskTotal={slaRiskTotal}
-                criticalBlockers={criticalBlockers}
-                phaseBoardColumns={phaseBoardColumns}
-                onCriticalClick={applyCriticalDrillFilter}
-                onPhaseClick={applyPhaseBoardFilter}
-                onNavigateCasussen={() => {
-                  onAppNavigate?.("/casussen");
-                }}
-              />
+              <div className="space-y-4">
+                <RegiekamerInsightsPanels
+                  gemeenteDisplayName={gemeenteDisplayName}
+                  activeCasesTotal={activeCasesTotal}
+                  avgDoorloopDays={avgDoorloopDays}
+                  slaRiskTotal={slaRiskTotal}
+                  criticalBlockers={criticalBlockers}
+                  phaseBoardColumns={phaseBoardColumns}
+                  onCriticalClick={applyCriticalDrillFilter}
+                  onPhaseClick={applyPhaseBoardFilter}
+                  onNavigateCasussen={() => {
+                    onAppNavigate?.("/casussen");
+                  }}
+                />
+              </div>
             </aside>
           )}
 
@@ -1623,13 +1806,13 @@ export function SystemAwarenessPage({
                 className="flex w-full max-w-md flex-col gap-0 border-border/60 p-0 sm:max-w-md"
               >
                 <SheetHeader className="shrink-0 space-y-1 border-b border-border/50 px-4 py-4">
-                  <SheetTitle>Regie-paneel</SheetTitle>
+                  <SheetTitle>Coördinatiepaneel</SheetTitle>
                   <SheetDescription className="sr-only">
-                    Regie-overzicht, snelle filters en notities voor deze pagina.
+                    Coördinatie-overzicht, snelle filters en notities voor deze pagina.
                   </SheetDescription>
                 </SheetHeader>
                 <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-                  <div className="space-y-4">
+                  <div className="space-y-4 rounded-[24px] border border-border/60 bg-card/30 p-3 shadow-sm">
                     <RegiekamerInsightsPanels
                       gemeenteDisplayName={gemeenteDisplayName}
                       activeCasesTotal={activeCasesTotal}
@@ -1690,17 +1873,17 @@ function RegiekamerInsightsPanels({
           <div className="min-w-0 space-y-3">
             <p className="text-sm font-semibold leading-tight text-foreground">{gemeenteDisplayName}</p>
             <dl className="space-y-2 text-sm">
-              <div className="flex justify-between gap-3">
+              <div className="flex min-w-0 items-start justify-between gap-3">
                 <dt className="text-muted-foreground">Actieve aanvragen</dt>
-                <dd className="tabular-nums font-semibold text-foreground">{activeCasesTotal}</dd>
+                <dd className="min-w-0 break-words text-right tabular-nums font-semibold text-foreground">{activeCasesTotal}</dd>
               </div>
-              <div className="flex justify-between gap-3">
+              <div className="flex min-w-0 items-start justify-between gap-3">
                 <dt className="text-muted-foreground">Gem. doorlooptijd</dt>
-                <dd className="tabular-nums text-sm text-muted-foreground">{avgDoorloopDays} dagen</dd>
+                <dd className="min-w-0 break-words text-right tabular-nums text-sm text-muted-foreground">{avgDoorloopDays} dagen</dd>
               </div>
-              <div className="flex justify-between gap-3">
+              <div className="flex min-w-0 items-start justify-between gap-3">
                 <dt className="text-muted-foreground">Doorlooptijd {'>'} SLA</dt>
-                <dd className={cn("tabular-nums font-semibold", slaRiskTotal > 0 ? "text-red-400" : "text-foreground")}>
+                <dd className={cn("min-w-0 break-words text-right tabular-nums font-semibold", slaRiskTotal > 0 ? "text-red-400" : "text-foreground")}>
                   {slaRiskTotal}
                 </dd>
               </div>
@@ -1721,7 +1904,7 @@ function RegiekamerInsightsPanels({
       </section>
 
       <section className="rounded-xl border border-border/50 bg-card/40 p-4 shadow-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Regie-snelkoppelingen</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Snelle acties</p>
         <ul className="mt-3 space-y-2">
           <li>
             <button
@@ -1795,7 +1978,8 @@ function RegiekamerWorkItemCard({
     ? summaryState!.statusLabel
     : hasPrimaryNba
       ? normalizedPrimaryAction!
-      : "Bekijk aanvraag";
+      : "Bekijk casus";
+  const taxonomySummary = buildTaxonomySummaryLabel(item);
 
   return (
     <CareWorkRow
@@ -1808,7 +1992,21 @@ function RegiekamerWorkItemCard({
         </CareMetaChip>
       }
       title={item.title}
-      context={<span className="font-mono text-[11px] text-muted-foreground/90">{item.case_reference}</span>}
+      context={
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <span className="font-mono text-[11px] text-muted-foreground/90">{item.case_reference}</span>
+          {item.urgency_applied ? (
+            <CareMetaChip className="text-[11px] font-medium text-amber-300">
+              Urgentie aangevraagd
+            </CareMetaChip>
+          ) : null}
+          {taxonomySummary ? (
+            <CareMetaChip className="max-w-[min(100%,16rem)] truncate text-[11px]" title={taxonomySummary}>
+              {taxonomySummary}
+            </CareMetaChip>
+          ) : null}
+        </div>
+      }
       status={
         <CareDominantStatus
           className={cn(

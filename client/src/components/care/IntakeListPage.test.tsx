@@ -86,7 +86,7 @@ describe("IntakeListPage", () => {
 
     render(<IntakeListPage onCaseClick={vi.fn()} view="requests" role="gemeente" />);
 
-    expect(screen.getByRole("heading", { name: "Nieuwe aanvragen" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Nieuwe casussen" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Accepteren" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Afwijzen" })).not.toBeInTheDocument();
   });

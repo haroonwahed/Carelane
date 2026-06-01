@@ -89,7 +89,7 @@ function dominantToneClass(severity: SignalSeverity): string {
   }
 }
 
-/** Statusregel onder de paginatitel — zelfde patroon als Casussen (CareMetricBadge onder titel). */
+/** Statusregel onder de paginatitel — zelfde patroon als casussen (CareMetricBadge onder titel). */
 function signalenPageMetricLabel(
   loading: boolean,
   error: string | null,
@@ -400,7 +400,7 @@ export function SignalenPage({ onOpenCase, onNavigateToWorkflow }: SignalenPageP
         <>
           <p className="mb-2 font-semibold text-foreground">Hoe dit overzicht werkt</p>
           <p>
-            Signalen worden afgeleid van doorlooptijd, capaciteit en casusstatus. Dit is het regie-overzicht; sidebar
+            Signalen worden afgeleid van doorlooptijd, capaciteit en casusstatus. Dit is het coördinatie-overzicht; sidebar
             Acties blijft de aparte takenlijst.
           </p>
           <p>Filter op ernst of zoek op tekst; open een rij voor de primaire vervolgstap.</p>

@@ -425,33 +425,33 @@ export function ArrangementAlignmentPanel({ caseId, careContext, variant = "full
           </p>
           <div className="rounded-xl border border-border/55 bg-background/40 p-3.5">
             <dl className="space-y-2.5 text-[13px]">
-              <div className="flex justify-between gap-3 border-b border-border/40 pb-2">
+              <div className="flex min-w-0 items-start justify-between gap-3 border-b border-border/40 pb-2">
                 <dt className="text-muted-foreground">Zorgvorm</dt>
-                <dd className="max-w-[58%] text-right font-medium text-foreground">
+                <dd className="min-w-0 max-w-[58%] break-words text-right font-medium text-foreground">
                   {careContext?.zorgvorm?.trim() || dash}
                 </dd>
               </div>
-              <div className="flex justify-between gap-3 border-b border-border/40 pb-2">
+              <div className="flex min-w-0 items-start justify-between gap-3 border-b border-border/40 pb-2">
                 <dt className="text-muted-foreground">Regio</dt>
-                <dd className="max-w-[58%] text-right font-medium text-foreground">
+                <dd className="min-w-0 max-w-[58%] break-words text-right font-medium text-foreground">
                   {careContext?.regio?.trim() || dash}
                 </dd>
               </div>
-              <div className="flex justify-between gap-3 border-b border-border/40 pb-2">
+              <div className="flex min-w-0 items-start justify-between gap-3 border-b border-border/40 pb-2">
                 <dt className="text-muted-foreground">Aanmelder</dt>
-                <dd className="max-w-[58%] text-right font-medium text-foreground">
+                <dd className="min-w-0 max-w-[58%] break-words text-right font-medium text-foreground">
                   {careContext?.aanmelder?.trim() || dash}
                 </dd>
               </div>
-              <div className="flex justify-between gap-3 border-b border-border/40 pb-2">
+              <div className="flex min-w-0 items-start justify-between gap-3 border-b border-border/40 pb-2">
                 <dt className="text-muted-foreground">Zorgintensiteit</dt>
-                <dd className="max-w-[58%] text-right font-medium text-foreground">
+                <dd className="min-w-0 max-w-[58%] break-words text-right font-medium text-foreground">
                   {careContext?.zorgintensiteit?.trim() || dash}
                 </dd>
               </div>
-              <div className="flex justify-between gap-3 border-b border-border/40 pb-2">
+              <div className="flex min-w-0 items-start justify-between gap-3 border-b border-border/40 pb-2">
                 <dt className="text-muted-foreground">Startperiode</dt>
-                <dd className="max-w-[58%] text-right font-medium text-foreground">
+                <dd className="min-w-0 max-w-[58%] break-words text-right font-medium text-foreground">
                   {careContext?.startperiode?.trim() || dash}
                 </dd>
               </div>

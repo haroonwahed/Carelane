@@ -29,6 +29,7 @@ from contracts.workflow_state_machine import (
     derive_workflow_state,
     resolve_actor_role,
 )
+from contracts.zorgbehoefte_taxonomy import format_taxonomy_explainability
 from contracts.workflow_summary_gate import workflow_summary_can_bootstrap
 
 
@@ -232,6 +233,15 @@ def _priority_score(
 
 
 def _build_regiekamer_overview_item(*, case: CareCase, evaluation: dict[str, Any]) -> dict[str, Any]:
+    intake, _case_record = _case_parts(case)
+    care_category_main = getattr(intake, "care_category_main", None) if intake is not None else None
+    care_category_sub = getattr(intake, "care_category_sub", None) if intake is not None else None
+    taxonomy_line, taxonomy_code_line = format_taxonomy_explainability(
+        getattr(care_category_main, "name", "") or "",
+        getattr(care_category_main, "code", "") or "",
+        getattr(care_category_sub, "name", "") or "",
+        getattr(care_category_sub, "code", "") or "",
+    )
     blockers = list(evaluation.get("blockers") or [])
     risks = list(evaluation.get("risks") or [])
     alerts = list(evaluation.get("alerts") or [])
@@ -243,6 +253,13 @@ def _build_regiekamer_overview_item(*, case: CareCase, evaluation: dict[str, Any
     top_alert = _highest_severity(alerts)
 
     urgency = _clean(decision_context.get("urgency") or "")
+    urgency_applied = bool(getattr(intake, "urgency_applied", False)) if intake is not None else False
+    urgency_applied_since = (
+        getattr(intake, "urgency_applied_since", None).isoformat()
+        if intake is not None and getattr(intake, "urgency_applied_since", None)
+        else None
+    )
+    placement_pressure = intake.placement_pressure_assessment() if intake is not None else None
     hours_in_current_state = decision_context.get("hours_in_current_state")
     try:
         hours_in_current_state = float(hours_in_current_state) if hours_in_current_state is not None else None
@@ -256,6 +273,12 @@ def _build_regiekamer_overview_item(*, case: CareCase, evaluation: dict[str, Any
         "current_state": evaluation.get("current_state") or "",
         "phase": evaluation.get("phase") or "",
         "urgency": urgency,
+        "urgency_applied": urgency_applied,
+        "urgency_applied_since": urgency_applied_since,
+        "placement_pressure_band": placement_pressure["band"] if placement_pressure else None,
+        "placement_pressure_label": placement_pressure["label"] if placement_pressure else None,
+        "placement_pressure_reason": placement_pressure["reason"] if placement_pressure else None,
+        "placement_pressure_implication": placement_pressure["implication"] if placement_pressure else None,
         "assigned_provider": decision_context.get("selected_provider_name") or "",
         "next_best_action": next_best_action or None,
         "top_blocker": top_blocker,
@@ -281,6 +304,12 @@ def _build_regiekamer_overview_item(*, case: CareCase, evaluation: dict[str, Any
             next_best_action=next_best_action,
         ),
         "responsible_role": _responsible_role_for_item(next_best_action),
+        "zorgbehoefte_categorie": getattr(care_category_main, "name", "") or "",
+        "zorgbehoefte_categorie_code": getattr(care_category_main, "code", "") or "",
+        "zorgbehoefte_specifiek": getattr(care_category_sub, "name", "") or "",
+        "zorgbehoefte_specifiek_code": getattr(care_category_sub, "code", "") or "",
+        "taxonomie_lijn": taxonomy_line,
+        "taxonomie_code_lijn": taxonomy_code_line,
     }
 
     try:
@@ -401,6 +430,7 @@ def build_regiekamer_decision_overview(
         "provider_sla_breaches": 0,
         "repeated_rejections": 0,
         "intake_delays": 0,
+        "urgency_applications_open": 0,
     }
     items: list[dict[str, Any]] = []
 
@@ -423,6 +453,9 @@ def build_regiekamer_decision_overview(
                 _has_item_code(evaluation.get("alerts") or [], _INTAKE_DELAY_CODES)
                 or _has_item_code(evaluation.get("risks") or [], {"INTAKE_DELAYED"})
             )
+            intake, _ = _case_parts(case)
+            if bool(getattr(intake, "urgency_applied", False)):
+                totals["urgency_applications_open"] += 1
         except Exception:
             logger.exception(
                 "regiekamer_overview_item_skipped case_id=%s",
@@ -682,7 +715,19 @@ def _build_region_fallback_data(*, intake: CaseIntakeProcess | None, case_record
     region_ids: list[int] = []
     case_sources: list[Any] = [intake]
     if intake is not None:
-        case_sources.extend([getattr(intake, "regio", None), getattr(intake, "preferred_region", None), getattr(intake, "gemeente", None)])
+        case_sources.extend(
+            [
+                getattr(intake, "zorgregio", None),
+                getattr(intake, "plaatsingsregio", None),
+                getattr(intake, "contractregio", None),
+                getattr(intake, "escalatie_regio", None),
+                getattr(intake, "regio", None),
+                getattr(intake, "preferred_region", None),
+                getattr(intake, "gemeente", None),
+                getattr(intake, "verantwoordelijke_gemeente", None),
+                getattr(intake, "verblijfsgemeente", None),
+            ]
+        )
     case_sources.append(case_record)
 
     for source in case_sources:
@@ -732,6 +777,10 @@ def _evaluate_distance_coverage(
 
     case_sources = [
         intake,
+        getattr(intake, "zorgregio", None) if intake is not None else None,
+        getattr(intake, "plaatsingsregio", None) if intake is not None else None,
+        getattr(intake, "contractregio", None) if intake is not None else None,
+        getattr(intake, "escalatie_regio", None) if intake is not None else None,
         getattr(intake, "regio", None) if intake is not None else None,
         getattr(intake, "preferred_region", None) if intake is not None else None,
         getattr(intake, "gemeente", None) if intake is not None else None,
@@ -1418,8 +1467,8 @@ def _evaluate_action_policy(
         return allowed, reason
 
     if action_code == "START_INTAKE":
-        if actor_role != WorkflowRole.ZORGAANBIEDER:
-            return False, "Alleen de zorgaanbieder kan intake starten."
+        if actor_role not in {WorkflowRole.ZORGAANBIEDER, WorkflowRole.GEMEENTE, WorkflowRole.ADMIN}:
+            return False, "Geen rechten om de intake-overdracht te starten."
         if current_state != WorkflowState.PLACEMENT_CONFIRMED:
             return False, "Intake kan pas starten na bevestigde plaatsing."
         if placement is None or placement.status != PlacementRequest.Status.APPROVED:
@@ -1813,14 +1862,9 @@ def _next_best_action(
             priority = "high"
             reason = "Samenvatting is gereed; matchadvies wordt opgebouwd."
     elif current_state == WorkflowState.MATCHING_READY:
-        if not has_matching_result:
-            action = "START_MATCHING"
-            priority = "high"
-            reason = "Matchadvies ontbreekt; start matching opnieuw."
-        else:
-            action = "VALIDATE_MATCHING"
-            priority = "high"
-            reason = "Gemeentevalidatie is verplicht vóór versturen naar aanbieder."
+        action = "VALIDATE_MATCHING"
+        priority = "high"
+        reason = "Gemeentevalidatie is verplicht vóór versturen naar aanbieder."
     elif current_state == WorkflowState.GEMEENTE_VALIDATED:
         action = "SEND_TO_PROVIDER"
         priority = "high"
@@ -2180,6 +2224,8 @@ def evaluate_case(case: Any, actor: Any | None = None, actor_role: str | None = 
         allowed_actions=allowed_actions,
         fallback_reason=str((next_best_action or {}).get("reason") or "Monitor de casus."),
     )
+    if is_archived:
+        next_best_action = None
 
     timeline_signals = {
         "latest_event_type": case_logs[0].event_type if case_logs else "",

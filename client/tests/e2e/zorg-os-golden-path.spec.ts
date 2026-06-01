@@ -66,7 +66,7 @@ test("Zorg OS golden path — gemeente → matching → provider scope → accep
 
   await loginAs(page, providerCreds.username, providerCreds.password);
   await page.goto(`${GOLDEN_PATH_BASE_URL}/dashboard/`);
-  await page.waitForLoadState("networkidle");
+  await expect(page.getByTestId("care-sidebar")).toBeVisible({ timeout: 45_000 });
 
   const providerTitles = await page.evaluate(async () => {
     const r = await fetch("/care/api/cases/");

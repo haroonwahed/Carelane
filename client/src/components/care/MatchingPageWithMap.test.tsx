@@ -38,6 +38,12 @@ function makeApiMatch(name: string, ranking: number) {
     fit_samenvatting: "Arrangement sluit grotendeels aan.",
     trade_offs: ["Capaciteit nog niet bevestigd"],
     verificatie_advies: "Controleer gemeentelijke validatie.",
+    zorgbehoefte_categorie: "Wonen & verblijf",
+    zorgbehoefte_categorie_code: "WONEN_VERBLIJF",
+    zorgbehoefte_specifiek: "Woonvoorziening",
+    zorgbehoefte_specifiek_code: "WONEN_VERBLIJF_WOONVOORZIENING",
+    taxonomie_lijn: "Taxonomie: Wonen & verblijf → Woonvoorziening",
+    taxonomie_code_lijn: "Taxonomiecode: WONEN_VERBLIJF → WONEN_VERBLIJF_WOONVOORZIENING",
     uitgesloten: false,
     uitsluitreden: "",
     ranking,
@@ -134,9 +140,9 @@ describe("MatchingPageWithMap", () => {
     });
     mockUseMatchingCandidates.mockReturnValue({
       matches: [
-        makeApiMatch("Zorggroep A", 1),
-        makeApiMatch("Zorggroep B", 2),
-        makeApiMatch("Zorggroep C", 3),
+        makeApiMatch("Zorggroep A", 201),
+        makeApiMatch("Zorggroep B", 202),
+        makeApiMatch("Zorggroep C", 203),
       ],
       loading: false,
       error: null,
@@ -148,7 +154,7 @@ describe("MatchingPageWithMap", () => {
       <MatchingPageWithMap caseId="C-MATCH-1" onBack={() => {}} onConfirmMatch={() => {}} />,
     );
 
-    expect(await screen.findByRole("heading", { name: /Matching voor Casus/i })).toBeVisible();
+    expect(await screen.findByRole("heading", { name: /Matching voor casus/i })).toBeVisible();
 
     const selectButtons = screen.getAllByRole("button", { name: /Selecteer & verzoek/i });
     expect(selectButtons.length).toBeGreaterThanOrEqual(1);
@@ -159,5 +165,82 @@ describe("MatchingPageWithMap", () => {
 
     await user.click(screen.getByRole("button", { name: /^Annuleren$/i }));
     expect(screen.queryByRole("dialog", { name: /Bevestig keuze/i })).not.toBeInTheDocument();
+  });
+
+  it("matches API rows by provider id instead of provider display name", async () => {
+    mockUseCases.mockReturnValue({
+      cases: [makeCase({ id: "C-MATCH-1" })],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseProviders.mockReturnValue({
+      providers: [
+        makeProvider("201", "Zorggroep A", 2),
+        makeProvider("202", "Zorggroep B", 3),
+      ],
+      loading: false,
+      error: null,
+      totalCount: 2,
+      networkSummary: null,
+      lastUpdatedAt: Date.now(),
+      refetch: vi.fn(),
+    });
+    mockUseMatchingCandidates.mockReturnValue({
+      matches: [
+        makeApiMatch("Verouderde naam uit API", 201),
+      ],
+      loading: false,
+      error: null,
+      incompleteCode: null,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <MatchingPageWithMap caseId="C-MATCH-1" onBack={() => {}} onConfirmMatch={() => {}} />,
+    );
+
+    expect(await screen.findByRole("heading", { name: /Matching voor casus/i })).toBeVisible();
+    expect(screen.getAllByText("Zorggroep A").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("Verouderde naam uit API")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Selecteer & verzoek/i }).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows submit errors as a visible blocker near the matching workspace", async () => {
+    mockUseCases.mockReturnValue({
+      cases: [makeCase({ id: "C-MATCH-1" })],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseProviders.mockReturnValue({
+      providers: [makeProvider("201", "Zorggroep A", 2)],
+      loading: false,
+      error: null,
+      totalCount: 1,
+      networkSummary: null,
+      lastUpdatedAt: Date.now(),
+      refetch: vi.fn(),
+    });
+    mockUseMatchingCandidates.mockReturnValue({
+      matches: [makeApiMatch("Zorggroep A", 1)],
+      loading: false,
+      error: null,
+      incompleteCode: null,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <MatchingPageWithMap
+        caseId="C-MATCH-1"
+        onBack={() => {}}
+        onConfirmMatch={() => {}}
+        submitError="Kies eerst een casus of probeer opnieuw."
+      />,
+    );
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Je kunt nog niet verder");
+    expect(alert).toHaveTextContent("Kies eerst een casus of probeer opnieuw.");
   });
 });

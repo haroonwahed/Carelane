@@ -15,7 +15,7 @@ export function ProviderKPIStrip({ data }: ProviderKPIStripProps) {
   const kpis = [
     {
       id: "nieuwe",
-      label: "Nieuwe casussen",
+      label: "Nieuwe aanvragen",
       value: data.nieuwe,
       icon: Clock,
       color: "text-blue-400",

@@ -115,7 +115,7 @@ export function GemeentenPage({ onGemeenteClick }: GemeentenPageProps = {}) {
         <span className="inline-flex flex-wrap items-center gap-2">
           Gemeenten
           <CareInfoPopover ariaLabel="Uitleg gemeentenoverzicht" testId="gemeenten-page-info">
-            <p className="text-muted-foreground">Verdeling van casussen en druk per gemeente — voor regie en capaciteit.</p>
+            <p className="text-muted-foreground">Verdeling van aanvragen en druk per gemeente — voor coördinatie en capaciteit.</p>
           </CareInfoPopover>
         </span>
       }
@@ -125,10 +125,10 @@ export function GemeentenPage({ onGemeenteClick }: GemeentenPageProps = {}) {
           icon={<Building2 size={16} />}
           message={
             totals.totalBlocked > 0
-              ? `${totals.totalBlocked} casussen zijn geblokkeerd`
+              ? `${totals.totalBlocked} aanvragen zijn geblokkeerd`
               : totals.totalUrgent === 1
                 ? "1 urgente casus — opvolging nodig"
-                : `${totals.totalUrgent} urgente casussen — opvolging nodig`
+                : `${totals.totalUrgent} urgente aanvragen — opvolging nodig`
           }
           action={
             <CareQueueInlineAction onClick={() => setSelectedStatus(totals.totalBlocked > 0 ? "blocked" : "urgent")}>
@@ -154,7 +154,7 @@ export function GemeentenPage({ onGemeenteClick }: GemeentenPageProps = {}) {
             meta={
               <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
                 <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
-                  {filteredGemeenten.length} zichtbaar · {totals.totalCases} casussen · {totals.avgWaitTime}d
+                  {filteredGemeenten.length} zichtbaar · {totals.totalCases} aanvragen · {totals.avgWaitTime}d
                 </span>
                 <CareSearchFiltersBar
                   className="px-0"
@@ -228,7 +228,7 @@ export function GemeentenPage({ onGemeenteClick }: GemeentenPageProps = {}) {
                     <tr className="border-b border-border/50">
                       <th className="p-4 text-left text-sm font-semibold text-muted-foreground">Gemeente</th>
                       <th className="p-4 text-left text-sm font-semibold text-muted-foreground">Regio</th>
-                      <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Casussen</th>
+                      <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Aanvragen</th>
                       <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Urgent</th>
                       <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Geblokkeerd</th>
                       <th className="p-4 text-right text-sm font-semibold text-muted-foreground">Wachttijd</th>

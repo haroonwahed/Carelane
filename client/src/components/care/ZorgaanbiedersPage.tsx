@@ -540,17 +540,17 @@ export function ZorgaanbiedersPage({
                           </div>
 
                           <div className="grid grid-cols-3 gap-2 border-t border-border/45 pt-2.5 text-xs">
-                            <div>
+                            <div className="min-w-0">
                               <p className="text-muted-foreground">Regio</p>
-                              <p className="mt-1 text-sm font-medium text-foreground">{provider.region}</p>
+                              <p className="mt-1 break-words text-sm font-medium text-foreground">{provider.region}</p>
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <p className="text-muted-foreground">Wachttijd</p>
-                              <p className="mt-1 text-sm font-medium text-foreground">{provider.averageWaitDays ?? 0} dgn</p>
+                              <p className="mt-1 break-words text-sm font-medium text-foreground">{provider.averageWaitDays ?? 0} dgn</p>
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <p className="text-muted-foreground">Wachtlijst</p>
-                              <p className="mt-1 text-sm font-medium text-foreground">{provider.waitingListLength}</p>
+                              <p className="mt-1 break-words text-sm font-medium text-foreground">{provider.waitingListLength}</p>
                             </div>
                           </div>
                         </button>

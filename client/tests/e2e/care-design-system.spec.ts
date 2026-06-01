@@ -31,7 +31,7 @@ async function assertCareSearchStack(page: Page) {
   await expect(input).toHaveAttribute("aria-label", /.+/);
 }
 
-/** Rows built on CareWorkRow expose `data-care-work-row`; Regiekamer also tags items with `data-testid="regiekamer-worklist-item"`. */
+/** Rows built on CareWorkRow expose `data-care-work-row`; Coördinatie also tags items with `data-testid="regiekamer-worklist-item"`. */
 async function assertOperationalRowContract(page: Page) {
   const workRows = page.locator("[data-care-work-row]");
   const regieRows = page.getByTestId("regiekamer-worklist-item");
@@ -54,13 +54,13 @@ test.describe("Care design system (SPA)", () => {
     });
     await installCareApiStubs(page);
     await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /Regiekamer/i, level: 1 })).toBeVisible({ timeout: 45_000 });
+    await expect(page.getByRole("heading", { name: /Coördinatie/i, level: 1 })).toBeVisible({ timeout: 45_000 });
   });
 
   test("shell + landmarks: target gemeente routes stay inside unified chrome", async ({ page }) => {
     const routes: Array<{ nav: string; heading: RegExp | string }> = [
-      { nav: "Regiekamer", heading: /Regiekamer/i },
-      { nav: "Casussen", heading: /^Casussen$/i },
+      { nav: "Coördinatie", heading: /Coördinatie/i },
+      { nav: "Aanvragen", heading: /^Aanvragen$/i },
       { nav: "Matching", heading: /^Matching$/i },
       { nav: "Acties", heading: /^Acties$/i },
       { nav: "Signalen", heading: /^Signalen$/i },
@@ -78,7 +78,7 @@ test.describe("Care design system (SPA)", () => {
     }
   });
 
-  test("Regiekamer (canonical): dominant action, phase board, disclosures, shared search + Meer filters", async ({
+  test("Coördinatie (canonical): dominant action, phase board, disclosures, shared search + Meer filters", async ({
     page,
   }) => {
     await assertShell(page);
@@ -106,7 +106,7 @@ test.describe("Care design system (SPA)", () => {
 
   test("shared CareSearchFiltersBar on list-heavy pages (incl. Zorgaanbieders)", async ({ page }) => {
     const pages: Array<{ nav: string; heading: RegExp | string }> = [
-      { nav: "Casussen", heading: /^Casussen$/i },
+      { nav: "Aanvragen", heading: /^Aanvragen$/i },
       { nav: "Matching", heading: /^Matching$/i },
       { nav: "Acties", heading: /^Acties$/i },
       { nav: "Signalen", heading: /^Signalen$/i },
@@ -128,10 +128,10 @@ test.describe("Care design system (SPA)", () => {
     await expect(page.getByRole("button", { name: /Meer filters/i })).toBeVisible();
   });
 
-  test("operational rows: Casussen + Matching + Regiekamer + Signalen share work-row contract", async ({ page }) => {
+  test("operational rows: Aanvragen + Matching + Regiekamer + Signalen share work-row contract", async ({ page }) => {
     await assertOperationalRowContract(page);
 
-    await goSidebar(page, "Casussen");
+    await goSidebar(page, "Aanvragen");
     await expect(page.getByTestId("worklist")).toBeVisible({ timeout: 30_000 });
     await assertOperationalRowContract(page);
 
@@ -149,9 +149,9 @@ test.describe("Care design system (SPA)", () => {
   });
 
   test("casus workspace: next-best-action + single context panel", async ({ page }) => {
-    await goSidebar(page, "Casussen");
-    await expect(page.getByRole("heading", { name: /^Casussen$/i, level: 1 })).toBeVisible({ timeout: 30_000 });
-    // Scope to Casussen worklist — Regiekamer may surface the same stub casus in embedded rows.
+    await goSidebar(page, "Aanvragen");
+    await expect(page.getByRole("heading", { name: /^Aanvragen$/i, level: 1 })).toBeVisible({ timeout: 30_000 });
+    // Scope to Aanvragen worklist — Coördinatie may surface the same stub casus in embedded rows.
     const row = page
       .getByTestId("worklist")
       .locator("[data-care-work-row]")
@@ -299,7 +299,7 @@ test.describe("Regiekamer adaptive modes (SPA)", () => {
       },
     });
     await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /Regiekamer/i, level: 1 })).toBeVisible({ timeout: 45_000 });
+    await expect(page.getByRole("heading", { name: /Coördinatie/i, level: 1 })).toBeVisible({ timeout: 45_000 });
     const panel = page.getByTestId("regiekamer-dominant-action");
     await expect(panel).toHaveCount(1);
     await expect(panel).toHaveAttribute("data-regiekamer-mode", "stable");
@@ -328,7 +328,7 @@ test.describe("Regiekamer adaptive modes (SPA)", () => {
       },
     });
     await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /Regiekamer/i, level: 1 })).toBeVisible({ timeout: 45_000 });
+    await expect(page.getByRole("heading", { name: /Coördinatie/i, level: 1 })).toBeVisible({ timeout: 45_000 });
     const panel = page.getByTestId("regiekamer-dominant-action");
     await expect(panel).toHaveAttribute("data-regiekamer-mode", "coordination");
     await expect(page.getByTestId("regiekamer-dominant-primary-cta")).toHaveText(/knelpunt in stroom|Open aanvragen/);
@@ -383,7 +383,7 @@ test.describe("Regiekamer adaptive modes (SPA)", () => {
       },
     });
     await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /Regiekamer/i, level: 1 })).toBeVisible({ timeout: 45_000 });
+    await expect(page.getByRole("heading", { name: /Coördinatie/i, level: 1 })).toBeVisible({ timeout: 45_000 });
     await expect(page.getByTestId("regiekamer-dominant-action")).toHaveAttribute("data-regiekamer-mode", "intervention");
     await expect(page.getByTestId("regiekamer-dominant-primary-cta")).toHaveText(
       /Bekijk matching-urgenties|Open matchingoverzicht|Bekijk matching-aanvragen/,

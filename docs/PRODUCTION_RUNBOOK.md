@@ -19,6 +19,10 @@ Audience: **hosting / security / gemeente IT** preparing pilot or production. Th
 - **Restore drill (quarterly):** restore latest backup to a **non-production** database; run `manage.py migrate --plan` and smoke `/_health/` + login; document outcome in your change log.
 - **Rehearsal DB:** local / CI uses `config.settings_rehearsal` and SQLite — **do not** point rehearsal scripts at production `DATABASE_URL`.
 
+Drill worksheet:
+
+- [`docs/BACKUP_RESTORE_DRILL.md`](./BACKUP_RESTORE_DRILL.md)
+
 ## 3. Observability
 
 | Signal | Where |
@@ -28,6 +32,10 @@ Audience: **hosting / security / gemeente IT** preparing pilot or production. Th
 | Errors (optional) | Sentry when `SENTRY_DSN` set — environment + release via `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE` (git SHA) |
 
 **Alerting (recommended):** alert on **5xx rate**, **health check failure**, **DB connection errors**, and **disk full** on the app + DB tier. Wire alerts to on-call, not email-only black holes.
+
+Notes sheet:
+
+- [`docs/OBSERVABILITY_ALERTING_NOTES.md`](./OBSERVABILITY_ALERTING_NOTES.md)
 
 ## 4. SSO / OIDC per environment
 

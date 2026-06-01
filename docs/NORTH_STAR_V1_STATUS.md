@@ -1,6 +1,6 @@
 # North star v1 — status matrix (percentages)
 
-**As of:** 2026-05-16  
+**As of:** 2026-05-31
 **Release ref:** `main` @ `ca146bdc` (staging sign-off GO; full demo seed on Render)  
 **Scoring:** % = evidence-backed completion toward the criterion, not calendar time.  
 **Visual:** open `careon-progress-matrix.canvas.tsx` in Cursor (Canvases).  
@@ -12,16 +12,16 @@
 
 | Track | Completion |
 |-------|------------|
-| **North star (overall)** | **94%** |
+| **North star (overall)** | **95%** |
 | Phase 0 — align & freeze | **92%** |
 | Phase 1 — Must band (rows 1–4) | **94%** |
 | Backlog Should rows 5–12 | **94%** |
 | Staging sign-off (ship gate) | **95%** |
 | Production | **0%** |
 
-**Remaining for 100%:** optional `RENDER_DEPLOY_HOOK_URL`; 3 provider Playwright tests skipped without active pending placement row; production promotion not started.
+**Remaining for 100%:** optional `RENDER_DEPLOY_HOOK_URL`; provider Playwright coverage now runs on the seeded rehearsal queue, but production promotion is still not started and rollout evidence still missing production secrets / backup-restore / observability proof.
 
-**Verified 2026-05-16:** `./scripts/staging_pilot_signoff.sh` **GO** on `https://careon-web.onrender.com`; `reset_pilot_environment` succeeds on Render Postgres after migrations `0071`–`0076`.
+**Verified 2026-05-29:** `./scripts/run_golden_path_e2e.sh --start-server` **GO** on the rehearsal stack; `./scripts/staging_pilot_signoff.sh` remains **GO** on `https://careon-web.onrender.com`; `reset_pilot_environment` succeeds on Render Postgres after migrations `0071`–`0076`.
 
 ---
 
@@ -29,7 +29,7 @@
 
 | # | Criterion | % | Evidence |
 |---|-----------|---|----------|
-| F1 | Canonical chain backend-enforced (gemeente gate → provider review → placement → intake) | **88%** | `workflow_state_machine.py`, timeline rehearsal GO; golden-path Playwright on CI |
+| F1 | Canonical chain backend-enforced (casus → samenvatting → matching → gemeente gate → aanbieder beoordeling → plaatsing → intake) | **90%** | `workflow_state_machine.py`, timeline rehearsal GO; golden-path Playwright rerun **GO** on rehearsal stack |
 | F2 | Matching remains advisory | **100%** | No auto-assign; API/UI copy; guardrails |
 | F3 | Provider visibility = linked cases only | **92%** | `tests/test_cross_tenant_isolation.py` + export endpoint isolation |
 | T1 | Structured provider decisions (codes + notes) | **95%** | API + Reacties UI + E2E info/decision paths |
@@ -40,10 +40,10 @@
 
 **North star weights (functional 40% / trust 30% / shippable 30%):**
 
-- Functional avg (F1–F3): **93%** → contributes **37%**
+- Functional avg (F1–F3): **94%** → contributes **38%**
 - Trust avg (T1–T2): **93%** → contributes **28%**
 - Shippable avg (S1–S3): **97%** → contributes **29%**
-- **Total: 94%**
+- **Total: 95%**
 
 ---
 
@@ -68,7 +68,7 @@
 | Row | % | Evidence |
 |-----|---|----------|
 | 1 Tenant + visibility | **92%** | Isolation tests; audit/dispute export cross-tenant |
-| 2 Workflow gates | **88%** | Foundation lock + decision engine tests |
+| 2 Workflow gates | **90%** | Foundation lock + decision engine tests; golden-path flow rerun GO |
 | 3 CI stop-the-line | **100%** | Guardrails + pilot rehearsal on `main` |
 | 4 Structured provider decisions | **95%** | API fields + Reacties + provider smoke |
 
@@ -89,7 +89,7 @@
 | 11 | Pilot rehearsal cadence | **95%** |
 | 12 | Staging shell smoke | **95%** (sign-off GO) |
 | 13 | `assessment` decision | **100%** (closed) |
-| 14 | Rollout evidence | **80%** (templates + preflight script; prod empty) |
+| 14 | Rollout evidence | **80%** (templates + preflight script; production blockers still open) |
 | 15 | Rename / anonimisatie | **0%** (deferred) |
 
 **Should band (6–14) average: ~94%**
@@ -103,6 +103,15 @@
 | Local / CI | **100%** | **100%** | **95%** | Engineering ready |
 | Staging Render | **100%** | **75%** | **92%** | **GO** (`ca146bdc`) |
 | Production | **0%** | **0%** | **0%** | Blocked |
+
+## Remaining work by owner
+
+| Owner | Remaining production work | Evidence still needed |
+|---|---|---|
+| Release captain | Schedule the production window; confirm GO/NO-GO; own final sign-off and rollback decision | Dated release window, all-clear or abort call, final sign-off record |
+| Backend owner | Execute deploy on `ca146bdc`; run migrations; verify app-level health after deploy | Deploy SHA, migration output, restart confirmation, `check --deploy` output |
+| Ops owner | Confirm production secrets/environment readiness; ensure backup exists; manage restart and monitoring access | Secrets inventory status, backup reference, monitoring watch start |
+| QA owner | Run production smoke checks and terminology guard; verify canonical routes return `200` | Smoke result, route status codes, guard output, follow-up defects |
 
 ---
 
@@ -118,5 +127,5 @@ E2E_BASE_URL=https://careon-web.onrender.com E2E_DEMO_PASSWORD=pilot_demo_pass_1
 ## To reach 100% north star
 
 1. **Optional:** set `RENDER_DEPLOY_HOOK_URL` in GitHub secrets for push-triggered Render deploys.
-2. **Optional:** seed a casus with active pending placement so 3 skipped provider Playwright tests run.
-3. **Production:** run `docs/PRODUCTION_RUNBOOK.md` + `./scripts/production_go_live_preflight.sh` with real Postgres; fill rollout checklists.
+2. **Done in rehearsal:** seed an active pending placement so provider Playwright coverage runs instead of skipping.
+3. **Production:** run `docs/PRODUCTION_RUNBOOK.md` + `./scripts/production_go_live_preflight.sh` with real Postgres; fill rollout checklists and close the explicit production blockers (secrets inventory, backup/restore drill, observability/alerting, rollback window).

@@ -64,6 +64,10 @@ import {
   type OperatieveWachtrijGroepKey,
 } from "./casusOperatieveWachtrijGroep";
 import { CareInfoPopover } from "./CareUnifiedPage";
+import {
+  GuidanceContextBanner,
+  InlineHelpChip,
+} from "../guidance";
 import { tokens } from "../../design/tokens";
 import {
   DECISION_UI_PHASE_IDS,
@@ -98,13 +102,14 @@ interface WorkloadPageProps {
 
 type FocusChip = "my-worklist" | "all" | "pipeline" | "critical" | "recent";
 type FlowColumnFilter = "all" | "plaatsing" | "intake";
+type TaxonomyFilter = "all" | string;
 
 /** Compacte statusregel voor de paginabadge (contrast met vage “vragen actie”-formuleringen elders). */
 function casussenWerkvoorraadMetric(filteredCount: number, attentionCount: number): string {
-  if (filteredCount === 0) return "Geen aanvragen in deze weergave";
-  if (attentionCount === 0) return `${filteredCount} aanvragen · geen open actie voor jou`;
-  if (attentionCount === 1) return `${filteredCount} aanvragen · 1 wacht op jouw actie`;
-  return `${filteredCount} aanvragen · ${attentionCount} wachten op jouw actie`;
+  if (filteredCount === 0) return "Geen casussen in deze weergave";
+  if (attentionCount === 0) return `${filteredCount} casussen · geen open actie voor jou`;
+  if (attentionCount === 1) return `${filteredCount} casussen · 1 wacht op jouw actie`;
+  return `${filteredCount} casussen · ${attentionCount} wachten op jouw actie`;
 }
 
 function urgencyRank(urgency: WorkflowCaseView["urgency"]): number {
@@ -152,7 +157,7 @@ const STRIP_DEF: Array<{
   {
     key: "casus",
     label: "Casus",
-    ownerWaitLabel: "Wacht op regieactie",
+    ownerWaitLabel: "Wacht op coördinatieactie",
     countKeys: ["casus"],
     filterPhase: "casus_gestart",
     statusTone: "ready",
@@ -195,7 +200,7 @@ function ownerWaitLabelForRole(stepKey: StripBucketKey, role: CaseDecisionRole):
   if (role === "zorgaanbieder") {
     switch (stepKey) {
       case "casus":
-        return "Wacht op regie-invoer";
+        return "Wacht op coördinatie-invoer";
       case "matching":
         return "Wacht op matchvoorstel";
       case "aanbieder_beoordeling":
@@ -211,7 +216,7 @@ function ownerWaitLabelForRole(stepKey: StripBucketKey, role: CaseDecisionRole):
 
   switch (stepKey) {
     case "casus":
-      return "Wacht op regieactie";
+      return "Wacht op coördinatieactie";
     case "matching":
       return "Wacht op matchvoorstel";
     case "aanbieder_beoordeling":
@@ -260,7 +265,7 @@ function buildOperationalSubline(decision: CaseDecisionState, queueGroup: Operat
       return "Wacht op reactie van de zorgaanbieder.";
     case "wacht-op-aanmelder":
       if (decision.responsibleParty === "Systeem") return "Wacht op systeem (bijv. samenvatting).";
-      return "Wacht op actie van aanmelder of regie.";
+      return "Wacht op actie van aanmelder of coördinatie.";
     case "financiele-validatie":
       return "Gemeente moet validatie afronden voordat de keten doorloopt.";
     case "klaar-voor-matching":
@@ -268,17 +273,26 @@ function buildOperationalSubline(decision: CaseDecisionState, queueGroup: Operat
         ? "Je kunt matching starten of het matchadvies controleren."
         : "Er ontbreekt nog een voorwaarde om matching zeker te starten.";
     case "plaatsing-intake":
-      return "Plaatsing of intake vraagt coördinatie tussen regie en aanbieder.";
+      return "Plaatsing of intake vraagt coördinatie tussen coördinatie en aanbieder.";
     default:
       if (decision.requiresCurrentUserAction) return "Jouw beurt voor de volgende stap.";
-      return "Geen urgente regie-actie; volg op de achtergrond.";
+      return "Geen urgente coördinatie-actie; volg op de achtergrond.";
   }
 }
 
 function buildOperationalMetaLine(item: WorkflowCaseView, decision: CaseDecisionState, phaseHumanLabel: string): string {
   const owner =
-    decision.responsibleParty === "Gemeente" ? "Regie" : decision.responsibleParty === "Zorgaanbieder" ? "Aanbieder" : "Systeem";
+    decision.responsibleParty === "Gemeente" ? "Coördinatie" : decision.responsibleParty === "Zorgaanbieder" ? "Aanbieder" : "Systeem";
   return `${item.lastUpdatedLabel} · ${owner} · ${phaseHumanLabel}`;
+}
+
+function buildTaxonomySummaryLabel(item: WorkflowCaseView): string {
+  const category = (item.zorgbehoefteCategorie ?? "").trim();
+  const specific = (item.zorgbehoefteSpecifiek ?? "").trim();
+  if (category && specific) {
+    return `${category} · ${specific}`;
+  }
+  return category || specific || "";
 }
 
 function queueGroupAccentTone(queueGroup: OperatieveWachtrijGroepKey): "critical" | "warning" | "neutral" {
@@ -292,6 +306,44 @@ function queueGroupAccentTone(queueGroup: OperatieveWachtrijGroepKey): "critical
     default:
       return "neutral";
   }
+}
+
+function collectTaxonomyCategoryOptions(items: WorkflowCaseView[]) {
+  const map = new Map<string, string>();
+  for (const item of items) {
+    const code = (item.zorgbehoefteCategorieCode ?? "").trim();
+    const label = (item.zorgbehoefteCategorie ?? "").trim();
+    if (!code || !label) {
+      continue;
+    }
+    if (!map.has(code)) {
+      map.set(code, label);
+    }
+  }
+  return Array.from(map.entries())
+    .map(([value, label]) => ({ value, label }))
+    .sort((left, right) => left.label.localeCompare(right.label, "nl"));
+}
+
+function collectTaxonomySubcategoryOptions(items: WorkflowCaseView[], categoryFilter: TaxonomyFilter) {
+  const map = new Map<string, string>();
+  for (const item of items) {
+    const categoryCode = (item.zorgbehoefteCategorieCode ?? "").trim();
+    const code = (item.zorgbehoefteSpecifiekCode ?? "").trim();
+    const label = (item.zorgbehoefteSpecifiek ?? "").trim();
+    if (!code || !label) {
+      continue;
+    }
+    if (categoryFilter !== "all" && categoryCode !== categoryFilter) {
+      continue;
+    }
+    if (!map.has(code)) {
+      map.set(code, label);
+    }
+  }
+  return Array.from(map.entries())
+    .map(([value, label]) => ({ value, label }))
+    .sort((left, right) => left.label.localeCompare(right.label, "nl"));
 }
 
 function CasussenOperatieveWachtrijItem({
@@ -316,23 +368,29 @@ function CasussenOperatieveWachtrijItem({
   onWorkflowAction: () => void;
 }) {
   const ownerLabel =
-    decision.responsibleParty === "Gemeente" ? "Regie" : decision.responsibleParty === "Zorgaanbieder" ? "Aanbieder" : "Systeem";
+    decision.responsibleParty === "Gemeente" ? "Coördinatie" : decision.responsibleParty === "Zorgaanbieder" ? "Aanbieder" : "Systeem";
   const actionLabel = decision.nextActionLabel.replace(/\s*→\s*$/u, "").trim() || decision.nextActionLabel;
+  const taxonomySummary = buildTaxonomySummaryLabel(item);
 
   return (
     <div className="group relative">
       <CareWorkRow
         density="operational"
-        leading={
-          <CareMetaChip className={cn("h-6 px-2 text-[11px] font-semibold", urgencyChipShellClass(item.urgency))}>
-            {item.urgencyLabel}
-          </CareMetaChip>
-        }
+                leading={
+                  <CareMetaChip className={cn("h-6 px-2 text-[11px] font-semibold", urgencyChipShellClass(item.urgency))}>
+                    {item.placementPressureLabel ?? item.urgencyLabel}
+                  </CareMetaChip>
+                }
         title={item.clientLabel}
         context={
           <>
             <CareMetaChip className="font-mono text-[11px]">{item.id}</CareMetaChip>
             <CareMetaChip>{item.region}</CareMetaChip>
+            {taxonomySummary ? (
+              <CareMetaChip className="max-w-[min(100%,16rem)] truncate text-[11px]" title={taxonomySummary}>
+                {taxonomySummary}
+              </CareMetaChip>
+            ) : null}
             <span className="line-clamp-1 min-w-0 max-w-[min(100%,28rem)] text-[11px] text-foreground/85">{headline}</span>
           </>
         }
@@ -398,6 +456,8 @@ export function WorkloadPage({
   const [selectedPhase, setSelectedPhase] = useState<"all" | DecisionUiPhaseId>("all");
   const [selectedFlowColumn, setSelectedFlowColumn] = useState<FlowColumnFilter>("all");
   const [selectedOwner, setSelectedOwner] = useState<"all" | "Gemeente" | "Zorgaanbieder" | "Systeem">("all");
+  const [selectedTaxonomyCategory, setSelectedTaxonomyCategory] = useState<TaxonomyFilter>("all");
+  const [selectedTaxonomySubcategory, setSelectedTaxonomySubcategory] = useState<TaxonomyFilter>("all");
   /** Default “Alle casussen”: volledige werklijst; gebruikers kunnen naar Mijn werkvoorraad voor focus. */
   const [focusChip, setFocusChip] = useState<FocusChip>("all");
   /** One-shot focus hand-off from Regiekamer NBA links (e.g. "Bekijk kritieke casussen", "Bekijk gehele stroom"). */
@@ -419,6 +479,21 @@ export function WorkloadPage({
   const { providers } = useProviders({ q: "" });
 
   const workflowCases = useMemo(() => buildWorkflowCases(cases, providers), [cases, providers]);
+  const taxonomyCategoryOptions = useMemo(() => collectTaxonomyCategoryOptions(workflowCases), [workflowCases]);
+  const taxonomySubcategoryOptions = useMemo(
+    () => collectTaxonomySubcategoryOptions(workflowCases, selectedTaxonomyCategory),
+    [workflowCases, selectedTaxonomyCategory],
+  );
+
+  useEffect(() => {
+    if (selectedTaxonomySubcategory === "all") {
+      return;
+    }
+    const allowed = taxonomySubcategoryOptions.some((option) => option.value === selectedTaxonomySubcategory);
+    if (!allowed) {
+      setSelectedTaxonomySubcategory("all");
+    }
+  }, [selectedTaxonomySubcategory, taxonomySubcategoryOptions]);
 
   const decisionItems = useMemo(() => {
     return workflowCases.map((item) => ({
@@ -456,6 +531,14 @@ export function WorkloadPage({
           return false;
         }
 
+        if (selectedTaxonomyCategory !== "all" && item.zorgbehoefteCategorieCode !== selectedTaxonomyCategory) {
+          return false;
+        }
+
+        if (selectedTaxonomySubcategory !== "all" && item.zorgbehoefteSpecifiekCode !== selectedTaxonomySubcategory) {
+          return false;
+        }
+
         return true;
       })
       .sort((left, right) => {
@@ -473,7 +556,7 @@ export function WorkloadPage({
 
         return left.item.id.localeCompare(right.item.id);
       });
-  }, [decisionItems, searchQuery, selectedRegion, selectedUrgency, selectedOwner]);
+  }, [decisionItems, searchQuery, selectedRegion, selectedUrgency, selectedOwner, selectedTaxonomyCategory, selectedTaxonomySubcategory]);
 
   const baseFilteredItems = useMemo(() => {
     if (selectedPhase === "all") {
@@ -623,7 +706,17 @@ export function WorkloadPage({
 
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, focusChip, selectedRegion, selectedUrgency, selectedPhase, selectedFlowColumn, selectedOwner]);
+  }, [
+    searchQuery,
+    focusChip,
+    selectedRegion,
+    selectedUrgency,
+    selectedPhase,
+    selectedFlowColumn,
+    selectedOwner,
+    selectedTaxonomyCategory,
+    selectedTaxonomySubcategory,
+  ]);
 
   useEffect(() => {
     if (page !== safePage) setPage(safePage);
@@ -669,13 +762,13 @@ export function WorkloadPage({
     }
     if (focusChip === "critical") {
       return {
-        label: "Toon alle aanvragen",
+        label: "Toon alle casussen",
         onClick: () => setFocusChip("all"),
       };
     }
     if (attentionCount > 0) {
       return {
-        label: "Bekijk kritieke aanvragen",
+        label: "Bekijk kritieke casussen",
         onClick: focusCriticalCases,
       };
     }
@@ -691,11 +784,11 @@ export function WorkloadPage({
   const workloadAttentionMessage =
     workflowCases.length === 0
       ? canCreateCase
-        ? "Er zijn nog geen lopende aanvragen; start een doorstroom of pas filters aan."
-        : "Er zijn nog geen lopende aanvragen; pas filters aan."
+        ? "Er zijn nog geen lopende casussen; start een doorstroom of pas filters aan."
+        : "Er zijn nog geen lopende casussen; pas filters aan."
       : attentionCount > 0
-        ? `${attentionCount} aanvraag${attentionCount === 1 ? "" : "en"} wachten op vervolgactie in de keten; blokkades en wachttijd bepalen de eigenaar.`
-        : "De werkvoorraad is rustig; gebruik filters om de volgende aanvraag en stap te vinden.";
+        ? `${attentionCount} casus${attentionCount === 1 ? "" : "sen"} wachten op vervolgactie in de keten; blokkades en wachttijd bepalen de eigenaar.`
+        : "De werkvoorraad is rustig; gebruik filters om de volgende casus en stap te vinden.";
 
   const workloadAttentionAction =
     primaryShortcut !== null ? (
@@ -714,7 +807,7 @@ export function WorkloadPage({
             className="h-9 min-h-9 rounded-lg px-4 text-[13px] font-semibold shadow-sm"
             onClick={onCreateCase}
           >
-            Nieuwe aanvraag
+            Nieuwe casus
           </Button>
         ) : null}
         <RegieRailToggleButton
@@ -772,17 +865,17 @@ export function WorkloadPage({
     <CarePageScaffold
       archetype="queue"
       className="pb-8"
-      title="Aanvragen"
+      title="Casussen"
       subtitleInfoTestId="casussen-page-info"
-      subtitleAriaLabel="Uitleg aanvragen"
+      subtitleAriaLabel="Uitleg casussen"
       subtitle={
         <div className="space-y-2">
           <p className="font-semibold text-foreground">Hoe deze lijst werkt</p>
           <p>
-            Tabbladen en zoekveld bepalen welke aanvragen je ziet. Sidebar Acties (taken) staat los van het tabblad Mijn werkvoorraad op
+            Tabbladen en zoekveld bepalen welke casussen je ziet. Sidebar Acties (taken) staat los van het tabblad Mijn werkvoorraad op
             deze pagina.
           </p>
-          <p>Doorstroom toont aanvragen per fase (na je filters). De werklijst toont de eerstvolgende passende actie per aanvraag.</p>
+          <p>Doorstroom toont casussen per fase (na je filters). De werklijst toont de eerstvolgende passende actie per casus.</p>
           <p className="text-muted-foreground">
             Tijdelijke werkvoorraad — na plaatsing en validatie gaat het traject naar externe systemen (uitstroom).
           </p>
@@ -813,6 +906,11 @@ export function WorkloadPage({
         />
       }
     >
+      {attentionCount > 0 || riskSignalCount > 0 ? (
+        <GuidanceContextBanner testId="werkvoorraad-blokkades-banner" className="mb-4">
+          Los blokkades eerst op om doorstroom te behouden.
+        </GuidanceContextBanner>
+      ) : null}
       <CareWorkspaceSection
         testId="casussen-uitvoerlijst"
         aria-labelledby="casussen-werkvoorraad-heading"
@@ -820,24 +918,43 @@ export function WorkloadPage({
         <CareSectionHeader
           className="lg:flex-col lg:items-stretch"
           title={
-            <span id="casussen-werkvoorraad-heading">Werkvoorraad</span>
+            <span id="casussen-werkvoorraad-heading" className="inline-flex flex-wrap items-center gap-2">
+              Werkvoorraad
+              <InlineHelpChip
+                title="Waarom staat dit bovenaan?"
+                triggerLabel="Prioriteit"
+                testId="werkvoorraad-prioriteit-help"
+              >
+                <p>Items worden geprioriteerd op urgentie, blokkades en benodigde actie.</p>
+              </InlineHelpChip>
+            </span>
           }
           meta={
             <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
               <span className="inline-flex w-fit items-center rounded-full bg-muted/35 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
                 {filteredItems.length} aanvragen
               </span>
+              <div className="flex flex-wrap items-center gap-2 pb-1">
+                <InlineHelpChip
+                  title="Waarom wachten?"
+                  triggerLabel="Wachten"
+                  testId="werkvoorraad-wachten-help"
+                >
+                  <p>Er is nu geen actie nodig totdat externe opvolging of reactie binnenkomt.</p>
+                </InlineHelpChip>
+              </div>
               <CareSearchFiltersBar
                 variant="workspace"
                 className="px-0"
                 searchValue={searchQuery}
                 onSearchChange={setSearchQuery}
-                searchPlaceholder="Zoek aanvragen, regio's, aanbieders…"
+                searchPlaceholder="Zoek casussen, regio's, aanbieders…"
                 showSecondaryFilters={showSecondaryFilters}
                 onToggleSecondaryFilters={() => setShowSecondaryFilters((current) => !current)}
                 secondaryFiltersLabel="Filters"
                 secondaryFilters={
-                  <div className="grid items-end gap-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+                  <>
+                    <div className="grid items-end gap-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
                     <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
                       Werkvoorraad-weergave
                       <CareOperationalSelect
@@ -846,7 +963,7 @@ export function WorkloadPage({
                         onChange={(event) => setFocusChip(event.target.value as FocusChip)}
                       >
                         <option value="my-worklist">Mijn werkvoorraad ({tabCounts.myWorklist})</option>
-                        <option value="all">Alle aanvragen ({tabCounts.all})</option>
+                        <option value="all">Alle casussen ({tabCounts.all})</option>
                         <option value="pipeline">Wacht op actie ({tabCounts.pipeline})</option>
                         <option value="critical">Kritiek ({tabCounts.critical})</option>
                         <option value="recent">Recent bijgewerkt ({tabCounts.recent})</option>
@@ -911,7 +1028,40 @@ export function WorkloadPage({
                         <option value="Systeem">Systeem</option>
                       </CareOperationalSelect>
                     </label>
-                  </div>
+                    </div>
+                    <div className="grid items-end gap-2 md:grid-cols-2">
+                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                      Zorgbehoefte categorie
+                      <CareOperationalSelect
+                        aria-label="Zorgbehoefte categorie"
+                        value={selectedTaxonomyCategory}
+                        onChange={(event) => {
+                          setSelectedTaxonomyCategory(event.target.value);
+                          setSelectedTaxonomySubcategory("all");
+                        }}
+                      >
+                        <option value="all">Alle categorieën</option>
+                        {taxonomyCategoryOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </CareOperationalSelect>
+                    </label>
+                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                      Specifieke zorgbehoefte
+                      <CareOperationalSelect
+                        aria-label="Specifieke zorgbehoefte"
+                        value={selectedTaxonomySubcategory}
+                        disabled={selectedTaxonomyCategory === "all" || taxonomySubcategoryOptions.length === 0}
+                        onChange={(event) => setSelectedTaxonomySubcategory(event.target.value)}
+                      >
+                        <option value="all">Alle specifieke behoeften</option>
+                        {taxonomySubcategoryOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </CareOperationalSelect>
+                    </label>
+                    </div>
+                  </>
                 }
               />
             </div>
@@ -925,43 +1075,43 @@ export function WorkloadPage({
                 tone="critical"
                 message={
                   <>
-                    Weergave: kritiek / geblokkeerd. Gebruik <span className="font-medium text-foreground">Toon alle aanvragen</span> rechtsboven om
+                    Weergave: kritiek / geblokkeerd. Gebruik <span className="font-medium text-foreground">Toon alle casussen</span> rechtsboven om
                     terug te gaan naar de volledige lijst.
                   </>
                 }
               />
             </div>
           ) : null}
-          {loading && <LoadingState title="Aanvragen laden…" copy="De werkvoorraad wordt opgebouwd." />}
+          {loading && <LoadingState title="Casussen laden…" copy="De werkvoorraad wordt opgebouwd." />}
 
           {!loading && error && (
-            <ErrorState title="Aanvragen laden mislukt" copy={getShortReasonLabel(error, 100)} action={<Button variant="outline" onClick={refetch}>Opnieuw</Button>} />
+          <ErrorState title="Casussen laden mislukt" copy={getShortReasonLabel(error, 100)} action={<Button variant="outline" onClick={refetch}>Opnieuw</Button>} />
           )}
 
           {!loading && !error && workflowCases.length === 0 && (
             <EmptyState
-              title="Geen aanvragen."
-              copy={canCreateCase ? "Er zijn nog geen aanvragen. Start een doorstroom via de knop rechtsboven." : "Pas filters aan."}
+              title="Geen casussen."
+              copy={canCreateCase ? "Er zijn nog geen casussen. Start een doorstroom via de knop rechtsboven." : "Pas filters aan."}
             />
           )}
 
           {!loading && !error && workflowCases.length > 0 && filteredItems.length === 0 && (
             <EmptyState
-              title={focusChip === "my-worklist" ? "Geen open acties." : "Geen aanvragen."}
+              title={focusChip === "my-worklist" ? "Geen open acties." : "Geen casussen."}
               copy={focusChip === "my-worklist" ? "Alles ligt bij andere partijen." : "Pas filters aan."}
             />
           )}
 
           {!loading && !error && filteredItems.length > 0 && (
-            <div data-testid="worklist" data-density="operational" data-layout="queue" className={CARE_RHYTHM.zoneStack}>
+            <div data-testid="worklist" data-density="compact" data-layout="queue" className={CARE_RHYTHM.zoneStack}>
               {groupedPageSections.length === 0 ? (
-                <p className="text-[13px] text-muted-foreground">Geen aanvragen op deze pagina.</p>
+                <p className="text-[13px] text-muted-foreground">Geen casussen op deze pagina.</p>
               ) : (
                 <>
                   <CareWorkListCard
                     header={
                       <CareOperationalQueueHeader
-                        labels={["Urgentie", "Aanvraag", "Operationeel", "Fase", "Bijgewerkt", "Volgende actie"]}
+                        labels={["Urgentie", "Casus", "Operationeel", "Fase", "Bijgewerkt", "Volgende actie"]}
                       />
                     }
                   >
@@ -1019,14 +1169,14 @@ export function WorkloadPage({
                   </CareWorkListCard>
 
                   <p className="text-[12px] leading-snug text-muted-foreground" data-testid="worklist-pagination-hint">
-                    Paginering loopt plat over alle wachtrijen (volgorde: wachtrij → urgentie → aanvraag). Tellingen bij elke kop
+                    Paginering loopt plat over alle wachtrijen (volgorde: wachtrij → urgentie → casus). Tellingen bij elke kop
                     zijn voor je huidige filters, niet alleen voor deze pagina.
                   </p>
 
                   <div className="flex flex-col gap-3 border-t border-border/50 pt-3 text-[13px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                     <p className="tabular-nums">
                       {totalRows === 0 ? "0" : `${(safePage - 1) * pageSize + 1}–${Math.min(safePage * pageSize, totalRows)}`} van {totalRows}{" "}
-                      aanvragen
+                      casussen
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
@@ -1161,7 +1311,7 @@ function CasussenInsightsPanels({
               className="inline-block text-sm font-semibold text-primary underline-offset-4 hover:underline"
               data-testid="casussen-rail-naar-regiekamer"
             >
-              Bekijk regie-overzicht
+              Bekijk coördinatie-overzicht
             </a>
           </div>
         </div>

@@ -26,7 +26,7 @@ export type CarePageScaffoldProps = {
   metric?: ReactNode;
   /** Page-level NBA / attention (e.g. `DominantActionPanel`) — above `kpiStrip`. */
   dominantAction?: ReactNode;
-  /** Block KPI strip below dominant action, above filters (e.g. Regiekamer `metric-strip`). */
+  /** Block KPI strip below dominant action, above filters (e.g. coördinatie `metric-strip`). */
   kpiStrip?: ReactNode;
   filters?: ReactNode;
   /** Collapsible or static insights below main content. */

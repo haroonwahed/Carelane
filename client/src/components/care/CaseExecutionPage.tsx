@@ -35,6 +35,12 @@ import {
 } from "../ui/alert-dialog";
 import { Textarea } from "../ui/textarea";
 import { ArrangementAlignmentPanel } from "./ArrangementAlignmentPanel";
+import {
+  GuidanceContextBanner,
+  InlineHelpChip,
+  ProgressiveGuidance,
+  VideoHelpTrigger,
+} from "../guidance";
 import { CasusWorkspaceLayout } from "./CasusWorkspaceLayout";
 import {
   CaseAttentionPointsCard,
@@ -731,7 +737,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   const summaryMatchInputs = [
     `Regio: ${spaCase.regio}`,
     `Zorgvraag: ${spaCase.zorgtype}`,
-    `Urgentie: ${spaCase.urgency}`,
+    `Plaatsingsdruk: ${(spaCase.placementPressureLabel ?? spaCase.urgency)}`,
     missingGeo ? "Locatie: onbekend (aanvullen aanbevolen)" : "Locatie: beschikbaar",
   ];
   const updatedAtLabel = formatUpdatedAtLabel(decisionEvaluation?.timeline_signals.latest_event_at);
@@ -748,7 +754,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   const statusLine = summaryNeedsCaseCompletion
     ? "Matching nog niet gestart."
     : dominantBlocker
-      ? "Wacht op regieactie."
+      ? "Wacht op coördinatieactie."
       : activeStepLabel.toLowerCase() === "casus gestart"
         ? "Casus aangemaakt en gereed voor matching."
         : `${activeStepLabel} is actief.`;
@@ -834,11 +840,11 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     regio: spaCase.regio,
     aanmelder: spaCase.owner,
     zorgintensiteit:
-      spaCase.urgency === "critical"
+      spaCase.placementPressureBand === "critical" || spaCase.urgency === "critical"
         ? "Spoed / hoog"
-        : spaCase.urgency === "warning"
+        : spaCase.placementPressureBand === "high" || spaCase.urgency === "warning"
           ? "Verhoogd"
-          : spaCase.urgency === "normal"
+          : spaCase.placementPressureBand === "normal" || spaCase.urgency === "normal"
             ? "Standaard"
             : "Laag / stabiel",
     startperiode: (() => {
@@ -856,7 +862,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     `Situatie: ${situationInsight}`,
     `Zorgvraag: ${spaCase.zorgtype}`,
     `Regio: ${spaCase.regio}`,
-    `Urgentie: ${spaCase.urgency}`,
+    `Plaatsingsdruk: ${(spaCase.placementPressureLabel ?? spaCase.urgency)}`,
     missingGeo ? "Locatiebasis onvolledig voor volledige matching." : "Locatiebasis beschikbaar voor matching.",
   ].slice(0, 5);
   const displayNextStepHeading = nextBestAction
@@ -953,11 +959,59 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     </div>
   );
 
+  const isGemeenteValidationPhase =
+    phasePresentation.apiPhase === "gemeente_validatie" || resolvedState === "MATCHING_READY";
+  const showProviderRejectionGuidance = providerRejectionSignal;
+
   const contextStack = (
     <div className="space-y-4">
+      {isGemeenteValidationPhase ? (
+        <>
+          <GuidanceContextBanner testId="case-gemeente-validatie-intro">
+            Gemeentevalidatie bevestigt of de voorgestelde route inhoudelijk en financieel gedragen kan worden.
+          </GuidanceContextBanner>
+          <div className="flex flex-wrap items-center gap-2">
+            <InlineHelpChip
+              title="Wat wordt gevalideerd?"
+              triggerLabel="Wat wordt gevalideerd?"
+              testId="case-gemeente-validatie-help"
+            >
+              <p>
+                De gemeente beoordeelt of de voorgestelde route, bekostiging en verantwoordelijkheid akkoord zijn.
+              </p>
+            </InlineHelpChip>
+            <VideoHelpTrigger
+              title="Gemeentevalidatie"
+                script="De gemeente controleert of de voorgestelde plaatsingsroute akkoord is. Bij akkoord kan de casus verder richting aanbiederbeoordeling of plaatsing. Bij afwijzing moet duidelijk zijn welke vervolgstap nodig is."
+              testId="case-gemeente-validatie-video"
+            />
+          </div>
+        </>
+      ) : null}
+      {showProviderRejectionGuidance ? (
+        <GuidanceContextBanner testId="case-gemeente-afwijzing-banner">
+        Na afwijzing blijft de casus actief totdat een vervolgactie is bepaald.
+        </GuidanceContextBanner>
+      ) : null}
       <CaseKeyFactsCard facts={caseFacts} />
       {showArrangementAlignment ? (
-        <ArrangementAlignmentPanel caseId={caseId} careContext={arrangementCareContext} variant="compact" />
+        <>
+          <ArrangementAlignmentPanel caseId={caseId} careContext={arrangementCareContext} variant="compact" />
+          <div className="flex flex-wrap items-center gap-2 px-1">
+            <ProgressiveGuidance
+              chip={{
+                title: "Wanneer doorstroombudget?",
+                triggerLabel: "Doorstroombudget",
+                testId: "case-doorstroombudget-help",
+                children: (
+                  <p>
+                    Gebruik dit wanneer vervolgplaatsing financiële goedkeuring of afstemming vraagt.
+                  </p>
+                ),
+              }}
+            />
+          </div>
+        </>
       ) : null}
       <CaseAttentionPointsCard
         items={attentionItems}
@@ -1025,7 +1079,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
           <div className="surface-section rounded-xl px-4 py-3.5 text-[13px] md:px-5">
             <p className="text-muted-foreground">Documenten en bijlagen beheer je in de casusbewerking.</p>
             <Button type="button" variant="outline" size="sm" className="mt-3 rounded-full" asChild>
-              <a href={toCareCaseEdit(caseId, "casus")}>Open casus bewerken</a>
+                <a href={toCareCaseEdit(caseId, "casus")}>Open casus bewerken</a>
             </Button>
           </div>
         )}
@@ -1135,7 +1189,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
               <div className="border border-border/70 p-3 text-sm">
                 <p><strong>Regio:</strong> {spaCase.regio}</p>
                 <p><strong>Zorgvraag:</strong> {spaCase.zorgtype}</p>
-                <p><strong>Urgentie:</strong> {spaCase.urgency}</p>
+                <p><strong>Plaatsingsdruk:</strong> {spaCase.placementPressureLabel ?? spaCase.urgency}</p>
                 <p><strong>Eigenaar:</strong> {stepOwner}</p>
               </div>
               <div className="border border-border/70 p-3 text-sm text-foreground space-y-3">
@@ -1213,7 +1267,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
       <AlertDialog open={archiveOpen} onOpenChange={setArchiveOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Casus archiveren?</AlertDialogTitle>
+          <AlertDialogTitle>Casus archiveren?</AlertDialogTitle>
             <AlertDialogDescription>
               Deze casus blijft bewaard, maar verdwijnt uit actieve overzichten.
             </AlertDialogDescription>

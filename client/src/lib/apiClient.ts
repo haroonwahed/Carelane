@@ -25,6 +25,16 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
+function shouldAvoidBrowserNavigation(): boolean {
+  if (typeof window === "undefined") {
+    return true;
+  }
+  if (import.meta.env.MODE === "test") {
+    return true;
+  }
+  return /jsdom/i.test(window.navigator.userAgent ?? "");
+}
+
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | string[]>;
 }
@@ -46,11 +56,12 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   const method = (rest.method ?? 'GET').toUpperCase();
   const isMutating = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+  const isFormData = typeof FormData !== 'undefined' && rest.body instanceof FormData;
 
   const response = await fetch(url.toString(), {
     credentials: 'same-origin',
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(isMutating ? { 'X-CSRFToken': getCsrfToken() } : {}),
       ...headers,
     },
@@ -64,7 +75,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   // in-session permission denials; 404 is used for hidden cases (e.g. provider without placement link).
   if (response.status === 401 || redirectedToLogin) {
     const nextUrl = `${window.location.pathname}${window.location.search}`;
-    window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(nextUrl)}`;
+    if (!shouldAvoidBrowserNavigation()) {
+      window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(nextUrl)}`;
+    }
     throw new Error('Niet geautoriseerd');
   }
 
@@ -90,9 +103,15 @@ export const apiClient = {
   get: <T>(path: string, params?: Record<string, string | number | string[]>) =>
     request<T>(path, { method: 'GET', params }),
   post: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+    request<T>(path, {
+      method: 'POST',
+      body: typeof FormData !== 'undefined' && body instanceof FormData ? body : JSON.stringify(body),
+    }),
   patch: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
+    request<T>(path, {
+      method: 'PATCH',
+      body: typeof FormData !== 'undefined' && body instanceof FormData ? body : JSON.stringify(body),
+    }),
   delete: <T>(path: string) =>
     request<T>(path, { method: 'DELETE' }),
 };

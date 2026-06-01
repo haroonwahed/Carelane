@@ -9,14 +9,16 @@ interface WorkflowCaseCardProps {
   onOpen: (caseId: string) => void;
 }
 
-function urgencyBadgeClasses(urgency: WorkflowCaseView["urgency"]) {
-  switch (urgency) {
+function placementPressureBadgeClasses(band: WorkflowCaseView["placementPressureBand"]) {
+  switch (band) {
     case "critical":
-      return "border-red-500/30 bg-red-500/10 text-red-300";
-    case "warning":
-      return "border-amber-500/30 bg-amber-500/10 text-amber-300";
+      return "border-red-500/35 bg-red-500/10 text-red-300";
+    case "high":
+      return "border-amber-500/35 bg-amber-500/10 text-amber-300";
     case "normal":
-      return "border-blue-500/30 bg-blue-500/10 text-blue-300";
+      return "border-blue-500/35 bg-blue-500/10 text-blue-300";
+    case "low":
+      return "border-emerald-500/25 bg-emerald-500/10 text-emerald-300";
     default:
       return "border-border bg-muted/40 text-muted-foreground";
   }
@@ -40,8 +42,8 @@ export function WorkflowCaseCard({ item, onOpen }: WorkflowCaseCardProps) {
             <p className="text-sm font-semibold text-foreground">{item.id}</p>
             <p className="mt-1 text-sm text-foreground/85">{item.clientLabel}</p>
           </div>
-          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${urgencyBadgeClasses(item.urgency)}`}>
-            {item.urgencyLabel}
+          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${placementPressureBadgeClasses(item.placementPressureBand)}`}>
+            {item.placementPressureLabel ?? item.urgencyLabel}
           </span>
         </div>
 
@@ -55,6 +57,12 @@ export function WorkflowCaseCard({ item, onOpen }: WorkflowCaseCardProps) {
         </div>
 
         <p className="mt-4 text-sm leading-6 text-foreground/85">{getShortReasonLabel(item.summarySnippet, 72)}</p>
+
+        {item.placementPressureReason ? (
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            {getShortReasonLabel(item.placementPressureReason, 100)}
+          </p>
+        ) : null}
 
         <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-muted/20 p-3 text-xs">
           <div>

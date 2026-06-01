@@ -209,7 +209,7 @@ describe("CaseExecutionPage workspace", () => {
     expect((await screen.findAllByText("Casusgegevens onvolledig")).length).toBeGreaterThan(0);
     expect(screen.getByText("Matching nog niet gestart.")).toBeInTheDocument();
     const heroBand = screen.getByTestId("casus-hero-band");
-    expect(within(heroBand).getByRole("button", { name: /Vul aanvraag aan|Controleer casusstatus/i })).toBeInTheDocument();
+    expect(within(heroBand).getByRole("button", { name: /Vul casus aan|Controleer casusstatus/i })).toBeInTheDocument();
     expect(screen.queryByTestId("worklist")).not.toBeInTheDocument();
 
     expect(screen.queryByText("Casussen")).not.toBeInTheDocument();
@@ -217,7 +217,7 @@ describe("CaseExecutionPage workspace", () => {
     expect(screen.queryByText("Alerts")).not.toBeInTheDocument();
     expect(screen.queryByText("SLA")).not.toBeInTheDocument();
     expect(screen.queryByText("Afwijzingen")).not.toBeInTheDocument();
-    expect(screen.getByText("Plaatsing & uitstroom")).toBeInTheDocument();
+    expect(screen.getByText("Plaatsing & intake")).toBeInTheDocument();
   });
 
   it("maps workflow state to decision UI phase and surfaces NBA reason", async () => {

@@ -109,7 +109,7 @@ class Command(BaseCommand):
             default_type = (
                 form_default.initial.get("preferred_region_type")
                 or form_default.fields["preferred_region_type"].initial
-                or "GEMEENTELIJK"
+                or "JEUGDREGIO"
             )
             if hasattr(default_type, "value"):
                 default_type = default_type.value
@@ -145,6 +145,6 @@ class Command(BaseCommand):
 
         self.stdout.write("")
         self.stdout.write(
-            "Tip: default SPA intake uses GEMEENTELIJK. "
-            "Zorg dat RegionalConfiguration met status=ACTIVE en region_type=GEMEENTELIJK bestaat voor deze tenant."
+            "Tip: default SPA intake uses JEUGDREGIO. "
+            "Zorg dat RegionalConfiguration met status=ACTIVE en region_type=JEUGDREGIO bestaat voor deze tenant."
         )

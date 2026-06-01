@@ -102,7 +102,7 @@ class CaseApiWorkflowStateTests(TestCase):
         self.assertEqual(detail_payload["workflow_state"], WorkflowState.PROVIDER_REVIEW_PENDING)
         self.assertEqual(list_case["workflow_state"], detail_payload["workflow_state"])
 
-    def test_case_geo_is_exposed_in_detail_but_not_raw_in_list(self):
+    def test_case_geo_is_hidden_before_controlled_link_and_exposed_after_placement(self):
         intake = CaseIntakeProcess.objects.create(
             organization=self.organization,
             title="Case with geo",
@@ -132,11 +132,18 @@ class CaseApiWorkflowStateTests(TestCase):
         self.assertIn("has_case_geo", list_case)
         self.assertTrue(list_case["has_case_geo"])
         self.assertNotIn("case_geo", list_case)
+        self.assertNotIn("case_geo", detail_payload)
 
-        self.assertIn("case_geo", detail_payload)
-        self.assertEqual(detail_payload["case_geo"]["postcode"], "3511AB")
-        self.assertEqual(float(detail_payload["case_geo"]["latitude"]), 52.0907)
-        self.assertEqual(float(detail_payload["case_geo"]["longitude"]), 5.1214)
+        intake.workflow_state = WorkflowState.PLACEMENT_CONFIRMED
+        intake.save(update_fields=["workflow_state"])
+
+        placement_response = self.client.get(reverse("careon:case_detail_api", kwargs={"case_id": case_id}))
+        self.assertEqual(placement_response.status_code, 200)
+        placement_payload = placement_response.json()
+        self.assertIn("case_geo", placement_payload)
+        self.assertEqual(placement_payload["case_geo"]["postcode"], "3511AB")
+        self.assertEqual(float(placement_payload["case_geo"]["latitude"]), 52.0907)
+        self.assertEqual(float(placement_payload["case_geo"]["longitude"]), 5.1214)
 
     def test_cases_list_and_detail_include_placement_snapshot_fields(self):
         case_id = self._create_case_with_state(workflow_state=WorkflowState.MATCHING_READY)

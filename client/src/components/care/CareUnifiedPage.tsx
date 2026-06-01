@@ -47,7 +47,7 @@ export function CareMetricBadge({ children }: { children: ReactNode }) {
   return (
     <span
       title="Status — geen actie"
-      className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-[12px] font-semibold text-muted-foreground"
+      className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/55 px-3 py-1 text-[12px] font-semibold leading-none text-muted-foreground shadow-sm"
     >
       <span className="size-1.5 shrink-0 rounded-full bg-muted-foreground/50" aria-hidden />
       {children}
@@ -98,7 +98,9 @@ export function CareInfoPopover({
           contentClassName,
         )}
       >
-        <div className="space-y-2 text-sm leading-relaxed">{children}</div>
+        <div className="space-y-2 rounded-xl border border-border/60 bg-muted/15 px-3 py-2 text-[13px] leading-6 text-muted-foreground">
+          {children}
+        </div>
       </PopoverContent>
     </Popover>
   );
@@ -118,7 +120,7 @@ export function CareMetaChip({
       data-component="care-meta-chip"
       title={titleAttr}
       className={cn(
-        "inline-flex max-w-full items-center gap-1 rounded-full border border-border/70 bg-muted/25 px-2 py-0.5 text-[11px] text-muted-foreground",
+        "inline-flex max-w-full items-center gap-1 rounded-full border border-border/60 bg-card/55 px-2.5 py-0.5 text-[11px] font-medium leading-none text-muted-foreground shadow-sm",
         className,
       )}
     >
@@ -133,7 +135,7 @@ export function CareDominantStatus({ children, className }: { children: ReactNod
     <span
       data-component="care-dominant-status"
       className={cn(
-        "inline-flex max-w-full items-center rounded-full border border-border/70 bg-card/60 px-2.5 py-1 text-[12px] font-semibold leading-tight text-foreground",
+        "inline-flex max-w-full items-center rounded-full border border-border/60 bg-card/60 px-2.5 py-1 text-[12px] font-semibold leading-tight text-foreground shadow-sm",
         className,
       )}
     >
@@ -218,7 +220,13 @@ export function CareUnifiedHeader({
   subtitleAriaLabel?: string;
 }) {
   return (
-    <section data-testid="care-unified-header" className={cn("space-y-1.5 px-1", CARE_RHYTHM.zoneHeader)}>
+    <section
+      data-testid="care-unified-header"
+      className={cn(
+        "space-y-1.5 rounded-[24px] border border-border/60 bg-card/45 px-4 py-4 shadow-sm backdrop-blur-[2px]",
+        CARE_RHYTHM.zoneHeader,
+      )}
+    >
       {/* Row 1: title (+ optional info) and actions — row 2: status/metric pills always below title row */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
@@ -388,7 +396,7 @@ export function CareFilterTabButton({
 
 /**
  * Single shared search + optional Meer filters + optional header tabs + optional right action.
- * Keep visual tokens aligned across Regiekamer, Casussen, Matching, Acties (and other care lists).
+ * Keep visual tokens aligned across coördinatie, Casussen, Matching, Acties (and other care lists).
  */
 export function CareSearchFiltersBar({
   tabs,
@@ -439,7 +447,7 @@ export function CareSearchFiltersBar({
             "flex w-full min-w-0 flex-1 items-center gap-2.5 px-3 shadow-sm",
             variant === "workspace"
               ? "care-op-search-field"
-              : "border border-border/80 bg-card",
+              : "border border-border/60 bg-card/55",
           )}
           style={{
             minHeight: tokens.searchControl.rowMinHeight,
@@ -466,7 +474,7 @@ export function CareSearchFiltersBar({
               onClick={onToggleSecondaryFilters}
               aria-expanded={expanded}
               aria-controls={secondaryFiltersId}
-              className="inline-flex h-10 items-center gap-1.5 rounded-xl px-1 text-[13px] font-medium text-primary hover:text-foreground"
+              className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-border/60 bg-card/35 px-3 text-[13px] font-medium text-primary shadow-sm transition-colors hover:bg-muted/30 hover:text-foreground"
             >
               {secondaryFiltersLabel}
               {showSecondaryFilters ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
@@ -571,7 +579,7 @@ export function CareOperationalQueueHeader({
 
 /**
  * Operational work list row: shared grid, density, and interaction pattern for
- * Regiekamer, Casussen, Matching, Plaatsingen, Aanbieder beoordeling, Acties, etc.
+ * coördinatie, Casussen, Matching, Plaatsingen, Aanbieder beoordeling, Acties, etc.
  */
 export function CareWorkRow({
   title,

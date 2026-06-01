@@ -28,6 +28,12 @@ export interface RegiekamerDecisionOverviewItem {
   current_state: string;
   phase: string;
   urgency: string;
+  urgency_applied?: boolean;
+  urgency_applied_since?: string | null;
+  placement_pressure_band?: string | null;
+  placement_pressure_label?: string | null;
+  placement_pressure_reason?: string | null;
+  placement_pressure_implication?: string | null;
   assigned_provider: string;
   next_best_action: RegiekamerOverviewAction | null;
   top_blocker: RegiekamerOverviewIssue | null;
@@ -41,6 +47,12 @@ export interface RegiekamerDecisionOverviewItem {
   hours_in_current_state: number | null;
   issue_tags?: RegiekamerIssueType[];
   responsible_role?: RegiekamerOwnershipRole;
+  zorgbehoefte_categorie?: string;
+  zorgbehoefte_categorie_code?: string;
+  zorgbehoefte_specifiek?: string;
+  zorgbehoefte_specifiek_code?: string;
+  taxonomie_lijn?: string;
+  taxonomie_code_lijn?: string;
 }
 
 export interface RegiekamerDecisionOverviewTotals {
@@ -50,6 +62,7 @@ export interface RegiekamerDecisionOverviewTotals {
   provider_sla_breaches: number;
   repeated_rejections: number;
   intake_delays: number;
+  urgency_applications_open?: number;
 }
 
 /** Operationele wachtrijen op Coördinatie — backend `governance_queues`. */

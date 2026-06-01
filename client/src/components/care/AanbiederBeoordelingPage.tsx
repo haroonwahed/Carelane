@@ -63,6 +63,7 @@ import {
   CareAttentionBar,
   CareFilterTabButton,
   CareFilterTabGroup,
+  BlockingNotice,
   CareInfoPopover,
   CareDominantStatus,
   CareMetaChip,
@@ -85,6 +86,11 @@ import {
   OPERATIONAL_QUEUE_GRID_CLASS,
   OPERATIONAL_QUEUE_HEADER_GRID_CLASS,
 } from "./CareDesignPrimitives";
+import {
+  GuidanceContextBanner,
+  InlineHelpChip,
+  MicroInstructionBlock,
+} from "../guidance";
 import { tokens } from "../../design/tokens";
 import { useCases } from "../../hooks/useCases";
 import { useProviderEvaluations } from "../../hooks/useProviderEvaluations";
@@ -288,6 +294,13 @@ function urgencyLabel(urgency: SpaCase["urgency"]): string {
   }
 }
 
+function placementPressureLabelForCase(caseItem: SpaCase): string {
+  if (caseItem.placementPressureLabel) {
+    return caseItem.placementPressureLabel;
+  }
+  return urgencyLabel(caseItem.urgency);
+}
+
 function formatClientReference(caseId: string): string {
   const digits = caseId.replace(/\D/g, "");
   if (digits.length >= 3) {
@@ -324,7 +337,7 @@ function formatProviderHandoffLine(ev: ProviderEvaluation | null | undefined): s
 }
 
 const PROVIDER_WHY_US_INTRO =
-  "Deze aanvraag is na gemeentelijke validatie en matching bij jullie neergelegd — onderstaande context ondersteunt je reactie (geen automatische toewijzing).";
+  "Deze casus is na gemeentelijke validatie en adviserende matching bij jullie neergelegd. Gebruik onderstaande context om je reactie te beoordelen; de afweging blijft handmatig en er is geen automatische toewijzing.";
 
 const PROVIDER_MATCH_ADVISORY_FOOTNOTE =
   "Geen automatische toewijzing; score en fit zijn indicatief.";
@@ -332,10 +345,12 @@ const PROVIDER_MATCH_ADVISORY_FOOTNOTE =
 /** Context block: keten-handoff + advisory matching/arrangement (row 6 “why us”). */
 function ProviderReviewWhyUsBlock({ evaluation }: { evaluation: ProviderEvaluation | null | undefined }) {
   const handoffLine = formatProviderHandoffLine(evaluation);
+  const taxonomyLine = evaluation?.taxonomieLijn?.trim() || null;
+  const taxonomyCodeLine = evaluation?.taxonomieCodeLijn?.trim() || null;
   const hasMatch = Boolean(evaluation?.matchFitSummary?.trim());
   const hasArrangement = Boolean(evaluation?.arrangementHintLine?.trim());
   const hasCoordinator = Boolean(evaluation?.caseCoordinatorLabel?.trim());
-  if (!handoffLine && !hasMatch && !hasArrangement && !hasCoordinator) {
+  if (!handoffLine && !hasMatch && !hasArrangement && !hasCoordinator && !taxonomyLine && !taxonomyCodeLine) {
     return null;
   }
 
@@ -345,9 +360,13 @@ function ProviderReviewWhyUsBlock({ evaluation }: { evaluation: ProviderEvaluati
       data-testid="provider-review-why-us-block"
     >
       <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-foreground/85">
-        Waarom deze aanvraag bij jullie ligt
+        Waarom deze casus bij jullie ligt
       </p>
       <p className="text-[11px] leading-snug text-muted-foreground">{PROVIDER_WHY_US_INTRO}</p>
+      <p className="text-[10px] leading-snug text-muted-foreground/90">
+        Handig om te weten: de context hieronder combineert gemeente, instroom, aanmeldercontext, matchadvies,
+        arrangementhint en casuscoördinatie in één compact overzicht.
+      </p>
       {handoffLine ? (
         <p
           className="text-[11px] text-muted-foreground leading-snug"
@@ -355,6 +374,20 @@ function ProviderReviewWhyUsBlock({ evaluation }: { evaluation: ProviderEvaluati
         >
           {handoffLine}
         </p>
+      ) : null}
+      {taxonomyLine || taxonomyCodeLine ? (
+        <div className="space-y-0.5 rounded-md border border-border/40 bg-background/30 px-2.5 py-2">
+          {taxonomyLine ? (
+            <p className="text-[11px] text-muted-foreground leading-snug" data-testid="provider-review-taxonomy-line">
+              {taxonomyLine}
+            </p>
+          ) : null}
+          {taxonomyCodeLine ? (
+            <p className="text-[10px] text-muted-foreground/90 leading-snug" data-testid="provider-review-taxonomy-code-line">
+              {taxonomyCodeLine}
+            </p>
+          ) : null}
+        </div>
       ) : null}
       {hasMatch ? (
         <p
@@ -396,7 +429,7 @@ function reviewCaseMetaLines(
 ): ReactNode[] {
   const meta: ReactNode[] = [
     <CareMetaChip key="regio">{caseItem.regio || "Regio onbekend"}</CareMetaChip>,
-    <CareMetaChip key="urgency">{urgencyLabel(caseItem.urgency)}</CareMetaChip>,
+    <CareMetaChip key="urgency">{placementPressureLabelForCase(caseItem)}</CareMetaChip>,
     <CareMetaChip key="wait">{caseItem.wachttijd}d in wachtrij</CareMetaChip>,
   ];
 
@@ -926,7 +959,7 @@ function GemeenteView({
               <CareInfoPopover ariaLabel="Uitleg reacties" testId="aanbieder-beoordeling-page-info">
                 <div className="space-y-2 text-muted-foreground">
                   <p>
-                    Volg reacties van zorgaanbieders op deze aanvraag — beslissing ligt bij de aanbieder. Herinner bij
+                    Volg reacties van zorgaanbieders op deze casus — beslissing ligt bij de aanbieder. Herinner bij
                     overschrijding van de reactietermijn.
                   </p>
                   <p>Status en termijn per uitgenodigde aanbieder op één plek.</p>
@@ -1014,8 +1047,13 @@ function GemeenteView({
             ) : undefined
           }
         >
+          {shellExtrasReady ? (
+            <GuidanceContextBanner testId="aanbieder-beoordeling-zichtbaarheid-banner" className="mb-4">
+              Deze casus is zichtbaar omdat er een actief plaatsingsverzoek is gekoppeld.
+            </GuidanceContextBanner>
+          ) : null}
           {loading && (
-            <LoadingState title="Aanvragen laden…" copy="Even geduld — de aanvraag en aanbieders worden opgehaald." />
+            <LoadingState title="Casussen laden…" copy="Even geduld — de casus en aanbieders worden opgehaald." />
           )}
 
           {!loading && error && (
@@ -1047,8 +1085,8 @@ function GemeenteView({
                 }
               />
               <EmptyState
-                title="Geen aanvragen in deze fase"
-                copy="Er zijn nog geen aanvragen naar een aanbieder verzonden. Valideer eerst het voorstel of keer terug naar de werkvoorraad."
+                title="Geen casussen in deze fase"
+                copy="Er zijn nog geen casussen naar een aanbieder verzonden. Valideer eerst het voorstel of keer terug naar de werkvoorraad."
               />
             </div>
           )}
@@ -1131,7 +1169,7 @@ function GemeenteView({
                 meta={
                   <div className="flex flex-wrap items-center gap-2">
                     {focusCase ? <CareMetaChip>{formatClientReference(focusCase.id)}</CareMetaChip> : null}
-                    {focusCase ? <CareMetaChip>{urgencyLabel(focusCase.urgency)}</CareMetaChip> : null}
+                    {focusCase ? <CareMetaChip>{placementPressureLabelForCase(focusCase)}</CareMetaChip> : null}
                     {focusCase?.regio ? <CareMetaChip>{focusCase.regio}</CareMetaChip> : null}
                   </div>
                 }
@@ -1297,7 +1335,7 @@ function ProviderReviewOutcomeBand({
           <div className="min-w-0 space-y-1">
             <p className="text-[14px] font-semibold text-foreground">Niet meer actief</p>
             <p className="text-[13px] text-muted-foreground">
-              Deze aanvraag staat niet meer open voor jouw reactie in dit overzicht.
+              Deze casus staat niet meer open voor jouw reactie in dit overzicht.
             </p>
           </div>
         </div>
@@ -1374,7 +1412,7 @@ function ProviderReviewOutcomeBand({
         <XCircle className="shrink-0 text-destructive mt-0.5" size={18} aria-hidden />
         <div className="min-w-0 space-y-1">
           <p className="text-[14px] font-semibold text-foreground">Afgewezen</p>
-          <p className="text-[13px] text-muted-foreground">Casus gaat terug naar matching.</p>
+            <p className="text-[13px] text-muted-foreground">Casus gaat terug naar matching.</p>
           {auditLine ? (
             <p className="text-[12px] text-muted-foreground" data-testid="provider-rejected-audit-line">
               {auditLine}
@@ -1570,6 +1608,9 @@ function ProviderReviewCaseCard({
         )}
       >
         <div className={CARE_RHYTHM.zoneStack}>
+          <GuidanceContextBanner testId="provider-review-visibility-banner">
+            Deze casus is zichtbaar omdat er een actief plaatsingsverzoek is gekoppeld.
+          </GuidanceContextBanner>
           <CareAttentionBar
             layout="compact"
             tone="info"
@@ -1578,6 +1619,12 @@ function ProviderReviewCaseCard({
             action={<CareQueueInlineAction type="button" onClick={() => onCaseClick(caseItem.id)}>Open casus</CareQueueInlineAction>}
           />
           <ProviderReviewWhyUsBlock evaluation={evaluation} />
+          <MicroInstructionBlock
+            title="Wat moet beoordeeld worden?"
+            testId="provider-review-beoordeling-instructie"
+          >
+            Beoordeel passendheid, capaciteit en eventuele voorwaarden voor vervolgstappen.
+          </MicroInstructionBlock>
 
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -1697,7 +1744,21 @@ function ProviderReviewCaseCard({
 
           {panelMode === "reject" && (
             <CareSection tone="muted" className="space-y-4" testId="provider-review-reject-panel">
-              <CareSectionHeader title="Afwijzen" description="Leg vast waarom de casus niet past en wat dat betekent voor matching." />
+              <CareSectionHeader
+                title="Afwijzen"
+                description={(
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    <span>Leg vast waarom de casus niet past en wat dat betekent voor matching.</span>
+                    <InlineHelpChip
+                      title="Wanneer afwijzen?"
+                      triggerLabel="Wanneer afwijzen?"
+                      testId="provider-review-afwijzen-help"
+                    >
+                      <p>Wijs alleen af wanneer plaatsing of vervolg niet haalbaar is. Geef altijd een bruikbare reden.</p>
+                    </InlineHelpChip>
+                  </span>
+                )}
+              />
               <RadioGroup
                 value={rejectCode || undefined}
                 onValueChange={v => setRejectCode(v as RejectionReasonCode)}
@@ -1897,11 +1958,11 @@ function ProviderView({
             message={
               activeQueue.length > 0
                 ? activeQueue.length === 1
-                  ? "1 aanvraag wacht op jouw reactie"
-                  : `${activeQueue.length} aanvragen wachten op jouw reactie`
+                  ? "1 casus wacht op jouw reactie"
+                  : `${activeQueue.length} casussen wachten op jouw reactie`
                 : "Geen openstaande reacties"
             }
-            action={onNavigateToCasussen ? <CareQueueInlineAction onClick={onNavigateToCasussen}>Naar aanvragen</CareQueueInlineAction> : undefined}
+            action={onNavigateToCasussen ? <CareQueueInlineAction onClick={onNavigateToCasussen}>Naar casussen</CareQueueInlineAction> : undefined}
           />
         }
         metric={
@@ -1921,17 +1982,14 @@ function ProviderView({
         }
       >
         {submitError && (
-          <div
-            role="alert"
-            className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3"
-          >
-            <AlertTriangle size={16} className="text-red-400 mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-foreground">{submitError}</p>
+          <div className="space-y-2">
+            <BlockingNotice message={submitError} />
+            <div className="flex justify-end">
+              <button type="button" onClick={clearSubmitError} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                <XCircle size={16} />
+                Sluit melding
+              </button>
             </div>
-            <button type="button" onClick={clearSubmitError} className="text-muted-foreground hover:text-foreground">
-              <XCircle size={16} />
-            </button>
           </div>
         )}
 
@@ -1962,7 +2020,7 @@ function ProviderView({
           <EmptyState
             title="Geen openstaande verzoeken"
             copy="Nieuwe casusverzoeken van gemeenten verschijnen hier zodra een casus naar jouw aanbieder is verzonden."
-            action={onNavigateToCasussen ? <Button variant="outline" onClick={onNavigateToCasussen}>Bekijk mijn aanvragen</Button> : undefined}
+            action={onNavigateToCasussen ? <Button variant="outline" onClick={onNavigateToCasussen}>Bekijk mijn casussen</Button> : undefined}
           />
         )}
 
@@ -1977,118 +2035,141 @@ function ProviderView({
         {!loading && !error && pendingCases.length > 0 && (
           <div className={CARE_RHYTHM.zoneStack}>
             {activeQueue.length > 0 && (
-              <section className="space-y-2" key={focusToken} data-testid="provider-beoordeling-actieve-sectie">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                  Actieve reactie
-                </p>
-                {activePlacementEvidence && (
-                  <div data-testid="aanbieder-provider-placement-evidence">
-                    <CareAttentionBar
-                      tone={placementEvidenceTone(activePlacementEvidence)}
-                      icon={<FileText size={16} aria-hidden />}
-                      message={formatPlacementEvidenceLine(activePlacementEvidence)}
-                    />
-                  </div>
-                )}
-                <ProviderReviewCaseCard
-                  caseItem={activeQueue[0]}
-                  evaluation={evaluationByCaseId.get(activeQueue[0].id)}
-                  submitting={submitting}
-                  submitDecision={submitDecision}
-                  onCaseClick={onCaseClick}
-                  onRequestInfo={() => setDecisionModal({ type: "info_request", caseId: activeQueue[0].id })}
-                  outcome={null}
-                  onOutcome={(type, caseId) => {
-                    if (type === "accepted") {
-                      setAcceptedCaseIds(prev => new Set([...prev, caseId]));
-                    } else if (type === "rejected") {
-                      setRejectedCaseIds(prev => new Set([...prev, caseId]));
-                    }
-                  }}
-                  onNextCase={handleNextCase}
+              <CareSection
+                tone="muted"
+                className="space-y-4"
+                key={focusToken}
+                testId="provider-beoordeling-actieve-sectie"
+              >
+                <CareSectionHeader
+                  eyebrow="Actieve reactie"
+                  title={activeQueue.length === 1 ? "1 casus staat klaar" : `${activeQueue.length} casussen staan klaar`}
+                  description="Werk eerst de bovenste casus af; de rest blijft compact zichtbaar in de wachtrij."
                 />
-              </section>
+                <CareSectionBody className="space-y-4">
+                  {activePlacementEvidence && (
+                    <div data-testid="aanbieder-provider-placement-evidence">
+                      <CareAttentionBar
+                        tone={placementEvidenceTone(activePlacementEvidence)}
+                        icon={<FileText size={16} aria-hidden />}
+                        message={formatPlacementEvidenceLine(activePlacementEvidence)}
+                      />
+                    </div>
+                  )}
+                  <ProviderReviewCaseCard
+                    caseItem={activeQueue[0]}
+                    evaluation={evaluationByCaseId.get(activeQueue[0].id)}
+                    submitting={submitting}
+                    submitDecision={submitDecision}
+                    onCaseClick={onCaseClick}
+                    onRequestInfo={() => setDecisionModal({ type: "info_request", caseId: activeQueue[0].id })}
+                    outcome={null}
+                    onOutcome={(type, caseId) => {
+                      if (type === "accepted") {
+                        setAcceptedCaseIds(prev => new Set([...prev, caseId]));
+                      } else if (type === "rejected") {
+                        setRejectedCaseIds(prev => new Set([...prev, caseId]));
+                      }
+                    }}
+                    onNextCase={handleNextCase}
+                  />
+                </CareSectionBody>
+              </CareSection>
             )}
 
             {activeQueue.length === 0 && doneCases.length > 0 && (
               <EmptyState
                 title="Wachtrij afgerond"
                 copy="Alle openstaande reacties in dit overzicht zijn verwerkt."
-                action={onNavigateToCasussen ? <Button variant="outline" onClick={onNavigateToCasussen}>Bekijk mijn aanvragen</Button> : undefined}
+                    action={onNavigateToCasussen ? <Button variant="outline" onClick={onNavigateToCasussen}>Bekijk mijn casussen</Button> : undefined}
               />
             )}
 
             {activeQueue.length > 1 && (
-              <section className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                  Overige in wachtrij ({activeQueue.length - 1})
-                </p>
-                <CareWorkListCard
-                  header={
-                    <CareOperationalQueueHeader
-                      labels={["Urgentie", "Casus", "Operationeel", "Status", "Wachttijd", "Actie"]}
-                    />
-                  }
-                >
-                  <div className="divide-y divide-border/40">
-                    <CarePrimaryList>
-                      {activeQueue.slice(1).map((c) => (
-                        <ProviderReviewQueueRow
-                          key={c.id}
-                          caseItem={c}
-                          outcome={null}
-                          onCaseClick={onCaseClick}
-                        />
-                      ))}
-                    </CarePrimaryList>
-                  </div>
-                </CareWorkListCard>
-              </section>
-            )}
-
-            {doneCases.length > 0 && (
-              <section className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                  Verwerkte aanvragen (dit overzicht)
-                </p>
-                <CareWorkListCard>
-                  <div className="divide-y divide-border/40">
-                    <CarePrimaryList>
-                      {doneCases.map((c) => {
-                        const doneOutcome = deriveProviderCardOutcome(
-                          c.id,
-                          evaluationByCaseId,
-                          acceptedCaseIds,
-                          rejectedCaseIds,
-                        );
-                        if (
-                          doneOutcome === "accepted"
-                          || doneOutcome === "rejected"
-                          || doneOutcome === "info_requested"
-                          || doneOutcome === "inactive"
-                        ) {
-                          return (
-                            <ProviderReviewOutcomeBand
-                              key={c.id}
-                              outcome={doneOutcome}
-                              evaluation={evaluationByCaseId.get(c.id)}
-                              showNextAction={false}
-                            />
-                          );
-                        }
-                        return (
+              <CareSection
+                tone="muted"
+                className="space-y-4"
+              >
+                <CareSectionHeader
+                  eyebrow="Overige in wachtrij"
+                  title={`${activeQueue.length - 1} resterend${activeQueue.length - 1 === 1 ? "" : "e"} casus${activeQueue.length - 1 === 1 ? "" : "sen"}`}
+                  description="Deze items blijven compact zichtbaar totdat de actieve reactie is afgerond."
+                />
+                <CareSectionBody>
+                  <CareWorkListCard
+                    header={
+                      <CareOperationalQueueHeader
+                        labels={["Urgentie", "Casus", "Operationeel", "Status", "Wachttijd", "Actie"]}
+                      />
+                    }
+                  >
+                    <div className="divide-y divide-border/40">
+                      <CarePrimaryList>
+                        {activeQueue.slice(1).map((c) => (
                           <ProviderReviewQueueRow
                             key={c.id}
                             caseItem={c}
-                            outcome={doneOutcome}
+                            outcome={null}
                             onCaseClick={onCaseClick}
                           />
-                        );
-                      })}
-                    </CarePrimaryList>
-                  </div>
-                </CareWorkListCard>
-              </section>
+                        ))}
+                      </CarePrimaryList>
+                    </div>
+                  </CareWorkListCard>
+                </CareSectionBody>
+              </CareSection>
+            )}
+
+            {doneCases.length > 0 && (
+              <CareSection
+                tone="muted"
+                className="space-y-4"
+              >
+                <CareSectionHeader
+                  eyebrow="Verwerkte aanvragen"
+                  title="Dit overzicht"
+                  description="Afgehandelde reacties blijven beschikbaar voor traceerbaarheid en snelle hercontrole."
+                />
+                <CareSectionBody>
+                  <CareWorkListCard>
+                    <div className="divide-y divide-border/40">
+                      <CarePrimaryList>
+                        {doneCases.map((c) => {
+                          const doneOutcome = deriveProviderCardOutcome(
+                            c.id,
+                            evaluationByCaseId,
+                            acceptedCaseIds,
+                            rejectedCaseIds,
+                          );
+                          if (
+                            doneOutcome === "accepted"
+                            || doneOutcome === "rejected"
+                            || doneOutcome === "info_requested"
+                            || doneOutcome === "inactive"
+                          ) {
+                            return (
+                              <ProviderReviewOutcomeBand
+                                key={c.id}
+                                outcome={doneOutcome}
+                                evaluation={evaluationByCaseId.get(c.id)}
+                                showNextAction={false}
+                              />
+                            );
+                          }
+                          return (
+                            <ProviderReviewQueueRow
+                              key={c.id}
+                              caseItem={c}
+                              outcome={doneOutcome}
+                              onCaseClick={onCaseClick}
+                            />
+                          );
+                        })}
+                      </CarePrimaryList>
+                    </div>
+                  </CareWorkListCard>
+                </CareSectionBody>
+              </CareSection>
             )}
           </div>
         )}

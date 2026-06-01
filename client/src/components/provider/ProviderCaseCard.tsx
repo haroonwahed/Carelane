@@ -206,7 +206,7 @@ export function ProviderCaseCard({
           <div className="flex items-start gap-2">
             <AlertTriangle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-red-300 leading-relaxed">
-              <strong>Let op:</strong> Deze casus heeft hoge urgentie. 
+              <strong>Let op:</strong> Deze casus heeft hoge urgentie.
               Reactie binnen 24 uur vereist.
             </p>
           </div>

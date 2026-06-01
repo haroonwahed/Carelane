@@ -31,33 +31,33 @@ function r(n: number): number {
 
 function nlWachtUpstream(w: number): string {
   const x = r(w);
-  return x === 1 ? "1 aanvraag wacht upstream" : `${x} aanvragen wachten upstream`;
+  return x === 1 ? "1 casus wacht upstream" : `${x} casussen wachten upstream`;
 }
 
 function nlBlokkeertBijAanbieder(p: number): string {
   const x = r(p);
-  return x === 1 ? "1 aanvraag blokkeert bij aanbieder" : `${x} aanvragen blokkeren bij aanbieder`;
+  return x === 1 ? "1 casus blokkeert bij aanbieder" : `${x} casussen blokkeren bij aanbieder`;
 }
 
 function nlMetKritiekeBlokkade(b: number): string {
   const x = r(b);
-  return x === 1 ? "1 aanvraag met kritieke blokkade" : `${x} aanvragen met kritieke blokkade`;
+  return x === 1 ? "1 casus met kritieke blokkade" : `${x} casussen met kritieke blokkade`;
 }
 
 function nlMetIntakeVertraging(d: number): string {
   const x = r(d);
-  return x === 1 ? "1 aanvraag met intake-vertraging" : `${x} aanvragen met intake-vertraging`;
+  return x === 1 ? "1 casus met intake-vertraging" : `${x} casussen met intake-vertraging`;
 }
 
 /** Titel zonder getal: het aantal staat in `panel.linkCount` / CareAlertCard-metric. */
 function nlMetVerhoogdRisicoHeading(risks: number): string {
   const x = r(risks);
-  return x === 1 ? "Aanvraag met verhoogd risico" : "Aanvragen met verhoogd risico";
+  return x === 1 ? "Casus met verhoogd risico" : "Casussen met verhoogd risico";
 }
 
 function nlMatchingRegieTitel(m: number): string {
   const x = r(m);
-  return x === 1 ? "Matching vraagt regie (1 aanvraag)" : `Matching vraagt regie (${x} aanvragen)`;
+  return x === 1 ? "Matching vraagt regie (1 casus)" : `Matching vraagt regie (${x} casussen)`;
 }
 
 /**
@@ -162,7 +162,7 @@ export function computeRegiekamerNextBestAction(input: RegiekamerNbaInput): Regi
     const title = "Verhoogde regie-aandacht";
     const description =
       b === 1
-        ? "1 aanvraag vraagt directe afstemming."
+        ? "1 casus vraagt directe afstemming."
         : `${b} aanvragen vragen directe afstemming.`;
     const impactHint =
       s > 0
@@ -206,7 +206,7 @@ export function computeRegiekamerNextBestAction(input: RegiekamerNbaInput): Regi
     return {
       title: nlMatchingRegieTitel(m),
       description:
-        "Zwak signaal of geen passende zorgcapaciteit. De primaire knop zet filters op matching-urgenties; validatie of her-matching doe je per aanvraag, niet via deze knop.",
+        "Zwak signaal of geen passende zorgcapaciteit. De primaire knop zet filters op matching-urgenties; validatie of her-matching doe je per casus, niet via deze knop.",
       reasons: matchingReasons(m, ex),
       primaryAction: { label: "Bekijk matching-aanvragen", actionKey: "FOCUS_MATCHING" },
       secondaryAction: { label: "Bekijk risico's", actionKey: "FOCUS_RISKS" },

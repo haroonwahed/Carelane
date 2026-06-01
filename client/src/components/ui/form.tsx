@@ -80,7 +80,7 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
     <FormItemContext.Provider value={{ id }}>
       <div
         data-slot="form-item"
-        className={cn("grid gap-2", className)}
+        className={cn("grid gap-3", className)}
         {...props}
       />
     </FormItemContext.Provider>
@@ -130,7 +130,17 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-description"
       id={formDescriptionId}
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("mt-2 rounded-xl border border-border/60 bg-muted/15 px-3 py-2 text-[0.8125rem] leading-6 text-muted-foreground", className)}
+      {...props}
+    />
+  );
+}
+
+function FieldHelperBox({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="field-helper-box"
+      className={cn("mt-2 rounded-xl border border-border/60 bg-muted/15 px-3 py-2 text-xs leading-6 text-muted-foreground", className)}
       {...props}
     />
   );
@@ -148,7 +158,7 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-message"
       id={formMessageId}
-      className={cn("text-destructive text-sm", className)}
+      className={cn("text-[0.8125rem] leading-6 text-destructive", className)}
       {...props}
     >
       {body}
@@ -165,4 +175,5 @@ export {
   FormDescription,
   FormMessage,
   FormField,
+  FieldHelperBox,
 };

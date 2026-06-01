@@ -17,6 +17,7 @@ class RegionType(models.TextChoices):
     ROAZ = 'ROAZ', 'ROAZ'
     GGD = 'GGD', 'GGD'
     ZORGKANTOOR = 'ZORGKANTOOR', 'Zorgkantoor'
+    CUSTOM = 'CUSTOM', 'Aangepast'
 
 
 class OutcomeReasonCode(models.TextChoices):
@@ -36,6 +37,10 @@ class OutcomeReasonCode(models.TextChoices):
 
 def document_upload_path(instance, filename):
     return f'documents/{instance.matter.id if instance.matter else "general"}/{filename}'
+
+
+def _generate_source_reference(prefix: str = 'BR') -> str:
+    return f'{prefix}-{date.today().year}-{uuid.uuid4().hex[:6].upper()}'
 
 
 class Organization(models.Model):
@@ -213,10 +218,12 @@ class CareCategoryMain(models.Model):
         verbose_name = 'Care Category (Main)'
         verbose_name_plural = 'Care Categories (Main)'
 
+    code = models.CharField(max_length=64, blank=True, default='', db_index=True)
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    visible_in_mvp = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -231,10 +238,12 @@ class CareCategorySubcategory(models.Model):
         verbose_name_plural = 'Care Subcategories'
 
     main_category = models.ForeignKey(CareCategoryMain, on_delete=models.CASCADE, related_name='subcategories')
+    code = models.CharField(max_length=64, blank=True, default='', db_index=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    visible_in_mvp = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -357,6 +366,12 @@ class ProviderProfile(models.Model):
     # Target care categories
     target_care_categories = models.ManyToManyField(CareCategoryMain, blank=True, related_name='provider_profiles',
                                                      verbose_name='Zorgvraagcategorieën')
+    target_care_subcategories = models.ManyToManyField(
+        CareCategorySubcategory,
+        blank=True,
+        related_name='provider_profiles',
+        verbose_name='Specifieke zorgbehoeften',
+    )
     served_regions = models.ManyToManyField(
         'RegionalConfiguration',
         blank=True,
@@ -664,6 +679,13 @@ class Document(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True, related_name='documents')
     uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     tags = models.CharField(max_length=500, blank=True)
+    external_handoff_reference = models.CharField(
+        max_length=500,
+        blank=True,
+        default='',
+        verbose_name='Externe handoffreferentie',
+        help_text='Veilige verwijzing naar een extern systeem of een beveiligde uitwisseling. Geen persoonsgegevens.',
+    )
     is_privileged = models.BooleanField(default=False)
     is_confidential = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1301,11 +1323,6 @@ class PlacementRequest(models.Model):
         if target_status == self.Status.APPROVED:
             if not self.selected_provider_id:
                 return False, 'Een bevestigde plaatsing vereist een geselecteerde aanbieder.'
-            if intake and intake.status not in {
-                CaseIntakeProcess.ProcessStatus.MATCHING,
-                CaseIntakeProcess.ProcessStatus.DECISION,
-            }:
-                return False, 'Casus moet eerst in matching staan.'
             if self.provider_response_status != self.ProviderResponseStatus.ACCEPTED:
                 return False, 'Plaatsing kan pas worden bevestigd na acceptatie door de aanbieder.'
             from contracts.care_lifecycle_v12 import placement_budget_blocks_confirmation
@@ -2059,7 +2076,19 @@ class CaseIntakeProcess(models.Model):
     # Organization & basic info
     organization = models.ForeignKey('Organization', on_delete=models.CASCADE, null=True, blank=True, related_name='due_diligence_processes')
     contract = models.OneToOneField('CareCase', on_delete=models.SET_NULL, null=True, blank=True, related_name='due_diligence_process')
-    title = models.CharField(max_length=200, verbose_name='Casusidentificatie', help_text='Bijv. voornaam + initialiteit')
+    title = models.CharField(
+        max_length=200,
+        verbose_name='Casuslabel',
+        help_text='Gebruik een pseudoniem of operationeel label. Geen naam, initialen of andere identificerende gegevens.',
+    )
+    source_reference = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        db_index=True,
+        verbose_name='Bronreferentie',
+        help_text='Automatisch gegenereerde referentie voor de bronkoppeling.',
+    )
     status = models.CharField(max_length=20, choices=ProcessStatus.choices, default=ProcessStatus.INTAKE, verbose_name='Status')
     workflow_state = models.CharField(
         max_length=48,
@@ -2085,6 +2114,13 @@ class CaseIntakeProcess(models.Model):
         GEMEENTE_AMBTELIJK = 'GEMEENTE_AMBTELIJK', 'Gemeente-account (standaardroute)'
         ZORGAANBIEDER_ORG = 'ZORGAANBIEDER_ORG', 'Zorgaanbieder-organisatie'
         ADMIN = 'ADMIN', 'Platformbeheer'
+
+    class PlacementPressureHorizon(models.TextChoices):
+        TODAY = 'TODAY', 'Vandaag'
+        THREE_DAYS = '3_DAYS', '3 dagen'
+        ONE_WEEK = '1_WEEK', '1 week'
+        TWO_WEEKS = '2_WEEKS', '2 weken'
+        MORE_THAN_TWO_WEEKS = '>2_WEEKS', '>2 weken'
 
     entry_route = models.CharField(
         max_length=20,
@@ -2117,15 +2153,42 @@ class CaseIntakeProcess(models.Model):
     
     # Dates
     start_date = models.DateField(verbose_name='Intakedatum')
-    target_completion_date = models.DateField(verbose_name='Doeldatum matchbesluit')
+    target_completion_date = models.DateField(verbose_name='Streefdatum matching')
     
     # CARE-SPECIFIC: Zorgvraag (Care Question)
-    care_category_main = models.ForeignKey(CareCategoryMain, on_delete=models.SET_NULL, null=True, blank=True, related_name='intakes_main', verbose_name='Hoofdcategorie zorgvraag')
-    care_category_sub = models.ForeignKey(CareCategorySubcategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='intakes_sub', verbose_name='Subcategorie zorgvraag')
+    care_category_main = models.ForeignKey(CareCategoryMain, on_delete=models.SET_NULL, null=True, blank=True, related_name='intakes_main', verbose_name='Zorgbehoefte categorie')
+    care_category_sub = models.ForeignKey(CareCategorySubcategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='intakes_sub', verbose_name='Specifieke zorgbehoefte')
     
     # CARE-SPECIFIC: Matching dimensions
     urgency = models.CharField(max_length=10, choices=Urgency.choices, default=Urgency.MEDIUM, verbose_name='Urgentie')
     complexity = models.CharField(max_length=20, choices=Complexity.choices, default=Complexity.SIMPLE, verbose_name='Complexiteit')
+    placement_pressure_horizon = models.CharField(
+        max_length=20,
+        choices=PlacementPressureHorizon.choices,
+        default=PlacementPressureHorizon.MORE_THAN_TWO_WEEKS,
+        verbose_name='Huidige situatie houdbaar tot',
+        help_text='Hoe lang de huidige situatie operationeel houdbaar is zonder escalatie.',
+    )
+    safety_pressure = models.BooleanField(
+        default=False,
+        verbose_name='Veiligheidsdruk',
+        help_text='Geeft aan of vertraging een veiligheidsrisico oplevert.',
+    )
+    time_sensitive_arrangement = models.BooleanField(
+        default=False,
+        verbose_name='Tijdskritisch arrangement',
+        help_text='Geeft aan of funding of juridische timing de doorstroom versnelt.',
+    )
+    escalation_needed = models.BooleanField(
+        default=False,
+        verbose_name='Escalatie nodig',
+        help_text='Geeft aan of snelle gemeente- of providerafstemming nodig is.',
+    )
+    placement_pressure_notes = models.TextField(
+        blank=True,
+        verbose_name='Plaatsingsdruk toelichting',
+        help_text='Korte operationele toelichting zonder direct herleidbare persoonsgegevens.',
+    )
     preferred_care_form = models.CharField(max_length=32, choices=CareForm.choices, default=CareForm.OUTPATIENT, verbose_name='Gewenste zorgvorm')
     preferred_region_type = models.CharField(
         max_length=20,
@@ -2149,6 +2212,30 @@ class CaseIntakeProcess(models.Model):
         related_name='intake_processes',
         verbose_name='Gemeente',
     )
+    herkomst_gemeente = models.ForeignKey(
+        'MunicipalityConfiguration',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='origin_intake_processes',
+        verbose_name='Herkomstgemeente',
+    )
+    verantwoordelijke_gemeente = models.ForeignKey(
+        'MunicipalityConfiguration',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='responsibility_intake_processes',
+        verbose_name='Verantwoordelijke gemeente',
+    )
+    verblijfsgemeente = models.ForeignKey(
+        'MunicipalityConfiguration',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='residence_intake_processes',
+        verbose_name='Verblijfsgemeente',
+    )
     regio = models.ForeignKey(
         'RegionalConfiguration',
         on_delete=models.SET_NULL,
@@ -2157,6 +2244,49 @@ class CaseIntakeProcess(models.Model):
         related_name='resolved_intakes',
         verbose_name='Geresolveerde regio',
         help_text='Deterministisch afgeleid uit gemeente; stabiel tenzij gemeente wijzigt.',
+    )
+    zorgregio = models.ForeignKey(
+        'RegionalConfiguration',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='zorgregio_intakes',
+        verbose_name='Zorgregio',
+    )
+    plaatsingsregio = models.ForeignKey(
+        'RegionalConfiguration',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='plaatsingsregio_intakes',
+        verbose_name='Plaatsingsregio',
+    )
+    contractregio = models.ForeignKey(
+        'RegionalConfiguration',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='contractregio_intakes',
+        verbose_name='Contractregio',
+    )
+    escalatie_regio = models.ForeignKey(
+        'RegionalConfiguration',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='escalatie_intakes',
+        verbose_name='Escalatieregio',
+    )
+    responsibility_reason = models.TextField(blank=True, verbose_name='Verantwoordingsreden')
+    responsibility_last_reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Laatste herbeoordeling',
+    )
+    requires_revalidation = models.BooleanField(
+        default=False,
+        verbose_name='Herbeoordeling vereist',
+        help_text='Wordt automatisch geactiveerd wanneer route- of regiogrenzen verschuiven.',
     )
     zorgvorm_gewenst = models.CharField(
         max_length=32,
@@ -2219,8 +2349,16 @@ class CaseIntakeProcess(models.Model):
     risk_factors = models.ManyToManyField(RiskFactor, blank=True, related_name='intakes', verbose_name='Risicofactoren')
     
     # Descriptive assessment
-    assessment_summary = models.TextField(blank=True, verbose_name='Intake samenvatting', help_text='Hulpvraag samenvatting, urgentie, aandachtspunten')
-    description = models.TextField(blank=True, verbose_name='Aanvullende opmerkingen')
+    assessment_summary = models.TextField(
+        blank=True,
+        verbose_name='Intake samenvatting',
+        help_text='Pseudonieme beschrijving van de casus. Geen namen, adressen, contactgegevens of BSN.',
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name='Aanvullende opmerkingen',
+        help_text='Alleen operationele context zonder direct herleidbare persoonsgegevens.',
+    )
     intake_outcome_status = models.CharField(
         max_length=20,
         choices=IntakeOutcomeStatus.choices,
@@ -2252,6 +2390,22 @@ class CaseIntakeProcess(models.Model):
         default=False,
         verbose_name='Urgentie gevalideerd',
         help_text='Mag alleen worden ingesteld door gemeente, en alleen als urgentieverklaring is bijgevoegd.',
+    )
+    has_urgency_declaration = models.BooleanField(
+        default=False,
+        verbose_name='Client heeft al een urgentieverklaring',
+        help_text='Geeft aan dat de client al een bestaande urgentieverklaring heeft die geüpload kan worden.',
+    )
+    urgency_applied = models.BooleanField(
+        default=False,
+        verbose_name='Urgentieverklaring aangevraagd',
+        help_text='Geeft aan dat de urgentieverklaring is aangevraagd bij de gemeente of het loket.',
+    )
+    urgency_applied_since = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Urgentieverklaring aangevraagd op',
+        help_text='Datum waarop de urgentieverklaring is aangevraagd.',
     )
     urgency_document = models.FileField(
         upload_to='urgency_documents/%Y/%m/',
@@ -2318,6 +2472,216 @@ class CaseIntakeProcess(models.Model):
     def __str__(self):
         return f'{self.title} ({self.get_status_display()})'
 
+    def _resolve_region_from_municipality(self, municipality):
+        if municipality is None:
+            return None
+        active_region = (
+            municipality.regions.filter(status=RegionalConfiguration.Status.ACTIVE)
+            .order_by('region_type', 'region_name')
+            .first()
+        )
+        if active_region is not None:
+            return active_region
+        return municipality.regions.order_by('region_type', 'region_name').first()
+
+    def _region_label(self, region):
+        if region is None:
+            return ''
+        return region.region_name or region.region_code or ''
+
+    @classmethod
+    def derive_placement_pressure(cls, *, horizon, target_completion_date=None, start_date=None, safety_pressure=False, time_sensitive_arrangement=False, escalation_needed=False, today=None):
+        from datetime import date as _date
+
+        today = today or _date.today()
+        score = 0
+        reasons: list[str] = []
+        label = 'Laag'
+        implication = 'Normale routing'
+
+        horizon_value = str(horizon or '').strip().upper()
+        horizon_score_map = {
+            cls.PlacementPressureHorizon.TODAY: 4,
+            cls.PlacementPressureHorizon.THREE_DAYS: 3,
+            cls.PlacementPressureHorizon.ONE_WEEK: 2,
+            cls.PlacementPressureHorizon.TWO_WEEKS: 1,
+            cls.PlacementPressureHorizon.MORE_THAN_TWO_WEEKS: 0,
+        }
+        horizon_reason_map = {
+            cls.PlacementPressureHorizon.TODAY: 'Huidige situatie houdbaar tot vandaag',
+            cls.PlacementPressureHorizon.THREE_DAYS: 'Huidige situatie houdbaar tot 3 dagen',
+            cls.PlacementPressureHorizon.ONE_WEEK: 'Huidige situatie houdbaar tot 1 week',
+            cls.PlacementPressureHorizon.TWO_WEEKS: 'Huidige situatie houdbaar tot 2 weken',
+            cls.PlacementPressureHorizon.MORE_THAN_TWO_WEEKS: 'Huidige situatie houdbaar langer dan 2 weken',
+        }
+        score += horizon_score_map.get(horizon_value, 0)
+        if horizon_value in horizon_reason_map:
+            reasons.append(horizon_reason_map[horizon_value])
+
+        if target_completion_date is not None:
+            days_until_deadline = (target_completion_date - today).days
+            if days_until_deadline <= 0:
+                score += 4
+                reasons.append('Uiterste plaatsingsdatum is bereikt of verlopen')
+            elif days_until_deadline <= 3:
+                score += 3
+                reasons.append('Uiterste plaatsingsdatum valt binnen 3 dagen')
+            elif days_until_deadline <= 14:
+                score += 2
+                reasons.append('Uiterste plaatsingsdatum valt binnen 14 dagen')
+
+        if start_date is not None:
+            days_until_start = (start_date - today).days
+            if days_until_start <= 0:
+                score += 2
+                reasons.append('Gewenste startdatum is vandaag of eerder')
+            elif days_until_start <= 14:
+                score += 2
+                reasons.append('Gewenste startdatum valt binnen 14 dagen')
+
+        if safety_pressure:
+            score += 3
+            reasons.append('Veiligheidsdruk aanwezig')
+            implication = 'Spoedroute actief' if score >= 8 else 'Snellere routing nodig'
+
+        if time_sensitive_arrangement:
+            score += 2
+            reasons.append('Tijdskritisch arrangement')
+
+        if escalation_needed:
+            score += 2
+            reasons.append('Escalatie nodig')
+
+        if score >= 8 or (safety_pressure and escalation_needed and horizon_value in {cls.PlacementPressureHorizon.TODAY, cls.PlacementPressureHorizon.THREE_DAYS}):
+            band = 'CRITICAL'
+            label = 'Spoed'
+            implication = 'Spoedroute actief'
+        elif score >= 5:
+            band = 'HIGH'
+            label = 'Hoog'
+            implication = 'Snelle plaatsing en strakkere opvolging nodig'
+        elif score >= 2:
+            band = 'NORMAL'
+            label = 'Normaal'
+            implication = 'Normale routing'
+        else:
+            band = 'LOW'
+            label = 'Laag'
+            implication = 'Ruimte voor inhoudelijke matching'
+
+        reason = ' · '.join(reasons[:3]) if reasons else 'Plaatsingsdruk lijkt stabiel.'
+        return {
+            'band': band,
+            'urgency': {
+                'LOW': cls.Urgency.LOW,
+                'NORMAL': cls.Urgency.MEDIUM,
+                'HIGH': cls.Urgency.HIGH,
+                'CRITICAL': cls.Urgency.CRISIS,
+            }[band],
+            'label': label,
+            'reason': reason,
+            'implication': implication,
+            'score': min(score, 10),
+        }
+
+    def placement_pressure_assessment(self):
+        return self.derive_placement_pressure(
+            horizon=self.placement_pressure_horizon,
+            target_completion_date=self.target_completion_date,
+            start_date=self.start_date,
+            safety_pressure=self.safety_pressure,
+            time_sensitive_arrangement=self.time_sensitive_arrangement,
+            escalation_needed=self.escalation_needed,
+        )
+
+    def derive_operational_urgency(self) -> str:
+        return self.placement_pressure_assessment()['urgency']
+
+    def _municipality_label(self, municipality):
+        if municipality is None:
+            return ''
+        return municipality.municipality_name or municipality.municipality_code or ''
+
+    def _derive_responsibility_reason(self, municipality_region, *, route_regions, municipality_changed, has_source_data):
+        if not has_source_data:
+            return 'Onvoldoende regiogegevens; handmatige herbeoordeling nodig.'
+
+        parts = []
+        if self.verantwoordelijke_gemeente_id and self.herkomst_gemeente_id:
+            if self.verantwoordelijke_gemeente_id == self.herkomst_gemeente_id:
+                parts.append('Woonplaatsbeginsel blijft bij herkomstgemeente')
+            else:
+                parts.append('Verantwoordelijke gemeente wijkt af van herkomstgemeente')
+        elif self.verantwoordelijke_gemeente_id:
+            parts.append('Verantwoordelijke gemeente vastgelegd')
+        elif self.gemeente_id:
+            parts.append('Verantwoordelijke gemeente volgt aanmelding')
+
+        if municipality_region is not None:
+            parts.append(f'Zorgregio: {self._region_label(municipality_region)}')
+
+        unique_region_ids = [region.id for region in route_regions if region is not None]
+        if len(set(unique_region_ids)) > 1:
+            parts.append('Route overschrijdt regiogrens')
+        if municipality_changed:
+            parts.append('Gemeentewijziging vraagt herbeoordeling')
+
+        if not parts:
+            parts.append('Gemeentelijke route en regio zijn in lijn')
+        return ' · '.join(parts)
+
+    def _has_routing_source_data(self):
+        return any(
+            [
+                self.gemeente_id,
+                self.herkomst_gemeente_id,
+                self.verantwoordelijke_gemeente_id,
+                self.verblijfsgemeente_id,
+                self.regio_id,
+                self.zorgregio_id,
+                self.plaatsingsregio_id,
+                self.contractregio_id,
+                self.escalatie_regio_id,
+                self.preferred_region_id,
+            ]
+        )
+
+    @property
+    def routing_summary(self):
+        return {
+            'herkomstGemeente': {
+                'id': str(self.herkomst_gemeente_id) if self.herkomst_gemeente_id else '',
+                'label': self._municipality_label(self.herkomst_gemeente),
+            },
+            'verantwoordelijkeGemeente': {
+                'id': str(self.verantwoordelijke_gemeente_id) if self.verantwoordelijke_gemeente_id else '',
+                'label': self._municipality_label(self.verantwoordelijke_gemeente),
+            },
+            'zorgregio': {
+                'id': str(self.zorgregio_id) if self.zorgregio_id else '',
+                'label': self._region_label(self.zorgregio),
+            },
+            'plaatsingsregio': {
+                'id': str(self.plaatsingsregio_id) if self.plaatsingsregio_id else '',
+                'label': self._region_label(self.plaatsingsregio),
+            },
+            'verblijfsgemeente': {
+                'id': str(self.verblijfsgemeente_id) if self.verblijfsgemeente_id else '',
+                'label': self._municipality_label(self.verblijfsgemeente),
+            },
+            'contractregio': {
+                'id': str(self.contractregio_id) if self.contractregio_id else '',
+                'label': self._region_label(self.contractregio),
+            },
+            'escalatieRegio': {
+                'id': str(self.escalatie_regio_id) if self.escalatie_regio_id else '',
+                'label': self._region_label(self.escalatie_regio),
+            },
+            'responsibilityReason': self.responsibility_reason or '',
+            'responsibilityLastReviewedAt': self.responsibility_last_reviewed_at.isoformat() if self.responsibility_last_reviewed_at else None,
+            'requiresRevalidation': bool(self.requires_revalidation),
+        }
+
     def save(self, *args, **kwargs):
         # Keep nullable payloads from older form/API clients from violating DB constraints.
         if self.contra_indicaties is None:
@@ -2328,13 +2692,34 @@ class CaseIntakeProcess(models.Model):
             self.zorgvorm_gewenst = ''
         if self.setting_voorkeur is None:
             self.setting_voorkeur = ''
+        if not self.source_reference:
+            self.source_reference = _generate_source_reference()
 
         previous_gemeente_id = None
+        previous_state = None
         if self.pk:
             previous_gemeente_id = (
                 CaseIntakeProcess.objects
                 .filter(pk=self.pk)
                 .values_list('gemeente_id', flat=True)
+                .first()
+            )
+            previous_state = (
+                CaseIntakeProcess.objects.filter(pk=self.pk)
+                .values(
+                    'gemeente_id',
+                    'herkomst_gemeente_id',
+                    'verantwoordelijke_gemeente_id',
+                    'verblijfsgemeente_id',
+                    'regio_id',
+                    'zorgregio_id',
+                    'plaatsingsregio_id',
+                    'contractregio_id',
+                    'escalatie_regio_id',
+                    'responsibility_reason',
+                    'responsibility_last_reviewed_at',
+                    'requires_revalidation',
+                )
                 .first()
             )
 
@@ -2372,6 +2757,65 @@ class CaseIntakeProcess(models.Model):
 
         if not self.regio_id and self.preferred_region_id:
             self.regio = self.preferred_region
+
+        municipality_region = self._resolve_region_from_municipality(self.gemeente)
+        if self.gemeente_id and not self.herkomst_gemeente_id:
+            self.herkomst_gemeente = self.gemeente
+        if self.gemeente_id and not self.verantwoordelijke_gemeente_id:
+            self.verantwoordelijke_gemeente = self.gemeente
+        if self.gemeente_id and not self.verblijfsgemeente_id:
+            self.verblijfsgemeente = self.gemeente
+        if municipality_region is not None and not self.zorgregio_id:
+            self.zorgregio = municipality_region
+        if not self.zorgregio_id and self.regio_id:
+            self.zorgregio = self.regio
+        if not self.plaatsingsregio_id and self.regio_id:
+            self.plaatsingsregio = self.regio
+        if not self.plaatsingsregio_id and self.zorgregio_id:
+            self.plaatsingsregio = self.zorgregio
+        if not self.contractregio_id and self.preferred_region_id:
+            self.contractregio = self.preferred_region
+        if not self.contractregio_id and self.zorgregio_id:
+            self.contractregio = self.zorgregio
+        if not self.escalatie_regio_id and self.plaatsingsregio_id:
+            self.escalatie_regio = self.plaatsingsregio
+        if not self.escalatie_regio_id and self.contractregio_id:
+            self.escalatie_regio = self.contractregio
+
+        route_regions = [self.zorgregio, self.plaatsingsregio, self.contractregio, self.escalatie_regio]
+        municipality_changed = bool(previous_gemeente_id and previous_gemeente_id != self.gemeente_id)
+        self.requires_revalidation = bool(
+            len({region.id for region in route_regions if region is not None}) > 1
+            or (
+                self.verantwoordelijke_gemeente_id
+                and self.herkomst_gemeente_id
+                and self.verantwoordelijke_gemeente_id != self.herkomst_gemeente_id
+            )
+            or (
+                self.verantwoordelijke_gemeente_id
+                and self.verblijfsgemeente_id
+                and self.verantwoordelijke_gemeente_id != self.verblijfsgemeente_id
+            )
+            or municipality_changed
+        )
+
+        has_source_data = self._has_routing_source_data()
+        if not has_source_data:
+            self.requires_revalidation = True
+
+        if (
+            previous_state is None
+            or previous_state.get('responsibility_reason') in {'', None}
+            or previous_state.get('requires_revalidation') != self.requires_revalidation
+            or previous_state.get('gemeente_id') != self.gemeente_id
+        ):
+            self.responsibility_reason = self._derive_responsibility_reason(
+                municipality_region,
+                route_regions=route_regions,
+                municipality_changed=municipality_changed,
+                has_source_data=has_source_data,
+            )
+            self.responsibility_last_reviewed_at = timezone.now()
 
         super().save(*args, **kwargs)
 
@@ -2429,11 +2873,11 @@ class CaseIntakeProcess(models.Model):
         }
 
         region_label = ''
-        if self.regio_id and self.regio:
-            region_label = self.regio.region_name
-        elif self.preferred_region_id and self.preferred_region:
-            region_label = self.preferred_region.region_name
-        elif self.gemeente_id and self.gemeente:
+        for region in (self.plaatsingsregio, self.zorgregio, self.regio, self.contractregio, self.preferred_region):
+            if region is not None:
+                region_label = region.region_name
+                break
+        if not region_label and self.gemeente_id and self.gemeente:
             region_label = self.gemeente.municipality_name
 
         case_record = CareCase.objects.create(
@@ -2704,10 +3148,23 @@ class MunicipalityConfiguration(models.Model):
     # Municipality info
     municipality_name = models.CharField(max_length=150, verbose_name='Gemeente')
     municipality_code = models.CharField(max_length=50, blank=True, verbose_name='Gemeentecode')
+    brp_code = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        db_index=True,
+        verbose_name='BRP-code',
+    )
     province = models.CharField(max_length=100, blank=True, default='', verbose_name='Provincie')
     
     # Configuration management
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE, verbose_name='Status')
+    active = models.BooleanField(
+        default=True,
+        db_index=True,
+        verbose_name='Actief',
+        help_text='Afgeleide vlag op basis van status; gebruikt voor snelle filtering.',
+    )
     
     # Care configuration
     care_domains = models.ManyToManyField(CareCategoryMain, blank=True, related_name='municipality_configs', verbose_name='Zorgdomeinen')
@@ -2716,6 +3173,12 @@ class MunicipalityConfiguration(models.Model):
     # Performance management
     max_wait_days = models.PositiveIntegerField(null=True, blank=True, verbose_name='Maximale wachttijd (dagen)')
     priority_rules = models.TextField(blank=True, verbose_name='Prioriteringsregels')
+    urgency_document_request_url = models.URLField(
+        blank=True,
+        default='',
+        verbose_name='Link urgentieverklaring aanvragen',
+        help_text='Officiële pagina of loket waar een urgentieverklaring aangevraagd kan worden.',
+    )
     
     # Contact & administration
     responsible_coordinator = models.ForeignKey(
@@ -2726,6 +3189,16 @@ class MunicipalityConfiguration(models.Model):
         related_name='municipality_configs',
         verbose_name='Verantwoordelijke',
     )
+    woonplaatsbeginsel_contact = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='woonplaatsbeginsel_municipalities',
+        verbose_name='Woonplaatsbeginsel contact',
+    )
+    budget_owner = models.CharField(max_length=200, blank=True, default='', verbose_name='Budgetverantwoordelijke')
+    contract_policies = models.JSONField(default=list, blank=True, verbose_name='Contractpolicies')
     notes = models.TextField(blank=True, verbose_name='Notities')
     
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_municipality_configs')
@@ -2739,7 +3212,11 @@ class MunicipalityConfiguration(models.Model):
         unique_together = ('organization', 'municipality_code')
 
     def __str__(self):
-        return f'{self.municipality_name} (gemeente)'
+        return self.municipality_name
+
+    def save(self, *args, **kwargs):
+        self.active = self.status == self.Status.ACTIVE
+        super().save(*args, **kwargs)
 
     @property
     def provider_count(self):
@@ -2777,6 +3254,12 @@ class RegionalConfiguration(models.Model):
     
     # Configuration management
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE, verbose_name='Status')
+    active = models.BooleanField(
+        default=True,
+        db_index=True,
+        verbose_name='Actief',
+        help_text='Afgeleide vlag op basis van status; gebruikt voor snelle filtering.',
+    )
     
     # Served municipalities
     served_municipalities = models.ManyToManyField(MunicipalityConfiguration, blank=True, related_name='regions', verbose_name='Bediende gemeenten')
@@ -2798,6 +3281,14 @@ class RegionalConfiguration(models.Model):
         related_name='regional_configs',
         verbose_name='Verantwoordelijke',
     )
+    escalatie_contact = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='escalatie_regios',
+        verbose_name='Escalatiecontact',
+    )
     notes = models.TextField(blank=True, verbose_name='Notities')
     
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_regional_configs')
@@ -2812,6 +3303,10 @@ class RegionalConfiguration(models.Model):
 
     def __str__(self):
         return f'{self.region_name} ({self.get_region_type_display().lower()})'
+
+    def save(self, *args, **kwargs):
+        self.active = self.status == self.Status.ACTIVE
+        super().save(*args, **kwargs)
 
     @property
     def provider_count(self):
@@ -3448,6 +3943,24 @@ class ProviderRegioDekking(models.Model):
     doelgroepen = models.JSONField(default=list, blank=True)
     contract_actief = models.BooleanField(default=True)
     capaciteit_meerekenen = models.BooleanField(default=True)
+    capaciteit = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Capaciteit',
+        help_text='Indicatieve beschikbare capaciteit in deze regiodekking.',
+    )
+    crisis_beschikbaar = models.BooleanField(default=False, verbose_name='Crisis beschikbaar')
+    class WachtlijstStatus(models.TextChoices):
+        OPEN = 'OPEN', 'Open'
+        BEPERKT = 'BEPERKT', 'Beperkt'
+        GESLOTEN = 'GESLOTEN', 'Gesloten'
+
+    wachtlijst_status = models.CharField(
+        max_length=20,
+        choices=WachtlijstStatus.choices,
+        default=WachtlijstStatus.OPEN,
+        verbose_name='Wachtlijststatus',
+    )
     reisafstand_score = models.FloatField(
         default=1.0,
         validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
@@ -3465,6 +3978,7 @@ class ProviderRegioDekking(models.Model):
         default=DekkingStatus.ACTIVE,
     )
     toelichting = models.TextField(blank=True)
+    notes = models.TextField(blank=True, verbose_name='Notities')
     bron_type = models.CharField(
         max_length=20,
         choices=BronType.choices,
@@ -3485,6 +3999,16 @@ class ProviderRegioDekking(models.Model):
     def __str__(self):
         vestiging = self.aanbieder_vestiging.name if self.aanbieder_vestiging else 'alle vestigingen'
         return f'{self.zorgaanbieder.name} · {self.regio.region_name} · {vestiging}'
+
+    def save(self, *args, **kwargs):
+        if self.notes and not self.toelichting:
+            self.toelichting = self.notes
+        elif self.toelichting and not self.notes:
+            self.notes = self.toelichting
+        super().save(*args, **kwargs)
+
+
+AanbiederRegioKoppeling = ProviderRegioDekking
 
 
 # ============================================================

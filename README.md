@@ -8,6 +8,8 @@ This repository is **production-oriented infrastructure**, not a Figma-only prot
 
 **→ [`docs/START_HERE.md`](docs/START_HERE.md)** — canonical reading order, ship checklist, and links to roadmaps.
 
+**Docs index:** [`docs/INDEX.md`](docs/INDEX.md) — compact entry point for the current active doc set and archive pointers.
+
 **Doctrine:** [`docs/Careon_Operational_Constitution_v2.md`](docs/Careon_Operational_Constitution_v2.md) (export) · [`docs/Careon_Operational_Constitution_v2.docx`](docs/Careon_Operational_Constitution_v2.docx) (Word master) · [`docs/FOUNDATION_LOCK.md`](docs/FOUNDATION_LOCK.md) (states, API phases, endpoints, UI density).
 
 **Agents / contributors:** [`AGENTS.md`](AGENTS.md).
@@ -39,6 +41,8 @@ export DJANGO_SECRET_KEY=test-not-for-production
 python manage.py migrate
 python manage.py runserver
 ```
+
+If your local `.env` still contains an old external `DATABASE_URL`, leave it unset or blank for normal local development so Django falls back to SQLite. Pass a production or staging `DATABASE_URL` explicitly only when you are running preflight or deploy checks.
 
 ### Python tests
 
@@ -75,5 +79,12 @@ Before first production traffic, set these host-specific values in Render:
 - `ALLOWED_HOSTS`
 - `CSRF_TRUSTED_ORIGINS`
 - `DEFAULT_FROM_EMAIL`
+- Optional: `RENDER_DEPLOY_HOOK_URL` for push-triggered deploys, if you want a manual deploy hook in addition to `autoDeploy: yes` on `main`
 
 The blueprint already wires `DJANGO_SECRET_KEY` and `DJANGO_SETTINGS_MODULE=config.settings_production`.
+
+For a manual Render deploy trigger, use:
+
+```bash
+RENDER_DEPLOY_HOOK_URL=... ./scripts/trigger_render_deploy.sh
+```

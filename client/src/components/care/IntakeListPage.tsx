@@ -78,7 +78,7 @@ function requestBadge(view: IntakeListPageProps["view"]): { title: string; descr
       };
     default:
       return {
-        title: "Nieuwe aanvragen",
+        title: "Nieuwe casussen",
         description: "Beoordeel nieuwe verzoeken.",
       };
   }
@@ -105,9 +105,9 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
     feedback ??
     (pendingRequests.length > 0
       ? pendingRequests.length === 1
-        ? "1 open aanvraag — beoordeling nodig"
-        : `${pendingRequests.length} open aanvragen — beoordeling nodig`
-      : "Geen open aanvragen");
+        ? "1 open casus — beoordeling nodig"
+        : `${pendingRequests.length} open casussen — beoordeling nodig`
+      : "Geen open casussen");
 
   const handleDecision = async (caseId: string, status: "ACCEPTED" | "REJECTED") => {
     if (submittingCaseId) {
@@ -149,7 +149,7 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
       metric={
         <CareMetricBadge>
           {visibleCases.length} zichtbaar · {pendingRequests.length} open{" "}
-          {pendingRequests.length === 1 ? "aanvraag" : "aanvragen"} · {intakeCases.length} plaatsing/intake
+          {pendingRequests.length === 1 ? "casus" : "casussen"} · {intakeCases.length} plaatsing/intake
         </CareMetricBadge>
       }
       dominantAction={
@@ -210,7 +210,7 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
 
         {!loading && !error && visibleCases.length === 0 && (
           <EmptyState
-            title={view === "requests" ? "Geen open verzoeken" : "Geen casussen in dit overzicht"}
+            title={view === "requests" ? "Geen open casussen" : "Geen casussen in dit overzicht"}
             copy={view === "requests" ? "Pas de zoekopdracht of kom later terug." : "Geen plaatsingen of intakes die aan dit filter voldoen."}
           />
         )}
@@ -314,7 +314,7 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
       <CareContextHint
         icon={<CheckCircle2 className="text-primary" size={20} />}
         title="Workflow"
-        copy="Accepteren zet door naar plaatsing en intake. Afwijzen stuurt terug naar matching."
+        copy="Accepteren zet door naar plaatsing en intake. Afwijzen stuurt de casus terug naar matching."
       />
     </CarePageScaffold>
   );

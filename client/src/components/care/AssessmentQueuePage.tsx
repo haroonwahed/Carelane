@@ -56,14 +56,14 @@ export function AssessmentQueuePage({ onCaseClick, onNavigateToCasussen }: Asses
       }
       metric={
         <CareMetricBadge>
-          {queueCases.length} {queueCases.length === 1 ? "aanvraag in wachtrij" : "aanvragen in wachtrij"}
+          {queueCases.length} {queueCases.length === 1 ? "casus in wachtrij" : "casussen in wachtrij"}
         </CareMetricBadge>
       }
       filters={
         <CareSearchFiltersBar
           searchValue={searchQuery}
           onSearchChange={setSearchQuery}
-          searchPlaceholder="Zoek aanvraag, regio of aanbieder..."
+          searchPlaceholder="Zoek casus, regio of aanbieder..."
           showSecondaryFilters={showSecondaryFilters}
           onToggleSecondaryFilters={() => setShowSecondaryFilters((current) => !current)}
           secondaryFilters={

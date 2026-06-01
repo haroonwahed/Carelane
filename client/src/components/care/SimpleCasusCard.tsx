@@ -1,7 +1,7 @@
 /**
  * SimpleCasusCard - Clean case card for Casussen search/manage page
  * 
- * Purpose: Quick overview without AI intelligence (that belongs in Regiekamer)
+ * Purpose: Quick overview without AI intelligence (that belongs in coördinatie)
  * Shows: ID, client, type, status, urgency, waiting time
  * No: AI insights, recommendations, signals
  */

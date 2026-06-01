@@ -30,7 +30,7 @@ const valueCards = [
   {
     icon: Layers3,
     title: "Eén gedeelde waarheid",
-    copy: "Casus, status en eigenaar blijven synchroon.",
+    copy: "Aanvraag, status en eigenaar blijven synchroon.",
   },
   {
     icon: ShieldCheck,
@@ -53,7 +53,7 @@ const problemCards = [
   {
     icon: CircleAlert,
     title: "Versnipperde context",
-    copy: "Casus, opvolging en escalaties staan nog te vaak in losse systemen.",
+    copy: "Aanvraag, opvolging en escalaties staan nog te vaak in losse systemen.",
   },
   {
     icon: Clock3,
@@ -70,7 +70,7 @@ const problemCards = [
 const workflowRows = [
   {
     step: "01",
-    title: "Casus vastleggen",
+    title: "Aanvraag vastleggen",
     copy: "De aanvraag start met een helder beginpunt, eigenaarschap en reden.",
     state: "Start",
   },
@@ -104,8 +104,8 @@ const audiencePanels = [
   {
     title: "Gemeente",
     eyebrow: "Financiering en arrangement",
-    copy: "Beoordeel compatibiliteit, bewaak tempo en houd de regie over de vervolgstap.",
-    bullets: ["Eén overzicht per casus", "Duidelijke validatie", "Auditbare afweging"],
+    copy: "Beoordeel compatibiliteit, bewaak tempo en houd de coördinatie over de vervolgstap.",
+    bullets: ["Eén overzicht per aanvraag", "Duidelijke validatie", "Auditbare afweging"],
   },
   {
     title: "Zorgaanbieder",
@@ -158,7 +158,7 @@ const faqItems = [
   {
     question: "Voor wie is CareOn bedoeld?",
     answer:
-      "Voor gemeenten en zorgaanbieders die regie, tempo en verantwoording in dezelfde werkstroom willen brengen.",
+      "Voor gemeenten en zorgaanbieders die coördinatie, tempo en verantwoording in dezelfde werkstroom willen brengen.",
   },
   {
     question: "Vervangt CareOn bestaande systemen?",
@@ -178,7 +178,7 @@ const faqItems = [
   {
     question: "Is CareOn geschikt voor een pilot?",
     answer:
-      "Ja. Begin klein met één gemeente, enkele aanbieders en een beperkte casusset.",
+      "Ja. Begin klein met één gemeente, enkele aanbieders en een beperkte aanvraagset.",
   },
 ] as const;
 
@@ -243,11 +243,11 @@ function HoverPanel({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-[28px] border border-slate-800/80 bg-slate-950/55 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-slate-700/90 hover:bg-slate-900/70 hover:shadow-[0_24px_60px_rgba(2,6,23,0.35)]",
+        "group relative overflow-hidden rounded-[28px] border border-slate-800/80 bg-slate-950/55 backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:border-slate-700/90 hover:bg-slate-900/70 hover:shadow-[0_24px_60px_rgba(2,6,23,0.35)]",
         className,
       )}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.09),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.035),transparent_40%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),transparent_30%),radial-gradient(circle_at_top_right,rgba(124,58,237,0.09),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.035),transparent_40%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="relative">{children}</div>
     </div>
   );
@@ -322,7 +322,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
                   <LandingPill>Operationele coördinatie</LandingPill>
                   <div className="space-y-4">
                     <h1 className="max-w-[600px] text-balance text-[clamp(2.55rem,3.25vw,3.9rem)] font-semibold tracking-[-0.06em] text-white leading-[0.98]">
-                      Casus, validatie en plaatsing in één gecontroleerde{" "}
+                      Aanvraag, validatie en plaatsing in één gecontroleerde{" "}
                       <span className="text-violet-200">werkstroom</span>.
                     </h1>
                     <p className="max-w-lg text-[15px] leading-7 text-slate-300 sm:text-[17px]">
@@ -370,7 +370,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
         </section>
 
         <section className="pb-8 pt-6 sm:pt-8 lg:pb-10 lg:pt-10" aria-label="Waardecriteria">
-          <div className="rounded-[28px] border border-slate-800/80 bg-slate-950/55">
+          <div className="rounded-[28px] border border-slate-800/80 bg-slate-950/55 shadow-[0_18px_50px_rgba(2,6,23,0.28)]">
             <div className="grid gap-0 lg:grid-cols-4">
               {valueCards.map((card, index) => {
                 const Icon = card.icon;
@@ -445,7 +445,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
           <SectionHeading
             eyebrow="Waarom"
             title="Versnippering vertraagt veilige zorgbesluiten."
-            copy="Zonder een gedeelde werkstroom raken casus, validatie en opvolging uit elkaar. Dan gaat tijd verloren en neemt de herleidbaarheid af."
+            copy="Zonder een gedeelde werkstroom raken aanvraag, validatie en opvolging uit elkaar. Dan gaat tijd verloren en neemt de herleidbaarheid af."
           />
 
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
@@ -468,13 +468,13 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
           <SectionHeading
             eyebrow="Werkstroom"
             title="Eén operationele laag boven de keten."
-            copy="Van casus tot intake blijft de route zichtbaar. De pagina moet niet uitleggen dat er een systeem is; ze moet laten zien hoe het systeem werkt."
+            copy="Van aanvraag tot intake blijft de route zichtbaar. De pagina moet niet uitleggen dat er een systeem is; ze moet laten zien hoe het systeem werkt."
           />
 
           <div className="mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
             <HoverPanel className="rounded-[28px] p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Gedeelde werkstroom</p>
-              <h3 className="mt-2 text-xl font-semibold text-white">Casus, validatie en plaatsing blijven samen leesbaar.</h3>
+              <h3 className="mt-2 text-xl font-semibold text-white">Aanvraag, validatie en plaatsing blijven samen leesbaar.</h3>
               <p className="mt-3 text-sm leading-7 text-slate-300">
                 CareOn geeft gemeenten, aanbieders en uitvoerders dezelfde operationele context, met de juiste
                 beperking per rol. Daardoor blijft de werkstroom rustig, verantwoordelijk en herleidbaar.
@@ -595,7 +595,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
           <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-stretch">
             <HoverPanel className="rounded-[28px] p-6 md:p-7">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Waarom dit landt</p>
-              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">Rustige regie, duidelijke fases, minder omwegen.</h3>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">Rustige coördinatie, duidelijke fases, minder omwegen.</h3>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
                 CareOn sluit aan op de manier waarop gemeenten en aanbieders al werken, maar brengt de stappen samen in
                 één gecontroleerde werkstroom met heldere eigenaarschap en auditability.
@@ -604,7 +604,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
 
             <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 lg:min-w-[320px]">
               {[
-                ["Eén werkstroom", "Van casus tot intake in dezelfde taal."],
+                ["Eén werkstroom", "Van aanvraag tot intake in dezelfde taal."],
                 ["Begrensde toegang", "Iedere rol ziet alleen wat nodig is."],
                 ["Bevestigde overdracht", "De stap blijft zichtbaar tot hij rond is."],
               ].map(([title, copy]) => (
@@ -639,7 +639,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
             <SectionHeading
               eyebrow="Pilot"
               title="Start klein. Leer snel. Schaal verantwoord."
-              copy="Begin met één gemeente, enkele aanbieders en een beperkte set casussen. Meet waar vertraging ontstaat en verbeter de keten stap voor stap."
+              copy="Begin met één gemeente, enkele aanbieders en een beperkte set aanvragen. Meet waar vertraging ontstaat en verbeter de keten stap voor stap."
             />
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -692,7 +692,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
               </div>
             </a>
             <p className="max-w-2xl text-sm leading-7 text-slate-400">
-              CareOn helpt gemeenten en zorgaanbieders van casus tot intake met meer grip, minder vertraging en
+              CareOn helpt gemeenten en zorgaanbieders van aanvraag tot intake met meer grip, minder vertraging en
               beter verklaarbare beslissingen.
             </p>
           </div>

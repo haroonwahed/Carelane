@@ -202,7 +202,7 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
           }
           action={
             filteredCases.length > 0 ? (
-              <CareQueueInlineAction type="button" onClick={() => onCaseClick(filteredCases[0].id)}>
+                <CareQueueInlineAction type="button" onClick={() => onCaseClick(filteredCases[0].id)}>
                 Open eerste casus in wachtrij
               </CareQueueInlineAction>
             ) : undefined
@@ -340,13 +340,13 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
 
           {!loading && !error && filteredCases.length === 0 && (
             <EmptyState
-              title={pool.length === 0 ? "Geen casussen in matching" : "Geen casussen in deze weergave"}
+              title={pool.length === 0 ? "Geen aanvragen in matching" : "Geen aanvragen in deze weergave"}
               copy={
                 pool.length === 0
-                  ? "Zodra samenvatting en voorbereiding klaar zijn, verschijnen casussen hier automatisch."
+                  ? "Zodra samenvatting en voorbereiding klaar zijn, verschijnen aanvragen hier automatisch."
                   : "Pas tabblad, zoekopdracht of filters aan."
               }
-              action={<CareQueueInlineAction onClick={() => onNavigateToCasussen?.()}>Naar casussen</CareQueueInlineAction>}
+              action={<CareQueueInlineAction onClick={() => onNavigateToCasussen?.()}>Naar aanvragen</CareQueueInlineAction>}
             />
           )}
 
@@ -354,7 +354,7 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
             <CareWorkListCard
               header={
                 <CareOperationalQueueHeader
-                  labels={["Fase", "Casus", "Matchadvies", "Wachttijd", "Context", "Volgende actie"]}
+                labels={["Fase", "Casus", "Matchadvies", "Wachttijd", "Context", "Volgende actie"]}
                 />
               }
             >

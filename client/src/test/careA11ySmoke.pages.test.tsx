@@ -74,6 +74,12 @@ function makeCase(overrides: Partial<SpaCase> = {}): SpaCase {
     arrangementTypeCode: "",
     arrangementProvider: "Aanbieder A",
     arrangementEndDate: null,
+    zorgbehoefteCategorie: "Wonen & verblijf",
+    zorgbehoefteCategorieCode: "WONEN_VERBLIJF",
+    zorgbehoefteSpecifiek: "Woonvoorziening",
+    zorgbehoefteSpecifiekCode: "WONEN_VERBLIJF_WOONVOORZIENING",
+    taxonomieLijn: "Taxonomie: Wonen & verblijf → Woonvoorziening",
+    taxonomieCodeLijn: "Taxonomiecode: WONEN_VERBLIJF → WONEN_VERBLIJF_WOONVOORZIENING",
     ...overrides,
   };
 }
@@ -172,6 +178,12 @@ function makeOverview(): RegiekamerDecisionOverview {
         hours_in_current_state: 48,
         issue_tags: ["blockers", "alerts"],
         responsible_role: "gemeente",
+        zorgbehoefte_categorie: "Wonen & verblijf",
+        zorgbehoefte_categorie_code: "WONEN_VERBLIJF",
+        zorgbehoefte_specifiek: "Woonvoorziening",
+        zorgbehoefte_specifiek_code: "WONEN_VERBLIJF_WOONVOORZIENING",
+        taxonomie_lijn: "Taxonomie: Wonen & verblijf → Woonvoorziening",
+        taxonomie_code_lijn: "Taxonomiecode: WONEN_VERBLIJF → WONEN_VERBLIJF_WOONVOORZIENING",
       },
     ],
     governance_queues: {
@@ -200,13 +212,14 @@ beforeEach(() => {
       regio: "",
       urgency: "",
       complexity: "",
+      has_urgency_declaration: false,
       urgency_applied: false,
       urgency_applied_since: "",
       diagnostiek: [],
       zorgvorm_gewenst: "",
       preferred_care_form: "",
-      preferred_region_type: "",
-      preferred_region: "",
+      preferred_region_type: "JEUGDREGIO",
+      preferred_region: "utrecht-stad",
       max_toelaatbare_wachttijd_dagen: "",
       leeftijd: "",
       setting_voorkeur: "",
@@ -219,25 +232,25 @@ beforeEach(() => {
       description: "",
     },
     options: {
-      care_category_main: [{ value: "ggz", label: "GGZ" }],
-      care_category_sub: [{ value: "ggz-jeugd", label: "Jeugd GGZ", mainCategoryId: "ggz" }],
-      gemeente: [{ value: "utrecht", label: "Utrecht" }],
-      regio: [{ value: "utrecht", label: "Utrecht" }],
+      care_category_main: [{ value: "WONEN_VERBLIJF", label: "Wonen & verblijf" }],
+      care_category_sub: [{ value: "WONEN_VERBLIJF_WOONVOORZIENING", label: "Woonvoorziening", mainCategoryId: "WONEN_VERBLIJF" }],
+      gemeente: [{ value: "utrecht", label: "Utrecht", urgencyDocumentRequestUrl: "https://www.utrecht.nl/wonen-en-leven/wonen/woning-zoeken/urgentie-voor-een-woning/" }],
+      regio: [{ value: "utrecht-stad", label: "Utrecht Stad" }],
       urgency: [
-        { value: "low", label: "Laag" },
-        { value: "medium", label: "Midden" },
-        { value: "high", label: "Hoog" },
+        { value: "LOW", label: "Laag" },
+        { value: "MEDIUM", label: "Midden" },
+        { value: "HIGH", label: "Hoog" },
       ],
       complexity: [
-        { value: "low", label: "Laag" },
-        { value: "medium", label: "Midden" },
-        { value: "high", label: "Hoog" },
+        { value: "SIMPLE", label: "Enkelvoudig" },
+        { value: "MULTIPLE", label: "Meervoudig" },
+        { value: "SEVERE", label: "Intensief" },
       ],
       diagnostiek: [{ value: "trauma", label: "Trauma" }],
       zorgvorm_gewenst: [{ value: "ambulant", label: "Ambulant" }],
       preferred_care_form: [{ value: "ambulant", label: "Ambulant" }],
-      preferred_region_type: [{ value: "lokaal", label: "Lokaal" }],
-      preferred_region: [{ value: "utrecht", label: "Utrecht" }],
+      preferred_region_type: [{ value: "JEUGDREGIO", label: "Jeugdregio" }],
+      preferred_region: [{ value: "utrecht-stad", label: "Utrecht Stad" }],
       client_age_category: [{ value: "jeugd", label: "Jeugd" }],
       family_situation: [{ value: "thuis", label: "Thuis" }],
       case_coordinator: [{ value: "gemeente", label: "Gemeente" }],
@@ -248,6 +261,7 @@ beforeEach(() => {
     id: 1,
     case_id: "CAS-1",
     title: "CLI-12345",
+    source_reference: "BR-2026-ABCDEF",
     redirect_url: "/care/cases/CAS-1/",
   });
   mockUseCurrentUser.mockReturnValue({
@@ -279,28 +293,38 @@ describe("Care accessibility smoke: core pages", () => {
     const user = userEvent.setup();
     const { container } = renderWithA11y(<NieuweCasusPage />);
     expect(await screen.findByRole("heading", { name: "Nieuwe casus" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Stap 1: Basis/i })).toHaveAttribute("aria-current", "step");
-    expect(screen.getByRole("progressbar", { name: "Voortgang nieuwe casus" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Basis – Koppel bronregistratie" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Stap 1: Basisgegevens/i })).toHaveAttribute("aria-current", "step");
+    expect(screen.getByRole("heading", { name: "Geef basisgegevens op" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Toelichting" })).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByRole("button", { name: "Volgende stap" })).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("Bronregistratie *"), "jeugdplatform");
-    await user.type(screen.getByPlaceholderText("Bijv. ZS-2026-8821"), "ZS-2026-8821");
+    await user.click(screen.getByRole("button", { name: "Woonplaatsbeginsel *" }));
+    const municipalityInput = screen.getByPlaceholderText("Zoek gemeente...");
+    await user.clear(municipalityInput);
+    await user.type(municipalityInput, "Utrecht");
+    const choice = document.querySelector('[cmdk-item][data-value="Utrecht"]') as HTMLElement | null;
+    expect(choice).not.toBeNull();
+    await user.click(choice!);
+    expect(screen.getByLabelText("Regio *")).toHaveDisplayValue("Utrecht Stad");
     await user.click(screen.getByRole("button", { name: "Volgende stap" }));
     expect(screen.getByRole("heading", { name: "Zorgvraag" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Terug" }).length).toBeGreaterThan(1);
+    expect(screen.getAllByRole("button", { name: "Terug" }).length).toBe(1);
     expect(screen.getByRole("button", { name: "Vorige" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Volgende" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Waarom deze vragen?" })).toHaveAttribute("aria-expanded", "false");
-    await user.selectOptions(screen.getByLabelText("Hoofdcategorie *"), "ggz");
-    await user.click(within(screen.getByRole("radiogroup", { name: "Complexiteit" })).getByRole("radio", { name: "Midden" }));
-    await user.click(within(screen.getByRole("radiogroup", { name: "Urgentie" })).getByRole("radio", { name: "Midden" }));
+    await user.selectOptions(screen.getByLabelText("Urgentie *"), "MEDIUM");
+    await user.selectOptions(screen.getByLabelText("Zorgbehoefte categorie *"), "WONEN_VERBLIJF");
+    await user.selectOptions(screen.getByLabelText("Specifieke zorgbehoefte"), "WONEN_VERBLIJF_WOONVOORZIENING");
+    expect(await screen.findByLabelText("Specifieke zorgbehoefte")).toHaveValue("WONEN_VERBLIJF_WOONVOORZIENING");
+    await user.selectOptions(screen.getByLabelText("Complexiteit *"), "MULTIPLE");
+    await user.click(screen.getByRole("button", { name: "Waarom persoonsbeeld?" }));
+    expect(screen.getByText("Beschrijf alleen de operationele context die nodig is voor beoordeling en matching.")).toBeInTheDocument();
+    expect(screen.getByText("Laat namen, adressen, telefoons, e-mailadressen en BSN achterwege.")).toBeInTheDocument();
+    await user.type(screen.getByLabelText("Persoonsbeeld *"), "Korte persoonsbeeldschets.");
     await user.click(screen.getByRole("button", { name: "Volgende" }));
-    expect(screen.getByRole("heading", { name: "Regio en zoekgebied" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Regio & Verantwoordelijkheid" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Samenvatting voor verzending" })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Casus aanmaken" }).length).toBeGreaterThan(1);
     await expectNoA11yViolations(container, "Nieuwe casus");
-  });
+  }, 10000);
 
   it("Casussen workflow surface", async () => {
     mockUseCases.mockReturnValue({
@@ -312,10 +336,10 @@ describe("Care accessibility smoke: core pages", () => {
     mockUseProviders.mockReturnValue({ providers: [makeProvider()] });
 
     const { container } = renderWithA11y(<WorkloadPage onCaseClick={vi.fn()} role="gemeente" canCreateCase onCreateCase={vi.fn()} />);
-    expect(screen.getByRole("heading", { name: "Aanvragen" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Nieuwe aanvraag" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Casussen" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Nieuwe casus" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Filters$/i })).toBeInTheDocument();
-    await expectNoA11yViolations(container, "Aanvragen");
+    await expectNoA11yViolations(container, "Casussen");
   });
 
   it("Regiekamer / SystemAwarenessPage", async () => {

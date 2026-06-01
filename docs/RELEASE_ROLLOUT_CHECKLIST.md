@@ -13,6 +13,62 @@ Use these as the source-of-truth contract for canonical workflow order, actor ow
 
 Use this for the staging-to-production handoff on a release that already has a green local validation set.
 
+## Required production inputs
+
+Fill these before the production window starts:
+
+- Release captain:
+- Backend owner:
+- Ops owner:
+- QA owner:
+- Production window date:
+- Production window start:
+- Production window end:
+- Rollback owner:
+- Rollback path:
+- Backup reference:
+- Backup timestamp:
+- Secrets/env readiness:
+- Monitoring access:
+- `OIDC_RP_CLIENT_SECRET` rotation status:
+
+### Copy block
+
+| Field | Value |
+|-------|-------|
+| Release captain |  |
+| Backend owner |  |
+| Ops owner |  |
+| QA owner |  |
+| Production window date |  |
+| Production window start |  |
+| Production window end |  |
+| Rollback owner |  |
+| Rollback path |  |
+| Backup reference |  |
+| Backup timestamp |  |
+| Secrets/env readiness |  |
+| Monitoring access |  |
+| `OIDC_RP_CLIENT_SECRET` rotation status |  |
+
+## Current release snapshot
+
+Release ref:
+- `main` @ `ca146bdc`
+
+Latest reviewed evidence:
+- `reports/release_evidence_bundle.json` → `timeline_gate.go=true`, `no_go_reasons=[]`
+- `./scripts/run_golden_path_e2e.sh --start-server` → **GO** (2026-05-29; 12 passed, 1 skipped)
+- Targeted provider / golden-path rerun → **GO** (2026-05-31; 9 passed, 1 skipped) after stabilizing Playwright login waits
+- `./scripts/staging_pilot_signoff.sh` → **GO** on `https://careon-web.onrender.com`
+
+Explicit blockers before production promotion:
+- Production promotion has **not** started.
+- Production secrets inventory is **not yet recorded** in this checklist.
+- Backup / restore drill evidence is **not yet recorded** for the target production environment.
+- Observability / alerting verification is **not yet recorded** for the target production environment.
+- Rollback ownership is only prepared at the role level; production scheduling still needs a release window and timestamps.
+
 For a **blank one-pager** to copy per release, see:
 - [`docs/RELEASE_EXECUTION_SHEET_TEMPLATE.md`](./RELEASE_EXECUTION_SHEET_TEMPLATE.md)
 
@@ -21,6 +77,14 @@ For the current pilot-rehearsal execution sheet, see:
 
 For a concrete, dated example of how to fill this in, see:
 - [`docs/RELEASE_EXECUTION_SHEET_2026-04-24.md`](./RELEASE_EXECUTION_SHEET_2026-04-24.md)
+
+For the current working rollout draft, see:
+- [`docs/RELEASE_EXECUTION_SHEET_2026-05-30.md`](./RELEASE_EXECUTION_SHEET_2026-05-30.md)
+
+Use that sheet as the live scratchpad for the next production window and copy the final values into `docs/DRILL_LOG.md` when the rollout closes.
+
+For the consolidated todo list / workplan, see:
+- [`docs/WORKPLAN_2026-05-30.md`](./WORKPLAN_2026-05-30.md)
 
 For the live post-deploy smoke path, see:
 - [`docs/POST_DEPLOY_VERIFICATION_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/POST_DEPLOY_VERIFICATION_CHECKLIST.md)
@@ -31,7 +95,7 @@ Release timing model:
 - record the actual execution timestamp beside each step during the rollout
 
 Reference release SHA:
-- `RELEASE_SHA="<git-sha-to-deploy>"`
+- `RELEASE_SHA="ca146bdc"`
 
 ## Release Control Sheet
 
@@ -42,6 +106,15 @@ Reference release SHA:
 | Ops owner | Infrastructure / DevOps | Backend owner | Handles server access, restart, and monitoring checks |
 | QA owner | Test / verification owner | Release captain | Runs smoke checks, confirms the canonical flow, records evidence |
 
+## Open owner matrix
+
+| Owner | Remaining production items | Required evidence / output |
+|---|---|---|
+| Release captain | Schedule the production window; confirm GO/NO-GO; own rollback decision; close final sign-off | Dated window, all-clear or abort call, owner sign-off in rollout evidence |
+| Backend owner | Execute deploy steps on the target SHA; run migrations; verify app-level post-deploy health | Deploy SHA, migration output, restart confirmation, `check --deploy` output |
+| Ops owner | Confirm secrets/env readiness; ensure backup exists; manage service restart and monitoring access | Backup reference, secrets inventory status, restart confirmation, monitoring watch start |
+| QA owner | Run production smoke checks and terminology guard; verify canonical routes return `200` | Smoke result, route status codes, terminology guard output, follow-up defects |
+
 ## Target Rollout Timeline
 
 | Step | Owner | Target timestamp | Actual timestamp | Evidence to capture |
@@ -50,10 +123,10 @@ Reference release SHA:
 | Staging deploy | Backend owner + Ops owner | `T-60m` | 2026-05-16 | Live on https://careon-web.onrender.com |
 | Staging verification | QA owner | `T-45m` | 2026-05-16 | `staging_pilot_signoff.sh` GO (9 Playwright / 3 skipped) |
 | Staging sign-off | Release captain | `T-30m` | 2026-05-16 | See `docs/RELEASE_EXECUTION_SHEET_2026-05-15.md` |
-| Production preflight | Release captain + Ops owner | `T-15m` |  | Backup confirmation, change window confirmation, rollback owner confirmation |
-| Production deploy | Ops owner + Backend owner | `T0` |  | Checkout SHA, migrate, collectstatic, restart app |
-| Production verification | QA owner + Release captain | `T+15m` |  | `check --deploy`, terminology guard, smoke checks, monitoring watch start |
-| Production sign-off | Release captain | `T+45m` |  | All-clear timestamp, evidence bundle, follow-up ticket list |
+| Production preflight | Release captain + Ops owner | `T-15m` | — | BLOCKED: backup confirmation, change window confirmation, rollback owner confirmation still need production scheduling |
+| Production deploy | Ops owner + Backend owner | `T0` | — | BLOCKED: checkout SHA, migrate, collectstatic, restart app only after production preflight is green |
+| Production verification | QA owner + Release captain | `T+15m` | — | BLOCKED: `check --deploy`, terminology guard, smoke checks, monitoring watch start only after deploy |
+| Production sign-off | Release captain | `T+45m` | — | BLOCKED: all-clear timestamp, evidence bundle, follow-up ticket list only after production watch window |
 
 ## 0. Rollout Preconditions
 
@@ -91,7 +164,7 @@ source "$VENV_DIR/bin/activate"
 
 git status --short
 git fetch --all --tags
-git log --oneline -5 origin/chore/careon-flow-normalization
+git log --oneline -5 "$RELEASE_SHA"
 python manage.py showmigrations contracts
 python manage.py check
 ls -lth /backups/careon/ | head -5
@@ -219,17 +292,17 @@ source "$VENV_DIR/bin/activate"
 
 git status --short
 git fetch --all --tags
-git log --oneline -5 origin/chore/careon-flow-normalization
+git log --oneline -5 "$RELEASE_SHA"
 python manage.py showmigrations contracts
 python manage.py check --deploy
 ls -lth /backups/careon/ | head -5
 ```
 
 Record:
-- actual timestamp:
-- backup reference:
-- staging sign-off:
-- rollback owner:
+- actual timestamp: `—` (not started)
+- backup reference: `—` (production backup evidence not yet captured)
+- staging sign-off: `GO` on 2026-05-29
+- rollback owner: release captain + ops owner (role-level assigned; production window still pending)
 
 ## 5. Production Deploy
 
@@ -264,10 +337,10 @@ sudo systemctl restart gunicorn-careon
 ```
 
 Record:
-- actual timestamp:
-- deploy SHA:
-- migration output:
-- restart confirmation:
+- actual timestamp: `—` (not started)
+- deploy SHA: `ca146bdc` (target only; no production deploy yet)
+- migration output: `—`
+- restart confirmation: `—`
 
 ## 6. Production Verification
 
@@ -309,10 +382,10 @@ Watch window:
 4. Scheduled job heartbeat.
 
 Record:
-- actual timestamp:
-- smoke result:
-- monitoring start:
-- monitoring end:
+- actual timestamp: `—` (not started)
+- smoke result: `—`
+- monitoring start: `—`
+- monitoring end: `—`
 
 ## 7. Sign-Off
 
@@ -331,10 +404,10 @@ Checklist:
 - [ ] Release evidence is saved.
 
 Record:
-- actual timestamp:
-- all-clear timestamp:
-- open follow-ups:
-- rollback not needed:
+- actual timestamp: `—` (not started)
+- all-clear timestamp: `—`
+- open follow-ups: production promotion remains unscheduled; production evidence still missing
+- rollback not needed: `—`
 
 ## 8. Abort Conditions
 
@@ -371,3 +444,9 @@ Capture these before closing the rollout:
 Record rollout evidence in:
 
 - [docs/DRILL_LOG.md](/Users/haroonwahed/Documents/Projects/Careon/docs/DRILL_LOG.md)
+
+## 10. Current status summary
+
+- Pilot rehearsal and staging sign-off are **GO**.
+- Release evidence bundle is **GO** with an empty `no_go_reasons` list.
+- Production rollout remains **not started** and should stay explicitly blocked until the evidence items above are filled.

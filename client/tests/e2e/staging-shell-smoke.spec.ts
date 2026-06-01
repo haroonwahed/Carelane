@@ -24,7 +24,7 @@ async function login(page: import("@playwright/test").Page, username: string, pa
   await page.getByLabel("Gebruikersnaam").fill(username);
   await page.getByLabel("Wachtwoord").fill(password);
   await page.getByRole("button", { name: "Inloggen" }).click();
-  await page.waitForLoadState("networkidle");
+  await page.waitForURL(/\/dashboard\/?(\?.*)?$/, { timeout: 45_000 });
   await expect(
     page.getByText("Ongeldige gebruikersnaam of wachtwoord. Probeer opnieuw."),
     "Login failed — run ./scripts/prepare_pilot_e2e.sh and demo credentials.",

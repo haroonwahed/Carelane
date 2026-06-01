@@ -1,4 +1,4 @@
-import { Check, Circle } from "lucide-react";
+import { Check } from "lucide-react";
 
 interface Step {
   id: string;
@@ -68,16 +68,6 @@ export function AssessmentStepper({ steps, currentStep, onStepClick }: Assessmen
               `}>
                 {step.label}
               </p>
-              {isActive && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Actieve stap
-                </p>
-              )}
-              {isCompleted && (
-                <p className="text-xs text-green-400/70 mt-0.5">
-                  Voltooid
-                </p>
-              )}
             </div>
 
             {/* Connector Line */}

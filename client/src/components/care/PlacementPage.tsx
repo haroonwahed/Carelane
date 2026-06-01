@@ -11,7 +11,11 @@ import { apiClient } from "../../lib/apiClient";
 import { toCareCasussenPlacementAction } from "../../lib/routes";
 import { toLegacyCase, toLegacyProvider } from "../../lib/careLegacyAdapters";
 import { tokens } from "../../design/tokens";
-import { CareAttentionBar, CareInfoPopover, CarePageScaffold, PrimaryActionButton, LoadingState, ErrorState, EmptyState, CarePanel } from "./CareDesignPrimitives";
+import { BlockingNotice, CareAttentionBar, CareInfoPopover, CarePageScaffold, PrimaryActionButton, LoadingState, ErrorState, EmptyState, CarePanel } from "./CareDesignPrimitives";
+import {
+  GuidanceContextBanner,
+  InlineHelpChip,
+} from "../guidance";
 
 interface PlacementPageProps {
   caseId: string;
@@ -31,6 +35,12 @@ interface PlacementDetailPayload {
     selectedProviderId: string;
     careForm: string;
     decisionNotes: string;
+    zorgbehoefteCategorie?: string;
+    zorgbehoefteCategorieCode?: string;
+    zorgbehoefteSpecifiek?: string;
+    zorgbehoefteSpecifiekCode?: string;
+    taxonomieLijn?: string;
+    taxonomieCodeLijn?: string;
   };
 }
 
@@ -78,6 +88,12 @@ export function PlacementPage({
 
   const caseData = legacyCases.find(c => c.id === caseId);
   const provider = legacyProviders.find(p => p.id === providerId) ?? legacyProviders[0];
+  const taxonomyReasons = placementDetail
+    ? [
+        placementDetail.placement.taxonomieLijn,
+        placementDetail.placement.taxonomieCodeLijn,
+      ].filter((item): item is string => Boolean(item && item.trim())).map((text) => ({ text, positive: true }))
+    : [];
 
   useEffect(() => {
     let cancelled = false;
@@ -159,7 +175,7 @@ export function PlacementPage({
       ? [{ severity: "medium" as const, message: "Geen directe startplek - plan intake met korte wachttijd" }]
       : []),
     ...(provider.responseTime > 8 
-      ? [{ severity: "low" as const, message: `Reactietijd ${provider.responseTime}u - houd regie op de intakeplanning` }]
+      ? [{ severity: "low" as const, message: `Reactietijd ${provider.responseTime}u - houd coördinatie op de intakeplanning` }]
       : [])
   ];
 
@@ -286,6 +302,27 @@ export function PlacementPage({
         <span className="text-sm font-medium">Terug naar matching</span>
       </button>
 
+      <GuidanceContextBanner testId="placement-intake-overgang-banner">
+        Na plaatsing verschuift de casus naar intake en operationele opvolging.
+      </GuidanceContextBanner>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <InlineHelpChip
+          title="Wat betekent voorlopig?"
+          triggerLabel="Voorlopige plaatsing"
+          testId="placement-voorlopig-help"
+        >
+          <p>Dit reserveert procesruimte, maar rondt intake of definitieve overdracht nog niet af.</p>
+        </InlineHelpChip>
+        <InlineHelpChip
+          title="Wanneer definitief?"
+          triggerLabel="Definitieve plaatsing"
+          testId="placement-definitief-help"
+        >
+          <p>Gebruik dit zodra intake, capaciteit en betrokken partijen bevestigd zijn.</p>
+        </InlineHelpChip>
+      </div>
+
       {/* TOP DECISION HEADER */}
       <CarePanel className="p-4 border border-border/70 ring-1 ring-primary/25">
         <div className="flex items-start justify-between gap-4">
@@ -356,38 +393,38 @@ export function PlacementPage({
       <div className="grid grid-cols-12 gap-4">
         {/* LEFT PANEL: Case Summary */}
         <div className="col-span-3">
-      <CarePanel className="p-4 sticky" style={{ top: tokens.layout.edgeZero }}>
+      <CarePanel className="sticky p-4" style={{ top: tokens.layout.edgeZero }}>
             <h3 className="text-sm font-semibold text-foreground mb-4">
               Samenvatting
             </h3>
             
             <div className="space-y-3 text-sm">
-              <div>
+              <div className="min-w-0">
                 <p className="text-muted-foreground text-xs mb-1">Casus-ID</p>
-                <p className="font-medium text-foreground">{caseData.id}</p>
+                <p className="min-w-0 break-words font-medium text-foreground">{caseData.id}</p>
               </div>
               
-              <div>
+              <div className="min-w-0">
                 <p className="text-muted-foreground text-xs mb-1">Casusreferentie</p>
-                <p className="font-medium text-foreground">{formatClientReference(caseData.id)}</p>
+                <p className="min-w-0 break-words font-medium text-foreground">{formatClientReference(caseData.id)}</p>
               </div>
               
-              <div>
+              <div className="min-w-0">
                 <p className="text-muted-foreground text-xs mb-1">Leeftijd</p>
                 <p className="font-medium text-foreground">{caseData.clientAge} jaar</p>
               </div>
               
-              <div>
+              <div className="min-w-0">
                 <p className="text-muted-foreground text-xs mb-1">Regio</p>
-                <p className="font-medium text-foreground">{caseData.region}</p>
+                <p className="min-w-0 break-words font-medium text-foreground">{caseData.region}</p>
               </div>
               
-              <div>
+              <div className="min-w-0">
                 <p className="text-muted-foreground text-xs mb-1">Zorgtype</p>
-                <p className="font-medium text-foreground">{caseData.caseType}</p>
+                <p className="min-w-0 break-words font-medium text-foreground">{caseData.caseType}</p>
               </div>
               
-              <div>
+              <div className="min-w-0">
                 <p className="text-muted-foreground text-xs mb-1">Urgentie</p>
                 <span className={`
                   inline-block px-2 py-1 rounded-md text-xs font-semibold
@@ -407,7 +444,7 @@ export function PlacementPage({
         {/* CENTER PANEL: Selected Provider + Validation */}
         <div className="col-span-6 space-y-3">
           {/* Selected Provider Card — reasons/tradeOffs only render when bound to real, evidence-backed data */}
-          <SelectedProviderCard provider={provider} />
+          <SelectedProviderCard provider={provider} reasons={taxonomyReasons} />
 
           {/* Validation Checklist */}
           <PlacementValidationChecklist items={validationItems} />
@@ -455,23 +492,21 @@ export function PlacementPage({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3">
+            <div className="space-y-3">
             {placementConfirmError && (
-              <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {placementConfirmError}
-              </div>
+              <BlockingNotice message={placementConfirmError} />
             )}
             <div className="rounded-lg border border-muted-foreground/20 bg-muted/30 p-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
+              <div className="grid gap-4 text-sm sm:grid-cols-2">
+                <div className="min-w-0">
                   <p className="mb-1 text-muted-foreground">Casusreferentie</p>
-                  <p className="font-semibold text-foreground">{formatClientReference(caseData.id)}</p>
+                  <p className="min-w-0 break-words font-semibold text-foreground">{formatClientReference(caseData.id)}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="mb-1 text-muted-foreground">Aanbieder</p>
-                  <p className="font-semibold text-foreground">{provider.name}</p>
+                  <p className="min-w-0 break-words font-semibold text-foreground">{provider.name}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="mb-1 text-muted-foreground">Urgentie</p>
                   <p className="font-semibold text-foreground capitalize">{caseData.urgency}</p>
                 </div>

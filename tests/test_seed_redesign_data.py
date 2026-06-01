@@ -28,7 +28,7 @@ class SeedRedesignDataCommandTests(TestCase):
             PILOT_CASE_TITLES[0]: {
                 'current_state': 'MATCHING_READY',
                 'blocker_code': None,
-                'alert_code': None,
+                'alert_code': 'NO_MATCH_AVAILABLE',
                 'next_action': 'VALIDATE_MATCHING',
             },
             PILOT_CASE_TITLES[1]: {
@@ -99,9 +99,9 @@ class SeedRedesignDataCommandTests(TestCase):
             [
                 PILOT_CASE_TITLES[1],
                 PILOT_CASE_TITLES[4],
+                PILOT_CASE_TITLES[0],
                 PILOT_CASE_TITLES[3],
                 PILOT_CASE_TITLES[5],
                 PILOT_CASE_TITLES[2],
-                PILOT_CASE_TITLES[0],
             ],
         )

@@ -64,6 +64,7 @@ from .provider_metrics import (
 )
 from .provider_workspace import build_provider_workspace_rows, build_provider_workspace_summary
 from .provider_location import provider_location_payload as _provider_location_payload
+from .zorgbehoefte_taxonomy import format_taxonomy_explainability
 from .oversight_workspace import (
     build_municipality_list_summary,
     build_municipality_detail_summary,
@@ -348,13 +349,23 @@ def _provider_form_match(profile, intake):
     }.get(intake.preferred_care_form, False)
 
 
+def _resolved_intake_urgency(intake):
+    urgency = (getattr(intake, 'urgency', '') or '').strip()
+    if urgency:
+        return urgency
+    try:
+        return (intake.derive_operational_urgency() or '').strip()
+    except Exception:
+        return ''
+
+
 def _provider_urgency_match(profile, intake):
     return {
         CaseIntakeProcess.Urgency.LOW: profile.handles_low_urgency,
         CaseIntakeProcess.Urgency.MEDIUM: profile.handles_medium_urgency,
         CaseIntakeProcess.Urgency.HIGH: profile.handles_high_urgency,
         CaseIntakeProcess.Urgency.CRISIS: profile.handles_crisis_urgency,
-    }.get(intake.urgency, False)
+    }.get(_resolved_intake_urgency(intake), False)
 
 
 def _capacity_status_label(free_slots):
@@ -738,7 +749,22 @@ def _build_case_intelligence_context(
     case_data = {
         'phase': _flow_stage_for_intake_status(intake.status),
         'care_category': intake.care_category_main.name if intake.care_category_main else None,
-        'urgency': intake.urgency,
+        'care_category_code': intake.care_category_main.code if intake.care_category_main else None,
+        'care_subcategory': intake.care_category_sub.name if intake.care_category_sub else None,
+        'care_subcategory_code': intake.care_category_sub.code if intake.care_category_sub else None,
+        'taxonomie_lijn': format_taxonomy_explainability(
+            intake.care_category_main.name if intake.care_category_main else '',
+            intake.care_category_main.code if intake.care_category_main else '',
+            intake.care_category_sub.name if intake.care_category_sub else '',
+            intake.care_category_sub.code if intake.care_category_sub else '',
+        )[0],
+        'taxonomie_code_lijn': format_taxonomy_explainability(
+            intake.care_category_main.name if intake.care_category_main else '',
+            intake.care_category_main.code if intake.care_category_main else '',
+            intake.care_category_sub.name if intake.care_category_sub else '',
+            intake.care_category_sub.code if intake.care_category_sub else '',
+        )[1],
+        'urgency': _resolved_intake_urgency(intake),
         'assessment_complete': bool(assessment and assessment.assessment_status == CaseAssessment.AssessmentStatus.APPROVED_FOR_MATCHING),
         'matching_run_exists': bool(matching_preview_candidates),
         'top_match_confidence': ((top_candidate or {}).get('explanation') or {}).get('confidence'),
@@ -818,16 +844,29 @@ def _build_match_context_from_intake(intake, organization):
     contra_indicaties = [
         token.strip() for token in str(getattr(intake, 'contra_indicaties', '') or '').split(',') if token.strip()
     ]
+    care_category_main = getattr(intake, 'care_category_main', None)
+    care_category_sub = getattr(intake, 'care_category_sub', None)
+    taxonomy_terms = [
+        getattr(care_category_main, 'name', '') or '',
+        getattr(care_category_main, 'code', '') or '',
+        getattr(care_category_sub, 'name', '') or '',
+        getattr(care_category_sub, 'code', '') or '',
+    ]
 
     return MatchContext(
+        zorgbehoefte_categorie=(getattr(care_category_main, 'name', '') or '').strip(),
+        zorgbehoefte_categorie_code=(getattr(care_category_main, 'code', '') or '').strip(),
+        zorgbehoefte_specifiek=(getattr(care_category_sub, 'name', '') or '').strip(),
+        zorgbehoefte_specifiek_code=(getattr(care_category_sub, 'code', '') or '').strip(),
         zorgvorm=(getattr(intake, 'zorgvorm_gewenst', '') or intake.preferred_care_form or '').lower(),
         leeftijd=getattr(intake, 'leeftijd', None),
         regio=(region_ref or '').strip(),
         gemeente=(gemeente_name or '').strip(),
         complexiteit=(intake.complexity or '').lower(),
-        urgentie=(intake.urgency or '').lower(),
+        urgentie=_resolved_intake_urgency(intake).lower(),
         problematiek=problematiek,
-        crisisopvang_vereist=(intake.urgency == CaseIntakeProcess.Urgency.CRISIS),
+        specialisaties_gevraagd=[term for term in taxonomy_terms if str(term).strip()],
+        crisisopvang_vereist=(_resolved_intake_urgency(intake) == CaseIntakeProcess.Urgency.CRISIS),
         setting_voorkeur=getattr(intake, 'setting_voorkeur', '') or '',
         contra_indicaties=contra_indicaties,
         max_toelaatbare_wachttijd_dagen=getattr(intake, 'max_toelaatbare_wachttijd_dagen', None),
@@ -850,7 +889,14 @@ def _region_pressure_summary(*, intake, provider_profiles, region_id):
     active_cases = CaseIntakeProcess.objects.filter(
         organization=intake.organization,
         status__in=active_statuses,
-    ).filter(Q(regio_id=region_id) | Q(preferred_region_id=region_id)).count()
+    ).filter(
+        Q(regio_id=region_id)
+        | Q(preferred_region_id=region_id)
+        | Q(zorgregio_id=region_id)
+        | Q(plaatsingsregio_id=region_id)
+        | Q(contractregio_id=region_id)
+        | Q(escalatie_regio_id=region_id)
+    ).count()
 
     regional_profiles = [
         profile for profile in provider_profiles
@@ -882,6 +928,13 @@ def _build_canonical_matching_suggestions_for_intake(intake, organization, *, li
     non_excluded = [row for row in results if not row.uitgesloten]
     if not non_excluded:
         return [], [row for row in results if row.uitgesloten]
+
+    taxonomie_lijn, taxonomie_code_lijn = format_taxonomy_explainability(
+        getattr(ctx, 'zorgbehoefte_categorie', '') or '',
+        getattr(ctx, 'zorgbehoefte_categorie_code', '') or '',
+        getattr(ctx, 'zorgbehoefte_specifiek', '') or '',
+        getattr(ctx, 'zorgbehoefte_specifiek_code', '') or '',
+    )
 
     provider_clients = {
         client.name.strip().lower(): client
@@ -934,6 +987,12 @@ def _build_canonical_matching_suggestions_for_intake(intake, organization, *, li
                 'fit_samenvatting': result.fit_samenvatting or '',
                 'trade_offs': trade_offs,
                 'verificatie_advies': result.verificatie_advies or '',
+                'zorgbehoefte_categorie': ctx.zorgbehoefte_categorie or '',
+                'zorgbehoefte_categorie_code': ctx.zorgbehoefte_categorie_code or '',
+                'zorgbehoefte_specifiek': ctx.zorgbehoefte_specifiek or '',
+                'zorgbehoefte_specifiek_code': ctx.zorgbehoefte_specifiek_code or '',
+                'taxonomie_lijn': taxonomie_lijn,
+                'taxonomie_code_lijn': taxonomie_code_lijn,
                 'uitgesloten': bool(result.uitgesloten),
                 'uitsluitreden': result.uitsluitreden or '',
                 'ranking': result.ranking,
@@ -1045,7 +1104,8 @@ def _sync_matching_signals_for_intake(intake, suggestions, excluded_results):
         )
 
     urgent_threshold = int(getattr(intake, 'max_toelaatbare_wachttijd_dagen', 0) or 0)
-    if intake.urgency in {CaseIntakeProcess.Urgency.HIGH, CaseIntakeProcess.Urgency.CRISIS} and urgent_threshold:
+    resolved_urgency = _resolved_intake_urgency(intake)
+    if resolved_urgency in {CaseIntakeProcess.Urgency.HIGH, CaseIntakeProcess.Urgency.CRISIS} and urgent_threshold:
         top_wait = suggestions[0].get('avg_wait_days') if suggestions else None
         if top_wait is not None and top_wait > urgent_threshold:
             CareSignal.objects.update_or_create(
@@ -1082,6 +1142,12 @@ def _build_matching_suggestions_for_intake(intake, provider_profiles, *, limit=5
         return canonical_suggestions[:limit] if limit else canonical_suggestions
 
     suggestions = []
+    taxonomie_lijn, taxonomie_code_lijn = format_taxonomy_explainability(
+        getattr(getattr(intake, 'care_category_main', None), 'name', '') or '',
+        getattr(getattr(intake, 'care_category_main', None), 'code', '') or '',
+        getattr(getattr(intake, 'care_category_sub', None), 'name', '') or '',
+        getattr(getattr(intake, 'care_category_sub', None), 'code', '') or '',
+    )
 
     for profile in provider_profiles:
         score = 0
@@ -1093,6 +1159,12 @@ def _build_matching_suggestions_for_intake(intake, provider_profiles, *, limit=5
             if category_match:
                 score += 40
                 reasons.append('Categorie match')
+        subcategory_match = False
+        if intake.care_category_sub_id and hasattr(profile, 'target_care_subcategories'):
+            subcategory_match = profile.target_care_subcategories.filter(id=intake.care_category_sub_id).exists()
+            if subcategory_match:
+                score += 18
+                reasons.append('Specifieke zorgbehoefte match')
 
         urgency_match = _provider_urgency_match(profile, intake)
         if urgency_match:
@@ -1106,15 +1178,27 @@ def _build_matching_suggestions_for_intake(intake, provider_profiles, *, limit=5
 
         region_match = False
         region_type_match = False
-        effective_region_id = intake.regio_id or intake.preferred_region_id
-        if effective_region_id:
-            region_match = (
-                profile.served_regions.filter(id=effective_region_id).exists()
-                or profile.secondary_served_regions.filter(id=effective_region_id).exists()
-            )
-            if region_match:
-                score += 15
-                reasons.append('Voorkeursregio match')
+        route_regions = [
+            getattr(intake, 'plaatsingsregio', None),
+            getattr(intake, 'contractregio', None),
+            getattr(intake, 'zorgregio', None),
+            intake.regio,
+            intake.preferred_region,
+        ]
+        effective_region_id = next((region.id for region in route_regions if region is not None), None)
+        route_region_ids = [region.id for region in route_regions if region is not None]
+        if route_region_ids:
+            for region_obj in route_regions:
+                if region_obj is None:
+                    continue
+                region_match = (
+                    profile.served_regions.filter(id=region_obj.id).exists()
+                    or profile.secondary_served_regions.filter(id=region_obj.id).exists()
+                )
+                if region_match:
+                    score += 15
+                    reasons.append(f'{region_obj.region_name} match')
+                    break
         elif intake.preferred_region_type:
             region_type_match = (
                 profile.served_regions.filter(region_type=intake.preferred_region_type).exists()
@@ -1153,7 +1237,7 @@ def _build_matching_suggestions_for_intake(intake, provider_profiles, *, limit=5
         behavior_modifier = calculate_provider_behavior_modifier(
             behavior_metrics,
             case_context={
-                'urgency': intake.urgency,
+                'urgency': _resolved_intake_urgency(intake),
                 'care_form': intake.preferred_care_form,
                 'region_id': effective_region_id,
             },
@@ -1195,6 +1279,12 @@ def _build_matching_suggestions_for_intake(intake, provider_profiles, *, limit=5
                 'fit_samenvatting': explanation.get('fit_summary') or '',
                 'trade_offs': explanation.get('trade_offs') or [],
                 'verificatie_advies': '; '.join(explanation.get('verify_manually') or []),
+                'zorgbehoefte_categorie': getattr(getattr(intake, 'care_category_main', None), 'name', '') or '',
+                'zorgbehoefte_categorie_code': getattr(getattr(intake, 'care_category_main', None), 'code', '') or '',
+                'zorgbehoefte_specifiek': getattr(getattr(intake, 'care_category_sub', None), 'name', '') or '',
+                'zorgbehoefte_specifiek_code': getattr(getattr(intake, 'care_category_sub', None), 'code', '') or '',
+                'taxonomie_lijn': taxonomie_lijn,
+                'taxonomie_code_lijn': taxonomie_code_lijn,
                 'uitgesloten': False,
                 'uitsluitreden': '',
                 'ranking': None,
@@ -2156,14 +2246,17 @@ class ClientDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView
                     str(CaseIntakeProcess.Urgency.MEDIUM): profile.handles_medium_urgency,
                     str(CaseIntakeProcess.Urgency.HIGH): profile.handles_high_urgency,
                     str(CaseIntakeProcess.Urgency.CRISIS): profile.handles_crisis_urgency,
-                }.get(str(selected_intake.urgency), False)
+                }.get(str(_resolved_intake_urgency(selected_intake)), False)
 
                 category_fit = False
                 if selected_intake.care_category_main_id:
                     category_fit = profile.target_care_categories.filter(id=selected_intake.care_category_main_id).exists()
+                subcategory_fit = False
+                if selected_intake.care_category_sub_id and hasattr(profile, 'target_care_subcategories'):
+                    subcategory_fit = profile.target_care_subcategories.filter(id=selected_intake.care_category_sub_id).exists()
 
-                fit_points = [form_fit, urgency_fit, category_fit]
-                fit_score = int((sum(1 for p in fit_points if p) / 3) * 100)
+                fit_points = [form_fit, urgency_fit, category_fit, subcategory_fit]
+                fit_score = int((sum(1 for p in fit_points if p) / 4) * 100)
                 case_fit_summary = {
                     'label': f'Casus {selected_intake.pk}: {selected_intake.title}',
                     'score': fit_score,
@@ -2171,6 +2264,7 @@ class ClientDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView
                         f"Zorgvorm fit: {'Ja' if form_fit else 'Nee'}",
                         f"Urgentie fit: {'Ja' if urgency_fit else 'Nee'}",
                         f"Categorie fit: {'Ja' if category_fit else 'Nee'}",
+                        f"Specifieke zorgbehoefte fit: {'Ja' if subcategory_fit else 'Nee'}",
                     ],
                 }
             else:
@@ -3320,6 +3414,12 @@ def reports_dashboard(request):
     domain_filter = request.GET.get('domain', '')
     region_type_filter = request.GET.get('region_type', '')
     region_filter = request.GET.get('region', '')
+    responsible_municipality_filter = request.GET.get('verantwoordelijke_gemeente', '')
+    zorgregio_filter = request.GET.get('zorgregio', '')
+    plaatsingsregio_filter = request.GET.get('plaatsingsregio', '')
+    verblijfsgemeente_filter = request.GET.get('verblijfsgemeente', '')
+    escalatie_regio_filter = request.GET.get('escalatie_regio', '')
+    requires_revalidation_filter = request.GET.get('requires_revalidation', '')
     try:
         stagnation_days = int(request.GET.get('stagnation_days', 21))
     except (TypeError, ValueError):
@@ -3351,6 +3451,18 @@ def reports_dashboard(request):
         cases_qs = cases_qs.filter(preferred_region_type=region_type_filter)
     if region_filter.isdigit():
         cases_qs = cases_qs.filter(preferred_region_id=int(region_filter))
+    if responsible_municipality_filter.isdigit():
+        cases_qs = cases_qs.filter(verantwoordelijke_gemeente_id=int(responsible_municipality_filter))
+    if zorgregio_filter.isdigit():
+        cases_qs = cases_qs.filter(zorgregio_id=int(zorgregio_filter))
+    if plaatsingsregio_filter.isdigit():
+        cases_qs = cases_qs.filter(plaatsingsregio_id=int(plaatsingsregio_filter))
+    if verblijfsgemeente_filter.isdigit():
+        cases_qs = cases_qs.filter(verblijfsgemeente_id=int(verblijfsgemeente_filter))
+    if escalatie_regio_filter.isdigit():
+        cases_qs = cases_qs.filter(escalatie_regio_id=int(escalatie_regio_filter))
+    if requires_revalidation_filter.lower() in {'1', 'true', 'yes', 'on'}:
+        cases_qs = cases_qs.filter(requires_revalidation=True)
 
     # KPI 1: Casussen zonder match
     matched_case_ids = indications_qs.filter(selected_provider__isnull=False).values_list('due_diligence_process_id', flat=True)
@@ -4257,9 +4369,10 @@ def _provider_recommended_action_presentation(next_action):
     return mapping.get(next_action, ('Monitor voortgang', 'medium'))
 
 
-@login_required
 @require_POST
 def case_communication_action(request, pk):
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden('Je moet ingelogd zijn om communicatie te wijzigen.')
     org = get_user_organization(request.user)
     intake = get_object_or_404(
         scope_queryset_for_organization(CaseIntakeProcess.objects.select_related('contract'), org),
@@ -4658,8 +4771,8 @@ def build_provider_response_monitor(org, *, user=None, filters=None, next_url=No
                 'region_id': str(region.pk) if region else '',
                 'region_label': region_label,
                 'phase_label': intake.get_status_display(),
-                'urgency_label': intake.get_urgency_display(),
-                'urgency_rank': _urgency_rank(intake.urgency),
+                'urgency_label': intake.get_urgency_display() or _resolved_intake_urgency(intake),
+                'urgency_rank': _urgency_rank(_resolved_intake_urgency(intake)),
                 'age_days': age_days,
                 'requested_at': placement.provider_response_requested_at,
                 'deadline_at': placement.provider_response_deadline_at,
@@ -6675,7 +6788,7 @@ class CaseIntakeListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView
                 'obj': intake,
                 'title': intake.title,
                 'status': intake.get_status_display(),
-                'urgency': intake.get_urgency_display(),
+                'urgency': intake.get_urgency_display() or _resolved_intake_urgency(intake),
                 'lead': intake.case_coordinator.get_full_name() if intake.case_coordinator else '—',
                 'category': intake.care_category_main.name if intake.care_category_main else '—',
                 'region': intake.preferred_region.region_name if intake.preferred_region else '—',
@@ -7014,10 +7127,11 @@ class CaseIntakeDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Detail
         if can_edit_case:
             priority = 'medium'
             icon = 'i'
-            if intake.urgency == CaseIntakeProcess.Urgency.CRISIS:
+            resolved_urgency = _resolved_intake_urgency(intake)
+            if resolved_urgency == CaseIntakeProcess.Urgency.CRISIS:
                 priority = 'critical'
                 icon = '!'
-            elif intake.urgency == CaseIntakeProcess.Urgency.HIGH:
+            elif resolved_urgency == CaseIntakeProcess.Urgency.HIGH:
                 priority = 'high'
                 icon = 'H'
 
@@ -7166,8 +7280,8 @@ class CaseIntakeDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Detail
             'decision_header': {
                 'title': intake.title,
                 'status': intake.get_status_display(),
-                'urgency': intake.get_urgency_display(),
-                'urgency_code': intake.urgency,
+                'urgency': intake.get_urgency_display() or _resolved_intake_urgency(intake),
+                'urgency_code': _resolved_intake_urgency(intake),
             },
             'phase_stepper': flow_rail,
         })
@@ -7257,8 +7371,26 @@ class CaseIntakeUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, Update
         return ctx
 
     def form_valid(self, form):
+        old_target_completion_date = self.object.target_completion_date
         response = super().form_valid(form)
-        log_action(self.request.user, 'UPDATE', 'CaseIntakeProcess', self.object.id, str(self.object), request=self.request)
+        changes = None
+        new_target_completion_date = self.object.target_completion_date
+        if old_target_completion_date != new_target_completion_date:
+            changes = {
+                'target_completion_date': {
+                    'from': old_target_completion_date.isoformat() if old_target_completion_date else None,
+                    'to': new_target_completion_date.isoformat() if new_target_completion_date else None,
+                }
+            }
+        log_action(
+            self.request.user,
+            'UPDATE',
+            'CaseIntakeProcess',
+            self.object.id,
+            str(self.object),
+            changes=changes,
+            request=self.request,
+        )
         messages.success(self.request, f'Casus "{self.object.title}" bijgewerkt.')
         return response
 
@@ -7988,6 +8120,9 @@ class PlacementRequestUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, 
     def get_queryset(self):
         org = self.get_organization()
         return PlacementRequest.objects.for_organization(org)
+
+    def handle_no_permission(self):
+        return HttpResponseForbidden('Je hebt geen rechten om plaatsing voor deze casus te wijzigen.')
 
     def dispatch(self, request, *args, **kwargs):
         placement = self.get_object()

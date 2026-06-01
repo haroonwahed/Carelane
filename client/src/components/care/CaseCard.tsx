@@ -31,6 +31,7 @@ interface CaseData {
   lastUpdated: string;
   urgencyValidated?: boolean;
   urgencyDocumentPresent?: boolean;
+  urgencyApplied?: boolean;
 }
 
 interface CaseCardProps {
@@ -55,6 +56,7 @@ export function CaseCard({ caseData, isSelected, onSelect, onViewCase, onAction 
     lastUpdated,
     urgencyValidated,
     urgencyDocumentPresent,
+    urgencyApplied,
   } = caseData;
 
   // Urgency styling (canonical semantic tones; no hardcoded/local color tokens)
@@ -157,6 +159,12 @@ export function CaseCard({ caseData, isSelected, onSelect, onViewCase, onAction 
                   <CareMetaChip className="inline-flex items-center gap-1 whitespace-nowrap border border-emerald-500/40 bg-emerald-500/15 text-emerald-300">
                     <ShieldCheck className="w-3 h-3" />
                     Gevalideerde urgentie
+                  </CareMetaChip>
+                )}
+                {!urgencyValidated && urgencyApplied && (
+                  <CareMetaChip className="inline-flex items-center gap-1 whitespace-nowrap border border-amber-500/40 bg-amber-500/15 text-amber-300">
+                    <Clock className="w-3 h-3" />
+                    Urgentie aangevraagd
                   </CareMetaChip>
                 )}
                 {!urgencyValidated && urgencyDocumentPresent && (urgency === "urgent" || urgency === "warning") && (

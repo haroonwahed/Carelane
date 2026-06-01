@@ -25,7 +25,7 @@ vi.mock("../../hooks/useRegions", () => ({
 }));
 
 describe("SignalenPage", () => {
-  it("frames signals as a regie-overview and exposes the dominant action", async () => {
+  it("frames signals as a coördinatie-overview and exposes the dominant action", async () => {
     mockUseCases.mockReturnValue({
       cases: [],
       loading: false,
@@ -75,7 +75,7 @@ describe("SignalenPage", () => {
     expect(screen.getByRole("button", { name: "Bekijk kritiek" })).toBeInTheDocument();
 
     await user.click(screen.getByTestId("signalen-page-uitleg"));
-    expect(screen.getByText(/regie-overzicht/i)).toBeInTheDocument();
+    expect(screen.getByText(/coördinatie-overzicht/i)).toBeInTheDocument();
     expect(screen.getByText(/sidebar Acties blijft de aparte takenlijst/i)).toBeInTheDocument();
   });
 });

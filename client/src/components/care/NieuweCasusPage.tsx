@@ -1,15 +1,24 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, ChevronDown, CircleHelp, ExternalLink, FileText, Loader2, Lock, Save, ShieldCheck, UserRound, X } from "lucide-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type ReactNode } from "react";
+import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CalendarDays, Check, CheckCircle2, ChevronDown, CircleHelp, ExternalLink, Loader2, Lock, Save, Search, ShieldCheck, X } from "lucide-react";
 import { apiClient } from "../../lib/apiClient";
 import { tokens } from "../../design/tokens";
 import { SPA_DASHBOARD_URL, toCareCaseDetail, toCareSettingsSection } from "../../lib/routes";
 import { Button } from "../ui/button";
 import { Calendar } from "../ui/calendar";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { VideoHelpTrigger } from "../guidance";
+import { CareInfoPopover } from "./CareUnifiedPage";
+import { derivePlacementPressure } from "../../lib/placementPressure";
 
 type Option = {
   value: string;
   label: string;
+};
+
+type MunicipalityOption = Option & {
+  urgencyDocumentRequestUrl?: string;
 };
 
 type SubcategoryOption = Option & {
@@ -18,6 +27,7 @@ type SubcategoryOption = Option & {
 
 type IntakeFormState = {
   title: string;
+  source_reference: string;
   start_date: string;
   target_completion_date: string;
   care_category_main: string;
@@ -27,6 +37,12 @@ type IntakeFormState = {
   regio: string;
   urgency: string;
   complexity: string;
+  placement_pressure_horizon: string;
+  safety_pressure: boolean;
+  time_sensitive_arrangement: boolean;
+  escalation_needed: boolean;
+  placement_pressure_notes: string;
+  has_urgency_declaration: boolean;
   urgency_applied: boolean;
   urgency_applied_since: string;
   diagnostiek: string[];
@@ -51,10 +67,11 @@ type IntakeFormPayload = {
   options: {
     care_category_main: Option[];
     care_category_sub: SubcategoryOption[];
-    gemeente: Option[];
+    gemeente: MunicipalityOption[];
     regio: Option[];
     urgency: Option[];
     complexity: Option[];
+    placement_pressure_horizon: Option[];
     diagnostiek: Option[];
     zorgvorm_gewenst: Option[];
     preferred_care_form: Option[];
@@ -83,16 +100,17 @@ type VisibilityRole = "gemeente" | "zorgaanbieder" | "regie";
 
 const baseFieldClass = "h-11 w-full rounded-xl border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary/50";
 const baseTextareaClass = "w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm text-foreground outline-none focus:border-primary/50";
-const SOURCE_REGISTRATION_OPTIONS: Option[] = [
-  { value: "gemeente_den_haag", label: "Gemeente Den Haag" },
-  { value: "jeugdplatform", label: "Jeugdplatform" },
-  { value: "veilig_thuis", label: "Veilig Thuis" },
-  { value: "zorgmail_intake", label: "Zorgmail Intake" },
-  { value: "handmatige_regiecasus", label: "Handmatige Regiecasus" },
-];
 const compactLabelClass = "mb-1 block text-[11px] font-medium tracking-[0.04em] text-muted-foreground";
 const compactGroupLabelClass = "mb-2 text-[11px] font-medium tracking-[0.04em] text-muted-foreground";
+const wizardFieldGridClass = "grid gap-5 md:grid-cols-2";
 const quietToggleClass = "inline-flex items-center gap-1 rounded-full border border-border/70 bg-card/55 px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:border-border/70 hover:text-foreground";
+const placementPressureHorizonChoices = [
+  { value: "TODAY", label: "Directe inzet" },
+  { value: "3_DAYS", label: "Binnen 72 uur" },
+  { value: "1_WEEK", label: "Binnen 1 week" },
+  { value: "2_WEEKS", label: "Binnen 2 weken" },
+  { value: ">2_WEEKS", label: "Meer dan 2 weken" },
+] as const;
 
 interface NieuweCasusPageProps {
   onCancel?: () => void;
@@ -115,20 +133,22 @@ function SectionHeader({
   step,
   eyebrow,
   title,
-  copy,
+  context,
+  video,
   status,
-  triggerLabel = "Waarom?",
 }: {
   step: string;
   eyebrow?: string;
   title: string;
-  copy?: string;
+  context?: string;
+  video?: {
+    title: string;
+    description?: string;
+    script: string;
+    testId?: string;
+  };
   status?: ReactNode;
-  triggerLabel?: string;
 }) {
-  const [showCopy, setShowCopy] = useState(false);
-  const copyId = `nieuw-casus-${step}-copy`;
-
   return (
     <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
@@ -147,21 +167,17 @@ function SectionHeader({
               title
             )}
           </h2>
-          {copy && (
-            <button
-              type="button"
-              onClick={() => setShowCopy((current) => !current)}
-              className={quietToggleClass}
-              aria-expanded={showCopy}
-              aria-controls={copyId}
-            >
-              <CircleHelp size={12} />
-              {triggerLabel}
-              <ChevronDown size={12} className={showCopy ? "rotate-180 transition-transform" : "transition-transform"} />
-            </button>
+          {video && (
+            <VideoHelpTrigger
+              title={video.title}
+              description={video.description}
+              script={video.script}
+              triggerLabel="Bekijk uitleg"
+              testId={video.testId}
+            />
           )}
         </div>
-        {copy && showCopy && <p id={copyId} className="mt-2 rounded-xl border border-border/70 bg-muted/15 px-3 py-2 text-sm text-muted-foreground">{copy}</p>}
+        {context ? <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{context}</p> : null}
       </div>
       {status}
     </div>
@@ -215,7 +231,7 @@ function addDays(date: Date, days: number): Date {
   return copy;
 }
 
-function buildReference(prefix: "CO" | "TMP", now = new Date()): string {
+function buildReference(prefix: "CO" | "TMP" | "BR", now = new Date()): string {
   const year = now.getFullYear();
   const randomChunk = (() => {
     if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
@@ -227,6 +243,63 @@ function buildReference(prefix: "CO" | "TMP", now = new Date()): string {
   })().toUpperCase();
   const serial = randomChunk;
   return `${prefix}-${year}-${serial}`;
+}
+
+const NIEUWE_CASUS_DRAFT_STORAGE_KEY = "careon:nieuwe-casus-draft:v2";
+
+type NieuweCasusDraft = {
+  currentStep: 1 | 2 | 3;
+  formState: IntakeFormState;
+  searchRadiusKm: 10 | 25 | 50;
+};
+
+function getDraftStorage(): Storage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const storage = window.localStorage as Storage | undefined;
+  if (!storage || typeof storage.getItem !== "function" || typeof storage.setItem !== "function" || typeof storage.removeItem !== "function") {
+    return null;
+  }
+  return storage;
+}
+
+function readNieuweCasusDraft(): NieuweCasusDraft | null {
+  const storage = getDraftStorage();
+  if (!storage) {
+    return null;
+  }
+
+  const raw = storage.getItem(NIEUWE_CASUS_DRAFT_STORAGE_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<NieuweCasusDraft> | null;
+    if (!parsed || typeof parsed !== "object" || !parsed.formState) {
+      return null;
+    }
+    const currentStep = parsed.currentStep === 1 || parsed.currentStep === 2 || parsed.currentStep === 3 ? parsed.currentStep : 1;
+    const searchRadiusKm = parsed.searchRadiusKm === 10 || parsed.searchRadiusKm === 25 || parsed.searchRadiusKm === 50 ? parsed.searchRadiusKm : 25;
+    return {
+      currentStep,
+      searchRadiusKm,
+      formState: parsed.formState as IntakeFormState,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function clearNieuweCasusDraft() {
+  const storage = getDraftStorage();
+  if (!storage) {
+    return;
+  }
+
+  storage.removeItem(NIEUWE_CASUS_DRAFT_STORAGE_KEY);
 }
 
 function extractValidationErrors(error: unknown): Record<string, string | string[]> | null {
@@ -246,15 +319,18 @@ function extractValidationErrors(error: unknown): Record<string, string | string
   }
 }
 
-function daysBetween(startDate: string, endDate: string): number | null {
-  const start = parseDateValue(startDate);
-  const end = parseDateValue(endDate);
-  if (!start || !end) {
-    return null;
-  }
+function isFilled(value: string | null | undefined): boolean {
+  return Boolean(value && value.trim());
+}
 
-  const msPerDay = 1000 * 60 * 60 * 24;
-  return Math.max(0, Math.round((end.getTime() - start.getTime()) / msPerDay));
+function shouldAvoidBrowserNavigation(): boolean {
+  if (typeof window === "undefined") {
+    return true;
+  }
+  if (import.meta.env.MODE === "test") {
+    return true;
+  }
+  return /jsdom/i.test(window.navigator.userAgent ?? "");
 }
 
 function selectFieldOptions(options: Option[], placeholder?: string) {
@@ -273,15 +349,19 @@ interface DateFieldProps {
   value: string;
   onChange: (value: string) => void;
   error?: string | string[];
+  labelAction?: ReactNode;
 }
 
-function DateField({ label, value, onChange, error }: DateFieldProps) {
+function DateField({ label, value, onChange, error, labelAction }: DateFieldProps) {
   const [open, setOpen] = useState(false);
   const selectedDate = parseDateValue(value);
 
   return (
     <div>
-      <label className={compactLabelClass}>{label}</label>
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <label className={compactLabelClass}>{label}</label>
+        {labelAction}
+      </div>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
@@ -313,8 +393,116 @@ function DateField({ label, value, onChange, error }: DateFieldProps) {
   );
 }
 
+interface MunicipalityComboboxProps {
+  label: string;
+  value: string;
+  options: Option[];
+  onChange: (value: string) => void;
+  error?: string | string[];
+  placeholder?: string;
+  labelAction?: ReactNode;
+}
+
+function MunicipalityCombobox({
+  label,
+  value,
+  options,
+  onChange,
+  error,
+  placeholder = "Selecteer gemeente",
+  labelAction,
+}: MunicipalityComboboxProps) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const selectedLabel = options.find((option) => option.value === value)?.label ?? "";
+  const normalizedQuery = query.trim().toLowerCase();
+
+  const filteredOptions = useMemo(() => {
+    if (!normalizedQuery) {
+      return options;
+    }
+    return options.filter((option) => {
+      const labelMatch = option.label.toLowerCase().includes(normalizedQuery);
+      const valueMatch = option.value.toLowerCase().includes(normalizedQuery);
+      return labelMatch || valueMatch;
+    });
+  }, [normalizedQuery, options]);
+
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+    }
+  }, [open]);
+
+  return (
+    <div>
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <label className={compactLabelClass}>{label}</label>
+        {labelAction}
+      </div>
+      <Popover
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (nextOpen) {
+            setQuery("");
+          }
+        }}
+      >
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={`${baseFieldClass} flex items-center justify-between gap-3 text-left`}
+            aria-label={label}
+            aria-expanded={open}
+            aria-haspopup="listbox"
+          >
+            <span className={value ? "text-foreground" : "text-muted-foreground"}>{selectedLabel || placeholder}</span>
+            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+              <Search size={16} />
+              <ChevronDown size={14} className={open ? "rotate-180 transition-transform" : "transition-transform"} />
+            </span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] rounded-2xl border border-border/80 bg-card p-0 shadow-xl" align="start">
+          <Command shouldFilter={false} className="rounded-2xl">
+            <CommandInput
+              value={query}
+              onValueChange={setQuery}
+              placeholder="Zoek gemeente..."
+            />
+            <CommandList>
+              <CommandEmpty>Geen gemeente gevonden.</CommandEmpty>
+              <CommandGroup>
+                {filteredOptions.map((option) => {
+                  const active = option.value === value;
+                  return (
+                    <CommandItem
+                      key={option.value}
+                      value={option.label}
+                      onSelect={() => {
+                        onChange(option.value);
+                        setOpen(false);
+                      }}
+                      className="flex items-center justify-between"
+                    >
+                      <span>{option.label}</span>
+                      {active && <Check size={14} className="text-primary" aria-hidden />}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      <FieldError message={error} />
+    </div>
+  );
+}
+
 const NIEUWE_CASUS_PRIVACY_GUIDANCE = [
-  "We koppelen deze casus aan een bronregistratie en bepalen de basiscontext.",
+  "We koppelen deze casus aan het woonplaatsbeginsel en genereren automatisch een bronreferentie.",
   "Vul alleen de minimale gegevens in om te starten. Aanvullende informatie volgt in de volgende stappen.",
   "Persoonsgegevens blijven afgeschermd tot formele intake of koppeling.",
 ] as const;
@@ -323,10 +511,12 @@ function NieuweCasusPrivacyGuidance({
   id,
   className,
   showRequiredFieldsNote = false,
+  showPrivacyLink = true,
 }: {
   id?: string;
   className?: string;
   showRequiredFieldsNote?: boolean;
+  showPrivacyLink?: boolean;
 }) {
   const rootClass = [
     "flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/30 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4",
@@ -353,14 +543,49 @@ function NieuweCasusPrivacyGuidance({
           ) : null}
         </div>
       </div>
-      <a
-        href={toCareSettingsSection("documenten-privacy")}
-        className="inline-flex shrink-0 items-center gap-1.5 self-start text-[12px] font-semibold text-primary underline-offset-4 hover:text-muted-foreground hover:underline sm:self-center"
-      >
-        Meer over privacy en zichtbaarheid
-        <ExternalLink size={14} className="opacity-90" aria-hidden />
-      </a>
+      {showPrivacyLink ? (
+        <a
+          href={toCareSettingsSection("documenten-privacy")}
+          className="inline-flex shrink-0 items-center gap-1.5 self-start text-[12px] font-semibold text-primary underline-offset-4 hover:text-muted-foreground hover:underline sm:self-center"
+        >
+          Meer over privacy en zichtbaarheid
+          <ExternalLink size={14} className="opacity-90" aria-hidden />
+        </a>
+      ) : null}
     </div>
+  );
+}
+
+function NieuweCasusToelichtingDialog({
+  open,
+  onOpenChange,
+  id,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  id?: string;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent id={id} className="max-w-2xl border-border/70 bg-card">
+        <DialogHeader className="text-left">
+          <DialogTitle>Toelichting nieuwe casus</DialogTitle>
+          <DialogDescription>Uitleg over privacy, minimale gegevens en zichtbaarheid per stap.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <NieuweCasusPrivacyGuidance showRequiredFieldsNote showPrivacyLink={false} />
+          <div className="flex items-center justify-end border-t border-border/60 pt-3">
+            <a
+              href={toCareSettingsSection("documenten-privacy")}
+              className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-primary underline-offset-4 hover:text-muted-foreground hover:underline"
+            >
+              Meer over privacy en zichtbaarheid
+              <ExternalLink size={14} className="opacity-90" aria-hidden />
+            </a>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -372,9 +597,11 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string | string[]>>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [showPageGuidance, setShowPageGuidance] = useState(false);
+  const [showPageGuidanceDialog, setShowPageGuidanceDialog] = useState(false);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+  const [stepError, setStepError] = useState<string | null>(null);
   const skipScrollOnFirstStepPaint = useRef(true);
+  const stepErrorBannerRef = useRef<HTMLDivElement | null>(null);
 
   /** Shell main uses `overflow-y-auto`; scroll the wizard top into view when the step changes (e.g. Volgende). */
   useLayoutEffect(() => {
@@ -387,27 +614,52 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
       (anchor as Element).scrollIntoView({ block: "start", behavior: "auto" });
     }
   }, [currentStep]);
-  const [stepError, setStepError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!stepError) {
+      return;
+    }
+
+    const banner = stepErrorBannerRef.current;
+    if (!banner) {
+      return;
+    }
+
+    if (typeof banner.scrollIntoView === "function") {
+      banner.scrollIntoView({ block: "center", behavior: "auto" });
+    }
+
+    if (typeof banner.focus === "function") {
+      banner.focus({ preventScroll: true });
+    }
+  }, [stepError]);
   const [searchRadiusKm, setSearchRadiusKm] = useState<10 | 25 | 50>(25);
-  const [sourceRegistration, setSourceRegistration] = useState("");
-  const [sourceReference, setSourceReference] = useState("");
+  const [urgencyDocument, setUrgencyDocument] = useState<File | null>(null);
   const [careonReference] = useState(() => buildReference("CO"));
-  const [tempReference] = useState(() => buildReference("TMP"));
   const [previewPhase, setPreviewPhase] = useState<WorkflowPhase>("casus");
   const [previewRole, setPreviewRole] = useState<VisibilityRole>("gemeente");
   const [revealRequested, setRevealRequested] = useState(false);
   const [showRevealPreview, setShowRevealPreview] = useState(false);
   const [showControleDetails, setShowControleDetails] = useState(false);
   const [showSupportNeedsPicker, setShowSupportNeedsPicker] = useState(false);
-  const pageGuidanceId = "nieuw-casus-page-guidance";
+  const pageGuidanceDialogId = "nieuw-casus-page-guidance-dialog";
   const revealPreviewId = "nieuw-casus-reveal-preview";
   const controleDetailsId = "nieuw-casus-controle-details";
 
-  const stepMeta: Array<{ id: 1 | 2 | 3; title: string; subtitle: string }> = [
-    { id: 1, title: "Basis", subtitle: "Koppel bronregistratie" },
-    { id: 2, title: "Zorgvraag", subtitle: "Vul zorgvraag in" },
-    { id: 3, title: "Randvoorwaarden", subtitle: "Controle en afronding" },
+  const stepMeta: Array<{ id: 1 | 2 | 3; title: string; hint?: string }> = [
+    { id: 1, title: "Basisgegevens" },
+    { id: 2, title: "Zorgvraag" },
+    { id: 3, title: "Randvoorwaarden" },
   ];
+
+  const complexityLabelMap: Record<string, string> = {
+    LOW: "Enkelvoudig",
+    MEDIUM: "Meervoudig",
+    HIGH: "Intensief",
+    SIMPLE: "Enkelvoudig",
+    MULTIPLE: "Meervoudig",
+    SEVERE: "Intensief",
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -419,32 +671,70 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
           return;
         }
 
+        const draft = readNieuweCasusDraft();
+        const payloadOptions = payload.options ?? {
+          care_category_main: [],
+          care_category_sub: [],
+          gemeente: [],
+          regio: [],
+          urgency: [],
+          complexity: [],
+          placement_pressure_horizon: [],
+          diagnostiek: [],
+          zorgvorm_gewenst: [],
+          preferred_care_form: [],
+          preferred_region_type: [],
+          preferred_region: [],
+          client_age_category: [],
+          family_situation: [],
+          case_coordinator: [],
+        };
+
         const today = new Date();
         const nextWeek = addDays(today, 7);
-        const urgencyDefault = payload.options.urgency.find((option) => option.value.toLowerCase().includes("medium"))?.value
-          ?? payload.options.urgency[0]?.value
+        const urgencyDefault = payloadOptions.urgency.find((option) => option.value.toLowerCase().includes("medium"))?.value
+          ?? payloadOptions.urgency[0]?.value
           ?? "";
 
-        const complexityDefault = payload.options.complexity.find((option) => option.value.toLowerCase().includes("medium"))?.value
-          ?? payload.options.complexity[0]?.value
+        const complexityDefault = payloadOptions.complexity.find((option) => option.value.toLowerCase().includes("medium"))?.value
+          ?? payloadOptions.complexity[0]?.value
           ?? "";
 
-        const preferredRegionTypeDefault = payload.options.preferred_region_type[0]?.value ?? "";
-        const preferredCareFormDefault = payload.options.preferred_care_form[0]?.value
-          ?? payload.options.zorgvorm_gewenst[0]?.value
+        const preferredRegionTypeDefault = payloadOptions.preferred_region_type[0]?.value ?? "";
+        const preferredCareFormDefault = payloadOptions.preferred_care_form[0]?.value
+          ?? payloadOptions.zorgvorm_gewenst[0]?.value
           ?? "";
+        const regionOptionValues = new Set(payloadOptions.regio.map((option) => option.value));
+        const preferredRegionTypeOptionValues = new Set(payloadOptions.preferred_region_type.map((option) => option.value));
 
         const regionDefault = payload.initial_values.regio
-          || payload.options.regio[0]?.value
-          || payload.options.preferred_region[0]?.value
+          || payloadOptions.regio[0]?.value
+          || payloadOptions.preferred_region[0]?.value
           || "";
-
+        const draftPreferredRegionType = draft?.formState?.preferred_region_type;
+        const normalizedDraftPreferredRegionType =
+          draftPreferredRegionType && draftPreferredRegionType !== "GEMEENTELIJK" && preferredRegionTypeOptionValues.has(draftPreferredRegionType)
+            ? draftPreferredRegionType
+            : "";
+        const draftRegion = draft?.formState?.regio && regionOptionValues.has(draft.formState.regio)
+          ? draft.formState.regio
+          : "";
+        const draftPreferredRegion = draft?.formState?.preferred_region && regionOptionValues.has(draft.formState.preferred_region)
+          ? draft.formState.preferred_region
+          : "";
         const withDefaults: IntakeFormState = {
           ...payload.initial_values,
+          source_reference: "",
           start_date: payload.initial_values.start_date || formatDateInputValue(today),
           target_completion_date: payload.initial_values.target_completion_date || formatDateInputValue(nextWeek),
           urgency: payload.initial_values.urgency || urgencyDefault,
           complexity: payload.initial_values.complexity || complexityDefault,
+          placement_pressure_horizon: payload.initial_values.placement_pressure_horizon || ">2_WEEKS",
+          safety_pressure: payload.initial_values.safety_pressure ?? false,
+          time_sensitive_arrangement: payload.initial_values.time_sensitive_arrangement ?? false,
+          escalation_needed: payload.initial_values.escalation_needed ?? false,
+          placement_pressure_notes: payload.initial_values.placement_pressure_notes ?? "",
+          has_urgency_declaration: payload.initial_values.has_urgency_declaration ?? false,
           preferred_region_type: payload.initial_values.preferred_region_type || preferredRegionTypeDefault,
           preferred_care_form: payload.initial_values.preferred_care_form || preferredCareFormDefault,
           zorgvorm_gewenst: payload.initial_values.zorgvorm_gewenst || preferredCareFormDefault,
@@ -453,8 +743,51 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
           max_toelaatbare_wachttijd_dagen: payload.initial_values.max_toelaatbare_wachttijd_dagen || "7",
         };
 
+        if (draft?.formState) {
+          withDefaults.title = draft.formState.title || withDefaults.title;
+          withDefaults.start_date = draft.formState.start_date || withDefaults.start_date;
+          withDefaults.target_completion_date = draft.formState.target_completion_date || withDefaults.target_completion_date;
+          withDefaults.care_category_main = draft.formState.care_category_main || withDefaults.care_category_main;
+          withDefaults.care_category_sub = draft.formState.care_category_sub || withDefaults.care_category_sub;
+          withDefaults.assessment_summary = draft.formState.assessment_summary ?? withDefaults.assessment_summary;
+          withDefaults.gemeente = draft.formState.gemeente || withDefaults.gemeente;
+          withDefaults.regio = draftRegion || withDefaults.regio;
+          withDefaults.urgency = draft.formState.urgency || withDefaults.urgency;
+          withDefaults.complexity = draft.formState.complexity || withDefaults.complexity;
+          withDefaults.placement_pressure_horizon = draft.formState.placement_pressure_horizon || withDefaults.placement_pressure_horizon;
+          withDefaults.safety_pressure = draft.formState.safety_pressure ?? withDefaults.safety_pressure;
+          withDefaults.time_sensitive_arrangement = draft.formState.time_sensitive_arrangement ?? withDefaults.time_sensitive_arrangement;
+          withDefaults.escalation_needed = draft.formState.escalation_needed ?? withDefaults.escalation_needed;
+          withDefaults.placement_pressure_notes = draft.formState.placement_pressure_notes ?? withDefaults.placement_pressure_notes;
+          withDefaults.has_urgency_declaration = draft.formState.has_urgency_declaration ?? withDefaults.has_urgency_declaration;
+          withDefaults.urgency_applied = draft.formState.urgency_applied ?? withDefaults.urgency_applied;
+          withDefaults.urgency_applied_since = draft.formState.urgency_applied_since || withDefaults.urgency_applied_since;
+          withDefaults.diagnostiek = draft.formState.diagnostiek ?? withDefaults.diagnostiek;
+          withDefaults.zorgvorm_gewenst = draft.formState.zorgvorm_gewenst || withDefaults.zorgvorm_gewenst;
+          withDefaults.preferred_care_form = draft.formState.preferred_care_form || withDefaults.preferred_care_form;
+          withDefaults.preferred_region_type = normalizedDraftPreferredRegionType || withDefaults.preferred_region_type;
+          withDefaults.regio = draftRegion || withDefaults.regio;
+          withDefaults.preferred_region = draftPreferredRegion || withDefaults.preferred_region;
+          withDefaults.max_toelaatbare_wachttijd_dagen = draft.formState.max_toelaatbare_wachttijd_dagen || withDefaults.max_toelaatbare_wachttijd_dagen;
+          withDefaults.leeftijd = draft.formState.leeftijd || withDefaults.leeftijd;
+          withDefaults.setting_voorkeur = draft.formState.setting_voorkeur || withDefaults.setting_voorkeur;
+          withDefaults.contra_indicaties = draft.formState.contra_indicaties || withDefaults.contra_indicaties;
+          withDefaults.problematiek_types = draft.formState.problematiek_types || withDefaults.problematiek_types;
+          withDefaults.client_age_category = draft.formState.client_age_category || withDefaults.client_age_category;
+          withDefaults.family_situation = draft.formState.family_situation || withDefaults.family_situation;
+          withDefaults.school_work_status = draft.formState.school_work_status || withDefaults.school_work_status;
+          withDefaults.case_coordinator = draft.formState.case_coordinator || withDefaults.case_coordinator;
+          withDefaults.description = draft.formState.description || withDefaults.description;
+        }
+
         setFormState(withDefaults);
-        setOptions(payload.options);
+        setOptions(payloadOptions);
+        if (draft?.currentStep) {
+          setCurrentStep(draft.currentStep);
+        }
+        if (draft?.searchRadiusKm) {
+          setSearchRadiusKm(draft.searchRadiusKm);
+        }
       } catch (error) {
         if (!ignore) {
           setLoadError(error instanceof Error ? error.message : "Kon het intakeformulier niet laden.");
@@ -479,25 +812,44 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
     return options.care_category_sub.filter((option) => option.mainCategoryId === formState.care_category_main);
   }, [options, formState]);
 
-  const deadlineDays = useMemo(() => {
+  const formatSpecificCareNeedLabel = (label: string) => {
+    const cleaned = String(label || "").trim();
+    if (!cleaned) {
+      return cleaned;
+    }
+    const arrowParts = cleaned.split("→").map((part) => part.trim()).filter(Boolean);
+    return arrowParts.length > 1 ? arrowParts[arrowParts.length - 1] : cleaned;
+  };
+
+  const pressureAssessment = useMemo(() => {
     if (!formState) {
       return null;
     }
-    return daysBetween(formState.start_date, formState.target_completion_date);
+
+    return derivePlacementPressure({
+      start_date: formState.start_date,
+      target_completion_date: formState.target_completion_date,
+      placement_pressure_horizon: formState.placement_pressure_horizon,
+      safety_pressure: formState.safety_pressure,
+      time_sensitive_arrangement: formState.time_sensitive_arrangement,
+      escalation_needed: formState.escalation_needed,
+    });
   }, [formState]);
 
   const matchingPreview = useMemo(() => {
-    if (!formState) {
-      return { label: "Medium", tone: "warning" as const, score: 2, detail: "Vul de intake volledig in voor een scherpere voorspelling." };
+    if (!formState || !pressureAssessment) {
+      return { label: "Normaal", tone: "warning" as const, score: 2, detail: "Vul de intake volledig in voor een scherpere voorspelling." };
     }
 
     let score = 0;
-    const urgency = formState.urgency.toLowerCase();
+    const urgency = pressureAssessment.band;
     const complexity = formState.complexity.toLowerCase();
 
-    if (urgency.includes("critical") || urgency.includes("high")) {
+    if (urgency === "critical") {
+      score += 4;
+    } else if (urgency === "high") {
       score += 3;
-    } else if (urgency.includes("medium")) {
+    } else if (urgency === "normal") {
       score += 1;
     }
     if (complexity.includes("high")) {
@@ -505,11 +857,16 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
     } else if (complexity.includes("medium")) {
       score += 1;
     }
-    if ((deadlineDays ?? 7) <= 3) {
+    if (pressureAssessment.band === "critical") {
       score += 3;
-    } else if ((deadlineDays ?? 7) <= 7) {
+    } else if (pressureAssessment.band === "high") {
       score += 2;
-    } else if ((deadlineDays ?? 7) <= 14) {
+    }
+    if (formState.placement_pressure_horizon === "TODAY" || formState.placement_pressure_horizon === "3_DAYS") {
+      score += 3;
+    } else if (formState.placement_pressure_horizon === "1_WEEK") {
+      score += 2;
+    } else if (formState.placement_pressure_horizon === "2_WEEKS") {
       score += 1;
     }
     if (!formState.care_category_sub) {
@@ -530,46 +887,39 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
       score -= 1;
     }
 
-    if (score >= 9) {
-      return { label: "Difficult", tone: "critical" as const, score, detail: "Hoge complexiteit. Match lastig." };
+    if (pressureAssessment.band === "critical" || score >= 9) {
+      return { label: "Spoedroute", tone: "critical" as const, score, detail: "Plaatsing vraagt directe routing en strakke opvolging." };
     }
     if (score >= 5) {
-      return { label: "Medium", tone: "warning" as const, score, detail: "Matchbaar, maar strak sturen." };
+      return { label: "Normaal", tone: "warning" as const, score, detail: "Matchbaar, maar strak sturen." };
     }
-    return { label: "Good", tone: "good" as const, score, detail: "Goede uitgangspositie." };
-  }, [deadlineDays, formState, searchRadiusKm]);
+    return { label: "Ruim", tone: "good" as const, score, detail: "Goede uitgangspositie voor inhoudelijke vergelijking." };
+  }, [formState, pressureAssessment, searchRadiusKm]);
 
-  const urgencyHint = useMemo(() => {
-    if (!formState) {
-      return "Kies urgentie op risico.";
+  const selectedGemeenteOption = useMemo(() => {
+    if (!options || !formState?.gemeente) {
+      return null;
     }
+    return options.gemeente.find((option) => option.value === formState.gemeente) ?? null;
+  }, [formState?.gemeente, options]);
 
-    const complexity = formState.complexity.toLowerCase();
-    const urgency = formState.urgency.toLowerCase();
-    if (complexity.includes("high") && !(urgency.includes("high") || urgency.includes("critical"))) {
-      return "Overweeg hogere urgentie.";
+  const selectedGemeenteLabel = selectedGemeenteOption?.label ?? formState?.gemeente ?? "";
+  const selectedGemeenteUrgencyRequestUrl = selectedGemeenteOption?.urgencyDocumentRequestUrl?.trim() ?? "";
+  const selectedRegionOption = useMemo(() => {
+    if (!options || !formState) {
+      return null;
     }
-    if ((deadlineDays ?? 7) <= 3 && !urgency.includes("critical")) {
-      return "Korte deadline: check urgentie.";
+    const selectedRegionId = formState.regio || formState.preferred_region || "";
+    if (!selectedRegionId) {
+      return null;
     }
-    return "Urgentie past bij de intake.";
-  }, [deadlineDays, formState]);
-
-  const regionCapacityHint = useMemo(() => {
-    if (!formState) {
-      return "";
-    }
-    if (!formState.preferred_region && !formState.regio) {
-      return "Kies een regio.";
-    }
-    if (searchRadiusKm <= 10) {
-      return "Kleine radius geeft krapte.";
-    }
-    if (matchingPreview.tone === "critical") {
-      return "Capaciteit krap. Vergroot regio.";
-    }
-    return "Regio ondersteunt matching.";
-  }, [formState, matchingPreview.tone, searchRadiusKm]);
+    const regionOptions = options.regio ?? [];
+    const preferredRegionOptions = options.preferred_region ?? [];
+    return regionOptions.find((option) => option.value === selectedRegionId)
+      ?? preferredRegionOptions.find((option) => option.value === selectedRegionId)
+      ?? null;
+  }, [formState?.preferred_region, formState?.regio, options]);
+  const selectedRegionLabel = selectedRegionOption?.label ?? formState?.regio ?? formState?.preferred_region ?? "";
 
   const updateField = <K extends keyof IntakeFormState>(field: K, value: IntakeFormState[K]) => {
     setFormState((current) => current ? { ...current, [field]: value } : current);
@@ -581,44 +931,6 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
       delete nextErrors[field];
       return nextErrors;
     });
-  };
-
-  const handleRadioKeyDown = (
-    event: KeyboardEvent<HTMLButtonElement>,
-    choices: Option[],
-    value: string,
-    onSelect: (nextValue: string) => void,
-  ) => {
-    const keys = ["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft", "Home", "End"];
-    if (!keys.includes(event.key)) {
-      return;
-    }
-
-    event.preventDefault();
-    const currentIndex = choices.findIndex((choice) => choice.value === value);
-    if (currentIndex < 0 || choices.length === 0) {
-      return;
-    }
-
-    let nextIndex = currentIndex;
-    if (event.key === "Home") {
-      nextIndex = 0;
-    } else if (event.key === "End") {
-      nextIndex = choices.length - 1;
-    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-      nextIndex = (currentIndex - 1 + choices.length) % choices.length;
-    } else {
-      nextIndex = (currentIndex + 1) % choices.length;
-    }
-
-    const nextValue = choices[nextIndex]?.value;
-    if (nextValue) {
-      onSelect(nextValue);
-      const container = event.currentTarget.closest('[role="radiogroup"]');
-      const safeValue = nextValue.replace(/"/g, '\\"');
-      const nextButton = container?.querySelector<HTMLButtonElement>(`button[data-radio-value="${safeValue}"]`);
-      nextButton?.focus();
-    }
   };
 
   const toggleDiagnostiek = (value: string) => {
@@ -636,6 +948,75 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
     });
   };
 
+  const buildIntakeCreateBody = () => {
+    if (!formState) {
+      return null;
+    }
+
+    const assessmentSummary = [formState.assessment_summary?.trim(), (
+      `Coördinatiecasus: ${careonReference}\n` +
+      `Woonplaatsbeginsel: ${selectedGemeenteLabel || "onbekend"}\n` +
+      `Privacy: casusgegevens worden AVG-minimaal verwerkt. Persoonsidentificerende gegevens blijven afgeschermd totdat formele koppeling, intake of geautoriseerde toegang nodig is.`
+    )].filter(Boolean).join("\n\n");
+    const operationalUrgency = pressureAssessment?.urgency ?? (formState.urgency as IntakeFormState["urgency"]);
+
+    if (!urgencyDocument) {
+      return {
+        ...formState,
+        urgency: operationalUrgency,
+        title: careonReference,
+        assessment_summary: assessmentSummary,
+      };
+    }
+
+    const formData = new FormData();
+    const appendValue = (key: string, value: string | number | boolean) => {
+      formData.append(key, String(value));
+    };
+
+    Object.entries({
+      ...formState,
+      urgency: operationalUrgency,
+      title: careonReference,
+      assessment_summary: assessmentSummary,
+    }).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => formData.append(key, entry));
+        return;
+      }
+      if (typeof value === "boolean") {
+        appendValue(key, value);
+        return;
+      }
+      appendValue(key, value ?? "");
+    });
+    formData.append("urgency_document", urgencyDocument);
+    return formData;
+  };
+
+  useEffect(() => {
+    if (loading || !formState) {
+      return;
+    }
+
+    try {
+      const storage = getDraftStorage();
+      if (!storage) {
+        return;
+      }
+      storage.setItem(
+        NIEUWE_CASUS_DRAFT_STORAGE_KEY,
+        JSON.stringify({
+          currentStep,
+          searchRadiusKm,
+          formState,
+        } satisfies NieuweCasusDraft),
+      );
+    } catch {
+      // Draft persistence is best-effort.
+    }
+  }, [currentStep, formState, loading, searchRadiusKm]);
+
   const handleSubmit = async () => {
     if (!formState) {
       return;
@@ -647,28 +1028,23 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
     setLoadError(null);
 
     try {
-      const isManualRegieCase = sourceRegistration === "handmatige_regiecasus";
-      const resolvedReference = isManualRegieCase ? tempReference : sourceReference.trim();
-      const sourceLabel = SOURCE_REGISTRATION_OPTIONS.find((option) => option.value === sourceRegistration)?.label ?? sourceRegistration;
-      const orchestrationNotice =
-        `Regiecasus: ${careonReference}\n` +
-        `Bronregistratie: ${sourceLabel || "onbekend"}\n` +
-        `Bronreferentie: ${resolvedReference || "onbekend"}\n` +
-        `Privacy: persoonsgegevens blijven in het bronsysteem tot formele koppeling/intake.`;
-      const payload = await apiClient.post<IntakeCreateSuccess>("/care/api/cases/intake-create/", {
-        ...formState,
-        title: careonReference,
-        assessment_summary: [formState.assessment_summary?.trim(), orchestrationNotice].filter(Boolean).join("\n\n"),
-      });
+      const requestBody = buildIntakeCreateBody();
+      if (!requestBody) {
+        return;
+      }
+      const payload = await apiClient.post<IntakeCreateSuccess>("/care/api/cases/intake-create/", requestBody);
+      clearNieuweCasusDraft();
       const createdCaseId = payload.case_id?.trim();
-      setSuccessMessage(`Casus ${payload.title} is aangemaakt. Je wordt doorgestuurd naar het nieuwe regietraject.`);
+      setSuccessMessage(`Casus ${payload.title} is aangemaakt. Let op: voeg deze CareOn referentiecode toe aan het dossier van uw client binnen uw ECD. Referentiecode: ${payload.source_reference || careonReference}. Je wordt doorgestuurd naar het nieuwe coördinatietraject.`);
       const target =
         payload.redirect_url ||
         (createdCaseId ? toCareCaseDetail(createdCaseId) : `${SPA_DASHBOARD_URL}?page=casussen`);
       if (createdCaseId) {
         onCreated?.(createdCaseId);
       }
-      window.location.href = target;
+      if (!shouldAvoidBrowserNavigation()) {
+        window.location.href = target;
+      }
     } catch (error) {
       const validationErrors = extractValidationErrors(error);
       if (validationErrors) {
@@ -696,16 +1072,23 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
     }
 
     if (step === 1) {
-      const isManualRegieCase = sourceRegistration === "handmatige_regiecasus";
-      if (!sourceRegistration || (!isManualRegieCase && !sourceReference.trim()) || !formState.start_date || !formState.target_completion_date) {
-        setStepError("Kies bronregistratie, bronreferentie (of handmatige regiecasus), startdatum en deadline matching.");
+      if (!formState.gemeente || !formState.start_date || !formState.target_completion_date) {
+        setStepError("Kies woonplaatsbeginsel, gewenste startdatum en uiterste plaatsingsdatum.");
         return false;
       }
     }
 
     if (step === 2) {
-      if (!formState.care_category_main || !formState.complexity || !formState.urgency) {
-        setStepError("Kies hoofdcategorie, complexiteit en urgentie om door te gaan.");
+      if (!formState.care_category_main || !formState.complexity || !formState.placement_pressure_horizon) {
+        setStepError("Kies zorgbehoefte, complexiteit en plaatsingsdruk om door te gaan.");
+        return false;
+      }
+      if (pressureAssessment && (pressureAssessment.band === "high" || pressureAssessment.band === "critical") && formState.has_urgency_declaration && !urgencyDocument) {
+        setStepError("Upload de urgentieverklaring of vink aan dat deze nog ontbreekt.");
+        return false;
+      }
+      if (!isFilled(formState.assessment_summary)) {
+        setStepError("Vul het persoonsbeeld in om door te gaan.");
         return false;
       }
     }
@@ -774,8 +1157,7 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
 
   const canRevealIdentity = previewPhase === "plaatsing" || previewPhase === "intake";
   const maskedIdentity = `${careonReference} · afgeschermd`;
-  const revealedIdentity = sourceReference.trim() || tempReference;
-  const isManualRegieCase = sourceRegistration === "handmatige_regiecasus";
+  const revealedIdentity = careonReference;
   const identityDisplay =
     previewRole === "zorgaanbieder" && !canRevealIdentity
       ? maskedIdentity
@@ -802,7 +1184,7 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
       label: "Matching",
       gemeente: "Leeftijdscategorie, regio, zorgvraag, urgentie",
       zorgaanbieder: "Leeftijdscategorie + regio (geen NAW)",
-      regie: "Need-to-know risicosignalen",
+      regie: "Need-to-know coördinatiesignalen",
     },
     {
       phase: "aanbieder_beoordeling",
@@ -823,7 +1205,7 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
       label: "Intake",
       gemeente: "Volledige gegevens voor geautoriseerde rollen",
       zorgaanbieder: "Volledige gegevens na acceptatie",
-      regie: "Alleen noodzakelijke regievelden",
+      regie: "Alleen noodzakelijke coördinatievelden",
     },
   ];
 
@@ -832,8 +1214,6 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
     .filter(Boolean);
   const supportNeedPreview = supportNeedLabels.slice(0, 3);
   const supportNeedOverflow = Math.max(0, supportNeedLabels.length - supportNeedPreview.length);
-  const currentStepSubtitle = currentStep === 1 ? "Basisgegevens" : currentStep === 3 ? "Randvoorwaarden" : null;
-
   return (
     <div
       data-nieuwe-casus-scroll-top
@@ -847,67 +1227,40 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
           className="inline-flex items-center gap-1.5 text-[15px] font-medium text-primary transition-colors hover:text-muted-foreground"
         >
           <ArrowLeft size={15} />
-          Terug naar aanvragen
+          Terug naar casussen
         </button>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="flex min-w-0 flex-wrap items-center gap-2.5">
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">Nieuwe casus</h1>
             <button
               type="button"
-              onClick={() => setShowPageGuidance((current) => !current)}
+              onClick={() => setShowPageGuidanceDialog(true)}
               className={quietToggleClass}
-              aria-expanded={showPageGuidance}
-              aria-controls={pageGuidanceId}
+              aria-expanded={showPageGuidanceDialog}
+              aria-controls={pageGuidanceDialogId}
             >
               <CircleHelp size={12} />
               Toelichting
-              <ChevronDown size={12} className={showPageGuidance ? "rotate-180 transition-transform" : "transition-transform"} />
+              <ChevronDown size={12} className={showPageGuidanceDialog ? "rotate-180 transition-transform" : "transition-transform"} />
             </button>
           </div>
-          {currentStep === 1 ? (
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <Button variant="outline" className="h-11 gap-2 rounded-full px-5 text-[15px] font-medium" onClick={() => onCancel?.()}>
-                Annuleren
-              </Button>
-              <Button
-                className="h-11 gap-2 rounded-full px-5 text-[15px] font-medium shadow-sm"
-                onClick={handleAdvance}
-              >
-                Volgende stap
-                <ArrowRight size={15} />
-              </Button>
-            </div>
-          ) : currentStep === 3 ? (
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <Button variant="outline" className="h-11 gap-2 rounded-full px-5 text-[15px] font-medium" onClick={() => onCancel?.()}>
-                Terug
-              </Button>
-              <Button
-                className="h-11 gap-2 rounded-full px-5 text-[15px] font-medium shadow-sm"
-                onClick={handleAdvance}
-              >
-                Casus aanmaken
-                <Save size={15} />
-              </Button>
-            </div>
-          ) : (
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <Button variant="outline" className="h-11 gap-2 rounded-full px-5 text-[15px] font-medium" onClick={() => onCancel?.()}>
-                Terug
-              </Button>
-            </div>
-          )}
+          {currentStep === 3 ? (
+            <Button
+              className="h-11 gap-2 rounded-full px-5 text-[15px] font-medium shadow-sm"
+              onClick={handleAdvance}
+            >
+              Casus aanmaken
+              <Save size={15} />
+            </Button>
+          ) : null}
         </div>
-        {currentStepSubtitle && (
-          <p className="text-[13px] font-medium text-muted-foreground">
-            Stap {currentStep} van 3 <span className="px-1 text-muted-foreground/75">•</span> {currentStepSubtitle}
-          </p>
-        )}
       </div>
 
-      {showPageGuidance && (
-        <NieuweCasusPrivacyGuidance id={pageGuidanceId} showRequiredFieldsNote />
-      )}
+      <NieuweCasusToelichtingDialog
+        id={pageGuidanceDialogId}
+        open={showPageGuidanceDialog}
+        onOpenChange={setShowPageGuidanceDialog}
+      />
 
       {formErrors.__all__ && (
         <div className="rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3">
@@ -930,14 +1283,38 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
         </div>
       )}
 
-      <section className="panel-surface rounded-[24px] border border-border/70 p-5 shadow-sm md:p-6">
+      {stepError ? (
+        <div
+          ref={stepErrorBannerRef}
+          tabIndex={-1}
+          role="alert"
+          aria-live="assertive"
+          className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 shadow-sm outline-none"
+        >
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-300" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">Je kunt nog niet verder</p>
+              <p className="mt-1 text-sm text-amber-100/90">{stepError}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <section className="rounded-[20px] border border-border/70 bg-panel/70 p-3 shadow-sm backdrop-blur-sm md:p-4">
         <div className="space-y-3">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <nav className="grid grid-cols-1 gap-2 md:grid-cols-3" aria-label="Wizard stappen">
             {stepMeta.map((step) => {
               const isFinalStep = currentStep === 3;
               const isActive = currentStep === step.id && !isFinalStep;
               const isCompleted = isFinalStep || currentStep > step.id;
-              const icon = step.id === 1 ? <FileText size={18} aria-hidden /> : step.id === 2 ? <UserRound size={18} aria-hidden /> : <ShieldCheck size={18} aria-hidden />;
+              const isClickable = isCompleted || isActive;
+              const stepToneClass = isActive
+                ? "border-primary/35 bg-primary/10 text-foreground shadow-[0_0_0_1px_rgba(124,90,255,0.08)]"
+                : isCompleted
+                  ? "border-emerald-500/20 bg-emerald-500/8 text-foreground hover:border-emerald-400/30"
+                  : "border-border/70 bg-card/20 text-muted-foreground hover:border-primary/20 hover:bg-card/30 hover:text-foreground";
+
               return (
                 <button
                   key={step.id}
@@ -945,113 +1322,98 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
                   aria-current={isActive ? "step" : undefined}
                   aria-label={`Stap ${step.id}: ${step.title}`}
                   onClick={() => {
-                    if (isCompleted || isActive) {
+                    if (isClickable) {
                       jumpToStep(step.id);
                     }
                   }}
-                  disabled={!isCompleted && !isActive}
-                  className={`flex min-h-[80px] items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${isActive ? "border-primary/35 bg-primary/10 text-foreground ring-1 ring-primary/15" : "border-cyan-500/20 bg-cyan-500/5 text-cyan-300 hover:border-cyan-400/30"}`}
+                  disabled={!isClickable}
+                className={`flex min-h-[58px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${stepToneClass}`}
                 >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold leading-none ${isActive ? "border-primary/20 bg-primary text-primary-foreground" : "border-cyan-500/25 bg-cyan-500/12 text-cyan-200"}`}>
-                      {isCompleted ? <CheckCircle2 size={16} aria-hidden /> : step.id}
-                    </span>
-                    <span className="min-w-0">
-                      <span className={`block text-[13px] font-semibold leading-tight ${isActive ? "text-foreground" : "text-cyan-100"}`}>{step.title}</span>
-                      <span className={`mt-0.5 block text-[12px] font-medium leading-snug ${isActive ? "text-muted-foreground" : "text-cyan-200/80"}`}>{step.subtitle}</span>
-                    </span>
+                  <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-sm font-semibold leading-none ${isActive ? "border-primary/20 bg-primary text-primary-foreground" : isCompleted ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300" : "border-border/70 bg-background/20 text-foreground"}`}>
+                    {isCompleted ? <CheckCircle2 size={15} aria-hidden /> : step.id}
                   </span>
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${isActive ? "border-primary/15 bg-primary/10 text-muted-foreground" : "border-cyan-500/20 bg-cyan-500/8 text-cyan-200/80"}`}>
-                    {icon}
+                  <span className="min-w-0 flex-1">
+                    <span className={`block text-[13px] font-semibold leading-tight ${isActive ? "text-foreground" : isCompleted ? "text-foreground" : "text-inherit"}`}>{step.title}</span>
+                    {step.hint ? (
+                      <span className="mt-0.5 block text-[11px] leading-tight text-muted-foreground">{step.hint}</span>
+                    ) : null}
                   </span>
+                  {isActive ? (
+                    <span className="shrink-0 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
+                      Actief
+                    </span>
+                  ) : null}
                 </button>
               );
             })}
-          </div>
-          <div
-            className="h-1 w-full overflow-hidden rounded-full bg-muted/35"
-            role="progressbar"
-            aria-label="Voortgang nieuwe casus"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round((currentStep / 3) * 100)}
-            aria-valuetext={`Stap ${currentStep} van 3`}
-          >
-            <div className="h-1 rounded-full bg-primary transition-all" style={{ width: `${(currentStep / 3) * 100}%` }} />
-          </div>
+          </nav>
         </div>
 
         {currentStep === 1 && (
-          <div className="space-y-4">
+          <div className="mt-6 space-y-4">
             <div className="rounded-2xl border border-border/55 bg-card/35 p-5 md:p-6">
               <SectionHeader
                 step="1"
-                eyebrow="Basis"
-                title="Koppel bronregistratie"
-                copy="Koppel de juiste bronregistratie en registreer de basiscontext."
-                status={(
-                  <div className="inline-flex items-center gap-1.5 self-start rounded-full border border-emerald-500/20 bg-emerald-500/8 px-3 py-1 text-[12px] font-medium text-emerald-300">
-                    <ShieldCheck size={13} aria-hidden />
-                    Alleen minimale gegevens nodig
-                  </div>
-                )}
+                title="Geef basisgegevens op"
+                video={{
+                  title: "Woonplaatsbeginsel",
+                  description: "Waarom deze keuze belangrijk is",
+                  script:
+                    "Controleer welke gemeente verantwoordelijk is voor de casus. Bij verhuizing of plaatsing buiten de eigen gemeente kan verantwoordelijkheid veranderen. Deze keuze beïnvloedt validatie, bekostiging en vervolgafstemming. Gebruik de gemeente die leidend is voor het woonplaatsbeginsel.",
+                  testId: "nieuwe-casus-gemeente-video",
+                }}
               />
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className={wizardFieldGridClass}>
                 <div>
-                  <label className={compactLabelClass}>Bronregistratie *</label>
-                  <select
-                    value={sourceRegistration}
-                    onChange={(event) => {
-                      setSourceRegistration(event.target.value);
-                      if (event.target.value === "handmatige_regiecasus") {
-                        setSourceReference("");
-                      }
-                    }}
-                    className={baseFieldClass}
-                    aria-label="Bronregistratie *"
-                  >
-                    <option value="">Selecteer bronregistratie</option>
-                    {SOURCE_REGISTRATION_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={compactLabelClass}>
-                    Zoek bronreferentie {isManualRegieCase ? "" : "*"}
-                  </label>
-                  <input
-                    value={sourceReference}
-                    onChange={(event) => setSourceReference(event.target.value)}
-                    className={baseFieldClass}
-                    placeholder="Bijv. ZS-2026-8821"
-                    disabled={isManualRegieCase}
-                    aria-label={`Zoek bronreferentie ${isManualRegieCase ? "" : "*"}`.trim()}
+                  <MunicipalityCombobox
+                    label="Woonplaatsbeginsel *"
+                    value={formState.gemeente}
+                    options={options.gemeente}
+                    onChange={(nextValue) => updateField("gemeente", nextValue)}
+                    placeholder="Zoek gemeente"
+                    labelAction={
+                      <CareInfoPopover ariaLabel="Waarom deze gemeente?" testId="nieuwe-casus-gemeente-info">
+                        <p>Kies de gemeente die leidend is voor het woonplaatsbeginsel.</p>
+                      </CareInfoPopover>
+                    }
+                    error={formErrors.gemeente}
                   />
-                  <p className="mt-2 text-xs text-muted-foreground">Alleen minimale referentie voor ketenregie.</p>
                 </div>
 
                 <div>
                   <DateField
-                    label="Startdatum casus *"
+                    label="Gewenste startdatum *"
                     value={formState.start_date}
                     onChange={(nextValue) => updateField("start_date", nextValue)}
                     error={formErrors.start_date}
+                    labelAction={
+                      <CareInfoPopover ariaLabel="Waarom gewenste startdatum?" testId="nieuwe-casus-startdatum-info">
+                        <p>Vanaf wanneer de client zoekt naar (vervolg)plaatsing.</p>
+                      </CareInfoPopover>
+                    }
                   />
                 </div>
                 <div>
                   <DateField
-                    label="Automatisch gegenereerde deadline matching *"
+                    label="Uiterste plaatsingsdatum *"
                     value={formState.target_completion_date}
                     onChange={(nextValue) => updateField("target_completion_date", nextValue)}
                     error={formErrors.target_completion_date}
+                    labelAction={
+                      <CareInfoPopover ariaLabel="Waarom uiterste plaatsingsdatum?" testId="nieuwe-casus-streefdatum-info">
+                        <p>Deze datum markeert de uiterste operationele plaatsingsgrens.</p>
+                        <p>Bij wijzigingen in plaatsingsdruk of context kan de datum worden aangepast.</p>
+                      </CareInfoPopover>
+                    }
                   />
-                  <p className="mt-2 text-xs text-muted-foreground">Uiterste datum waarop een match moet worden gevonden.</p>
                 </div>
 
                 <div>
-                  <label className={compactLabelClass}>Regio *</label>
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <label className={compactLabelClass}>Regio *</label>
+                    <span aria-hidden className="h-8 w-8 shrink-0" />
+                  </div>
                   <select
                     value={formState.regio}
                     onChange={(event) => updateField("regio", event.target.value)}
@@ -1065,49 +1427,37 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
                   </select>
                   <FieldError message={formErrors.regio} />
                 </div>
-                <div>
-                  <label className={compactLabelClass}>Urgentie *</label>
-                  <select
-                    value={formState.urgency}
-                    onChange={(event) => updateField("urgency", event.target.value)}
-                    className={baseFieldClass}
-                    aria-label="Urgentie *"
-                  >
-                    <option value="">Selecteer urgentie</option>
-                    {options.urgency.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                  <FieldError message={formErrors.urgency} />
-                </div>
               </div>
-
-              {isManualRegieCase && (
-                <div className="rounded-2xl border border-cyan-500/25 bg-cyan-500/5 px-4 py-3 text-sm text-cyan-100">
-                  <p className="font-semibold">Handmatige regiecasus zonder bronkoppeling</p>
-                  <p className="mt-1 text-cyan-200/90">
-                    Tijdelijke referentie: <span className="font-semibold">{tempReference}</span>. Geen persoonsgegevens vereist; koppeling kan later.
-                  </p>
-                </div>
-              )}
 
             </div>
           </div>
         )}
 
         {currentStep === 2 && (
-          <div className="space-y-3">
-              <SectionHeader step="2" title="Zorgvraag" copy="Maak de vraag concreet." triggerLabel="Waarom deze vragen?" />
+          <div className="mt-6 space-y-3">
+            <SectionHeader
+              step="2"
+              title="Zorgvraag"
+              video={{
+                  title: "Zorgvraag",
+                  description: "Uitleg over zorgbehoefte, plaatsingsdruk en routing.",
+                  script: "Gebruik deze stap om de zorgvraag expliciet te maken. Kies de zorgbehoefte categorie en de specifieke zorgbehoefte, bepaal de complexiteit en modelleer vervolgens de plaatsingsdruk met houdbaarheid, veiligheidsdruk, tijdskritisch arrangement en escalatie. Het systeem leidt hieruit de urgentie af en gebruikt die voor matching en coördinatie.",
+                  testId: "nieuwe-casus-zorgvraag-video",
+                }}
+              />
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className={wizardFieldGridClass}>
               <div>
-                <label htmlFor="nieuw-casus-hoofdcategorie" className={compactLabelClass}>Hoofdcategorie *</label>
+                <label htmlFor="nieuw-casus-hoofdcategorie" className={compactLabelClass}>Zorgbehoefte categorie *</label>
                 <select
                   id="nieuw-casus-hoofdcategorie"
                   value={formState.care_category_main}
                   onChange={(event) => {
-                    updateField("care_category_main", event.target.value);
-                    updateField("care_category_sub", "");
+                    const nextMainValue = event.target.value;
+                    const nextVisibleSubcategories = options.care_category_sub.filter((option) => option.mainCategoryId === nextMainValue);
+                    const currentSubcategoryStillValid = nextVisibleSubcategories.some((option) => option.value === formState.care_category_sub);
+                    updateField("care_category_main", nextMainValue);
+                    updateField("care_category_sub", currentSubcategoryStillValid ? formState.care_category_sub : "");
                   }}
                   className={baseFieldClass}
                 >
@@ -1120,7 +1470,9 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
               </div>
 
               <div>
-                <label htmlFor="nieuw-casus-subcategorie" className={compactLabelClass}>Subcategorie</label>
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <label htmlFor="nieuw-casus-subcategorie" className={compactLabelClass}>Specifieke zorgbehoefte</label>
+                </div>
                 <select
                   id="nieuw-casus-subcategorie"
                   value={formState.care_category_sub}
@@ -1130,85 +1482,339 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
                 >
                   <option value="">Selecteer</option>
                   {visibleSubcategories.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
+                    <option key={option.value} value={option.value}>{formatSpecificCareNeedLabel(option.label)}</option>
                   ))}
                 </select>
                 <FieldError message={formErrors.care_category_sub} />
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className={wizardFieldGridClass}>
               <div>
                 <p className={compactGroupLabelClass}>Complexiteit *</p>
-                <p className="mb-2 text-xs text-muted-foreground">Kies 1 optie</p>
-                <div className="grid gap-2" role="radiogroup" aria-label="Complexiteit">
+                <select
+                  value={formState.complexity}
+                  onChange={(event) => updateField("complexity", event.target.value)}
+                  className={baseFieldClass}
+                  aria-label="Complexiteit *"
+                >
+                  <option value="">Selecteer complexiteit</option>
                   {options.complexity.map((option) => {
-                    const active = formState.complexity === option.value;
+                    const label = complexityLabelMap[option.value.toUpperCase()] ?? option.label;
                     return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        data-radio-value={option.value}
-                        onClick={() => updateField("complexity", option.value)}
-                        onKeyDown={(event) => handleRadioKeyDown(event, options.complexity, formState.complexity, (nextValue) => updateField("complexity", nextValue))}
-                        role="radio"
-                        aria-checked={active}
-                        tabIndex={active ? 0 : -1}
-                        className={`rounded-2xl border px-4 py-3 text-left text-sm transition-colors ${active ? "border-primary/30 bg-primary/5 text-foreground" : "border-border/70 bg-card/30 text-muted-foreground hover:border-border/70 hover:text-foreground"}`}
-                      >
-                        {option.label}
-                      </button>
+                      <option key={option.value} value={option.value}>
+                        {label}
+                      </option>
                     );
                   })}
-                </div>
+                </select>
                 <FieldError message={formErrors.complexity} />
               </div>
-
-              <div>
-                <p className={compactGroupLabelClass}>Urgentie *</p>
-                <p className="mb-2 text-xs text-muted-foreground">Kies 1 optie</p>
-                <div className="grid gap-2" role="radiogroup" aria-label="Urgentie">
-                  {options.urgency.map((option) => {
-                    const active = formState.urgency === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        data-radio-value={option.value}
-                        onClick={() => updateField("urgency", option.value)}
-                        onKeyDown={(event) => handleRadioKeyDown(event, options.urgency, formState.urgency, (nextValue) => updateField("urgency", nextValue))}
-                        role="radio"
-                        aria-checked={active}
-                        tabIndex={active ? 0 : -1}
-                        className={`rounded-2xl border px-4 py-3 text-left text-sm transition-colors ${active ? "border-primary/30 bg-primary/5 text-foreground" : "border-border/70 bg-card/30 text-muted-foreground hover:border-border/70 hover:text-foreground"}`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <FieldError message={formErrors.urgency} />
-              </div>
             </div>
+            <section className="rounded-[24px] border border-border/70 bg-card/35 p-4 shadow-sm">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-[17px] font-semibold text-foreground">Plaatsingsdruk &amp; urgentie</h3>
+                </div>
+                <span className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ${
+                  pressureAssessment?.band === "critical"
+                    ? "border-red-500/30 bg-red-500/10 text-red-200"
+                    : pressureAssessment?.band === "high"
+                      ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+                      : pressureAssessment?.band === "normal"
+                        ? "border-sky-500/30 bg-sky-500/10 text-sky-200"
+                        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                }`}>
+                  {pressureAssessment?.label ?? "Normaal"}
+                </span>
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+                <div className="space-y-4">
+                  <div className="space-y-3 rounded-2xl border border-border/60 bg-card/25 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <label className={compactGroupLabelClass}>Hoe lang is de zorgsituatie nog houdbaar? *</label>
+                      </div>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      {placementPressureHorizonChoices.map((option) => {
+                        const active = formState.placement_pressure_horizon === option.value;
+                        return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              aria-pressed={active}
+                              aria-label={`Zorgsituatie nog houdbaar: ${option.label.toLowerCase()}`}
+                              onClick={() => updateField("placement_pressure_horizon", option.value)}
+                              className={`rounded-xl border px-3 py-2 text-left text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 ${
+                              active
+                                ? "border-primary/40 bg-primary/10 text-foreground shadow-sm"
+                                : "border-border/60 bg-background/40 text-muted-foreground hover:border-border/90 hover:text-foreground"
+                            }`}
+                          >
+                            <span className="block font-medium">{option.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <FieldError message={formErrors.placement_pressure_horizon} />
+                  </div>
+
+                  <div className="space-y-3 rounded-2xl border border-border/60 bg-card/25 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className={compactGroupLabelClass}>Risicosignalen</p>
+                      <span className="rounded-full border border-border/60 bg-background/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                        Triage-indicatoren
+                      </span>
+                    </div>
+                    <label className="flex items-start gap-3 text-sm text-foreground">
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary/60"
+                        checked={formState.safety_pressure}
+                        onChange={(event) => updateField("safety_pressure", event.target.checked)}
+                      />
+                      <span>
+                        <span className="block font-medium">Veiligheidsdruk</span>
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-3 text-sm text-foreground">
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary/60"
+                        checked={formState.time_sensitive_arrangement}
+                        onChange={(event) => updateField("time_sensitive_arrangement", event.target.checked)}
+                      />
+                      <span>
+                        <span className="block font-medium">Tijdskritisch arrangement</span>
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-3 text-sm text-foreground">
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary/60"
+                        checked={formState.escalation_needed}
+                        onChange={(event) => updateField("escalation_needed", event.target.checked)}
+                      />
+                      <span>
+                        <span className="block font-medium">Escalatie nodig</span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-border/60 bg-card/30 px-4 py-4">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Urgentieadvies</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                        pressureAssessment?.band === "critical"
+                          ? "bg-red-500/10 text-red-200"
+                          : pressureAssessment?.band === "high"
+                            ? "bg-amber-500/10 text-amber-200"
+                            : pressureAssessment?.band === "normal"
+                              ? "bg-sky-500/10 text-sky-200"
+                              : "bg-emerald-500/10 text-emerald-200"
+                      }`}>
+                        {pressureAssessment?.label ?? "Normaal"}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm font-medium leading-snug text-foreground">
+                      {pressureAssessment?.reason ?? "Plaatsingsdruk lijkt stabiel."}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {pressureAssessment?.implication ?? "Normale routing"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-border/60 bg-card/30 px-4 py-4">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Matchverwachting</p>
+                    <p className="mt-2 text-sm font-medium leading-snug text-foreground">
+                      {matchingPreview.label}
+                    </p>
+                    <p className="mt-3 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Toelichting</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{matchingPreview.detail}</p>
+                    <span className={`mt-3 inline-flex rounded-full px-3 py-1 text-[11px] font-medium ${matchingPreview.tone === "good" ? "bg-green-500/10 text-green-300" : matchingPreview.tone === "warning" ? "bg-yellow-500/10 text-yellow-300" : "bg-red-500/10 text-red-300"}`}>
+                      {matchingPreview.label}
+                    </span>
+                  </div>
+
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <label htmlFor="nieuw-casus-placement-pressure-notes" className={compactLabelClass}>Toelichting</label>
+                  <CareInfoPopover ariaLabel="Waarom toelichting plaatsingsdruk?" testId="nieuwe-casus-place-pressure-info">
+                    <p>Gebruik alleen operationele context die nodig is voor triage en matching.</p>
+                    <p>Laat namen, adressen, telefoonnummers, e-mailadressen en BSN weg.</p>
+                  </CareInfoPopover>
+                </div>
+                <textarea
+                  id="nieuw-casus-placement-pressure-notes"
+                  value={formState.placement_pressure_notes}
+                  onChange={(event) => updateField("placement_pressure_notes", event.target.value)}
+                  className={`${baseTextareaClass} min-h-24`}
+                  placeholder="Korte operationele toelichting zonder direct herleidbare persoonsgegevens"
+                />
+                <FieldError message={formErrors.placement_pressure_notes} />
+              </div>
+
+              {pressureAssessment?.band && pressureAssessment.band !== "low" ? (
+                <div className="rounded-2xl border border-dashed border-border/60 bg-muted/10 p-4">
+                  <div className="space-y-4">
+                    <label className="flex items-start gap-3 text-sm text-foreground">
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary/60"
+                        checked={formState.has_urgency_declaration}
+                        onChange={(event) => {
+                          const checked = event.target.checked;
+                          updateField("has_urgency_declaration", checked);
+                          if (!checked) {
+                            setUrgencyDocument(null);
+                            updateField("urgency_applied", false);
+                            updateField("urgency_applied_since", "");
+                            setFormErrors((current) => {
+                              if (!('urgency_document' in current)) {
+                                return current;
+                              }
+                              const nextErrors = { ...current };
+                              delete nextErrors.urgency_document;
+                              return nextErrors;
+                            });
+                          }
+                        }}
+                        aria-describedby="nieuw-casus-urgency-declaration-help"
+                      />
+                      <span>Client heeft al een urgentieverklaring</span>
+                    </label>
+                    <div id="nieuw-casus-urgency-declaration-help" className="rounded-xl border border-border/60 bg-card/30 px-4 py-3 text-sm text-muted-foreground">
+                      {formState.has_urgency_declaration ? (
+                        <div className="space-y-3">
+                          <p className="text-foreground">Upload de bestaande urgentieverklaring zodat de casus direct compleet is.</p>
+                          <div>
+                            <div className="mb-1 flex flex-wrap items-center gap-2">
+                              <label htmlFor="nieuw-casus-urgency-document" className={compactLabelClass}>Urgentieverklaring *</label>
+                              <CareInfoPopover ariaLabel="Waarom uploaden?" testId="nieuwe-casus-urgency-document-info">
+                                <p>Verplicht wanneer de client al een urgentieverklaring heeft.</p>
+                                <p>Voeg een PDF of afbeelding toe.</p>
+                              </CareInfoPopover>
+                            </div>
+                            <input
+                              id="nieuw-casus-urgency-document"
+                              type="file"
+                              accept=".pdf,image/*"
+                              className={`${baseFieldClass} py-2 file:mr-3 file:rounded-full file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary-foreground`}
+                              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                                const file = event.target.files?.[0] ?? null;
+                                setUrgencyDocument(file);
+                                if (file) {
+                                  setFormErrors((current) => {
+                                    if (!('urgency_document' in current)) {
+                                      return current;
+                                    }
+                                    const nextErrors = { ...current };
+                                    delete nextErrors.urgency_document;
+                                    return nextErrors;
+                                  });
+                                }
+                              }}
+                            />
+                            <FieldError message={formErrors.urgency_document} />
+                          </div>
+                          <p className="font-medium text-foreground">{urgencyDocument ? urgencyDocument.name : "Nog geen bestand gekozen"}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <p className="text-foreground">
+                              Vraag eerst een urgentieverklaring aan bij {selectedGemeenteLabel || "de gemeente"} of het aangewezen loket.
+                            </p>
+                            {selectedGemeenteUrgencyRequestUrl ? (
+                              <a
+                                href={selectedGemeenteUrgencyRequestUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                              >
+                                Vraag urgentieverklaring aan
+                                <ExternalLink size={14} />
+                              </a>
+                            ) : null}
+                          </div>
+                          <label className="flex items-start gap-3 text-sm text-foreground">
+                            <input
+                              type="checkbox"
+                              className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary/60"
+                              checked={formState.urgency_applied}
+                              onChange={(event) => {
+                                const checked = event.target.checked;
+                                updateField("urgency_applied", checked);
+                                if (checked && !formState.urgency_applied_since) {
+                                  updateField("urgency_applied_since", formatDateInputValue(new Date()));
+                                }
+                                if (!checked) {
+                                  updateField("urgency_applied_since", "");
+                                }
+                              }}
+                            />
+                            <span>Urgentieverklaring aangevraagd</span>
+                          </label>
+                          {formState.urgency_applied ? (
+                            <div>
+                              <label htmlFor="nieuw-casus-urgency-applied-since" className={compactLabelClass}>Aangevraagd op</label>
+                              <input
+                                id="nieuw-casus-urgency-applied-since"
+                                type="date"
+                                value={formState.urgency_applied_since}
+                                onChange={(event) => updateField("urgency_applied_since", event.target.value)}
+                                className={baseFieldClass}
+                              />
+                              <FieldError message={formErrors.urgency_applied_since} />
+                            </div>
+                          ) : null}
+                          <p>Pas daarna kun je de upload toevoegen. Zonder verklaring kun je deze stap nog wel opslaan.</p>
+                          {selectedGemeenteUrgencyRequestUrl ? null : (
+                            <p className="text-xs text-muted-foreground">
+                              Er is nog geen casuslink gekoppeld voor {selectedGemeenteLabel || "deze gemeente"}.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </section>
 
             <div>
-              <label className={compactLabelClass}>Toelichting (optioneel)</label>
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <label htmlFor="nieuw-casus-persoonsbeeld" className={compactLabelClass}>Persoonsbeeld *</label>
+                <CareInfoPopover ariaLabel="Waarom persoonsbeeld?" testId="nieuwe-casus-persoonsbeeld-info">
+                  <p>Beschrijf alleen de operationele context die nodig is voor beoordeling en matching.</p>
+                  <p>Laat namen, adressen, telefoons, e-mailadressen en BSN achterwege.</p>
+                </CareInfoPopover>
+              </div>
               <textarea
+                id="nieuw-casus-persoonsbeeld"
                 value={formState.assessment_summary}
                 onChange={(event) => updateField("assessment_summary", event.target.value)}
                 className={`${baseTextareaClass} min-h-28`}
-                placeholder="Beschrijf kort context of aandachtspunten voor beoordeling en matching"
+                placeholder="Beschrijf kort de casuscontext zonder herleidbare persoonsgegevens, met aandachtspunten voor beoordeling en matching"
               />
-            </div>
-
-            <div className="rounded-2xl border border-border/60 bg-muted/10 px-4 py-3 text-sm text-muted-foreground">
-              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Urgentiesuggestie</p>
-              <p className="mt-1 text-foreground/90">{urgencyHint}</p>
+              <FieldError message={formErrors.assessment_summary} />
             </div>
 
             <div className="rounded-2xl border border-border/60 bg-muted/10 p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Zichtbaarheid per fase</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Wie ziet wat per fase</p>
+                  <CareInfoPopover ariaLabel="Wie voeg ik toe?" testId="nieuwe-casus-partijen-help">
+                    <p>Voeg alleen partijen toe die betrokken zijn bij beoordeling, plaatsing of opvolging.</p>
+                  </CareInfoPopover>
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowRevealPreview((current) => !current)}
@@ -1228,7 +1834,7 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
                         <th className="px-3">Fase</th>
                         <th className="px-3">Gemeente</th>
                         <th className="px-3">Zorgaanbieder</th>
-                        <th className="px-3">Regie</th>
+                        <th className="px-3">Coördinatie</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1251,224 +1857,249 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
         )}
 
         {currentStep === 3 && (
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.9fr)_minmax(350px,1fr)]">
-            <div className="space-y-3">
-              <section className="panel-surface rounded-[24px] border border-border/70 p-4 shadow-sm">
-                <div className="mb-3 flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-[18px] font-semibold text-foreground">Regio en zoekgebied</h2>
-                  </div>
-                </div>
+          <div className="mt-6 space-y-3">
+            <SectionHeader
+              step="3"
+              title="Randvoorwaarden"
+            />
 
-                <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-                  <div>
-                    <label htmlFor="nieuw-casus-regio" className={compactLabelClass}>Regio *</label>
-                    <select
-                      id="nieuw-casus-regio"
-                      value={formState.regio}
-                      onChange={(event) => {
-                        updateField("regio", event.target.value);
-                        if (!formState.preferred_region) {
-                          updateField("preferred_region", event.target.value);
-                        }
-                      }}
-                      className={baseFieldClass}
-                    >
-                      <option value="">Selecteer regio</option>
-                      {options.regio.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                    <FieldError message={formErrors.regio} />
-                  </div>
-
-                  <div>
-                    <label className={compactLabelClass}>Zoekradius</label>
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {[10, 25, 50].map((radius) => (
-                        <button
-                          key={radius}
-                          type="button"
-                          onClick={() => setSearchRadiusKm(radius as 10 | 25 | 50)}
-                          className={`rounded-full border px-3 py-1.5 text-[11px] font-medium ${searchRadiusKm === radius ? "border-primary/30 bg-primary/10 text-foreground" : "border-border/70 bg-card/30 text-muted-foreground hover:border-border/70 hover:text-foreground"}`}
-                        >
-                          {radius} km
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section className="panel-surface rounded-[24px] border border-border/70 p-4 shadow-sm">
-                <div className="mb-3 flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-[18px] font-semibold text-foreground">Ondersteuningsbehoeften</h2>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-9 rounded-full border-border/70 px-3 text-xs font-medium"
-                    onClick={() => setShowSupportNeedsPicker((current) => !current)}
-                  >
-                    + Toevoegen
-                  </Button>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {supportNeedPreview.map((label) => (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() => {
-                        const option = options.diagnostiek.find((entry) => entry.label === label);
-                        if (option) {
-                          toggleDiagnostiek(option.value);
-                        }
-                      }}
-                      className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/30 px-3 py-1.5 text-sm text-foreground transition-colors hover:border-border/70 hover:bg-muted/30"
-                    >
-                      <span>{label}</span>
-                      <X size={14} className="text-muted-foreground" aria-hidden />
-                    </button>
-                  ))}
-                  {supportNeedOverflow > 0 && (
-                    <span className="inline-flex items-center rounded-full border border-border/70 bg-card/30 px-3 py-1.5 text-sm text-muted-foreground">
-                      +{supportNeedOverflow}
-                    </span>
-                  )}
-                </div>
-
-                {showSupportNeedsPicker && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {options.diagnostiek
-                      .filter((option) => !formState.diagnostiek.includes(option.value))
-                      .map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => toggleDiagnostiek(option.value)}
-                          className="rounded-full border border-border/70 bg-card/25 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-border/70 hover:text-foreground"
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                  </div>
-                )}
-
-                <p className="mt-3 text-sm text-muted-foreground">Selecteer de belangrijkste ondersteuningsbehoeften van de jeugdige.</p>
-              </section>
-
-              <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1.9fr)_minmax(350px,1fr)]">
+              <div className="space-y-3">
                 <section className="panel-surface rounded-[24px] border border-border/70 p-4 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-400">
-                      <AlertTriangle size={16} aria-hidden />
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <h3 className="text-[17px] font-semibold text-foreground">Regio &amp; Verantwoordelijkheid</h3>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                    <div>
+                      <label htmlFor="nieuw-casus-regio" className={compactLabelClass}>Regio *</label>
+                      <select
+                        id="nieuw-casus-regio"
+                        value={formState.regio}
+                        onChange={(event) => {
+                          updateField("regio", event.target.value);
+                          if (!formState.preferred_region) {
+                            updateField("preferred_region", event.target.value);
+                          }
+                        }}
+                        className={baseFieldClass}
+                      >
+                        <option value="">Selecteer regio</option>
+                        {options.regio.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                      <FieldError message={formErrors.regio} />
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-[18px] font-semibold text-foreground">Matchverwachting</h2>
-                        <span className={`rounded-full px-3 py-1 text-[11px] font-medium ${matchingPreview.tone === "good" ? "bg-green-500/10 text-green-300" : matchingPreview.tone === "warning" ? "bg-yellow-500/10 text-yellow-300" : "bg-red-500/10 text-red-300"}`}>
+
+                    <div>
+                      <label className={compactLabelClass}>Zoekradius</label>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {[10, 25, 50].map((radius) => (
+                          <button
+                            key={radius}
+                            type="button"
+                            onClick={() => setSearchRadiusKm(radius as 10 | 25 | 50)}
+                            className={`rounded-full border px-3 py-1.5 text-[11px] font-medium ${searchRadiusKm === radius ? "border-primary/30 bg-primary/10 text-foreground" : "border-border/70 bg-card/30 text-muted-foreground hover:border-border/70 hover:text-foreground"}`}
+                          >
+                            {radius} km
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/30 px-3 py-3">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Woonplaatsbeginsel</p>
+                      <p className="mt-1 break-words text-sm font-medium leading-snug text-foreground">{selectedGemeenteLabel || "Wordt afgeleid uit gemeente"}</p>
+                    </div>
+                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/30 px-3 py-3">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Zorgregio</p>
+                      <p className="mt-1 break-words text-sm font-medium leading-snug text-foreground">{selectedRegionLabel || "Wordt afgeleid uit regio"}</p>
+                    </div>
+                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/30 px-3 py-3">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Plaatsingsregio</p>
+                      <p className="mt-1 break-words text-sm font-medium leading-snug text-foreground">{selectedRegionLabel || "Volgt regio voor plaatsing"}</p>
+                    </div>
+                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/30 px-3 py-3">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Herbeoordeling</p>
+                      <p className="mt-1 break-words text-sm font-medium leading-snug text-foreground">
+                        {formState.gemeente && formState.regio ? "Alleen bij grensverschil" : "Nog niet bepaald"}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="panel-surface rounded-[24px] border border-border/70 p-4 shadow-sm">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <h3 className="text-[17px] font-semibold text-foreground">Ondersteuningsbehoeften</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-9 rounded-full border-border/70 px-3 text-xs font-medium"
+                      onClick={() => setShowSupportNeedsPicker((current) => !current)}
+                    >
+                      + Toevoegen
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {supportNeedPreview.map((label) => (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => {
+                          const option = options.diagnostiek.find((entry) => entry.label === label);
+                          if (option) {
+                            toggleDiagnostiek(option.value);
+                          }
+                        }}
+                        className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/30 px-3 py-1.5 text-sm text-foreground transition-colors hover:border-border/70 hover:bg-muted/30"
+                      >
+                        <span>{label}</span>
+                        <X size={14} className="text-muted-foreground" aria-hidden />
+                      </button>
+                    ))}
+                    {supportNeedOverflow > 0 && (
+                      <span className="inline-flex items-center rounded-full border border-border/70 bg-card/30 px-3 py-1.5 text-sm text-muted-foreground">
+                        +{supportNeedOverflow}
+                      </span>
+                    )}
+                  </div>
+
+                  {showSupportNeedsPicker && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {options.diagnostiek
+                        .filter((option) => !formState.diagnostiek.includes(option.value))
+                        .map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => toggleDiagnostiek(option.value)}
+                            className="rounded-full border border-border/70 bg-card/25 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-border/70 hover:text-foreground"
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </section>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <section className="panel-surface h-full rounded-[24px] border border-border/70 p-4 shadow-sm">
+                    <div className="flex h-full flex-col">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-400">
+                          <AlertTriangle size={16} aria-hidden />
+                        </div>
+                        <h3 className="min-w-0 text-[17px] font-semibold leading-snug text-foreground">Matchverwachting</h3>
+                      </div>
+                      <div className="mt-4 rounded-2xl border border-border/50 bg-card/30 px-3 py-3">
+                        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                          Verwachte uitkomst
+                        </p>
+                        <p className="mt-1 text-sm font-medium leading-snug text-foreground">
+                          {matchingPreview.label}
+                        </p>
+                        <span className={`mt-3 inline-flex rounded-full px-3 py-1 text-[11px] font-medium ${matchingPreview.tone === "good" ? "bg-green-500/10 text-green-300" : matchingPreview.tone === "warning" ? "bg-yellow-500/10 text-yellow-300" : "bg-red-500/10 text-red-300"}`}>
                           {matchingPreview.label}
                         </span>
                       </div>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {matchingPreview.detail}
-                      </p>
-                      <p className="mt-3 flex items-start gap-2 text-sm text-muted-foreground">
-                        <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-300" aria-hidden />
-                        <span>{regionCapacityHint}</span>
-                      </p>
                     </div>
-                  </div>
-                </section>
+                  </section>
 
-                <section className="panel-surface rounded-[24px] border border-border/70 p-4 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-violet-500/20 bg-violet-500/10 text-violet-300">
-                      <Lock size={16} aria-hidden />
-                    </div>
-                    <div className="min-w-0">
-                      <h2 className="text-[18px] font-semibold text-foreground">Privacy &amp; zichtbaarheid</h2>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Persoonsgegevens blijven afgeschermd tot formele intake of koppeling.
-                      </p>
-                      <div className="mt-4 flex flex-col gap-2 text-sm text-foreground">
-                        <p className="flex items-center gap-2">
-                          <Lock size={14} className="text-violet-300" aria-hidden />
-                          <span>Alleen pseudonieme gegevens zichtbaar</span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <ShieldCheck size={14} className="text-violet-300" aria-hidden />
-                          <span>Openbaar voor: Gemeente, Matching</span>
-                        </p>
+                  <section className="panel-surface h-full rounded-[24px] border border-border/70 p-4 shadow-sm">
+                    <div className="flex h-full flex-col">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-violet-500/20 bg-violet-500/10 text-violet-300">
+                          <Lock size={16} aria-hidden />
+                        </div>
+                        <h3 className="min-w-0 text-[17px] font-semibold leading-snug text-foreground">Privacy &amp; zichtbaarheid</h3>
+                      </div>
+                      <div className="mt-4 rounded-2xl border border-border/50 bg-card/30 px-3 py-3">
+                        <div className="flex flex-col gap-2 text-sm text-foreground">
+                          <p className="grid min-w-0 grid-cols-[14px_minmax(0,1fr)] items-start gap-2 leading-snug">
+                            <Lock size={14} className="text-violet-300" aria-hidden />
+                            <span className="min-w-0 break-words">Alleen pseudonieme gegevens zichtbaar</span>
+                          </p>
+                          <p className="grid min-w-0 grid-cols-[14px_minmax(0,1fr)] items-start gap-2 leading-snug">
+                            <ShieldCheck size={14} className="text-violet-300" aria-hidden />
+                            <span className="min-w-0 break-words">Openbaar voor: Gemeente, Matching</span>
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </section>
+                  </section>
+                </div>
               </div>
+
+              <aside className="panel-surface rounded-[24px] border border-border/70 p-4 shadow-sm">
+                <div className="mb-3">
+                  <h3 className="text-[17px] font-semibold text-foreground">Samenvatting voor verzending</h3>
+                </div>
+                <div className="mt-4 divide-y divide-border/60">
+                  <div className="flex min-w-0 items-start justify-between gap-3 py-3 text-sm">
+                    <span className="text-muted-foreground">Woonplaatsbeginsel</span>
+                    <span className="min-w-0 break-words text-right font-medium text-foreground">{(selectedGemeenteLabel || "-")}</span>
+                  </div>
+                  <div className="flex min-w-0 items-start justify-between gap-3 py-3 text-sm">
+                    <span className="text-muted-foreground">Regio</span>
+                    <span className="min-w-0 break-words text-right font-medium text-foreground">{(options.regio.find((option) => option.value === formState.regio)?.label ?? formState.regio) || "-"}</span>
+                  </div>
+                  <div className="flex min-w-0 items-start justify-between gap-3 py-3 text-sm">
+                    <span className="text-muted-foreground">Zoekradius</span>
+                    <span className="min-w-0 break-words text-right font-medium text-foreground">{searchRadiusKm} km</span>
+                  </div>
+                  <div className="flex min-w-0 items-start justify-between gap-3 py-3 text-sm">
+                    <span className="text-muted-foreground">Urgentieadvies</span>
+                    <span className="inline-flex min-w-0 items-center justify-end gap-2 text-right font-medium text-foreground">
+                      <span className={`h-2.5 w-2.5 rounded-full ${pressureAssessment?.band === "low" ? "bg-green-400" : pressureAssessment?.band === "normal" ? "bg-sky-400" : pressureAssessment?.band === "high" ? "bg-amber-400" : "bg-red-400"}`} />
+                      {pressureAssessment?.label ?? "-"}
+                    </span>
+                  </div>
+                  <div className="py-3 text-sm">
+                    <div className="mb-2 flex min-w-0 items-start justify-between gap-3">
+                      <span className="text-muted-foreground">Ondersteuningsbehoeften</span>
+                      {supportNeedOverflow > 0 && <span className="text-xs text-muted-foreground">+{supportNeedOverflow}</span>}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {supportNeedPreview.map((label) => (
+                        <span key={label} className="rounded-full border border-violet-500/25 bg-violet-500/10 px-2.5 py-1 text-[11px] font-medium text-violet-200">
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex min-w-0 items-start justify-between gap-3 py-3 text-sm">
+                    <span className="text-muted-foreground">Matchverwachting</span>
+                    <span className={`min-w-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${matchingPreview.tone === "good" ? "bg-green-500/10 text-green-300" : matchingPreview.tone === "warning" ? "bg-yellow-500/10 text-yellow-300" : "bg-red-500/10 text-red-300"}`}>
+                      {matchingPreview.label}
+                    </span>
+                  </div>
+                  <div className="flex min-w-0 items-start justify-between gap-3 py-3 text-sm">
+                    <span className="text-muted-foreground">Zichtbaarheid</span>
+                    <span className="min-w-0 break-words text-right font-medium text-foreground">Afgeschermd tot intake/koppeling</span>
+                  </div>
+                </div>
+
+              </aside>
             </div>
-
-            <aside className="panel-surface rounded-[24px] border border-border/70 p-4 shadow-sm">
-              <h2 className="text-[18px] font-semibold text-foreground">Samenvatting voor verzending</h2>
-              <div className="mt-4 divide-y divide-border/60">
-                <div className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <span className="text-muted-foreground">Bronregistratie</span>
-                  <span className="font-medium text-foreground">{SOURCE_REGISTRATION_OPTIONS.find((option) => option.value === sourceRegistration)?.label ?? "-"}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <span className="text-muted-foreground">Regio</span>
-                  <span className="font-medium text-foreground">{(options.regio.find((option) => option.value === formState.regio)?.label ?? formState.regio) || "-"}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <span className="text-muted-foreground">Zoekradius</span>
-                  <span className="font-medium text-foreground">{searchRadiusKm} km</span>
-                </div>
-                <div className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <span className="text-muted-foreground">Urgentie</span>
-                  <span className="inline-flex items-center gap-2 font-medium text-foreground">
-                    <span className={`h-2.5 w-2.5 rounded-full ${matchingPreview.tone === "good" ? "bg-green-400" : matchingPreview.tone === "warning" ? "bg-yellow-400" : "bg-red-400"}`} />
-                    {options.urgency.find((option) => option.value === formState.urgency)?.label ?? "-"}
-                  </span>
-                </div>
-                <div className="py-3 text-sm">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <span className="text-muted-foreground">Ondersteuningsbehoeften</span>
-                    {supportNeedOverflow > 0 && <span className="text-xs text-muted-foreground">+{supportNeedOverflow}</span>}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {supportNeedPreview.map((label) => (
-                      <span key={label} className="rounded-full border border-violet-500/25 bg-violet-500/10 px-2.5 py-1 text-[11px] font-medium text-violet-200">
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <span className="text-muted-foreground">Matchverwachting</span>
-                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${matchingPreview.tone === "good" ? "bg-green-500/10 text-green-300" : matchingPreview.tone === "warning" ? "bg-yellow-500/10 text-yellow-300" : "bg-red-500/10 text-red-300"}`}>
-                    {matchingPreview.label}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <span className="text-muted-foreground">Zichtbaarheid</span>
-                  <span className="text-right font-medium text-foreground">Afgeschermd tot intake/koppeling</span>
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-xl border border-border/60 bg-card/30 p-4">
-                <div className="flex items-start gap-3">
-                  <ShieldCheck size={18} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden />
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Controleer bovenstaande gegevens.</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Na aanmaken start de workflow automatisch.</p>
-                  </div>
-                </div>
-              </div>
-            </aside>
           </div>
         )}
       </section>
+
+      {currentStep === 1 && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <Button variant="outline" className="h-11 gap-2 rounded-full px-5 text-[15px] font-medium" onClick={() => onCancel?.()}>
+            Annuleren
+          </Button>
+          <Button className="h-11 gap-2 rounded-full px-5 text-[15px] font-medium shadow-sm" onClick={handleAdvance}>
+            Volgende stap
+            <ArrowRight size={15} />
+          </Button>
+        </div>
+      )}
 
       {currentStep === 2 && (
         <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1501,25 +2132,12 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button variant="outline" className="h-11 gap-2 rounded-full px-5 text-[15px] font-medium" onClick={() => onCancel?.()}>
               <ArrowLeft size={15} />
-              Terug
+              Vorige stap
             </Button>
             <Button className="h-11 gap-2 rounded-full px-5 text-[15px] font-medium shadow-sm" onClick={handleAdvance}>
               Casus aanmaken
               <Save size={15} />
             </Button>
-          </div>
-          <div className="flex items-start gap-2 text-xs text-muted-foreground">
-            <Lock size={14} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden />
-            <p>Wij verwerken gegevens conform AVG. Persoonsgegevens worden pas vrijgegeven na formele intake of koppeling.</p>
-          </div>
-        </div>
-      )}
-
-      {stepError && (
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
-          <div className="flex items-start gap-2">
-            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-            <p>{stepError}</p>
           </div>
         </div>
       )}

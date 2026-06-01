@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ProcessTimeline } from "../design/ProcessTimeline";
 import { cn } from "../ui/utils";
 import { getShortReasonLabel } from "../../lib/uxCopy";
+import { BlockingNotice } from "./CareDesignPrimitives";
 
 export type CaseStepperStep = {
   id: string;
@@ -136,7 +137,7 @@ export function CasePrimaryActionPanel({
   errorMessage?: string | null;
 }) {
   return (
-    <div data-testid="next-best-action" className="space-y-4">
+    <div data-testid="next-best-action" data-priority="primary" className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-lg bg-muted/20 px-3 py-2.5">
           <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Status</p>
@@ -176,9 +177,11 @@ export function CasePrimaryActionPanel({
         </div>
       ) : null}
       {(primaryDisabled && (disabledReason || errorMessage)) ? (
-        <p className="text-[12px] text-destructive">
-          {errorMessage ?? getShortReasonLabel(disabledReason ?? "", 110)}
-        </p>
+        <BlockingNotice
+          title="Actie geblokkeerd"
+          message={errorMessage ?? getShortReasonLabel(disabledReason ?? "", 110)}
+          className="mt-1"
+        />
       ) : null}
     </div>
   );
@@ -329,9 +332,9 @@ export function CaseDetailEvidenceList({
     <div className="surface-section rounded-xl px-4 py-3.5 md:px-5">
       <dl className="divide-y divide-border/30">
         {rows.map((row) => (
-          <div key={row.label} className="flex items-center justify-between gap-3 py-2 text-[13px]">
+          <div key={row.label} className="flex min-w-0 items-start justify-between gap-3 py-2 text-[13px]">
             <dt className="text-muted-foreground">{row.label}</dt>
-            <dd className="font-medium text-foreground">{row.value}</dd>
+            <dd className="min-w-0 break-words text-right font-medium text-foreground">{row.value}</dd>
           </div>
         ))}
       </dl>

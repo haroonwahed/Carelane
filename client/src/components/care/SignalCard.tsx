@@ -58,7 +58,7 @@ export function SignalCard({ signal }: SignalCardProps) {
           </p>
           <div className="flex items-center gap-3 mt-2 text-xs">
             <span className={style.text}>
-              {signal.affectedCases} casussen
+              {signal.affectedCases} aanvragen
             </span>
             {signal.region && (
               <span className="text-muted-foreground">

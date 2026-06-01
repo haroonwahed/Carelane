@@ -51,6 +51,8 @@ If `demo_gemeente` already exists, boot runs `seed_pilot_e2e` only (password syn
 - GitHub secret `RENDER_DEPLOY_HOOK_URL` (dashboard deploy hook), or
 - GitHub secret `RENDER_API_KEY` + repository variable `RENDER_SERVICE_ID` (`srv-d7h4h5jbc2fs738ol9a0`) — POST to Render API `/v1/services/{id}/deploys`.
 
+For a manual local trigger, use `./scripts/trigger_render_deploy.sh` with `RENDER_DEPLOY_HOOK_URL` set in the environment.
+
 Sign-off from CI or laptop:
 
 ```bash

@@ -88,6 +88,9 @@ export interface ProviderEvaluation {
   /** Persisted match explainability for this aanbieder (advisory). */
   matchFitSummary?: string;
   matchTradeOffsHint?: string;
+  /** Persisted taxonomy explainability for this aanbieder (advisory). */
+  taxonomieLijn?: string;
+  taxonomieCodeLijn?: string;
   /** Intake arrangement metadata line (advisory; not a budget guarantee). */
   arrangementHintLine?: string;
   arrangementHintDisclaimer?: string;

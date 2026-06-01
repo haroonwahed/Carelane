@@ -17,10 +17,12 @@ from contracts.pilot_universe import (
     PILOT_ORG_SLUG,
     PILOT_PROVIDER_CLIENT_NAMES,
 )
+from contracts.zorgbehoefte_taxonomy import ensure_zorgbehoefte_taxonomy, provider_subcategory_codes_for_category
 
 from contracts.models import (
     AanbiederVestiging,
     CareCategoryMain,
+    CareCategorySubcategory,
     CareCase,
     CareSignal,
     CaseAssessment,
@@ -199,31 +201,48 @@ class Command(BaseCommand):
         Client.objects.filter(organization=organization, name__in=provider_names).delete()
 
     def _ensure_categories(self):
-        names = [
-            'Angst en spanning',
-            'Gedrag en gezin',
-            'Autisme en structuur',
-            'Trauma en veiligheid',
-            'Schoolverzuim',
-            'Gezinsbegeleiding',
-        ]
-        categories = {}
-        for order, name in enumerate(names, start=1):
-            category, _ = CareCategoryMain.objects.update_or_create(
-                name=name,
-                defaults={
-                    'order': order,
-                    'is_active': True,
-                },
-            )
-            categories[name] = category
-        return categories
+        ensure_zorgbehoefte_taxonomy()
+        category_map = {
+            category.name: category
+            for category in CareCategoryMain.objects.filter(visible_in_mvp=True, is_active=True)
+        }
+        aliases = {
+            'Angst en spanning': category_map['Psychosociaal & begeleiding'],
+            'Gedrag en gezin': category_map['Gezin & opvoeding'],
+            'Autisme en structuur': category_map['Gedrag & ontwikkeling'],
+            'Trauma en veiligheid': category_map['Veiligheid & bescherming'],
+            'Schoolverzuim': category_map['Gedrag & ontwikkeling'],
+            'Gezinsbegeleiding': category_map['Gezin & opvoeding'],
+        }
+        category_map.update(aliases)
+        return category_map
 
     def _ensure_network(self, *, organization, demo_user, categories):
         municipalities = [
-            {'name': 'Utrecht', 'code': 'DEMO-UTR', 'province': 'Utrecht', 'region_code': 'DEMO-UTR-REG', 'region_name': 'Utrecht Regio'},
-            {'name': 'Amsterdam', 'code': 'DEMO-AMS', 'province': 'Noord-Holland', 'region_code': 'DEMO-AMS-REG', 'region_name': 'Amsterdam Regio'},
-            {'name': 'Rotterdam', 'code': 'DEMO-RTM', 'province': 'Zuid-Holland', 'region_code': 'DEMO-RTM-REG', 'region_name': 'Rotterdam Regio'},
+            {
+                'name': 'Utrecht',
+                'code': 'DEMO-UTR',
+                'province': 'Utrecht',
+                'region_code': 'DEMO-UTR-REG',
+                'region_name': 'Utrecht Regio',
+                'urgency_document_request_url': 'https://www.utrecht.nl/wonen-en-leven/wonen/woning-zoeken/urgentie-voor-een-woning/',
+            },
+            {
+                'name': 'Amsterdam',
+                'code': 'DEMO-AMS',
+                'province': 'Noord-Holland',
+                'region_code': 'DEMO-AMS-REG',
+                'region_name': 'Amsterdam Regio',
+                'urgency_document_request_url': 'https://www.amsterdam.nl/wonen-bouwen-verbouwen/woonruimte-vinden/urgentieverklaring-aanvragen/',
+            },
+            {
+                'name': 'Rotterdam',
+                'code': 'DEMO-RTM',
+                'province': 'Zuid-Holland',
+                'region_code': 'DEMO-RTM-REG',
+                'region_name': 'Rotterdam Regio',
+                'urgency_document_request_url': 'https://www.rotterdam.nl/sociaal-medische-advisering',
+            },
         ]
 
         municipality_map = {}
@@ -240,6 +259,7 @@ class Command(BaseCommand):
                     'created_by': demo_user,
                     'max_wait_days': 21,
                     'priority_rules': 'Demo prioritering volgens canonical flow.',
+                    'urgency_document_request_url': entry['urgency_document_request_url'],
                     'notes': 'Demo gemeenteconfiguratie.',
                 },
             )
@@ -404,6 +424,10 @@ class Command(BaseCommand):
                 },
             )
             provider_profile.target_care_categories.set([spec['category']])
+            if hasattr(provider_profile, 'target_care_subcategories'):
+                provider_profile.target_care_subcategories.set(
+                    CareCategorySubcategory.objects.filter(code__in=provider_subcategory_codes_for_category(spec['category']))
+                )
             provider_profile.served_regions.set([region_map[spec['city']]])
             provider_profile.secondary_served_regions.clear()
 

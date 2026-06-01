@@ -39,7 +39,7 @@ import {
 } from "../ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useCases } from "../../hooks/useCases";
-import { useProviders } from "../../hooks/useProviders";
+import { useProviders, type SpaProvider } from "../../hooks/useProviders";
 import { useMatchingCandidates, type MatchingCandidateRow } from "../../hooks/useMatchingCandidates";
 import { toLegacyCase, toLegacyProvider } from "../../lib/careLegacyAdapters";
 import { apiClient } from "../../lib/apiClient";
@@ -47,11 +47,15 @@ import { toCareCaseDetail } from "../../lib/routes";
 import { ProviderMapSurface } from "./ProviderMapSurface";
 import { tokens } from "../../design/tokens";
 import { cn } from "../ui/utils";
-import { CarePanel, EmptyState, ErrorState, LoadingState } from "./CareDesignPrimitives";
+import { BlockingNotice, CarePanel, EmptyState, ErrorState, LoadingState } from "./CareDesignPrimitives";
 import { advisoryFromEngineConfidenceLabel } from "../../lib/matchingAdvisory";
+import {
+  GuidanceContextBanner,
+  InlineHelpChip,
+  VideoHelpTrigger,
+} from "../guidance";
 
 const MATCH_BRAND = tokens.colors.casussenAccent;
-const MATCH_SURFACE = tokens.colors.casussenSurfaceRaised;
 const MATCH_BG = tokens.colors.casussenPageChrome;
 
 function formatMatchingCaseTitle(caseId: string): string {
@@ -107,6 +111,25 @@ function formatEngineFactorScore(raw: number): string {
   return `${normalized} (factor)`;
 }
 
+function taxonomyExplainabilityLines(candidate?: MatchingCandidateRow | null): string[] {
+  if (!candidate) {
+    return [];
+  }
+  const lines = [
+    candidate.taxonomie_lijn?.trim(),
+    candidate.taxonomie_code_lijn?.trim(),
+  ].filter((line): line is string => Boolean(line));
+  return lines;
+}
+
+function resolveProviderForMatch(match: MatchingCandidateRow, providers: SpaProvider[]): SpaProvider | null {
+  const providerId = String(match.zorgaanbieder_id ?? "").trim();
+  if (!providerId) {
+    return null;
+  }
+  return providers.find((provider) => String(provider.id) === providerId) ?? null;
+}
+
 interface MatchingPageWithMapProps {
   caseId: string;
   onBack: () => void;
@@ -138,14 +161,12 @@ export function MatchingPageWithMap({
     if (!apiMatches.length) return null;
     const rows: { legacy: ReturnType<typeof toLegacyProvider>; api: MatchingCandidateRow }[] = [];
     for (const m of apiMatches) {
-      const nm = (m.aanbiederName || "").trim();
-      if (!nm) continue;
-      const spa = providers.find(p => p.name.trim().toLowerCase() === nm.toLowerCase());
+      const spa = resolveProviderForMatch(m, providers);
       if (!spa) continue;
       rows.push({ legacy: toLegacyProvider(spa), api: m });
       if (rows.length >= 3) break;
     }
-    return rows.length ? rows : null;
+      return rows.length ? rows : null;
   }, [apiMatches, providers]);
 
   const caseData = legacyCases.find((item) => item.id === caseId);
@@ -188,10 +209,12 @@ export function MatchingPageWithMap({
       return liveApiRanked.map(({ legacy: provider, api }, index) => {
         const advisory = advisoryFromEngineConfidenceLabel(api.confidence_label || "");
         const distance: number | null = null;
+        const taxonomyLines = taxonomyExplainabilityLines(api);
         const tradeFromApi = (api.trade_offs ?? []).map(t => String(t)).filter(Boolean);
         const strongParts = [api.fit_samenvatting, api.verificatie_advies].map(s => (s || "").trim()).filter(Boolean);
+        const combinedStrongParts = [...taxonomyLines, ...strongParts];
         const strongPoints =
-          strongParts.length > 0 ? strongParts : ["Matchadvies uit de keten-engine (advies)."];
+          combinedStrongParts.length > 0 ? combinedStrongParts : ["Matchadvies uit de keten-engine (advies)."];
         const tradeOffs =
           tradeFromApi.length > 0
             ? tradeFromApi.slice(0, 3)
@@ -205,7 +228,7 @@ export function MatchingPageWithMap({
           : index === 0
             ? [`Capaciteit onzeker (laatste activiteit casus: ${capacityUpdateLabel})`]
             : [];
-        const whyMatch = api.fit_samenvatting || "Geselecteerd op basis van actuele matching.";
+        const whyMatch = api.fit_samenvatting || taxonomyLines[0] || "Geselecteerd op basis van actuele matching.";
         const tier = index === 0 ? "best" : index === 1 ? "balanced" : "risk";
         return {
           provider,
@@ -216,6 +239,7 @@ export function MatchingPageWithMap({
           alternativeReasons: [] as string[],
           advisoryLabel: advisory.label,
           advisoryHint: advisory.hint,
+          taxonomyLines,
           engineFactors: {
             specialization: api.score_inhoudelijke_fit,
             region: api.score_regio_contract_fit,
@@ -241,8 +265,7 @@ export function MatchingPageWithMap({
     return apiMatches.slice(3).map((m) => {
       const raw = Number(m.totaalscore) || 0;
       const score = raw > 0 && raw <= 1 ? Math.round(raw * 100) : Math.max(0, Math.min(100, Math.round(raw)));
-      const nm = (m.aanbiederName || "").trim();
-      const spa = providers.find((p) => p.name.trim().toLowerCase() === nm.toLowerCase());
+      const spa = resolveProviderForMatch(m, providers);
       if (!spa) return null;
       const advisory = advisoryFromEngineConfidenceLabel(m.confidence_label || "");
       return { provider: toLegacyProvider(spa), advisoryLabel: advisory.label };
@@ -252,9 +275,7 @@ export function MatchingPageWithMap({
   const allProvidersTable = useMemo(() => {
     const rows: { provider: ReturnType<typeof toLegacyProvider>; score: number }[] = [];
     for (const m of apiMatches) {
-      const nm = (m.aanbiederName || "").trim();
-      if (!nm) continue;
-      const spa = providers.find((p) => p.name.trim().toLowerCase() === nm.toLowerCase());
+      const spa = resolveProviderForMatch(m, providers);
       if (!spa) continue;
       const raw = Number(m.totaalscore) || 0;
       const score = raw > 0 && raw <= 1 ? Math.round(raw * 100) : Math.max(0, Math.min(100, Math.round(raw)));
@@ -296,16 +317,23 @@ export function MatchingPageWithMap({
   const bestMatch = rankedMatches[0] ?? null;
 
   const spaCaseRaw = cases.find((c) => c.id === caseId) ?? null;
+  const placementPressureLabel = spaCaseRaw?.placementPressureLabel ?? (spaCaseRaw?.urgency === "critical"
+    ? "Spoed"
+    : spaCaseRaw?.urgency === "warning"
+      ? "Hoog"
+      : spaCaseRaw?.urgency === "normal"
+        ? "Normaal"
+        : "Laag");
   const showUrgentBanner = caseData.urgency === "critical" || caseData.urgency === "high";
   const capacityScarceInRegion =
     rankedMatches.length > 0 && rankedMatches.every((m) => m.provider.availableSpots <= 1);
   const urgencyBannerLabel = !showUrgentBanner
     ? null
     : spaCaseRaw?.urgency === "critical"
-      ? "Urgent: spoedige regie en matching vereist"
+      ? `Plaatsingsdruk ${placementPressureLabel}: spoedige coördinatie en matching vereist`
       : spaCaseRaw != null && spaCaseRaw.wachttijd >= 5
-        ? `Urgent: casus al ${spaCaseRaw.wachttijd} dagen in de stroom — versnel doorleiding`
-        : "Urgent: hoge prioriteit — plan validatie en doorleiding snel";
+        ? `Plaatsingsdruk ${placementPressureLabel}: casus al ${spaCaseRaw.wachttijd} dagen in de stroom — versnel doorleiding`
+        : `Plaatsingsdruk ${placementPressureLabel}: hoge prioriteit — plan validatie en doorleiding snel`;
 
   const urgencyNl =
     caseData.urgency === "critical"
@@ -350,10 +378,7 @@ export function MatchingPageWithMap({
       await apiClient.post<Record<string, unknown>>(`/care/api/cases/${caseId}/matching/action/`, {
         action: "prepare_waitlist_proposal",
         provider_id: providerId,
-        match_score: apiMatches.find((m) => {
-          const nm = (m.aanbiederName || "").trim().toLowerCase();
-          return nm === target.provider.name.trim().toLowerCase();
-        })?.totaalscore,
+        match_score: apiMatches.find((m) => String(m.zorgaanbieder_id ?? "").trim() === String(providerId))?.totaalscore,
       });
       setSelectedProviderId(target.provider.id);
       setWaitlistModalOpen(false);
@@ -420,10 +445,7 @@ export function MatchingPageWithMap({
       if (Number.isNaN(pid)) {
         throw new Error("Ongeldige aanbieder-id.");
       }
-      const apiRow = apiMatches.find((m) => {
-        const nm = (m.aanbiederName || "").trim().toLowerCase();
-        return nm === match.provider.name.trim().toLowerCase();
-      });
+      const apiRow = apiMatches.find((m) => String(m.zorgaanbieder_id ?? "").trim() === String(pid));
       const validation_context = {
         totaalscore: apiRow?.totaalscore,
         confidenceLabel: match.advisoryLabel,
@@ -452,31 +474,43 @@ export function MatchingPageWithMap({
   const resolveRankedMatchRow = (providerId: string): RankedMatchRow | null => {
     const existing = rankedMatches.find((m) => m.provider.id === providerId);
     if (existing) return existing;
+    const apiRow = apiMatches.find((m) => String(m.zorgaanbieder_id ?? "").trim() === String(providerId));
+    if (!apiRow) return null;
     const provider = legacyProviders.find((p) => String(p.id) === String(providerId));
     if (!provider) return null;
-    const advisory = advisoryFromEngineConfidenceLabel("");
+    const advisory = advisoryFromEngineConfidenceLabel(apiRow?.confidence_label || "");
     return {
       provider,
       index: Math.max(0, allProvidersTable.findIndex((r) => r.provider.id === providerId)),
       distance: null,
-      strongPoints: ["Beschikbaar in het regionale netwerk"],
-      tradeOffs: ["Verificatie tijdens gemeente-validatie"],
+      strongPoints: apiRow?.fit_samenvatting?.trim()
+        ? [apiRow.fit_samenvatting.trim()]
+        : ["Beschikbaar in het regionale netwerk"],
+      tradeOffs: apiRow?.trade_offs?.length
+        ? apiRow.trade_offs.slice(0, 3)
+        : ["Verificatie tijdens gemeente-validatie"],
       alternativeReasons: [],
       advisoryLabel: advisory.label,
       advisoryHint: advisory.hint,
       engineFactors: {
-        specialization: 0,
-        region: 0,
-        capacity: 0,
-        complexity: 0,
+        specialization: apiRow?.score_inhoudelijke_fit ?? 0,
+        region: apiRow?.score_regio_contract_fit ?? 0,
+        capacity: apiRow?.score_capaciteit_wachttijd_fit ?? 0,
+        complexity: apiRow?.score_complexiteit_veiligheid_fit ?? 0,
       },
       focusChecks: [
         { label: "Regio", value: provider.region },
         { label: "Type", value: provider.type },
       ],
-      warnings: provider.availableSpots <= 0 ? ["Beperkte directe capaciteit"] : [],
-      whyMatch: "Geselecteerd uit volledige aanbiederslijst — matching blijft advies.",
-      tier: "risk",
+      warnings: apiRow?.region_pressure_signal?.trim()
+        ? [apiRow.region_pressure_signal.trim()]
+        : provider.availableSpots <= 0
+          ? ["Beperkte directe capaciteit"]
+          : [],
+      whyMatch: apiRow?.fit_samenvatting?.trim()
+        ? apiRow.fit_samenvatting.trim()
+        : "Geselecteerd uit volledige aanbiederslijst — matching blijft advies.",
+      tier: apiRow ? "balanced" : "risk",
       whyShownThird: null,
     };
   };
@@ -487,8 +521,8 @@ export function MatchingPageWithMap({
 
   return (
     <div data-care-page-archetype="workspace" className="flex min-h-screen flex-col text-foreground" style={{ backgroundColor: MATCH_BG }}>
-      <header className="border-b border-border/60 px-4 py-5 md:px-8" style={{ backgroundColor: MATCH_BG }}>
-        <div className="mx-auto flex max-w-[1680px] flex-col gap-5">
+      <header className="border-b border-border/50 px-4 py-5 md:px-8">
+        <div className="mx-auto flex max-w-[1680px] flex-col gap-5 rounded-[28px] border border-border/60 bg-card/45 px-4 py-4 shadow-sm backdrop-blur-[2px]">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 space-y-3">
               <Button
@@ -508,7 +542,7 @@ export function MatchingPageWithMap({
               </Button>
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-[22px] font-bold tracking-tight md:text-[26px]">
-                  Matching voor Casus {formatMatchingCaseTitle(caseId)}
+                  Matching voor casus {formatMatchingCaseTitle(caseId)}
                 </h1>
                 <span
                   className="rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white"
@@ -558,16 +592,16 @@ export function MatchingPageWithMap({
             </DropdownMenu>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-border/60 px-3 py-3.5" style={{ backgroundColor: MATCH_SURFACE }}>
+          <div className="overflow-x-auto rounded-[22px] border border-border/60 bg-card/35 px-3 py-3.5 shadow-sm">
             <div className="flex min-w-[760px] items-center gap-0">
               {(
                 [
-                  { Icon: CheckCircle2, label: "Casus", sub: "Voltooid", state: "done" as const },
-                  { Icon: Scale, label: "Matching", sub: "Huidige fase", state: "current" as const },
-                  { Icon: Shield, label: "Validatie", sub: "Wacht op gemeente", state: "pending" as const },
-                  { Icon: UserRound, label: "Aanbieder", sub: "—", state: "idle" as const },
-                  { Icon: Home, label: "Plaatsing", sub: "—", state: "idle" as const },
-                  { Icon: CheckCircle2, label: "Intake", sub: "—", state: "idle" as const },
+                  { Icon: CheckCircle2, label: "Casus", state: "done" as const },
+                  { Icon: Scale, label: "Matching", state: "current" as const },
+                  { Icon: Shield, label: "Validatie", state: "pending" as const },
+                  { Icon: UserRound, label: "Aanbieder", state: "idle" as const },
+                  { Icon: Home, label: "Plaatsing", state: "idle" as const },
+                  { Icon: CheckCircle2, label: "Intake", state: "idle" as const },
                 ] as const
               ).map((step, idx, arr) => (
                 <Fragment key={step.label}>
@@ -584,7 +618,6 @@ export function MatchingPageWithMap({
                       <step.Icon className="size-5" aria-hidden />
                     </div>
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{step.label}</p>
-                    <p className="text-[11px] font-medium text-foreground">{step.sub}</p>
                   </div>
                   {idx < arr.length - 1 ? (
                     <div className="flex h-8 w-4 shrink-0 items-center self-start pt-4" aria-hidden>
@@ -601,9 +634,10 @@ export function MatchingPageWithMap({
       <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col gap-6 px-4 py-6 lg:flex-row lg:items-start lg:px-8">
         <div className="min-w-0 flex-1 space-y-4">
             {(submitError || matchSubmitError) && (
-              <div className="mb-4 rounded-2xl border border-destructive/40 bg-destructive/15 px-4 py-3 text-sm text-destructive">
-                {matchSubmitError ?? submitError}
-              </div>
+              <BlockingNotice
+                className="mb-4"
+                message={matchSubmitError ?? submitError}
+              />
             )}
 
             {scenarioMessage && (
@@ -611,6 +645,27 @@ export function MatchingPageWithMap({
                 {scenarioMessage}
               </div>
             )}
+
+            <GuidanceContextBanner testId="matching-advisory-banner">
+              Matching is adviserend. Gebruik de suggesties als ondersteuning voor beoordeling, niet als automatische keuze.
+            </GuidanceContextBanner>
+
+            <div className="flex flex-wrap items-center justify-end gap-2 pb-1">
+              <InlineHelpChip
+                title="Wat betekent passendheid?"
+                triggerLabel="Passendheid"
+                testId="matching-score-help"
+              >
+                <p>
+                  Passendheid toont hoe goed een aanbieder aansluit op de casus. De uiteindelijke keuze blijft een menselijke beslissing.
+                </p>
+              </InlineHelpChip>
+              <VideoHelpTrigger
+                title="Hoe matching werkt"
+                script="CareOn vergelijkt de casus met beschikbare aanbieders op zorgtype, regio, capaciteit en urgentie. De match is een advies met uitleg en afwegingen. De gebruiker bepaalt welke vervolgstap passend is."
+                testId="matching-how-it-works-video"
+              />
+            </div>
 
             <div
               ref={focusZoneRef}
@@ -633,7 +688,7 @@ export function MatchingPageWithMap({
                 </div>
               )}
 
-              <div className="flex gap-1 border-b border-white/10">
+            <div className="flex gap-1 border-b border-border/60">
                 <button
                   type="button"
                   className={cn(
@@ -660,29 +715,6 @@ export function MatchingPageWithMap({
                 </button>
               </div>
 
-              <div
-                className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-border/70 bg-muted/25 px-4 py-3 text-[13px] leading-snug text-muted-foreground"
-                style={{ backgroundColor: `${MATCH_BRAND}18` }}
-              >
-                <div className="flex min-w-0 gap-2">
-                  <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-                  <p>
-                    Dit zijn de best passende aanbieders op basis van de ingestelde matching voorkeuren en beschikbare capaciteit.
-                    Matching is advies — de gemeente valideert en kiest bewust door.
-                  </p>
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button type="button" className="shrink-0 text-[13px] font-semibold text-primary underline-offset-4 hover:underline">
-                      Meer over matching
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs border border-border bg-popover text-xs">
-                    Factoren: specialisatie, urgentie, beschikbaarheid, afstand en historische uitkomsten. Geen automatische toewijzing.
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-
               <div className="hidden gap-4 border-b border-border/60 pb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid lg:grid-cols-[2.25rem_minmax(0,1fr)_7.5rem_minmax(0,1fr)_11rem] lg:items-end lg:px-2">
                 <span className="sr-only">Rang</span>
                 <span>Aanbieder</span>
@@ -705,10 +737,9 @@ export function MatchingPageWithMap({
                           onMouseEnter={() => setHoveredProviderId(item.provider.id)}
                           onMouseLeave={() => setHoveredProviderId(null)}
                           className={cn(
-                            "cursor-pointer rounded-xl border border-border/60 p-4 transition-all",
+                            "care-hover-card cursor-pointer rounded-[22px] border border-border/60 p-4 transition-all",
                             isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "hover:border-border/80",
                           )}
-                          style={{ backgroundColor: MATCH_SURFACE }}
                         >
                           <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[2.25rem_minmax(0,1fr)_7.5rem_minmax(0,1fr)_11rem] lg:items-center lg:gap-4">
                             <div className="flex items-center gap-3 lg:block">
@@ -831,7 +862,7 @@ export function MatchingPageWithMap({
                       const isSelected = selectedProviderId === row.provider.id;
                       const rank = idx + 1;
                       const bullets =
-                        resolved?.strongPoints?.length && resolved.strongPoints.length > 0
+                        (resolved?.strongPoints?.length && resolved.strongPoints.length > 0)
                           ? resolved.strongPoints
                           : [`${row.provider.region} · type ${row.provider.type}`, resolved?.advisoryLabel ?? "Beoordeling nodig"];
                       return (
@@ -841,10 +872,9 @@ export function MatchingPageWithMap({
                           onMouseEnter={() => setHoveredProviderId(row.provider.id)}
                           onMouseLeave={() => setHoveredProviderId(null)}
                           className={cn(
-                            "cursor-pointer rounded-xl border border-border/60 p-4 transition-all",
+                            "care-hover-card cursor-pointer rounded-[22px] border border-border/60 p-4 transition-all",
                             isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "hover:border-border/80",
                           )}
-                          style={{ backgroundColor: MATCH_SURFACE }}
                         >
                           <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[2.25rem_minmax(0,1fr)_7.5rem_minmax(0,1fr)_11rem] lg:items-center lg:gap-4">
                             <span
@@ -879,7 +909,7 @@ export function MatchingPageWithMap({
                             </div>
 
                             <div className="flex justify-center">
-                              <MatchingAdvisoryBadge label={advisoryFromEngineConfidenceLabel(apiMatches.find(m => (m.aanbiederName||"").trim().toLowerCase() === row.provider.name.trim().toLowerCase())?.confidence_label || "").label} />
+                              <MatchingAdvisoryBadge label={advisoryFromEngineConfidenceLabel(apiMatches.find(m => String(m.zorgaanbieder_id ?? "").trim() === row.provider.id)?.confidence_label || "").label} />
                             </div>
 
                             <ul className="space-y-1.5 text-[13px] text-muted-foreground">
@@ -953,7 +983,10 @@ export function MatchingPageWithMap({
               ) : null}
 
               {rankedMatches.length === 0 && listTab === "recommended" ? (
-                <CarePanel className="p-2">
+                <CarePanel className="space-y-3 p-2">
+                  <GuidanceContextBanner testId="matching-no-providers-banner">
+                    Niet alle aanbieders zijn beschikbaar of passend binnen dit arrangement. Controleer zorgtype, regio en capaciteit.
+                  </GuidanceContextBanner>
                   <EmptyState
                     title="Geen aanbieders"
                     copy="Geen geschikte aanbieders binnen de selectie."
@@ -1002,7 +1035,7 @@ export function MatchingPageWithMap({
                       </span>
                     ))}
                   </div>
-                  <div className="relative h-[min(52vh,520px)] overflow-hidden rounded-xl border border-white/10 bg-background/80">
+                  <div className="relative h-[min(52vh,520px)] overflow-hidden rounded-[22px] border border-border/60 bg-background/80 shadow-sm">
                     <ProviderMapSurface
                       providers={providers}
                       selectedProviderId={selectedProviderId ?? bestMatch?.provider.id ?? null}
@@ -1017,8 +1050,17 @@ export function MatchingPageWithMap({
           </div>
 
         <aside className="flex w-full shrink-0 flex-col gap-4 lg:w-[360px]">
-          <div className="rounded-xl border border-border/60 p-4" style={{ backgroundColor: MATCH_SURFACE }}>
-            <h3 className="text-sm font-semibold text-foreground">Waarom deze match?</h3>
+          <div className="rounded-[22px] border border-border/60 bg-card/45 p-4 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-semibold text-foreground">Waarom deze match?</h3>
+              <InlineHelpChip
+                title="Waarom deze aanbieder?"
+                triggerLabel="Waarom deze aanbieder?"
+                testId="matching-why-provider-help"
+              >
+                <p>Deze suggestie is gebaseerd op zorgtype, beschikbaarheid, regio en passendheid.</p>
+              </InlineHelpChip>
+            </div>
             <div className="mt-4 space-y-3">
               {(
                 [
@@ -1039,7 +1081,7 @@ export function MatchingPageWithMap({
             </Button>
           </div>
 
-          <div className="rounded-xl border border-border/60 p-4" style={{ backgroundColor: MATCH_SURFACE }}>
+          <div className="care-hover-card rounded-[22px] border border-border/60 bg-card/40 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold text-foreground">Huidige voorkeuren</h3>
               <Button variant="ghost" size="sm" type="button" className="h-8 text-xs text-primary" onClick={() => scrollToFocusZone()}>
@@ -1069,7 +1111,7 @@ export function MatchingPageWithMap({
             </div>
           </div>
 
-          <div className="rounded-xl border border-border/60 p-4" style={{ backgroundColor: MATCH_SURFACE }}>
+          <div className="care-hover-card rounded-[22px] border border-border/60 bg-card/40 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold text-foreground">Alternatieven (lagere score)</h3>
               <span
@@ -1164,7 +1206,18 @@ export function MatchingPageWithMap({
             {waitlistTargetMatch ? (
               <>
                 <DialogHeader className="gap-3 text-left">
-                  <DialogTitle className="text-xl font-semibold text-foreground">Wachtlijstvoorstel voorbereiden</DialogTitle>
+                  <DialogTitle className="text-xl font-semibold text-foreground">
+                    Wachtlijstvoorstel voorbereiden
+                  </DialogTitle>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <InlineHelpChip
+                      title="Wanneer op wachtlijst?"
+                      triggerLabel="Wanneer op wachtlijst?"
+                      testId="matching-waitlist-help"
+                    >
+                      <p>Gebruik de wachtlijst wanneer directe plaatsing niet mogelijk is maar opvolging nodig blijft.</p>
+                    </InlineHelpChip>
+                  </div>
                   <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
                     Je legt een concept wachtlijstvoorstel vast voor {waitlistTargetMatch.provider.name}. Daarna ga je verder op de
                     casuspagina om te controleren en eventueel naar de aanbieder te sturen — nog geen definitieve plaatsing.

@@ -1,11 +1,8 @@
 /**
- * MultiTenantDemo - Full Platform with Role Switching
- * 
- * Demonstrates:
- * - Role/context switching in top bar
- * - Role-based sidebar navigation
- * - Different navigation per role
- * - Platform-level multi-tenancy
+ * MultiTenantDemo - Full Platform shell for authenticated Care surfaces.
+ *
+ * The shell mirrors the active session context and keeps internal demo affordances
+ * out of the stakeholder-facing UI.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -617,7 +614,7 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
           currentContext={currentContext}
           availableContexts={availableContexts}
           onContextSwitch={handleContextSwitch}
-          showRoleSwitcher={me?.permissions.allowRoleSwitch ?? true}
+          showRoleSwitcher={false}
           notificationCount={0}
           onNotificationClick={() => {
             goToPage("acties");
@@ -828,25 +825,9 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
                       <p className="mb-4 text-lg font-bold text-foreground">
                         Alleen beheerder
                       </p>
-                      <p className="mb-8 text-muted-foreground">
-                        Alleen voor beheerders.<br />
-                        Beheer gebruikers, rechten en toegang.
+                      <p className="mx-auto max-w-xl text-muted-foreground">
+                        Beheer gebruikers, rechten en toegang vanuit de beheerlaag. In de stakeholder-demo blijven operationele aantallen en context-switching verborgen.
                       </p>
-
-                      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3">
-                        <div className="premium-card p-6">
-                          <p className="mb-2 text-3xl font-bold text-foreground">24</p>
-                          <p className="text-sm text-muted-foreground">Gemeente</p>
-                        </div>
-                        <div className="premium-card p-6">
-                          <p className="mb-2 text-3xl font-bold text-foreground">18</p>
-                          <p className="text-sm text-muted-foreground">Zorgaanbieder</p>
-                        </div>
-                        <div className="premium-card p-6">
-                          <p className="mb-2 text-3xl font-bold text-primary">3</p>
-                          <p className="text-sm text-muted-foreground">Admins</p>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 )}

@@ -361,6 +361,7 @@ export async function installCareApiStubs(page: Page, options?: { regiekamerOver
       regio: "",
       urgency: "",
       complexity: "",
+      has_urgency_declaration: false,
       urgency_applied: false,
       urgency_applied_since: "",
       diagnostiek: [],
@@ -382,7 +383,7 @@ export async function installCareApiStubs(page: Page, options?: { regiekamerOver
     options: {
       care_category_main: [{ value: "ggz", label: "GGZ" }],
       care_category_sub: [{ value: "ggz-jeugd", label: "Jeugd GGZ", mainCategoryId: "ggz" }],
-      gemeente: [{ value: "utrecht", label: "Utrecht" }],
+      gemeente: [{ value: "utrecht", label: "Utrecht", urgencyDocumentRequestUrl: "https://www.utrecht.nl/wonen-en-leven/wonen/woning-zoeken/urgentie-voor-een-woning/" }],
       regio: [{ value: "utrecht", label: "Utrecht" }],
       urgency: [
         { value: "low", label: "Laag" },
@@ -419,6 +420,7 @@ export async function installCareApiStubs(page: Page, options?: { regiekamerOver
           id: 99,
           case_id: "99",
           title: "CLI-12345",
+          source_reference: "BR-2026-ABCDEF",
           redirect_url: "/care/cases/99/",
         }),
       });

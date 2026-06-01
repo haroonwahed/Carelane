@@ -17,7 +17,7 @@ export function RegieRailToggleButton({ collapsed, onToggle, testId }: RegieRail
       data-testid={testId}
       onClick={onToggle}
       aria-expanded={!collapsed}
-      aria-label={collapsed ? "Regie-rail openen" : "Regie-rail inklappen"}
+      aria-label={collapsed ? "Coördinatie-rail openen" : "Coördinatie-rail inklappen"}
       className="h-9 gap-2 rounded-xl px-3 text-[13px] font-semibold"
     >
       <PanelRightOpen size={14} aria-hidden />
@@ -37,7 +37,7 @@ export function RegieRailEdgeTab({ onExpand, testId }: RegieRailEdgeTabProps) {
       type="button"
       data-testid={testId}
       onClick={onExpand}
-      aria-label="Regie-rail openen"
+      aria-label="Coördinatie-rail openen"
       className={cn(
         "fixed right-0 top-1/2 z-20 -translate-y-1/2 rounded-l-xl border border-border/70 bg-card px-2.5 py-3 text-muted-foreground shadow-md",
         "hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -47,4 +47,3 @@ export function RegieRailEdgeTab({ onExpand, testId }: RegieRailEdgeTabProps) {
     </button>
   );
 }
-

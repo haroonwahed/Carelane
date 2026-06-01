@@ -243,6 +243,12 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         self.assertIsNotNone(intake.contract_id)
         self.assertEqual(body['case_id'], str(intake.contract_id))
         self.assertEqual(body['redirect_url'], f"/care/cases/{intake.contract_id}/")
+        self.assertIn('routing', body)
+        self.assertEqual(
+            body['routing']['verantwoordelijkeGemeente']['label'],
+            municipality.municipality_name,
+        )
+        self.assertFalse(body['routing']['requiresRevalidation'])
         self.assertEqual(intake.contract.title, intake.title)
         self.assertEqual(intake.aanmelder_actor_profile, CaseIntakeProcess.AanmelderActorProfile.ADMIN)
         self.assertEqual(intake.contract.case_phase, CareCase.CasePhase.INTAKE)

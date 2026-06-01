@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Download, Eye, FileBarChart2, TrendingUp, CalendarClock, ShieldCheck } from "lucide-react";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { FieldHelperBox } from "../ui/form";
 import { toast } from "sonner@2.0.3";
 import { tokens } from "../../design/tokens";
 import {
@@ -387,9 +388,9 @@ export function RapportagesPage() {
           <ShieldCheck size={16} className="text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Exportgeschiedenis</h3>
         </div>
-        <p className="mb-3 text-xs text-muted-foreground">
+        <FieldHelperBox className="mb-3 mt-0">
           Historiek van eerder uitgevoerde exports. Je kunt items opnieuw downloaden of bekijken.
-        </p>
+        </FieldHelperBox>
         <div className="space-y-2 text-sm">
           {historyItems.map((entry) => (
             <div key={entry.id} className="flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2">

@@ -1,5 +1,188 @@
 # CareOn Drill Log
 
+## 2026-05-30: Production Rollout Record
+
+- Environment: production rollout / evidence log template
+- Scope: capture the final production handoff evidence after the next live deployment
+
+### Release Metadata
+
+- Release date: 2026-05-30
+- Timezone: Europe/Amsterdam
+- Release SHA: `ca146bdc`
+- Branch: `main`
+- Release captain: pending
+- Backend owner: pending
+- Ops owner: pending
+- QA owner: pending
+
+### Production Preflight
+
+### Required production inputs
+
+- Release captain:
+- Backend owner:
+- Ops owner:
+- QA owner:
+- Production window date:
+- Production window start:
+- Production window end:
+- Rollback owner:
+- Rollback path:
+- Backup reference:
+- Backup timestamp:
+- Secrets/env readiness:
+- Monitoring access:
+- `OIDC_RP_CLIENT_SECRET` rotation status:
+
+### Copy block
+
+| Field | Value |
+|-------|-------|
+| Release captain |  |
+| Backend owner |  |
+| Ops owner |  |
+| QA owner |  |
+| Production window date |  |
+| Production window start |  |
+| Production window end |  |
+| Rollback owner |  |
+| Rollback path |  |
+| Backup reference |  |
+| Backup timestamp |  |
+| Secrets/env readiness |  |
+| Monitoring access |  |
+| `OIDC_RP_CLIENT_SECRET` rotation status |  |
+
+- Window proposed date: pending
+- Window proposed start time: pending
+- Window proposed end time: pending
+- Window confirmed by: pending
+- Example format: 2026-06-03 09:00-10:30 (replace with the actual window)
+- Production window: pending
+- Rollback owner: pending
+- Backup reference: pending
+- Backup timestamp: pending
+- Monitoring access: pending
+- Secrets/env readiness: pending
+
+### Green light criteria
+
+- Release captain, backend owner, ops owner, and QA owner are assigned.
+- Production window is confirmed.
+- Backup exists and is recent.
+- Secrets/env readiness is confirmed.
+- Monitoring access is confirmed.
+- Rollback owner is confirmed.
+- Local release-confidence checks are green.
+
+### Start / Stop
+
+- Start only when all green-light criteria are checked.
+- Stop immediately on any abort trigger.
+- If stopped, record the reason and move to rollback.
+
+### Execution tasks
+
+1. Confirm the window and owners.
+2. Verify backup and access.
+3. Checkout the SHA and run deploy steps.
+4. Verify `check --deploy`, smoke, and monitoring.
+5. Record sign-off and archive evidence.
+
+### Contact order
+
+1. Release captain: confirm go/no-go, window status, and sign-off authority.
+2. Ops owner: confirm backup, access, restart, and monitoring.
+3. Backend owner: run migrate, collectstatic, and deploy verification.
+4. QA owner: run smoke checks and record results.
+
+### Abort triggers
+
+Stop the rollout and switch to rollback if any of these happen:
+
+- `migrate --noinput` fails
+- `check --deploy` fails
+- Dashboard or canonical `/care/` route returns non-`200`
+- Core workflow path returns `404` or `500`
+- Terminology guard reports a regression
+- Error rate or latency spikes beyond alert thresholds
+
+### Production Deploy
+
+- Checkout timestamp: pending
+- Deployed SHA: pending
+- `migrate --noinput`: pending
+- `collectstatic --noinput`: pending
+- Restart confirmation: pending
+- App health check: pending
+
+### Production Verification
+
+- `check --deploy`: pending
+- Terminology guard: pending
+- Dashboard `200`: pending
+- Canonical `/care/` `200`: pending
+- Smoke result: pending
+- Monitoring watch start: pending
+- Monitoring watch end: pending
+
+### Sign-Off
+
+- All-clear timestamp: pending
+- Open defects: pending
+- Rollback not needed: pending
+- Evidence bundle path: pending
+
+### Follow-ups
+
+- [ ] Fill in actual timestamps during rollout
+- [ ] Copy final values from `docs/RELEASE_EXECUTION_SHEET_2026-05-30.md`
+- [ ] Archive `check --deploy` and smoke output
+- [ ] Add any incidents or rollback notes below
+
+## 2026-05-31: Provider / Golden Path Rehearsal Rerun
+
+- Environment: local rehearsal stack
+- Scope: stabilize browser login waits and verify provider / golden path E2E coverage
+
+### Result
+
+- Updated the Playwright login wait from `networkidle` to `waitForURL(/dashboard/)` in:
+  - `client/tests/e2e/helpers/goldenPathPilotApi.ts`
+  - `client/tests/e2e/provider-review-smoke.spec.ts`
+- Re-ran the provider smoke slice and the golden path rehearsal:
+  - `9 passed`
+  - `1 skipped`
+  - `0 failed`
+- Provider review coverage now runs against seeded pending-placement rehearsal data instead of timing out on login or queue discovery.
+
+### Follow-up
+
+- Production rollout items remain blocked on external production input.
+- `RENDER_DEPLOY_HOOK_URL` remains optional.
+
+---
+
+## 2026-05-29: Release Evidence Review
+
+- Environment: rehearsal / staging release artifacts
+- Scope: current release handoff evidence, rollout blockers, and pilot-ready status
+
+### Reviewed Evidence
+
+- `reports/release_evidence_bundle.json` → `timeline_gate.go=true`, `no_go_reasons=[]`
+- `./scripts/run_golden_path_e2e.sh --start-server` → **GO** (12 passed, 1 skipped)
+- `./scripts/staging_pilot_signoff.sh` → **GO** on `https://careon-web.onrender.com`
+- `docs/RELEASE_ROLLOUT_CHECKLIST.md` → production preflight / deploy / verification / sign-off explicitly blocked until production evidence is filled
+
+### Current Conclusion
+
+- canonical `casus` flow is verified end-to-end on the rehearsal stack
+- pilot rehearsal evidence is GO
+- production rollout remains intentionally **not started**
+- remaining open production evidence: secrets inventory, backup / restore drill, observability / alerting, rollback window
+
 ## 2026-04-10: Migration Rollback Drill
 
 - Environment: local scratch SQLite databases
