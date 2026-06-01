@@ -108,7 +108,7 @@ export function getShortActionLabel(value: string | null | undefined): string {
   return shortenText(cleaned, 28);
 }
 
-export function getEmptyStateCopy(context: "casussen" | "matching" | "beoordeling" | "plaatsing" | "intake" | "regiekamer" | "default"): string {
+export function getEmptyStateCopy(context: "casussen" | "matching" | "beoordeling" | "plaatsing" | "intake" | "coordination" | "default"): string {
   switch (context) {
     case "casussen":
       return "Geen casussen.";
@@ -120,7 +120,7 @@ export function getEmptyStateCopy(context: "casussen" | "matching" | "beoordelin
       return "Geen plaatsingen.";
     case "intake":
       return "Geen open intake.";
-    case "regiekamer":
+    case "coordination":
       return "Geen acties nodig.";
     default:
       return "Geen resultaten.";

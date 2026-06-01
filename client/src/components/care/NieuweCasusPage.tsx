@@ -96,7 +96,7 @@ type IntakeCreateError = {
 };
 
 type WorkflowPhase = "casus" | "matching" | "aanbieder_beoordeling" | "plaatsing" | "intake";
-type VisibilityRole = "gemeente" | "zorgaanbieder" | "regie";
+type VisibilityRole = "gemeente" | "zorgaanbieder" | "coordinatie";
 
 const baseFieldClass = "h-11 w-full rounded-xl border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary/50";
 const baseTextareaClass = "w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm text-foreground outline-none focus:border-primary/50";
@@ -1170,42 +1170,42 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
     label: string;
     gemeente: string;
     zorgaanbieder: string;
-    regie: string;
+    coordinatie: string;
   }> = [
     {
       phase: "casus",
       label: "Casus",
       gemeente: "CAS-ID, CLI-ID, zorgvraag, urgentie",
       zorgaanbieder: "Niet zichtbaar",
-      regie: "Alleen pseudonieme metadata",
+      coordinatie: "Alleen pseudonieme metadata",
     },
     {
       phase: "matching",
       label: "Matching",
       gemeente: "Leeftijdscategorie, regio, zorgvraag, urgentie",
       zorgaanbieder: "Leeftijdscategorie + regio (geen NAW)",
-      regie: "Need-to-know coördinatiesignalen",
+      coordinatie: "Need-to-know coördinatiesignalen",
     },
     {
       phase: "aanbieder_beoordeling",
       label: "Aanbieder beoordeling",
       gemeente: "Casuscontext + advies",
       zorgaanbieder: "Beperkt profiel + pseudoniem",
-      regie: "Processtatus en blokkades",
+      coordinatie: "Processtatus en blokkades",
     },
     {
       phase: "plaatsing",
       label: "Plaatsing",
       gemeente: "Gecontroleerde reveal mogelijk",
       zorgaanbieder: "Reveal op autorisatie + audit",
-      regie: "Audit + toestemmingstatus",
+      coordinatie: "Audit + toestemmingstatus",
     },
     {
       phase: "intake",
       label: "Intake",
       gemeente: "Volledige gegevens voor geautoriseerde rollen",
       zorgaanbieder: "Volledige gegevens na acceptatie",
-      regie: "Alleen noodzakelijke coördinatievelden",
+      coordinatie: "Alleen noodzakelijke coördinatievelden",
     },
   ];
 
@@ -1843,7 +1843,7 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
                           <td className="px-3 py-2 font-semibold text-foreground">{row.label}</td>
                           <td className="px-3 py-2 text-muted-foreground">{row.gemeente}</td>
                           <td className="px-3 py-2 text-muted-foreground">{row.zorgaanbieder}</td>
-                          <td className="px-3 py-2 text-muted-foreground">{row.regie}</td>
+                          <td className="px-3 py-2 text-muted-foreground">{row.coordinatie}</td>
                         </tr>
                       ))}
                     </tbody>

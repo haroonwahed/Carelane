@@ -60,12 +60,12 @@ interface NavSection {
 // Aanmelder-keten (volledige doorstroom)
 const gemeenteNavigation: NavSection[] = [
   {
-    id: "regie",
+    id: "coordination",
     label: "DOORSTROOM",
     color: "purple",
     items: [
       {
-        id: "regiekamer",
+        id: "coordination",
         label: "Coördinatie",
         icon: LayoutDashboard,
         href: SPA_DASHBOARD_URL,
@@ -229,12 +229,12 @@ const zorgaanbiederNavigation: NavSection[] = [
 // ADMIN — same keten + netwerk coverage as gemeente, plus gebruikers (shell parity with ADMIN_PAGES).
 const adminNavigation: NavSection[] = [
   {
-    id: "regie",
+    id: "coordination",
     label: "DOORSTROOM",
     color: "purple",
     items: [
       {
-        id: "regiekamer",
+        id: "coordination",
         label: "Coördinatie",
         icon: LayoutDashboard,
         href: SPA_DASHBOARD_URL,
@@ -405,7 +405,7 @@ interface SidebarProps {
 
 export function Sidebar({
   role,
-  activeItemId = "regiekamer",
+  activeItemId = "coordination",
   onNavigate,
   badgeOverrides = {},
   profileDisplayName = "Gebruiker",

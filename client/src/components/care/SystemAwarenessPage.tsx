@@ -1342,7 +1342,7 @@ export function SystemAwarenessPage({
                   variant="ghost"
                   className="gap-2 xl:hidden"
                   onClick={() => setRailSheetOpen(true)}
-                  data-testid="coordination-mobile-regie-panel"
+                  data-testid="coordination-mobile-control-panel"
                 >
                   <PanelRight size={14} aria-hidden />
                   Coördinatiepaneel
