@@ -95,8 +95,8 @@ const availableContexts: Context[] = [
   }
 ];
 
-type Page = 
-  | "regiekamer" 
+type Page =
+  | "coordination"
   | "casussen" 
   | "nieuwe-casus"
   | "beoordelingen"
@@ -117,7 +117,7 @@ type Page =
   | "geen-toegang";
 
 const PAGE_TO_HREF: Record<Page, string> = {
-  regiekamer: SPA_DASHBOARD_URL,
+  coordination: SPA_DASHBOARD_URL,
   casussen: "/casussen",
   "nieuwe-casus": "/casussen/nieuw",
   beoordelingen: "/beoordelingen",
@@ -139,7 +139,7 @@ const PAGE_TO_HREF: Record<Page, string> = {
 };
 
 const GEMEENTE_PAGES: readonly Page[] = [
-  "regiekamer",
+  "coordination",
   "casussen",
   "nieuwe-casus",
   "beoordelingen",
@@ -159,7 +159,7 @@ const GEMEENTE_PAGES: readonly Page[] = [
 const ZORGAANBIEDER_PAGES: readonly Page[] = ["intake", "mijn-casussen", "nieuwe-casus", "beoordelingen", "documenten"];
 
 const ADMIN_PAGES: readonly Page[] = [
-  "regiekamer",
+  "coordination",
   "regios",
   "gebruikers",
   "beoordelingen",
@@ -185,7 +185,7 @@ function normalizePageForRole(page: Page, role: RoleType): Page {
   if ((allowed as readonly string[]).includes(page)) {
     return page;
   }
-  return role === "zorgaanbieder" ? "intake" : "regiekamer";
+  return role === "zorgaanbieder" ? "intake" : "coordination";
 }
 
 function pathWithoutTrailingSlash(path: string): string {
@@ -235,8 +235,8 @@ function getInitialNavigation(pathname: string): { page: Page; caseId: string | 
   }
 
   const shellMap: Record<string, Page> = {
-    "/dashboard": "regiekamer",
-    [CARE_PATHS.REGIEKAMER]: "regiekamer",
+    "/dashboard": "coordination",
+    [CARE_PATHS.REGIEKAMER]: "coordination",
     "/casussen": "casussen",
     "/casussen/nieuw": "nieuwe-casus",
     "/beoordelingen": "beoordelingen",
@@ -262,7 +262,7 @@ function getInitialNavigation(pathname: string): { page: Page; caseId: string | 
     return { page: shellPage, caseId: null };
   }
 
-  return { page: "regiekamer", caseId: null };
+  return { page: "coordination", caseId: null };
 }
 
 function pageToHref(page: Page, caseId: string | null): string {
@@ -396,7 +396,7 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
     }
     setCurrentContext(newContext);
     setSelectedCase(null);
-    const home: Page = newContext.type === "zorgaanbieder" ? "intake" : "regiekamer";
+    const home: Page = newContext.type === "zorgaanbieder" ? "intake" : "coordination";
     const normalized = normalizePageForRole(home, newContext.type);
     setCurrentPage(normalized);
     window.history.pushState({}, "", pageToHref(normalized, null));
@@ -545,8 +545,8 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
     }
     if (currentContext.id !== matched.id) {
       setCurrentContext(matched);
-      setCurrentPage(normalizePageForRole("regiekamer", matched.type));
-      window.history.replaceState({}, "", pageToHref("regiekamer", null));
+      setCurrentPage(normalizePageForRole("coordination", matched.type));
+      window.history.replaceState({}, "", pageToHref("coordination", null));
     }
   }, [currentContext.id, demoContextId, me]);
 
@@ -632,7 +632,7 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
             const resetCtx = availableContexts[0];
             setCurrentContext(resetCtx);
             setSelectedCase(null);
-            const home = normalizePageForRole("regiekamer", resetCtx.type);
+            const home = normalizePageForRole("coordination", resetCtx.type);
             setCurrentPage(home);
             window.history.pushState({}, "", pageToHref(home, null));
           }}
@@ -643,12 +643,12 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
           <div className="flex-1 overflow-y-auto">
             <CareAppFrame
               className="min-h-full"
-              layoutMaxWidth={currentPage === "regiekamer" ? tokens.layout.regiekamerWorkspaceMaxWidth : undefined}
+              layoutMaxWidth={currentPage === "coordination" ? tokens.layout.coordinationWorkspaceMaxWidth : undefined}
             >
             {currentPage === "geen-toegang" ? (
               <AccessDeniedPage
                 onGoDashboard={() => {
-                  goToPage("regiekamer");
+                  goToPage("coordination");
                 }}
                 onGoCasussen={() => {
                   goToPage(currentContext.type === "zorgaanbieder" ? "mijn-casussen" : "casussen");
@@ -663,7 +663,7 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
               />
             ) : currentContext.type === "gemeente" || currentContext.type === "admin" ? (
               <>
-                {currentPage === "regiekamer" && (
+                {currentPage === "coordination" && (
                   <SystemAwarenessPage
                     onCaseClick={handleCaseClick}
                     onAppNavigate={handleAppNavigate}

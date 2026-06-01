@@ -17,8 +17,8 @@ import { ProviderProfilePage } from "../care/ProviderProfilePage";
 import { CareAppFrame } from "../care/CareAppFrame";
 import { mockProviders } from "../../lib/casesData";
 
-type Page = 
-  | "regiekamer" 
+type Page =
+  | "coordination"
   | "casussen" 
   | "matching"
   | "acties" 
@@ -32,7 +32,7 @@ type Page =
   | "instellingen";
 
 export function SidebarDemo() {
-  const [currentPage, setCurrentPage] = useState<Page>("regiekamer");
+  const [currentPage, setCurrentPage] = useState<Page>("coordination");
 
   const handleNavigate = (itemId: string, href: string) => {
     console.log("Navigate to:", itemId, href);
@@ -83,8 +83,8 @@ export function SidebarDemo() {
             </p>
           </div>
           
-          {/* REGIEKAMER */}
-          {currentPage === "regiekamer" && (
+          {/* COORDINATION */}
+          {currentPage === "coordination" && (
             <div className="p-6">
               <SystemAwarenessPage onCaseClick={handleCaseClick} />
             </div>

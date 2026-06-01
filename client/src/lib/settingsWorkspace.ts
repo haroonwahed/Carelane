@@ -4,7 +4,7 @@ import {
   type SettingsSectionId,
 } from "../components/care/settings/instellingenNav";
 
-/** URL query: `?section=workflow-regie` */
+/** URL query: `?section=workflow-regie` (legacy contract). */
 export const SETTINGS_SECTION_QUERY_PARAM = "section";
 
 export const SETTINGS_SECTION_STORAGE_KEY = "careon-settings-active-section";
