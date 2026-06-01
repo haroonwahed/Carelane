@@ -64,12 +64,11 @@ export const SETTINGS_NAV_GROUPS: readonly SettingsNavGroup[] = [
 export const DEFAULT_SETTINGS_SECTION: SettingsSectionId = "algemeen";
 
 const ALL_SECTION_IDS: SettingsSectionId[] = SETTINGS_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
-const LEGACY_SECTION_IDS: readonly string[] = ["workflow-regie"];
 
 export function getAllSettingsSectionIds(): readonly SettingsSectionId[] {
   return ALL_SECTION_IDS;
 }
 
 export function isSettingsSectionId(id: string): id is SettingsSectionId {
-  return (ALL_SECTION_IDS as readonly string[]).includes(id) || LEGACY_SECTION_IDS.includes(id);
+  return (ALL_SECTION_IDS as readonly string[]).includes(id);
 }

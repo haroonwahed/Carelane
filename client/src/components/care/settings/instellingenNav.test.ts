@@ -4,7 +4,6 @@ import { getAllSettingsSectionIds, isSettingsSectionId } from "./instellingenNav
 describe("instellingenNav", () => {
   it("validates section ids", () => {
     expect(isSettingsSectionId("workflow-coordinatie")).toBe(true);
-    expect(isSettingsSectionId("workflow-regie")).toBe(true);
     expect(isSettingsSectionId("not-a-section")).toBe(false);
   });
 

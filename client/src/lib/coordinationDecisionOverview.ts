@@ -1,7 +1,7 @@
 import { apiClient } from "./apiClient";
 
 export type CoordinationPriorityBand = "critical" | "high" | "medium" | "low";
-export type CoordinationOwnershipRole = "gemeente" | "zorgaanbieder" | "coordinatie" | "regie";
+export type CoordinationOwnershipRole = "gemeente" | "zorgaanbieder" | "coordinatie";
 export type CoordinationIssueType = "blockers" | "risks" | "alerts" | "SLA" | "rejection" | "intake";
 
 export interface CoordinationOverviewAction {

@@ -65,7 +65,6 @@ export function redirectIfAuthDocumentPath(): void {
 
 export const CARE_PATHS = {
   COORDINATION: "/coordination",
-  REGIEKAMER: "/regiekamer",
   MATCHING: "/care/matching",
   SETTINGS: "/instellingen",
   CASES_BASE: "/care/cases",

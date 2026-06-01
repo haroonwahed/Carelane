@@ -129,7 +129,7 @@ const PHASE_PARAM_VALUES = new Set<PhaseFilter>([
   "plaatsing",
   "intake",
 ]);
-const OWNERSHIP_PARAM_VALUES = new Set<OwnershipFilter>(["all", "gemeente", "zorgaanbieder", "coordinatie", "regie"]);
+const OWNERSHIP_PARAM_VALUES = new Set<OwnershipFilter>(["all", "gemeente", "zorgaanbieder", "coordinatie"]);
 
 function pathWithoutTrailingSlash(path: string): string {
   const p = path.split("?")[0]?.split("#")[0] ?? "/";
@@ -141,7 +141,7 @@ function pathWithoutTrailingSlash(path: string): string {
 
 function isCoordinationPath(pathname: string): boolean {
   const normalized = pathWithoutTrailingSlash(pathname);
-  return normalized === CARE_PATHS.COORDINATION || normalized === CARE_PATHS.REGIEKAMER;
+  return normalized === CARE_PATHS.COORDINATION;
 }
 
 function filtersFromSearchString(search: string): {
@@ -303,7 +303,7 @@ const OWNERSHIP_LABELS: Record<OwnershipFilter, string> = {
   all: "Alles",
   gemeente: "Gemeente",
   zorgaanbieder: "Zorgaanbieder",
-  regie: "Coördinatie",
+  coordinatie: "Coördinatie",
 };
 
 function priorityBand(score: number): CoordinationPriorityBand {
@@ -619,8 +619,7 @@ function primaryProblemText(item: CoordinationDecisionOverviewItem): string {
 
 function ownerLabel(item: CoordinationDecisionOverviewItem): string {
   const role = (item.responsible_role ?? "coordinatie") as OwnershipFilter;
-  const normalizedRole = role === "regie" ? "coordinatie" : role;
-  return OWNERSHIP_LABELS[normalizedRole] ?? "Coördinatie";
+  return OWNERSHIP_LABELS[role] ?? "Coördinatie";
 }
 
 function matchesIssueFilter(item: CoordinationDecisionOverviewItem, filter: IssueFilter) {
@@ -635,7 +634,7 @@ function matchesOwnershipFilter(item: CoordinationDecisionOverviewItem, filter: 
     return true;
   }
   const role = (item.responsible_role ?? "coordinatie") as OwnershipFilter;
-  return (role === "regie" ? "coordinatie" : role) === filter;
+  return role === filter;
 }
 
 /** UI-only Coordination modes — computed via `computeCoordinationNextBestAction` (deterministic). */
