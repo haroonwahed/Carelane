@@ -194,6 +194,7 @@ class SpaShellMigrationMiddleware:
     }
     SHELL_PATHS = {
         '/dashboard/',
+        '/coordination/',
         '/care/casussen/',
         '/care/casussen/new/',
         '/care/beoordelingen/',
@@ -205,6 +206,8 @@ class SpaShellMigrationMiddleware:
     }
     SHELL_PREFIXES = (
         '/dashboard/',
+        '/coordination',
+        '/coordination/',
         '/settings/',
         '/care/',
     )
@@ -221,6 +224,7 @@ class SpaShellMigrationMiddleware:
         '/regios',
         '/signalen',
         '/rapportages',
+        '/coordination',
         '/documenten',
         '/audittrail',
         '/regiekamer',

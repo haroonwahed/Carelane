@@ -5413,7 +5413,7 @@ def case_matching_action(request, pk):
         request,
         intake=intake,
         allowed_roles={WorkflowRole.GEMEENTE, WorkflowRole.ADMIN},
-        failure_message='Alleen gemeente of admin/regie kan matching doorzetten naar beoordeling door aanbieder.',
+        failure_message='Alleen gemeente of admin/coördinatie kan matching doorzetten naar beoordeling door aanbieder.',
     )
     if role_error_response is not None:
         return role_error_response
@@ -5676,7 +5676,7 @@ def case_provider_response_action(request, pk):
         request,
         intake=intake,
         allowed_roles={WorkflowRole.GEMEENTE, WorkflowRole.ADMIN},
-        failure_message='Alleen gemeente of admin/regie kan providerreactie-orchestratie uitvoeren.',
+        failure_message='Alleen gemeente of admin/coördinatie kan providerreactie-orchestratie uitvoeren.',
     )
     if role_error_response is not None:
         return role_error_response
@@ -6190,7 +6190,7 @@ def case_placement_action(request, pk):
         request,
         intake=intake,
         allowed_roles={WorkflowRole.GEMEENTE, WorkflowRole.ADMIN},
-        failure_message='Alleen gemeente of admin/regie kan een plaatsing bevestigen of terugzetten.',
+        failure_message='Alleen gemeente of admin/coördinatie kan een plaatsing bevestigen of terugzetten.',
     )
     if role_error_response is not None:
         return role_error_response
@@ -6409,7 +6409,7 @@ def case_archive_action(request, pk):
 
 def dashboard(request):
     # Dashboard is SPA-first: always serve the React frontend shell.
-    # Legacy Regiekamer backend pages are retired; workspace always loads the SPA.
+    # Legacy coördinatie backend pages are retired; workspace always loads the SPA.
     return _render_spa_shell_response()
 
 

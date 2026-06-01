@@ -6,7 +6,8 @@ import {
 
 describe("settingsWorkspace", () => {
   it("parses valid section from query string", () => {
-    expect(readSectionFromSearch(`?${SETTINGS_SECTION_QUERY_PARAM}=workflow-regie`)).toBe("workflow-regie");
+    expect(readSectionFromSearch(`?${SETTINGS_SECTION_QUERY_PARAM}=workflow-coordinatie`)).toBe("workflow-coordinatie");
+    expect(readSectionFromSearch(`?${SETTINGS_SECTION_QUERY_PARAM}=workflow-regie`)).toBe("workflow-coordinatie");
     expect(readSectionFromSearch(`${SETTINGS_SECTION_QUERY_PARAM}=matching-engine`)).toBe("matching-engine");
   });
 

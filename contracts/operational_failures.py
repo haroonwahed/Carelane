@@ -25,6 +25,11 @@ _FAILURE_CONTEXTS: dict[str, tuple[str, str, str]] = {
         "Casustijdlijn kon niet worden geladen.",
         "Ververs het dossier of controleer uw rechten op deze casus.",
     ),
+    "coordination_decision_overview_api_failed": (
+        "COORDINATION_AGGREGATION_FAILURE",
+        "Coördinatie-overzicht kon niet volledig worden opgebouwd.",
+        "Controleer organisatiecontext of workflowdata en probeer opnieuw.",
+    ),
     "regiekamer_decision_overview_api_failed": (
         "REGIEKAMER_AGGREGATION_FAILURE",
         "Regiekamer kon niet volledig worden opgebouwd.",

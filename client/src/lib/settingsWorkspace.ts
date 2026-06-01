@@ -4,7 +4,7 @@ import {
   type SettingsSectionId,
 } from "../components/care/settings/instellingenNav";
 
-/** URL query: `?section=workflow-regie` (legacy contract). */
+/** URL query: `?section=workflow-coordinatie` (legacy alias: `workflow-regie`). */
 export const SETTINGS_SECTION_QUERY_PARAM = "section";
 
 export const SETTINGS_SECTION_STORAGE_KEY = "careon-settings-active-section";
@@ -24,7 +24,10 @@ export function readSectionFromSearch(search: string): SettingsSectionId | null 
   const qs = search.startsWith("?") ? search.slice(1) : search;
   const params = new URLSearchParams(qs);
   const raw = params.get(SETTINGS_SECTION_QUERY_PARAM);
-  return raw && isSettingsSectionId(raw) ? raw : null;
+  if (!raw || !isSettingsSectionId(raw)) {
+    return null;
+  }
+  return raw === "workflow-regie" ? "workflow-coordinatie" : raw;
 }
 
 /** Prioriteit: URL → sessionStorage → default. Alleen in browser. */

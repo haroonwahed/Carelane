@@ -46,7 +46,7 @@ type DecisionEvaluationResponse = {
   risks: Array<{ code: string; message: string; severity: string }>;
 };
 
-type RegiekamerOverviewResponse = {
+type CoordinationOverviewResponse = {
   totals: {
     active_cases: number;
     critical_blockers: number;
@@ -240,7 +240,7 @@ async function getDecisionEvaluation(page: import("@playwright/test").Page, case
 
 test.describe.configure({ mode: "serial" });
 
-test("pilot demo part 1 creates case, summary, matching, rejection, and Regiekamer flag", async ({ page }) => {
+test("pilot demo part 1 creates case, summary, matching, rejection, and Coordination flag", async ({ page }) => {
   await page.goto(BASE_URL);
   await expect(page).toHaveTitle(/SaaS Careon|CareOn - Zorgregieplatform/i);
 
@@ -364,21 +364,21 @@ test("pilot demo part 1 creates case, summary, matching, rejection, and Regiekam
   await logout(page);
   await loginAs(page, GEMEENTE_USERNAME, GEMEENTE_PASSWORD);
 
-  const overview = await apiFetch<RegiekamerOverviewResponse>(page, "/care/api/regiekamer/decision-overview/");
-  expect(overview.ok, "Expected Regiekamer overview to load").toBeTruthy();
+  const overview = await apiFetch<CoordinationOverviewResponse>(page, "/care/api/coordination/decision-overview/");
+  expect(overview.ok, "Expected Coordination overview to load").toBeTruthy();
   expect(overview.json?.totals.high_priority_alerts).toBeGreaterThanOrEqual(1);
 
   const overviewItem = overview.json?.items.find((item) => item.title === CASE_TITLE);
-  expect(overviewItem, "Expected rejected case in Regiekamer overview").toBeTruthy();
+  expect(overviewItem, "Expected rejected case in Coordination overview").toBeTruthy();
   expect(overviewItem?.next_best_action?.action).toBe("REMATCH_CASE");
   expect(overviewItem?.top_blocker?.code).toBe("PROVIDER_NOT_ACCEPTED");
 
   await page.goto(new URL("/dashboard/", BASE_URL).toString());
-  await expect(page.getByRole("heading", { name: "Regiekamer" })).toBeVisible();
-  await expect(page.getByTestId("regiekamer-dominant-action")).toBeVisible();
-  await expect(page.getByTestId("regiekamer-worklist-item").filter({ hasText: CASE_TITLE }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Coordination" })).toBeVisible();
+  await expect(page.getByTestId("coordination-dominant-action")).toBeVisible();
+  await expect(page.getByTestId("coordination-worklist-item").filter({ hasText: CASE_TITLE }).first()).toBeVisible();
 
-  const worklistRow = page.getByTestId("regiekamer-worklist-item").filter({ hasText: CASE_TITLE }).first();
+  const worklistRow = page.getByTestId("coordination-worklist-item").filter({ hasText: CASE_TITLE }).first();
   await worklistRow.click();
   await expect(page.getByRole("button", { name: "Terug naar casussen" })).toBeVisible();
   await expect(page.getByTestId("casus-hero-band")).toBeVisible();

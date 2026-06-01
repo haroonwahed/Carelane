@@ -370,7 +370,7 @@ export function InstellingenSettingsExperience({
             </SettingsSection>
           )}
 
-          {activeSection === "workflow-regie" && (
+          {activeSection === "workflow-coordinatie" && (
             <SettingsSection
               title="Workflow & coördinatie"
               lede="De keten is vastgelegd: geen overslaan van stappen. Hier stuur je operationele drempels — SLA’s, herinneringen en escalatie — zonder de juridische volgorde te doorbreken."

@@ -129,7 +129,7 @@ const PHASE_PARAM_VALUES = new Set<PhaseFilter>([
   "plaatsing",
   "intake",
 ]);
-const OWNERSHIP_PARAM_VALUES = new Set<OwnershipFilter>(["all", "gemeente", "zorgaanbieder", "regie"]);
+const OWNERSHIP_PARAM_VALUES = new Set<OwnershipFilter>(["all", "gemeente", "zorgaanbieder", "coordinatie", "regie"]);
 
 function pathWithoutTrailingSlash(path: string): string {
   const p = path.split("?")[0]?.split("#")[0] ?? "/";
@@ -140,7 +140,8 @@ function pathWithoutTrailingSlash(path: string): string {
 }
 
 function isCoordinationPath(pathname: string): boolean {
-  return pathWithoutTrailingSlash(pathname) === CARE_PATHS.REGIEKAMER;
+  const normalized = pathWithoutTrailingSlash(pathname);
+  return normalized === CARE_PATHS.COORDINATION || normalized === CARE_PATHS.REGIEKAMER;
 }
 
 function filtersFromSearchString(search: string): {
@@ -236,7 +237,7 @@ function buildCoordinationUrl(parts: {
     params.set("care_subcategory", parts.subcategoryFilter);
   }
   const qs = params.toString();
-  return qs ? `${CARE_PATHS.REGIEKAMER}?${qs}` : CARE_PATHS.REGIEKAMER;
+  return qs ? `${CARE_PATHS.COORDINATION}?${qs}` : CARE_PATHS.COORDINATION;
 }
 
 function itemMatchesPhaseFilter(itemPhase: string, phaseFilter: PhaseFilter): boolean {
@@ -617,8 +618,9 @@ function primaryProblemText(item: CoordinationDecisionOverviewItem): string {
 }
 
 function ownerLabel(item: CoordinationDecisionOverviewItem): string {
-  const role = (item.responsible_role ?? "regie") as OwnershipFilter;
-  return OWNERSHIP_LABELS[role] ?? "Coördinatie";
+  const role = (item.responsible_role ?? "coordinatie") as OwnershipFilter;
+  const normalizedRole = role === "regie" ? "coordinatie" : role;
+  return OWNERSHIP_LABELS[normalizedRole] ?? "Coördinatie";
 }
 
 function matchesIssueFilter(item: CoordinationDecisionOverviewItem, filter: IssueFilter) {
@@ -632,7 +634,8 @@ function matchesOwnershipFilter(item: CoordinationDecisionOverviewItem, filter: 
   if (filter === "all") {
     return true;
   }
-  return (item.responsible_role ?? "regie") === filter;
+  const role = (item.responsible_role ?? "coordinatie") as OwnershipFilter;
+  return (role === "regie" ? "coordinatie" : role) === filter;
 }
 
 /** UI-only Coordination modes — computed via `computeCoordinationNextBestAction` (deterministic). */

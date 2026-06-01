@@ -1307,7 +1307,7 @@ function CasussenInsightsPanels({
               </div>
             </dl>
             <a
-              href={CARE_PATHS.REGIEKAMER}
+              href={CARE_PATHS.COORDINATION}
               className="inline-block text-sm font-semibold text-primary underline-offset-4 hover:underline"
               data-testid="casussen-rail-naar-coordination"
             >

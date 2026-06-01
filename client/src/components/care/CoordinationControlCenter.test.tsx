@@ -126,7 +126,7 @@ function makeOverview(overrides: Partial<CoordinationDecisionOverview> = {}): Co
         priority_score: 80,
         hours_in_current_state: 80,
         issue_tags: ["risks", "alerts", "SLA", "rejection"],
-        responsible_role: "regie",
+        responsible_role: "coordinatie",
       }),
       makeItem({
         case_id: 103,
@@ -492,7 +492,7 @@ describe("CoordinationControlCenter", () => {
     expect(screen.getByText("Casus C")).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Type" }), "all");
-    await user.selectOptions(screen.getByRole("combobox", { name: "Rol" }), "regie");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Rol" }), "coordinatie");
     expect(await screen.findAllByTestId("coordination-worklist-item")).toHaveLength(1);
     expect(screen.getByText("Casus B")).toBeInTheDocument();
   });

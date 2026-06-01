@@ -236,7 +236,7 @@ function getInitialNavigation(pathname: string): { page: Page; caseId: string | 
 
   const shellMap: Record<string, Page> = {
     "/dashboard": "coordination",
-    [CARE_PATHS.REGIEKAMER]: "coordination",
+    [CARE_PATHS.COORDINATION]: "coordination",
     "/casussen": "casussen",
     "/casussen/nieuw": "nieuwe-casus",
     "/beoordelingen": "beoordelingen",

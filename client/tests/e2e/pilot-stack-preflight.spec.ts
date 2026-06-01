@@ -2,8 +2,8 @@
  * Stack checks before pilot-smoke / pilot-demo (real Django + built SPA).
  *
  * E2E_PROFILE:
- * - pilot-demo (default) — gemeente + provider login + dashboard Regiekamer
- * - pilot-smoke — e2e_owner login + dashboard Regiekamer
+ * - pilot-demo (default) — gemeente + provider login + dashboard Coordination
+ * - pilot-smoke — e2e_owner login + dashboard Coordination
  * - all — demo + smoke (run after `./scripts/prepare_pilot_e2e.sh` seeds both tiers)
  *
  * Env: E2E_BASE_URL, E2E_DEMO_PASSWORD, E2E_SMOKE_PASSWORD (see pilotEnv.ts)
@@ -92,7 +92,7 @@ test("pilot-smoke: owner login succeeds", async ({ page }) => {
   await expect(page).not.toHaveURL(/\/login\/?$/);
 });
 
-test("dashboard: care-sidebar + Regiekamer (demo user)", async ({ page }) => {
+test("dashboard: care-sidebar + Coordination (demo user)", async ({ page }) => {
   test.skip(!runPilotDemo(), `skipped: E2E_PROFILE=${PROFILE}`);
   await page.goto(`${E2E_BASE_URL}/login/`);
   await page.getByLabel("Gebruikersnaam").fill(pilotDemoGemeenteUsername());
@@ -101,10 +101,10 @@ test("dashboard: care-sidebar + Regiekamer (demo user)", async ({ page }) => {
   await page.waitForURL(/\/dashboard\/?(\?.*)?$/, { timeout: 45_000 });
   await page.goto(`${E2E_BASE_URL}/dashboard/`);
   await expect(page.getByTestId("care-sidebar"), SPA_MOUNT_FAILURE).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("heading", { name: /Regiekamer/i })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("heading", { name: /Coordination/i })).toBeVisible({ timeout: 30_000 });
 });
 
-test("dashboard: care-sidebar + Regiekamer (smoke user)", async ({ page }) => {
+test("dashboard: care-sidebar + Coordination (smoke user)", async ({ page }) => {
   test.skip(!runPilotSmoke(), `skipped: E2E_PROFILE=${PROFILE}`);
   await page.goto(`${E2E_BASE_URL}/login/`);
   await page.getByLabel("Gebruikersnaam").fill(pilotSmokeUsername());
@@ -113,5 +113,5 @@ test("dashboard: care-sidebar + Regiekamer (smoke user)", async ({ page }) => {
   await page.waitForURL(/\/dashboard\/?(\?.*)?$/, { timeout: 45_000 });
   await page.goto(`${E2E_BASE_URL}/dashboard/`);
   await expect(page.getByTestId("care-sidebar"), SPA_MOUNT_FAILURE).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("heading", { name: /Regiekamer/i })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("heading", { name: /Coordination/i })).toBeVisible({ timeout: 30_000 });
 });

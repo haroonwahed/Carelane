@@ -39,10 +39,10 @@ test("gemeente smoke: casussen werkvoorraad shell mounts", async ({ page }) => {
   await expect(page.getByTestId("casussen-uitvoerlijst")).toBeVisible({ timeout: 45_000 });
 });
 
-test("gemeente smoke: Regiekamer shell mounts", async ({ page }) => {
+test("gemeente smoke: Coordination shell mounts", async ({ page }) => {
   await page.goto(BASE_URL);
   await login(page, pilotDemoGemeenteUsername(), pilotDemoGemeentePassword());
-  await page.goto(new URL("/regiekamer", BASE_URL).toString());
+  await page.goto(new URL("/coordination", BASE_URL).toString());
   await expect(page.getByTestId("care-sidebar")).toBeVisible({ timeout: 45_000 });
   await expect(page.getByRole("heading", { name: /Coördinatie/i })).toBeVisible({ timeout: 45_000 });
 });

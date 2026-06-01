@@ -32,13 +32,13 @@ async function loginGemeente(page: import("@playwright/test").Page): Promise<voi
 }
 
 test.describe("pilot deterministic screenshots", () => {
-  test("regiekamer dashboard (full page)", async ({ page }, testInfo) => {
+  test("coordination dashboard (full page)", async ({ page }, testInfo) => {
     await loginGemeente(page);
     await page.goto(new URL("/dashboard/", BASE_URL).toString());
     await expect(page.getByTestId("care-sidebar")).toBeVisible({ timeout: 45_000 });
     await expect(page.getByRole("heading", { name: /Coördinatie/i })).toBeVisible({ timeout: 45_000 });
 
-    const out = path.join(testInfo.outputDir, "pilot-regiekamer-1440x900.png");
+    const out = path.join(testInfo.outputDir, "pilot-coordination-1440x900.png");
     await page.screenshot({ path: out, fullPage: true });
   });
 
@@ -77,10 +77,10 @@ test.describe("pilot deterministic screenshots", () => {
   test("settings page uses the new slim authenticated shell", async ({ page }, testInfo) => {
     await loginGemeente(page);
     await page.goto(new URL("/settings/", BASE_URL).toString());
-    await expect(page.getByRole("heading", { name: /Operationele regie/i })).toBeVisible({ timeout: 45_000 });
+    await expect(page.getByRole("heading", { name: /Operationele coördinatie/i })).toBeVisible({ timeout: 45_000 });
     await expect(page.getByText("Careon ZORGREGIE")).toHaveCount(0);
     await expect(page.getByText("CASUSMANAGEMENT")).toHaveCount(0);
-    await expect(page.getByText("Rapportages & regie")).toHaveCount(0);
+    await expect(page.getByText("Rapportages & coördinatie")).toHaveCount(0);
 
     const out = path.join(testInfo.outputDir, "pilot-settings-1440x900.png");
     await page.screenshot({ path: out, fullPage: true });

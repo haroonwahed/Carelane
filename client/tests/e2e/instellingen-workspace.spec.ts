@@ -31,15 +31,15 @@ test.describe("Instellingen workspace", () => {
       await stubDesignMode(page);
       await installCareApiStubs(page);
       await page.goto(spaDashboardPath(baseURL), { waitUntil: "domcontentloaded" });
-      await expect(page.getByRole("heading", { name: /Regiekamer/i, level: 1 })).toBeVisible({ timeout: 45_000 });
+      await expect(page.getByRole("heading", { name: /Coordination/i, level: 1 })).toBeVisible({ timeout: 45_000 });
       await goSidebar(page, "Instellingen");
       await expect(page.getByTestId("instellingen-workspace")).toBeVisible({ timeout: 30_000 });
     });
 
     test("sidebar switches section and syncs URL query", async ({ page }) => {
-      await page.getByTestId("settings-nav-workflow-regie").click();
-      await expect(page.getByRole("heading", { name: "Workflow & regie", level: 2 })).toBeVisible();
-      await expect(page).toHaveURL(/[?&]section=workflow-regie/);
+      await page.getByTestId("settings-nav-workflow-coordinatie").click();
+      await expect(page.getByRole("heading", { name: "Workflow & coördinatie", level: 2 })).toBeVisible();
+      await expect(page).toHaveURL(/[?&]section=workflow-coordinatie/);
     });
 
     test("nav lists operational sections with stable test ids", async ({ page }) => {
@@ -51,7 +51,7 @@ test.describe("Instellingen workspace", () => {
       await page.locator("header button").last().click();
       await page.getByRole("button", { name: "Profiel" }).click();
       await expect(page.getByTestId("instellingen-workspace")).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("heading", { name: /Operationele regie/i })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: /Operationele coördinatie/i })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("heading", { name: /Algemeen/i, level: 2 })).toBeVisible({ timeout: 30_000 });
     });
   });

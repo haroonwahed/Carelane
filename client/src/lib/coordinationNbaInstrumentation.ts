@@ -2,7 +2,7 @@ import type { CoordinationNbaActionKey, CoordinationNbaUiMode } from "./coordina
 import { trackNbaEvent } from "./telemetryAdapter";
 import type { CoordinationNbaTelemetryEvent } from "./telemetrySchema";
 
-export const COORDINATION_NBA_ROUTE = "/regiekamer" as const;
+export const COORDINATION_NBA_ROUTE = "/coordination" as const;
 
 export type CoordinationNbaInstrumentationEventName =
   | "nba_shown"

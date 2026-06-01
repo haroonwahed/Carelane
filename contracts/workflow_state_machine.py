@@ -152,7 +152,7 @@ def resolve_actor_role(*, user: User, organization=None) -> str:
     """
     Resolve workflow actor role for policy checks.
 
-    Must never raise: this is called while building querysets (e.g. cases list / Regiekamer)
+    Must never raise: this is called while building querysets (e.g. cases list / Coördinatie)
     before iteration; a DB or profile edge case should degrade to gemeente, not HTTP 500.
     """
     try:

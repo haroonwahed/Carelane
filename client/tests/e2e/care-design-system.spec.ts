@@ -31,13 +31,13 @@ async function assertCareSearchStack(page: Page) {
   await expect(input).toHaveAttribute("aria-label", /.+/);
 }
 
-/** Rows built on CareWorkRow expose `data-care-work-row`; Coördinatie also tags items with `data-testid="regiekamer-worklist-item"`. */
+/** Rows built on CareWorkRow expose `data-care-work-row`; Coördinatie also tags items with `data-testid="coordination-worklist-item"`. */
 async function assertOperationalRowContract(page: Page) {
   const workRows = page.locator("[data-care-work-row]");
-  const regieRows = page.getByTestId("regiekamer-worklist-item");
+  const regieRows = page.getByTestId("coordination-worklist-item");
   const count = await workRows.count();
   const regieCount = await regieRows.count();
-  expect(count + regieCount, "expected at least one operational row or regiekamer row").toBeGreaterThan(0);
+  expect(count + regieCount, "expected at least one operational row or coordination row").toBeGreaterThan(0);
   const row = count > 0 ? workRows.first() : regieRows.first();
   await expect(row).toBeVisible();
   const primaryCtas = row.locator('button[type="button"]');
@@ -83,20 +83,20 @@ test.describe("Care design system (SPA)", () => {
   }) => {
     await assertShell(page);
     /** Stubbed GET must finish before `hasActiveData` renders the dominant panel (expect default is 10s). */
-    await expect(page.getByTestId("regiekamer-dominant-action")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("coordination-dominant-action")).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('[data-component="care-dominant-action-panel"]')).toHaveCount(1);
-    const dominantPanelTop = await page.getByTestId("regiekamer-dominant-action").evaluate((el) => el.getBoundingClientRect().top);
+    const dominantPanelTop = await page.getByTestId("coordination-dominant-action").evaluate((el) => el.getBoundingClientRect().top);
     expect(dominantPanelTop, "dominant action panel should appear above the fold").toBeLessThan(420);
-    await expect(page.getByTestId("regiekamer-phase-board")).toBeVisible();
+    await expect(page.getByTestId("coordination-phase-board")).toBeVisible();
     await expect(page.getByTestId("care-unified-header")).toBeVisible();
     const competingAttentionBars = page.locator('[data-component="care-attention-bar"]');
     expect(await competingAttentionBars.count()).toBeLessThanOrEqual(0);
-    await expect(page.getByTestId("regiekamer-dominant-action")).toHaveCount(1);
-    await expect(page.getByTestId("regiekamer-dominant-action")).toHaveAttribute("data-regiekamer-mode", "crisis");
-    await expect(page.getByTestId("regiekamer-insight-why")).toHaveCount(0);
-    await expect(page.getByTestId("regiekamer-insight-flow")).toHaveCount(0);
-    await expect(page.getByTestId("regiekamer-action-queue")).toHaveCount(0);
-    const dominantPrimary = page.getByTestId("regiekamer-dominant-primary-cta");
+    await expect(page.getByTestId("coordination-dominant-action")).toHaveCount(1);
+    await expect(page.getByTestId("coordination-dominant-action")).toHaveAttribute("data-coordination-mode", "crisis");
+    await expect(page.getByTestId("coordination-insight-why")).toHaveCount(0);
+    await expect(page.getByTestId("coordination-insight-flow")).toHaveCount(0);
+    await expect(page.getByTestId("coordination-action-queue")).toHaveCount(0);
+    const dominantPrimary = page.getByTestId("coordination-dominant-primary-cta");
     await expect(dominantPrimary).toBeVisible();
     await dominantPrimary.focus();
     await expect(dominantPrimary).toBeFocused();
@@ -128,7 +128,7 @@ test.describe("Care design system (SPA)", () => {
     await expect(page.getByRole("button", { name: /Meer filters/i })).toBeVisible();
   });
 
-  test("operational rows: Aanvragen + Matching + Regiekamer + Signalen share work-row contract", async ({ page }) => {
+  test("operational rows: Aanvragen + Matching + Coordination + Signalen share work-row contract", async ({ page }) => {
     await assertOperationalRowContract(page);
 
     await goSidebar(page, "Aanvragen");
@@ -231,7 +231,7 @@ test.describe("Care design system (SPA)", () => {
   });
 });
 
-const STABLE_REGIEKAMER_ITEMS = [
+const STABLE_COORDINATION_ITEMS = [
   {
     case_id: "st-1",
     case_reference: "ST-1",
@@ -251,7 +251,7 @@ const STABLE_REGIEKAMER_ITEMS = [
     age_hours: 10,
     hours_in_current_state: 5,
     issue_tags: [] as string[],
-    responsible_role: "regie",
+    responsible_role: "coordinatie",
   },
   {
     case_id: "st-2",
@@ -276,7 +276,7 @@ const STABLE_REGIEKAMER_ITEMS = [
   },
 ];
 
-test.describe("Regiekamer adaptive modes (SPA)", () => {
+test.describe("Coordination adaptive modes (SPA)", () => {
   async function darkTheme(page: Page) {
     await page.addInitScript(() => {
       window.localStorage.setItem("careon-theme", "dark");
@@ -286,7 +286,7 @@ test.describe("Regiekamer adaptive modes (SPA)", () => {
   test("stable: calm banner + phase board + uitvoerlijst + Prioriteer werkvoorraad", async ({ page }) => {
     await darkTheme(page);
     await installCareApiStubs(page, {
-      regiekamerOverview: {
+      coordinationOverview: {
         totals: {
           active_cases: 5,
           critical_blockers: 0,
@@ -295,27 +295,27 @@ test.describe("Regiekamer adaptive modes (SPA)", () => {
           intake_delays: 0,
           repeated_rejections: 0,
         },
-        items: STABLE_REGIEKAMER_ITEMS,
+        items: STABLE_COORDINATION_ITEMS,
       },
     });
     await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /Coördinatie/i, level: 1 })).toBeVisible({ timeout: 45_000 });
-    const panel = page.getByTestId("regiekamer-dominant-action");
+    const panel = page.getByTestId("coordination-dominant-action");
     await expect(panel).toHaveCount(1);
-    await expect(panel).toHaveAttribute("data-regiekamer-mode", "stable");
-    await expect(page.getByTestId("regiekamer-dominant-primary-cta")).toHaveText(/Prioriteer werkvoorraad|Open werkvoorraad/);
-    await expect(page.getByTestId("regiekamer-calm-state")).toContainText("Geen operationele blokkades");
-    await expect(page.getByTestId("regiekamer-phase-board")).toBeVisible();
-    await expect(page.getByTestId("regiekamer-uitvoerlijst")).toBeVisible();
-    await expect(page.getByTestId("regiekamer-worklist-item")).toHaveCount(2);
-    await expect(page.getByTestId("regiekamer-insight-why")).toHaveCount(0);
-    await expect(page.getByTestId("regiekamer-insight-flow")).toHaveCount(0);
+    await expect(panel).toHaveAttribute("data-coordination-mode", "stable");
+    await expect(page.getByTestId("coordination-dominant-primary-cta")).toHaveText(/Prioriteer werkvoorraad|Open werkvoorraad/);
+    await expect(page.getByTestId("coordination-calm-state")).toContainText("Geen operationele blokkades");
+    await expect(page.getByTestId("coordination-phase-board")).toBeVisible();
+    await expect(page.getByTestId("coordination-uitvoerlijst")).toBeVisible();
+    await expect(page.getByTestId("coordination-worklist-item")).toHaveCount(2);
+    await expect(page.getByTestId("coordination-insight-why")).toHaveCount(0);
+    await expect(page.getByTestId("coordination-insight-flow")).toHaveCount(0);
   });
 
   test("coordination: doorstroom-coördinatie + phase board (no legacy insight panels)", async ({ page }) => {
     await darkTheme(page);
     await installCareApiStubs(page, {
-      regiekamerOverview: {
+      coordinationOverview: {
         totals: {
           active_cases: 12,
           critical_blockers: 0,
@@ -324,18 +324,18 @@ test.describe("Regiekamer adaptive modes (SPA)", () => {
           intake_delays: 0,
           repeated_rejections: 0,
         },
-        items: STABLE_REGIEKAMER_ITEMS,
+        items: STABLE_COORDINATION_ITEMS,
       },
     });
     await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /Coördinatie/i, level: 1 })).toBeVisible({ timeout: 45_000 });
-    const panel = page.getByTestId("regiekamer-dominant-action");
-    await expect(panel).toHaveAttribute("data-regiekamer-mode", "coordination");
-    await expect(page.getByTestId("regiekamer-dominant-primary-cta")).toHaveText(/knelpunt in stroom|Open aanvragen/);
-    await expect(page.getByTestId("regiekamer-phase-board")).toBeVisible();
-    await expect(page.getByTestId("regiekamer-uitvoerlijst")).toBeVisible();
-    await expect(page.getByTestId("regiekamer-insight-why")).toHaveCount(0);
-    await expect(page.getByTestId("regiekamer-insight-flow")).toHaveCount(0);
+    const panel = page.getByTestId("coordination-dominant-action");
+    await expect(panel).toHaveAttribute("data-coordination-mode", "coordination");
+    await expect(page.getByTestId("coordination-dominant-primary-cta")).toHaveText(/knelpunt in stroom|Open aanvragen/);
+    await expect(page.getByTestId("coordination-phase-board")).toBeVisible();
+    await expect(page.getByTestId("coordination-uitvoerlijst")).toBeVisible();
+    await expect(page.getByTestId("coordination-insight-why")).toHaveCount(0);
+    await expect(page.getByTestId("coordination-insight-flow")).toHaveCount(0);
   });
 
   test("intervention: matching zwak — Bekijk matching-urgenties, operatieve aandacht + uitvoerlijst", async ({
@@ -343,7 +343,7 @@ test.describe("Regiekamer adaptive modes (SPA)", () => {
   }) => {
     await darkTheme(page);
     await installCareApiStubs(page, {
-      regiekamerOverview: {
+      coordinationOverview: {
         totals: {
           active_cases: 3,
           critical_blockers: 0,
@@ -384,13 +384,13 @@ test.describe("Regiekamer adaptive modes (SPA)", () => {
     });
     await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /Coördinatie/i, level: 1 })).toBeVisible({ timeout: 45_000 });
-    await expect(page.getByTestId("regiekamer-dominant-action")).toHaveAttribute("data-regiekamer-mode", "intervention");
-    await expect(page.getByTestId("regiekamer-dominant-primary-cta")).toHaveText(
+    await expect(page.getByTestId("coordination-dominant-action")).toHaveAttribute("data-coordination-mode", "intervention");
+    await expect(page.getByTestId("coordination-dominant-primary-cta")).toHaveText(
       /Bekijk matching-urgenties|Open matchingoverzicht|Bekijk matching-aanvragen/,
     );
-    await expect(page.getByTestId("regiekamer-insight-why")).toHaveCount(0);
-    await expect(page.getByTestId("regiekamer-dominant-action")).toContainText(/matching|casus/i);
-    await expect(page.getByTestId("regiekamer-uitvoerlijst")).toBeVisible();
+    await expect(page.getByTestId("coordination-insight-why")).toHaveCount(0);
+    await expect(page.getByTestId("coordination-dominant-action")).toContainText(/matching|casus/i);
+    await expect(page.getByTestId("coordination-uitvoerlijst")).toBeVisible();
   });
 });
 

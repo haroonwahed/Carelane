@@ -115,7 +115,7 @@ async function registerTempUser(page: import("@playwright/test").Page) {
     page.getByTestId("care-sidebar"),
     "SPA bundle/static shell did not mount. Build SPA and collect static before running pilot E2E. Run ./scripts/prepare_pilot_e2e.sh (docs/E2E_RUNBOOK.md).",
   ).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByRole("heading", { name: /Regiekamer/i })).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByRole("heading", { name: /Coordination/i })).toBeVisible({ timeout: 45_000 });
 }
 
 async function loginAs(page: import("@playwright/test").Page, username: string, password: string) {
@@ -139,7 +139,7 @@ async function logout(page: import("@playwright/test").Page) {
 
 async function openDashboard(page: import("@playwright/test").Page) {
   await page.goto(new URL("/dashboard/", BASE_URL).toString());
-  await expect(page.getByRole("heading", { name: "Regiekamer" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Coordination" })).toBeVisible();
   await expect(page.getByTestId("care-sidebar")).toBeVisible();
 }
 
@@ -176,18 +176,18 @@ async function getProviderIdByName(page: import("@playwright/test").Page, name: 
   return Number(match?.id);
 }
 
-async function getAccessibleRegiekamerTitle(page: import("@playwright/test").Page): Promise<string> {
+async function getAccessibleCoordinationTitle(page: import("@playwright/test").Page): Promise<string> {
   const [overviewResponse, casesResponse] = await Promise.all([
-    apiFetch<{ items: Array<{ title: string }> }>(page, "/care/api/regiekamer/decision-overview/"),
+    apiFetch<{ items: Array<{ title: string }> }>(page, "/care/api/coordination/decision-overview/"),
     apiFetch<{ contracts: Array<{ title: string }> }>(page, "/care/api/cases/"),
   ]);
 
-  expect(overviewResponse.ok, "Expected Regiekamer decision overview to load").toBeTruthy();
+  expect(overviewResponse.ok, "Expected Coordination decision overview to load").toBeTruthy();
   expect(casesResponse.ok, "Expected visible cases list to load").toBeTruthy();
 
   const visibleTitles = new Set((casesResponse.json?.contracts ?? []).map((item) => item.title));
   const match = (overviewResponse.json?.items ?? []).find((item) => visibleTitles.has(item.title));
-  expect(match, "Expected at least one Regiekamer item to be visible in the case list").toBeTruthy();
+  expect(match, "Expected at least one Coordination item to be visible in the case list").toBeTruthy();
   return String(match?.title);
 }
 
@@ -201,9 +201,9 @@ async function getFirstVisibleCaseTitle(page: import("@playwright/test").Page): 
 
 test.describe.configure({ mode: "serial" });
 
-test("pilot smoke covers login, register, Regiekamer, and casus detail", async ({ page }) => {
+test("pilot smoke covers login, register, Coordination, and casus detail", async ({ page }) => {
   await page.goto(BASE_URL);
-  await expect(page).toHaveTitle(/CareOn|SaaS Careon|Zorgregie/i);
+  await expect(page).toHaveTitle(/CareOn|SaaS Careon|Zorgcoördinatie/i);
   await expect(page.getByRole("heading", { name: /Van casus tot intake in één regieomgeving/i })).toBeVisible();
 
   await registerTempUser(page);
@@ -211,7 +211,7 @@ test("pilot smoke covers login, register, Regiekamer, and casus detail", async (
   await loginAs(page, E2E_USERNAME, E2E_PASSWORD);
   await openDashboard(page);
 
-  const worklistItems = page.getByTestId("regiekamer-worklist-item");
+  const worklistItems = page.getByTestId("coordination-worklist-item");
   if (await worklistItems.count()) {
     const visibleCaseTitle = await getFirstVisibleCaseTitle(page);
     await openCasus(page, visibleCaseTitle);

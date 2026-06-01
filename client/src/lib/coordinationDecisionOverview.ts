@@ -1,7 +1,7 @@
 import { apiClient } from "./apiClient";
 
 export type CoordinationPriorityBand = "critical" | "high" | "medium" | "low";
-export type CoordinationOwnershipRole = "gemeente" | "zorgaanbieder" | "regie";
+export type CoordinationOwnershipRole = "gemeente" | "zorgaanbieder" | "coordinatie" | "regie";
 export type CoordinationIssueType = "blockers" | "risks" | "alerts" | "SLA" | "rejection" | "intake";
 
 export interface CoordinationOverviewAction {
@@ -85,5 +85,5 @@ export interface CoordinationDecisionOverview {
 }
 
 export async function fetchCoordinationDecisionOverview(): Promise<CoordinationDecisionOverview> {
-  return apiClient.get<CoordinationDecisionOverview>("/care/api/regiekamer/decision-overview/");
+  return apiClient.get<CoordinationDecisionOverview>("/care/api/coordination/decision-overview/");
 }

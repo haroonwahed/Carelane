@@ -16,7 +16,7 @@ This module provides ONE shared source of truth for operational decisions:
 
 Architecture
 -----------
-All pages (Regiekamer, Casussen, Matching, Plaatsingen)
+All pages (Coördinatie, Casussen, Matching, Plaatsingen)
 consume OperationalDecision objects computed by this service.
 
 The service receives case data and returns complete decisions.
@@ -674,7 +674,7 @@ def build_operational_decisions_for_organization(org_id: int) -> List[Operationa
     """
     Build operational decisions for all active cases in an organization.
     
-    Used by Regiekamer and Reports.
+    Used by Coördinatie and Reports.
     
     Args:
         org_id: Organization ID

@@ -50,11 +50,11 @@ test.describe("Care list visual regression (SPA)", () => {
   test.beforeEach(async ({ page }) => {
     await installCareApiStubs(page);
     await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /Regiekamer/i })).toBeVisible({ timeout: 45_000 });
+    await expect(page.getByRole("heading", { name: /Coordination/i })).toBeVisible({ timeout: 45_000 });
   });
 
-  test("Regiekamer: row rhythm, focus ring, CTA nested in row", async ({ page }) => {
-    await maybeDump(page, "regiekamer-desktop");
+  test("Coordination: row rhythm, focus ring, CTA nested in row", async ({ page }) => {
+    await maybeDump(page, "coordination-desktop");
     const rows = page.locator('article[data-density="compact"]');
     await expect(rows.first()).toBeVisible({ timeout: 30_000 });
     const heights = await rows.evaluateAll((els) => els.slice(0, 10).map((el) => el.getBoundingClientRect().height));
@@ -85,8 +85,8 @@ test.describe("Care list visual regression (SPA)", () => {
     expect(ctaInsideRow, "CTA must be a descendant of the row so clicks can be isolated from row handler").toBe(true);
   });
 
-  test("Regiekamer: CTA vs row title each open the casus once (single evaluation fetch)", async ({ page }) => {
-    const row = page.getByTestId("regiekamer-worklist-item").filter({ hasText: /E2E matching casus/i }).first();
+  test("Coordination: CTA vs row title each open the casus once (single evaluation fetch)", async ({ page }) => {
+    const row = page.getByTestId("coordination-worklist-item").filter({ hasText: /E2E matching casus/i }).first();
     await expect(row).toBeVisible({ timeout: 30_000 });
 
     const cta = row.locator('button[type="button"]').first();
@@ -108,7 +108,7 @@ test.describe("Care list visual regression (SPA)", () => {
       expect(decisionEvalGets, "one CTA click must not double-fetch decision evaluation").toBe(1);
 
       await page.getByRole("button", { name: /Terug naar casussen/i }).click();
-      await expect(page.getByRole("heading", { name: /Regiekamer/i })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: /Coordination/i })).toBeVisible({ timeout: 30_000 });
       await expect(casePanel).toHaveCount(0);
 
       decisionEvalGets = 0;
@@ -239,9 +239,9 @@ test.describe("Care list visual regression (SPA)", () => {
     await page.waitForURL(/\/care\/cases\/99\/?$/, { timeout: 30_000 });
   });
 
-  test("Design system: unified shell on Regiekamer, Casussen, Matching, Acties, Signalen", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: /Regiekamer/i })).toBeVisible();
-    await expect(page.getByTestId("regiekamer-phase-board")).toBeVisible();
+  test("Design system: unified shell on Coordination, Casussen, Matching, Acties, Signalen", async ({ page }) => {
+    await expect(page.getByRole("heading", { name: /Coordination/i })).toBeVisible();
+    await expect(page.getByTestId("coordination-phase-board")).toBeVisible();
     await expect(page.getByPlaceholder(/Zoek casus, naam of type/i)).toBeVisible();
 
     await goSidebar(page, "Casussen");

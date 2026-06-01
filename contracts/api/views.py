@@ -25,7 +25,7 @@ from contracts.forms import CaseIntakeProcessForm
 from contracts.middleware import log_action
 from contracts.observability import log_escalation_hint
 from contracts.arrangement_alignment import build_arrangement_alignment_payload
-from contracts.decision_engine import build_regiekamer_decision_overview, evaluate_case
+from contracts.decision_engine import build_coordination_decision_overview, evaluate_case
 from contracts.governance import AuditLoggingError, log_case_decision_event
 from contracts.zorgbehoefte_taxonomy import format_taxonomy_explainability
 from contracts.provider_location import provider_location_payload as _provider_location_payload
@@ -775,7 +775,7 @@ def case_arrangement_alignment_api(request, case_id):
 
 @login_required
 @require_http_methods(["GET"])
-def regiekamer_decision_overview_api(request):
+def coordination_decision_overview_api(request):
     try:
         organization = _active_organization(request)
         if organization is None:
@@ -791,13 +791,13 @@ def regiekamer_decision_overview_api(request):
             cases = filter_care_cases_for_provider_actor(cases, request.user, organization)
         except Exception:
             logger.exception(
-                "regiekamer_cases_queryset_failed org_id=%s user_id=%s",
+                "coordination_cases_queryset_failed org_id=%s user_id=%s",
                 getattr(organization, "pk", "?"),
                 getattr(request.user, "pk", "?"),
             )
             cases = CareCase.objects.none()
 
-        payload = build_regiekamer_decision_overview(
+        payload = build_coordination_decision_overview(
             cases,
             actor=request.user,
             organization=organization,
@@ -810,19 +810,19 @@ def regiekamer_decision_overview_api(request):
         if critical_blockers > 0:
             try:
                 log_escalation_hint(
-                    'REGIEKAMER_CRITICAL_BLOCKERS',
+                    'COORDINATION_CRITICAL_BLOCKERS',
                     extra={
                         'critical_blockers': totals.get('critical_blockers'),
                         'active_cases': totals.get('active_cases'),
                     },
                 )
             except Exception:
-                logger.exception("regiekamer_escalation_hint_failed")
+                logger.exception("coordination_escalation_hint_failed")
         try:
             return JsonResponse(payload)
         except Exception:
             logger.exception(
-                "regiekamer_json_encode_failed correlation_id=%s",
+                "coordination_json_encode_failed correlation_id=%s",
                 getattr(request, "correlation_id", None),
             )
 
@@ -851,7 +851,10 @@ def regiekamer_decision_overview_api(request):
                 status=200,
             )
     except Exception:
-        return _internal_server_error(request, context='regiekamer_decision_overview_api_failed')
+        return _internal_server_error(request, context='coordination_decision_overview_api_failed')
+
+
+regiekamer_decision_overview_api = coordination_decision_overview_api
 
 @csrf_exempt
 @login_required

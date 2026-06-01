@@ -124,9 +124,9 @@ _ACTION_OWNER_ROLE = {
     "PROVIDER_REJECT": WorkflowRole.ZORGAANBIEDER,
     "PROVIDER_REQUEST_INFO": WorkflowRole.ZORGAANBIEDER,
     "START_INTAKE": WorkflowRole.ZORGAANBIEDER,
-    "FOLLOW_UP_PROVIDER": "regie",
-    "WAIT_PROVIDER_RESPONSE": "regie",
-    "MONITOR_CASE": "regie",
+    "FOLLOW_UP_PROVIDER": "coordinatie",
+    "WAIT_PROVIDER_RESPONSE": "coordinatie",
+    "MONITOR_CASE": "coordinatie",
 }
 
 _REJECTION_CODES = {"PROVIDER_REJECTED_CASE", "REPEATED_PROVIDER_REJECTIONS"}
@@ -188,8 +188,8 @@ def _derive_issue_tags(
 
 def _responsible_role_for_item(next_best_action: dict[str, Any] | None) -> str:
     if not next_best_action:
-        return "regie"
-    return str(_ACTION_OWNER_ROLE.get(str(next_best_action.get("action") or ""), "regie"))
+        return "coordinatie"
+    return str(_ACTION_OWNER_ROLE.get(str(next_best_action.get("action") or ""), "coordinatie"))
 
 
 def _priority_score(
@@ -232,7 +232,7 @@ def _priority_score(
     return score
 
 
-def _build_regiekamer_overview_item(*, case: CareCase, evaluation: dict[str, Any]) -> dict[str, Any]:
+def _build_coordination_overview_item(*, case: CareCase, evaluation: dict[str, Any]) -> dict[str, Any]:
     intake, _case_record = _case_parts(case)
     care_category_main = getattr(intake, "care_category_main", None) if intake is not None else None
     care_category_sub = getattr(intake, "care_category_sub", None) if intake is not None else None
@@ -321,7 +321,7 @@ def _build_regiekamer_overview_item(*, case: CareCase, evaluation: dict[str, Any
 
 
 def _build_governance_v12_queues(*, organization: Any | None) -> dict[str, Any]:
-    """Operationele wachtrijen voor Regiekamer (gemeente levenscyclus-eigenaar)."""
+    """Operationele wachtrijen voor Coördinatie (gemeente levenscyclus-eigenaar)."""
     if organization is None:
         return {}
     today = timezone.now().date()
@@ -408,7 +408,7 @@ def _build_governance_v12_queues(*, organization: Any | None) -> dict[str, Any]:
     }
 
 
-def build_regiekamer_decision_overview(
+def build_coordination_decision_overview(
     cases: Iterable[CareCase],
     *,
     actor: Any | None = None,
@@ -419,7 +419,7 @@ def build_regiekamer_decision_overview(
         try:
             actor_role = resolve_actor_role(user=actor, organization=organization)
         except Exception:
-            logger.exception("regiekamer_resolve_actor_role_failed")
+            logger.exception("coordination_resolve_actor_role_failed")
             actor_role = WorkflowRole.GEMEENTE
     actor_role = actor_role or WorkflowRole.GEMEENTE
 
@@ -438,7 +438,7 @@ def build_regiekamer_decision_overview(
         try:
             evaluation = evaluate_case(case, actor=actor, actor_role=actor_role)
 
-            item = _build_regiekamer_overview_item(case=case, evaluation=evaluation)
+            item = _build_coordination_overview_item(case=case, evaluation=evaluation)
             items.append(item)
 
             totals["active_cases"] += 1
@@ -458,11 +458,11 @@ def build_regiekamer_decision_overview(
                 totals["urgency_applications_open"] += 1
         except Exception:
             logger.exception(
-                "regiekamer_overview_item_skipped case_id=%s",
+                "coordination_overview_item_skipped case_id=%s",
                 getattr(case, "pk", "?"),
             )
 
-    def _regiekamer_item_sort_key(item: dict[str, Any]) -> tuple[int, float, int]:
+    def _coordination_item_sort_key(item: dict[str, Any]) -> tuple[int, float, int]:
         """All tuple elements must be real numbers: None-valued keys break Python 3 sort."""
         ps = item.get("priority_score")
         try:
@@ -482,15 +482,15 @@ def build_regiekamer_decision_overview(
         return (ps_i, hrs_f, cid_i)
 
     try:
-        items.sort(key=_regiekamer_item_sort_key, reverse=True)
+        items.sort(key=_coordination_item_sort_key, reverse=True)
     except Exception:
-        logger.exception("regiekamer_overview_sort_failed")
+        logger.exception("coordination_overview_sort_failed")
 
     try:
         governance_queues = _build_governance_v12_queues(organization=organization)
     except Exception:
         logger.exception(
-            "regiekamer_governance_queues_failed org_id=%s",
+            "coordination_governance_queues_failed org_id=%s",
             getattr(organization, "pk", None),
         )
         governance_queues = {}
@@ -501,6 +501,9 @@ def build_regiekamer_decision_overview(
         "items": items,
         "governance_queues": governance_queues,
     }
+
+
+build_regiekamer_decision_overview = build_coordination_decision_overview
 
 
 def _clean(value: Any) -> str:

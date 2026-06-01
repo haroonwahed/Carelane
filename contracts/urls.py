@@ -61,6 +61,7 @@ urlpatterns = [
     path('api/regions/', api_views.regions_api, name='regions_api'),
     path('api/regions/health/', api_views.regions_health_api, name='regions_health_api'),
     path('api/dashboard/', api_views.dashboard_summary_api, name='dashboard_summary_api'),
+    path('api/coordination/decision-overview/', api_views.coordination_decision_overview_api, name='coordination_decision_overview_api'),
     path('api/regiekamer/decision-overview/', api_views.regiekamer_decision_overview_api, name='regiekamer_decision_overview_api'),
 
     # Care core
@@ -124,6 +125,7 @@ urlpatterns = [
     path('organizations/activity/export/', views.organization_activity_export, name='organization_activity_export'),
 
     path('reports/', views.reports_dashboard, name='reports_dashboard'),
+    path('coordination/provider-responses/', views.provider_response_monitor, name='coordination_provider_response_monitor'),
     path('regiekamer/provider-responses/', views.provider_response_monitor, name='provider_response_monitor'),
     path('search/', views.global_search, name='global_search'),
 

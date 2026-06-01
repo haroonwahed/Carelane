@@ -73,8 +73,8 @@ export function buildDecisionEvaluationStub(caseId: string) {
   };
 }
 
-/** Partial override for `/care/api/regiekamer/decision-overview/` (E2E only). */
-export type RegiekamerOverviewStubPatch = {
+/** Partial override for `/care/api/coordination/decision-overview/` (E2E only). */
+export type CoordinationOverviewStubPatch = {
   generated_at?: string;
   totals?: Partial<{
     active_cases: number;
@@ -88,7 +88,7 @@ export type RegiekamerOverviewStubPatch = {
 };
 
 /** Stub GET /care/api/* so Vite→Django proxy 401 does not redirect to login during E2E. */
-export async function installCareApiStubs(page: Page, options?: { regiekamerOverview?: RegiekamerOverviewStubPatch }) {
+export async function installCareApiStubs(page: Page, options?: { coordinationOverview?: CoordinationOverviewStubPatch }) {
   const casesPayload = {
     contracts: [
       {
@@ -246,7 +246,7 @@ export async function installCareApiStubs(page: Page, options?: { regiekamerOver
     total_count: 3,
   };
 
-  const regiekamerPayload = {
+  const coordinationPayload = {
     generated_at: new Date().toISOString(),
     totals: {
       active_cases: 4,
@@ -316,19 +316,19 @@ export async function installCareApiStubs(page: Page, options?: { regiekamerOver
     ],
   };
 
-  const mergedRegiekamerPayload =
-    options?.regiekamerOverview != null
+  const mergedCoordinationPayload =
+    options?.coordinationOverview != null
       ? {
-          ...regiekamerPayload,
-          ...options.regiekamerOverview,
+          ...coordinationPayload,
+          ...options.coordinationOverview,
           totals: {
-            ...regiekamerPayload.totals,
-            ...options.regiekamerOverview.totals,
+            ...coordinationPayload.totals,
+            ...options.coordinationOverview.totals,
           },
-          items: options.regiekamerOverview.items ?? regiekamerPayload.items,
-          generated_at: options.regiekamerOverview.generated_at ?? regiekamerPayload.generated_at,
+          items: options.coordinationOverview.items ?? coordinationPayload.items,
+          generated_at: options.coordinationOverview.generated_at ?? coordinationPayload.generated_at,
         }
-      : regiekamerPayload;
+      : coordinationPayload;
 
   const tasksPayload = {
     tasks: [
@@ -460,10 +460,10 @@ export async function installCareApiStubs(page: Page, options?: { regiekamerOver
       return;
     }
     if (
-      pathNoTrailing === "/care/api/regiekamer/decision-overview"
-      || pathname.includes("/regiekamer/decision-overview")
+      pathNoTrailing === "/care/api/coordination/decision-overview"
+      || pathname.includes("/coordination/decision-overview")
     ) {
-      await fulfill(mergedRegiekamerPayload);
+      await fulfill(mergedCoordinationPayload);
       return;
     }
     if (pathNoTrailing === "/care/api/tasks") {

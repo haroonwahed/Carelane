@@ -6,7 +6,7 @@ export type SettingsSectionId =
   | "algemeen"
   | "organisatie"
   | "gebruikers-rollen"
-  | "workflow-regie"
+  | "workflow-coordinatie"
   | "matching-engine"
   | "documenten-privacy"
   | "meldingen"
@@ -33,7 +33,7 @@ export const SETTINGS_NAV_GROUPS: readonly SettingsNavGroup[] = [
     label: "Mensen & keten",
     items: [
       { id: "gebruikers-rollen", label: "Gebruikers & rollen" },
-      { id: "workflow-regie", label: "Workflow & coördinatie" },
+      { id: "workflow-coordinatie", label: "Workflow & coördinatie" },
       { id: "matching-engine", label: "Matching engine" },
     ],
   },
@@ -64,11 +64,12 @@ export const SETTINGS_NAV_GROUPS: readonly SettingsNavGroup[] = [
 export const DEFAULT_SETTINGS_SECTION: SettingsSectionId = "algemeen";
 
 const ALL_SECTION_IDS: SettingsSectionId[] = SETTINGS_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
+const LEGACY_SECTION_IDS: readonly string[] = ["workflow-regie"];
 
 export function getAllSettingsSectionIds(): readonly SettingsSectionId[] {
   return ALL_SECTION_IDS;
 }
 
 export function isSettingsSectionId(id: string): id is SettingsSectionId {
-  return (ALL_SECTION_IDS as readonly string[]).includes(id);
+  return (ALL_SECTION_IDS as readonly string[]).includes(id) || LEGACY_SECTION_IDS.includes(id);
 }
