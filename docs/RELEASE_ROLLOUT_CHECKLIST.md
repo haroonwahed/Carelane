@@ -112,22 +112,10 @@ Explicit blockers before production promotion:
 For a **blank one-pager** to copy per release, see:
 - [`docs/RELEASE_EXECUTION_SHEET_TEMPLATE.md`](./RELEASE_EXECUTION_SHEET_TEMPLATE.md)
 
-For the current pilot-rehearsal execution sheet, see:
-- [`docs/RELEASE_EXECUTION_SHEET_2026-05-15.md`](./RELEASE_EXECUTION_SHEET_2026-05-15.md)
-
-For a concrete, dated example of how to fill this in, see:
-- [`docs/RELEASE_EXECUTION_SHEET_2026-04-24.md`](./RELEASE_EXECUTION_SHEET_2026-04-24.md)
-
 For the current working rollout draft, see:
 - [`docs/RELEASE_EXECUTION_SHEET_2026-05-30.md`](./RELEASE_EXECUTION_SHEET_2026-05-30.md)
 
 Use that sheet as the live scratchpad for the next production window and copy the final values into `docs/DRILL_LOG.md` when the rollout closes.
-
-For the consolidated todo list / workplan, see:
-- [`docs/WORKPLAN_2026-05-30.md`](./WORKPLAN_2026-05-30.md)
-
-For the live post-deploy smoke path, see:
-- [`docs/POST_DEPLOY_VERIFICATION_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/POST_DEPLOY_VERIFICATION_CHECKLIST.md)
 
 Release timing model:
 - `T0` = production deploy start
@@ -162,7 +150,7 @@ Reference release SHA:
 | Staging preflight | Release captain + Ops owner | `T-90m` | 2026-05-16 | `ca146bdc`; Render env pilot bootstrap + demo seed |
 | Staging deploy | Backend owner + Ops owner | `T-60m` | 2026-05-16 | Live on https://careon-web.onrender.com |
 | Staging verification | QA owner | `T-45m` | 2026-05-16 | `staging_pilot_signoff.sh` GO (9 Playwright / 3 skipped) |
-| Staging sign-off | Release captain | `T-30m` | 2026-05-16 | See `docs/RELEASE_EXECUTION_SHEET_2026-05-15.md` |
+| Staging sign-off | Release captain | `T-30m` | 2026-05-16 | See `docs/RELEASE_EXECUTION_SHEET_2026-05-30.md` |
 | Production preflight | Release captain + Ops owner | `T-15m` | — | BLOCKED: backup confirmation, change window confirmation, rollback owner confirmation still need production scheduling |
 | Production deploy | Ops owner + Backend owner | `T0` | — | BLOCKED: checkout SHA, migrate, collectstatic, restart app only after production preflight is green |
 | Production verification | QA owner + Release captain | `T+15m` | — | BLOCKED: `check --deploy`, terminology guard, smoke checks, monitoring watch start only after deploy |

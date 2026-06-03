@@ -77,4 +77,4 @@ If startup still fails:
 - [`docs/FREE_EXTERNAL_DB_SETUP.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/FREE_EXTERNAL_DB_SETUP.md)
 - [`docs/RENDER_DEPLOYMENT_SETUP.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RENDER_DEPLOYMENT_SETUP.md)
 - [`docs/RELEASE_ROLLOUT_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RELEASE_ROLLOUT_CHECKLIST.md)
-- [`docs/RELEASE_EXECUTION_SHEET_2026-04-24.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RELEASE_EXECUTION_SHEET_2026-04-24.md)
+- [`docs/RELEASE_EXECUTION_SHEET_2026-05-30.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RELEASE_EXECUTION_SHEET_2026-05-30.md)

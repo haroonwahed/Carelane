@@ -130,5 +130,5 @@ Related docs:
 
 - [`docs/GO_LIVE_ONE_PAGE_RUNBOOK.md`](GO_LIVE_ONE_PAGE_RUNBOOK.md) — short ordered steps + helper scripts
 - [`docs/RELEASE_ROLLOUT_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RELEASE_ROLLOUT_CHECKLIST.md)
-- [`docs/RELEASE_EXECUTION_SHEET_2026-04-24.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RELEASE_EXECUTION_SHEET_2026-04-24.md)
+- [`docs/RELEASE_EXECUTION_SHEET_2026-05-30.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RELEASE_EXECUTION_SHEET_2026-05-30.md)
 - [`docs/DRILL_LOG.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/DRILL_LOG.md)
