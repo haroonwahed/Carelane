@@ -160,7 +160,7 @@ function makeHighUrgencyIntakeFormPayload() {
 }
 
 async function chooseMunicipality(user: ReturnType<typeof userEvent.setup>, value = "Utrecht") {
-  await user.click(screen.getByRole("button", { name: "Woonplaatsbeginsel *" }));
+  await user.click(screen.getByRole("button", { name: "Gemeente (woonplaatsbeginsel) *" }));
   const input = screen.getByPlaceholderText("Zoek gemeente...");
   await user.clear(input);
   await user.type(input, value);
@@ -222,7 +222,7 @@ describe("NieuweCasusPage", () => {
     render(<NieuweCasusPage />);
 
     expect(await screen.findByRole("heading", { name: "Nieuwe casus" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Woonplaatsbeginsel *" }));
+    await user.click(screen.getByRole("button", { name: "Gemeente (woonplaatsbeginsel) *" }));
     expect(screen.getByText("Amsterdam")).toBeInTheDocument();
     expect(screen.getByText("Utrecht")).toBeInTheDocument();
   });
@@ -311,7 +311,7 @@ describe("NieuweCasusPage", () => {
     expect(await screen.findByRole("heading", { name: "Zorgvraag" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Vorige" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Vorige" }));
-    expect(screen.getByRole("button", { name: "Woonplaatsbeginsel *" })).toHaveTextContent("Utrecht");
+    expect(screen.getByRole("button", { name: "Gemeente (woonplaatsbeginsel) *" })).toHaveTextContent("Utrecht");
     await user.click(screen.getByRole("button", { name: "Volgende stap" }));
     expect(screen.getByRole("heading", { name: "Zorgvraag" })).toBeInTheDocument();
     expect(screen.getByLabelText("Zorgbehoefte categorie *")).toHaveValue("WONEN_VERBLIJF");
@@ -336,7 +336,7 @@ describe("NieuweCasusPage", () => {
 
     expect(await screen.findByRole("heading", { name: "Nieuwe casus" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText("Jeugdregio *")).toHaveDisplayValue("Utrecht Stad"));
-    expect(screen.getByRole("button", { name: "Woonplaatsbeginsel *" })).toHaveTextContent("Zoek gemeente");
+    expect(screen.getByRole("button", { name: "Gemeente (woonplaatsbeginsel) *" })).toHaveTextContent("Zoek gemeente");
   });
 
   it("posts the woonplaatsbeginsel, source reference and urgency document on submit", async () => {

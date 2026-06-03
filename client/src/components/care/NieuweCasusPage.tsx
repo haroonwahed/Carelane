@@ -1367,7 +1367,7 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
               <div className={wizardFieldGridClass}>
                 <div>
                   <MunicipalityCombobox
-                    label="Woonplaatsbeginsel *"
+                    label="Gemeente (woonplaatsbeginsel) *"
                     value={formState.gemeente}
                     options={options.gemeente}
                     onChange={(nextValue) => updateField("gemeente", nextValue)}
@@ -1911,7 +1911,7 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
 
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     <div className="min-w-0 rounded-2xl border border-border/50 bg-card/30 px-3 py-3">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Woonplaatsbeginsel</p>
+                      <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Gemeente (woonplaatsbeginsel)</p>
                       <p className="mt-1 break-words text-sm font-medium leading-snug text-foreground">{selectedGemeenteLabel || "Wordt afgeleid uit gemeente"}</p>
                     </div>
                     <div className="min-w-0 rounded-2xl border border-border/50 bg-card/30 px-3 py-3">
@@ -2040,7 +2040,7 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
                 </div>
                 <div className="mt-4 divide-y divide-border/60">
                   <div className="flex min-w-0 items-start justify-between gap-3 py-3 text-sm">
-                    <span className="text-muted-foreground">Woonplaatsbeginsel</span>
+                    <span className="text-muted-foreground">Gemeente (woonplaatsbeginsel)</span>
                     <span className="min-w-0 break-words text-right font-medium text-foreground">{(selectedGemeenteLabel || "-")}</span>
                   </div>
                   <div className="flex min-w-0 items-start justify-between gap-3 py-3 text-sm">
