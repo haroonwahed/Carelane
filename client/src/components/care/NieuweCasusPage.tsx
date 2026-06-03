@@ -1411,16 +1411,16 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
 
                 <div>
                   <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <label className={compactLabelClass}>Regio *</label>
+                    <label className={compactLabelClass}>Jeugdregio *</label>
                     <span aria-hidden className="h-8 w-8 shrink-0" />
                   </div>
                   <select
                     value={formState.regio}
                     onChange={(event) => updateField("regio", event.target.value)}
                     className={baseFieldClass}
-                    aria-label="Regio *"
+                    aria-label="Jeugdregio *"
                   >
-                    <option value="">Selecteer regio</option>
+                    <option value="">Selecteer jeugdregio</option>
                     {options.regio.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
@@ -1866,13 +1866,13 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1.9fr)_minmax(350px,1fr)]">
               <div className="space-y-3">
                 <section className="panel-surface rounded-[24px] border border-border/70 p-4 shadow-sm">
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <h3 className="text-[17px] font-semibold text-foreground">Regio &amp; Verantwoordelijkheid</h3>
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <h3 className="text-[17px] font-semibold text-foreground">Jeugdregio &amp; Verantwoordelijkheid</h3>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
                     <div>
-                      <label htmlFor="nieuw-casus-regio" className={compactLabelClass}>Regio *</label>
+                      <label htmlFor="nieuw-casus-regio" className={compactLabelClass}>Jeugdregio *</label>
                       <select
                         id="nieuw-casus-regio"
                         value={formState.regio}
@@ -1884,7 +1884,7 @@ export function NieuweCasusPage({ onCancel, onCreated }: NieuweCasusPageProps) {
                         }}
                         className={baseFieldClass}
                       >
-                        <option value="">Selecteer regio</option>
+                        <option value="">Selecteer jeugdregio</option>
                         {options.regio.map((option) => (
                           <option key={option.value} value={option.value}>{option.label}</option>
                         ))}

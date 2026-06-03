@@ -202,7 +202,7 @@ describe("NieuweCasusPage", () => {
     expect(screen.getByText("Vanaf wanneer de client zoekt naar (vervolg)plaatsing.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Waarom deze gemeente?" }));
     expect(screen.getByText("Kies de gemeente die leidend is voor het woonplaatsbeginsel.")).toBeInTheDocument();
-    expect(screen.getByLabelText("Regio *")).toHaveDisplayValue("Utrecht Stad");
+    expect(screen.getByLabelText("Jeugdregio *")).toHaveDisplayValue("Utrecht Stad");
     await user.click(screen.getByRole("button", { name: "Toelichting" }));
     expect(await screen.findByRole("dialog", { name: "Toelichting nieuwe casus" })).toBeInTheDocument();
     const dialog = screen.getByRole("dialog", { name: "Toelichting nieuwe casus" });
@@ -335,7 +335,7 @@ describe("NieuweCasusPage", () => {
     render(<NieuweCasusPage />);
 
     expect(await screen.findByRole("heading", { name: "Nieuwe casus" })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByLabelText("Regio *")).toHaveDisplayValue("Utrecht Stad"));
+    await waitFor(() => expect(screen.getByLabelText("Jeugdregio *")).toHaveDisplayValue("Utrecht Stad"));
     expect(screen.getByRole("button", { name: "Woonplaatsbeginsel *" })).toHaveTextContent("Zoek gemeente");
   });
 
