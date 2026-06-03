@@ -18,18 +18,22 @@ import {
   Clock,
   AlertTriangle,
   ChevronRight,
+  ChevronDown,
+  Check,
   TrendingUp,
   TrendingDown,
   Activity,
+  Search,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { cn } from "../ui/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import {
   CareAttentionBar,
   CareInfoPopover,
   CarePageScaffold,
   CareSectionHeader,
-  CareSearchFiltersBar,
   CareWorkspaceSection,
   CareQueueInlineAction,
   CARE_RHYTHM,
@@ -67,7 +71,7 @@ export function RegiosPage({
   const [capacityFilter, setCapacityFilter] = useState<"all" | "stabiel" | "druk" | "tekort" | "kritiek">("all");
   const [sortBy, setSortBy] = useState<"cases" | "capacity" | "waittime">("cases");
 
-  const { regions, loading, error, refetch } = useRegions({ q: searchQuery, regionType: "JEUGDREGIO" });
+  const { regions, loading, error, refetch } = useRegions({ regionType: "JEUGDREGIO" });
 
   const openSignalen = useCallback(() => {
     if (onNavigateToSignalen) {
@@ -179,8 +183,8 @@ export function RegiosPage({
   const filteredRegions = useMemo(() => {
     return regions
       .filter(r => {
-        // Search filter
-        if (searchQuery && !r.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        const normalizedQuery = searchQuery.trim().toLowerCase();
+        if (normalizedQuery && !r.name.toLowerCase().includes(normalizedQuery) && !r.code.toLowerCase().includes(normalizedQuery)) {
           return false;
         }
         
@@ -248,15 +252,31 @@ export function RegiosPage({
               <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
                 {filteredRegions.length} zichtbaar · {systemState.totalCases} aanvragen · {systemState.systemUtilization}% bezetting
               </span>
-              <CareSearchFiltersBar
-                className="px-0"
-                searchValue={searchQuery}
-                onSearchChange={setSearchQuery}
-                searchPlaceholder="Zoeken op regio..."
-                showSecondaryFilters={showSecondaryFilters}
-                onToggleSecondaryFilters={() => setShowSecondaryFilters((current) => !current)}
-                secondaryFiltersLabel="Filters"
-                secondaryFilters={(
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+                <RegionTypeahead
+                  regions={regions}
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                />
+                <div className="flex shrink-0 flex-wrap items-center gap-2 md:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowSecondaryFilters((current) => !current)}
+                    aria-expanded={showSecondaryFilters}
+                    className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-border/60 bg-card/35 px-3 text-[13px] font-medium text-primary shadow-sm transition-colors hover:bg-muted/30 hover:text-foreground"
+                  >
+                    Filters
+                    {showSecondaryFilters ? <ChevronDown size={14} className="rotate-180 transition-transform" aria-hidden /> : <ChevronDown size={14} aria-hidden />}
+                  </button>
+                  {searchQuery ? (
+                    <Button type="button" variant="ghost" className="h-10 px-3 text-[13px] font-medium text-muted-foreground" onClick={() => setSearchQuery("")}>
+                      Wis jeugdregio
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+              {showSecondaryFilters ? (
+                <div className="rounded-xl border border-border/50 bg-card/30 px-3 py-2.5">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <Select value={capacityFilter} onValueChange={setCapacityFilter}>
                       <SelectTrigger className="h-10 w-full border-border bg-card text-foreground hover:bg-muted/35 focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/30">
@@ -281,8 +301,8 @@ export function RegiosPage({
                       </SelectContent>
                     </Select>
                   </div>
-                )}
-              />
+                </div>
+              ) : null}
             </div>
           )}
         />
@@ -606,5 +626,94 @@ function RegionCard({ region, onClick, onViewGemeenten, onViewProviders }: Regio
         <Button variant="ghost" onClick={onViewProviders} className="flex-1">Aanbieders</Button>
       </div>
     </div>
+  );
+}
+
+function RegionTypeahead({
+  regions,
+  value,
+  onChange,
+}: {
+  regions: SpaRegion[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const normalizedQuery = value.trim().toLowerCase();
+
+  const filteredRegions = useMemo(() => {
+    if (!normalizedQuery) {
+      return regions;
+    }
+    return regions.filter((region) => {
+      const nameMatch = region.name.toLowerCase().includes(normalizedQuery);
+      const codeMatch = region.code.toLowerCase().includes(normalizedQuery);
+      return nameMatch || codeMatch;
+    });
+  }, [normalizedQuery, regions]);
+
+  const selectedLabel = useMemo(() => {
+    if (!value.trim()) {
+      return "";
+    }
+    const exactMatch = regions.find((region) => {
+      const normalizedName = region.name.trim().toLowerCase();
+      const normalizedCode = region.code.trim().toLowerCase();
+      return normalizedName === normalizedQuery || normalizedCode === normalizedQuery;
+    });
+    return exactMatch?.name ?? value;
+  }, [normalizedQuery, regions, value]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label="Zoek jeugdregio"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          className="flex h-10 min-w-0 flex-1 items-center justify-between gap-3 rounded-xl border border-border/60 bg-card/55 px-3 text-left text-[13px] shadow-sm transition-colors hover:bg-muted/30"
+        >
+          <span className={value ? "truncate text-foreground" : "truncate text-muted-foreground"}>
+            {selectedLabel || "Zoek jeugdregio..."}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <Search size={16} aria-hidden />
+            <ChevronDown size={14} className={open ? "rotate-180 transition-transform" : "transition-transform"} aria-hidden />
+          </span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] rounded-2xl border border-border/80 bg-card p-0 shadow-xl" align="start">
+        <Command shouldFilter={false} className="rounded-2xl">
+          <CommandInput
+            value={value}
+            onValueChange={onChange}
+            placeholder="Typ een jeugdregio..."
+          />
+          <CommandList>
+            <CommandEmpty>Geen jeugdregio gevonden.</CommandEmpty>
+            <CommandGroup>
+              {filteredRegions.map((region) => {
+                const active = normalizedQuery === region.name.toLowerCase() || normalizedQuery === region.code.toLowerCase();
+                return (
+                  <CommandItem
+                    key={region.id}
+                    value={region.name}
+                    onSelect={() => {
+                      onChange(region.name);
+                      setOpen(false);
+                    }}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="truncate">{region.name}</span>
+                    {active ? <Check size={14} className="text-primary" aria-hidden /> : null}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
