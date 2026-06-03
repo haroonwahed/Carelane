@@ -1,28 +1,35 @@
 naam,type_regio,provincie,actief
 Amsterdam-Amstelland,jeugdregio,Noord-Holland,true
 Zaanstreek-Waterland,jeugdregio,Noord-Holland,true
-Noord-Holland Noord,jeugdregio,Noord-Holland,true
+Kennemerland,jeugdregio,Noord-Holland,true
+Alkmaar,jeugdregio,Noord-Holland,true
+Westfriesland,jeugdregio,Noord-Holland,true
+Kop van Noord-Holland,jeugdregio,Noord-Holland,true
+Gooi en Vechtstreek,jeugdregio,Noord-Holland,true
 Haarlemmermeer,jeugdregio,Noord-Holland,true
-IJmond,jeugdregio,Noord-Holland,true
 Haaglanden,jeugdregio,Zuid-Holland,true
 Holland Rijnland,jeugdregio,Zuid-Holland,true
 Midden-Holland,jeugdregio,Zuid-Holland,true
-Rotterdam Rijnmond,jeugdregio,Zuid-Holland,true
+Zuid-Holland Noord,jeugdregio,Zuid-Holland,true
+Rotterdam-Rijnmond,jeugdregio,Zuid-Holland,true
 Zuid-Holland Zuid,jeugdregio,Zuid-Holland,true
 Utrecht Stad,jeugdregio,Utrecht,true
 Utrecht West,jeugdregio,Utrecht,true
 Lekstroom,jeugdregio,Utrecht,true
-Eemland,jeugdregio,Utrecht,true
+Amersfoort,jeugdregio,Utrecht,true
 West-Brabant West,jeugdregio,Noord-Brabant,true
 West-Brabant Oost,jeugdregio,Noord-Brabant,true
 Hart van Brabant,jeugdregio,Noord-Brabant,true
 Noordoost Brabant,jeugdregio,Noord-Brabant,true
 Zuidoost Brabant,jeugdregio,Noord-Brabant,true
-Gelderland Midden,jeugdregio,Gelderland,true
-Gelderland Zuid,jeugdregio,Gelderland,true
+Helmond-De Peel,jeugdregio,Noord-Brabant,true
+Arnhem,jeugdregio,Gelderland,true
+Centraal Gelderland,jeugdregio,Gelderland,true
 FoodValley,jeugdregio,Gelderland,true
-Achterhoek,jeugdregio,Gelderland,true
+Rijk van Nijmegen,jeugdregio,Gelderland,true
 Rivierenland,jeugdregio,Gelderland,true
+Achterhoek,jeugdregio,Gelderland,true
+West-Overijssel,jeugdregio,Overijssel,true
 Twente,jeugdregio,Overijssel,true
 IJsselland,jeugdregio,Overijssel,true
 Flevoland,jeugdregio,Flevoland,true

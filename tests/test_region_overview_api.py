@@ -38,3 +38,63 @@ class RegionOverviewApiTests(TestCase):
                 region_type="JEUGDREGIO",
             ).count(),
         )
+
+    def test_seeded_youth_region_taxonomy_matches_canonical_set(self):
+        expected_active = {
+            "Achterhoek",
+            "Alkmaar",
+            "Amersfoort",
+            "Amsterdam-Amstelland",
+            "Arnhem",
+            "Centraal Gelderland",
+            "Drenthe",
+            "Flevoland",
+            "FoodValley",
+            "Friesland",
+            "Groningen",
+            "Gooi en Vechtstreek",
+            "Haaglanden",
+            "Haarlemmermeer",
+            "Hart van Brabant",
+            "Helmond-De Peel",
+            "Holland Rijnland",
+            "IJsselland",
+            "Kennemerland",
+            "Kop van Noord-Holland",
+            "Lekstroom",
+            "Midden-Holland",
+            "Midden-Limburg",
+            "Noord-Limburg",
+            "Noordoost Brabant",
+            "Rijk van Nijmegen",
+            "Rivierenland",
+            "Rotterdam-Rijnmond",
+            "Twente",
+            "Utrecht Stad",
+            "Utrecht West",
+            "West-Brabant Oost",
+            "West-Brabant West",
+            "West-Overijssel",
+            "Westfriesland",
+            "Zaanstreek-Waterland",
+            "Zeeland",
+            "Zuid-Holland Noord",
+            "Zuid-Holland Zuid",
+            "Zuidoost Brabant",
+        }
+
+        region_names = set(
+            RegionalConfiguration.objects.filter(
+                organization__slug="gemeente-demo",
+                status=RegionalConfiguration.Status.ACTIVE,
+                region_type="JEUGDREGIO",
+            ).values_list("region_name", flat=True),
+        )
+
+        self.assertTrue(expected_active.issubset(region_names))
+        self.assertNotIn("Noord-Holland Noord", region_names)
+        self.assertNotIn("IJmond", region_names)
+        self.assertNotIn("Eemland", region_names)
+        self.assertNotIn("Gelderland Midden", region_names)
+        self.assertNotIn("Gelderland Zuid", region_names)
+        self.assertNotIn("Rotterdam Rijnmond", region_names)
