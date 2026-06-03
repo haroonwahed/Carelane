@@ -157,8 +157,7 @@ class RehearsalVerifyJsonStdoutTests(TestCase):
     """rehearsal_verify --json must emit a single JSON object on stdout (merge / json.tool safe)."""
 
     def setUp(self):
-        call_command('seed_demo_data', reset=True, locked_time=True, verbosity=0)
-        call_command('seed_pilot_e2e', verbosity=0)
+        call_command('reset_pilot_environment', verbosity=0)
 
     def test_rehearsal_verify_json_stdout_is_single_parseable_object(self):
         buf = StringIO()

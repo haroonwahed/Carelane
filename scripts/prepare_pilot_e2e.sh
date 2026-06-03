@@ -78,6 +78,7 @@ echo "[prepare_pilot_e2e] Seeding Gemeente Demo pilot ecosystem + E2E accounts..
 export E2E_DEMO_PASSWORD E2E_SMOKE_PASSWORD
 [[ -n "${E2E_PASSWORD:-}" ]] && export E2E_PASSWORD
 "$PYTHON_BIN" manage.py seed_demo_data --locked-time || die "seed_demo_data failed"
+"$PYTHON_BIN" manage.py seed_jeugdregio_backbone || die "seed_jeugdregio_backbone failed"
 "$PYTHON_BIN" manage.py seed_pilot_e2e || die "seed_pilot_e2e failed"
 
 echo ""

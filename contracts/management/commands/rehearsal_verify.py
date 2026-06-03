@@ -6,8 +6,10 @@ Run after `reset_pilot_environment` or `seed_demo_data` + `seed_pilot_e2e`.
 
 from __future__ import annotations
 
+import csv
 import json
 import os
+from pathlib import Path
 from typing import Any, Callable
 
 from django.contrib.auth import get_user_model
@@ -15,7 +17,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.test import Client as DjangoTestClient
 from django.urls import reverse
 
-from contracts.models import CareCase, CaseIntakeProcess, Client as ProviderClient, Organization, OrganizationMembership, PlacementRequest, UserProfile
+from contracts.models import CareCase, CaseIntakeProcess, Client as ProviderClient, MunicipalityConfiguration, Organization, OrganizationMembership, PlacementRequest, UserProfile
 from contracts.pilot_universe import (
     PILOT_CASE_TITLES,
     PILOT_ORG_SLUG,
@@ -24,6 +26,12 @@ from contracts.pilot_universe import (
 from contracts.workflow_state_machine import WorkflowRole, resolve_actor_role
 
 User = get_user_model()
+FULL_GEMEENTEN_CSV = Path(__file__).resolve().parent.parent / "seed_data" / "gemeenten_jeugdregio_full.csv"
+
+
+def _expected_full_municipality_count() -> int:
+    with FULL_GEMEENTEN_CSV.open("r", encoding="utf-8", newline="") as handle:
+        return sum(1 for _ in csv.DictReader(handle))
 
 
 def _demo_password() -> str:
@@ -73,6 +81,20 @@ class Command(BaseCommand):
             if org is None:
                 raise ValueError(f"Missing active organization slug={PILOT_ORG_SLUG!r}")
             org_holder["org"] = org
+
+        def verify_municipality_coverage() -> None:
+            org = org_holder["org"]
+            assert org is not None
+            expected = _expected_full_municipality_count()
+            active_count = MunicipalityConfiguration.objects.filter(
+                organization=org,
+                status="ACTIVE",
+            ).count()
+            if active_count < expected:
+                raise ValueError(
+                    f"Expected at least {expected} active municipalities for rehearsal org, found {active_count}. "
+                    f"Run seed_jeugdregio_backbone or reset_pilot_environment."
+                )
 
         def verify_case_inventory() -> None:
             org = org_holder["org"]
@@ -176,6 +198,7 @@ class Command(BaseCommand):
 
         for name, fn in (
             ("tenant_org", verify_org),
+            ("municipality_coverage", verify_municipality_coverage),
             ("case_inventory", verify_case_inventory),
             ("provider_clients", verify_providers),
             ("e2e_memberships", verify_e2e_memberships),
