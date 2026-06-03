@@ -81,19 +81,30 @@ export function CasePrimaryActionPanel({
   disabledReason?: string | null;
   errorMessage?: string | null;
 }) {
+  const isBlocked = Boolean(primaryDisabled && (disabledReason || errorMessage));
+
   return (
-    <div data-testid="next-best-action" data-priority="primary" className="space-y-2">
-      <div className="grid gap-2 sm:grid-cols-3">
-        <div className="rounded-md bg-muted/12 px-2.5 py-1">
+    <div
+      data-testid="next-best-action"
+      data-priority="primary"
+      className={cn(
+        "space-y-3 rounded-2xl border p-3.5 md:p-4",
+        isBlocked
+          ? "border-red-500/25 bg-red-500/[0.05]"
+          : "border-primary/15 bg-background/30",
+      )}
+    >
+      <div className="grid gap-2 sm:grid-cols-[0.82fr_1.28fr_0.9fr]">
+        <div className={cn("rounded-xl px-3 py-2", isBlocked ? "border border-red-500/20 bg-red-500/[0.08]" : "bg-muted/12")}>
           <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Status</p>
-          <p className="mt-0.5 text-[11px] font-medium leading-tight text-muted-foreground">{statusLabel}</p>
+          <p className={cn("mt-0.5 text-[11px] font-semibold leading-tight", isBlocked ? "text-red-100" : "text-muted-foreground")}>{statusLabel}</p>
         </div>
-        <div className="rounded-md border border-primary/20 bg-primary/8 px-2.5 py-1.5">
+        <div className="rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 shadow-sm">
           <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-primary/80">Actiehouder</p>
-          <p className="mt-0.5 text-[12px] font-semibold leading-tight text-foreground">{actionHolderLabel}</p>
+          <p className="mt-0.5 text-[13px] font-semibold leading-tight text-foreground">{actionHolderLabel}</p>
           <p className="mt-0.5 text-[10px] leading-tight text-primary/70">{waitingOnLabel}</p>
         </div>
-        <div className="rounded-md border border-primary/20 bg-primary/8 px-2.5 py-1.5">
+        <div className="rounded-xl border border-primary/18 bg-primary/8 px-3 py-2">
           <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-primary/80">Volgende stap</p>
           <p className="mt-0.5 text-[12px] font-semibold leading-tight text-foreground">{nextStepLabel}</p>
         </div>
@@ -104,7 +115,7 @@ export function CasePrimaryActionPanel({
             type="button"
             onClick={onPrimaryAction}
             disabled={primaryDisabled}
-            className="h-10 min-h-10 w-full gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:bg-primary/90 sm:w-auto sm:min-w-[180px]"
+            className="h-11 min-h-11 w-full gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-md hover:bg-primary/90 sm:w-auto sm:min-w-[220px]"
           >
             {primaryPending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
             {primaryCtaLabel}

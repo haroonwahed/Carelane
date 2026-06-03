@@ -1109,15 +1109,17 @@ select:not([multiple]):not([size]):disabled {
 }
 
 .care-flow-step__card--active {
-  border-color: color-mix(in srgb, var(--primary) 28%, transparent);
-  background-color: color-mix(in srgb, var(--surface-2) 75%, var(--card) 25%);
+  border-color: color-mix(in srgb, var(--primary) 42%, transparent);
+  background-color: color-mix(in srgb, var(--surface-2) 66%, var(--card) 34%);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--primary) 12%, transparent),
-    0 10px 24px rgba(11, 16, 32, 0.18);
+    0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent),
+    0 14px 30px rgba(11, 16, 32, 0.22);
+  transform: translateY(-1px);
 }
 
 .care-flow-step__card--completed {
-  background-color: color-mix(in srgb, var(--surface-1) 65%, var(--background) 35%);
+  background-color: color-mix(in srgb, var(--surface-1) 58%, var(--background) 42%);
+  opacity: 0.96;
 }
 
 .care-flow-connector {
