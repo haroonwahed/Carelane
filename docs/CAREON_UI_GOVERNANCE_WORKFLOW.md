@@ -7,6 +7,7 @@ This document operationalizes doctrine enforcement in day-to-day implementation 
 It complements:
 
 - `docs/CAREON_VISUAL_DOCTRINE.md`
+- `docs/CAREON_DESIGN_GOVERNANCE.md`
 - `docs/CAREON_DOCTRINE_ENFORCEMENT_PHASE2.md`
 
 ---
@@ -165,4 +166,3 @@ Every UI review must answer:
 - what adds noise without clarity?
 
 Preference: restraint over accumulation.
-
