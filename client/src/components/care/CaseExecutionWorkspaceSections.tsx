@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Lock, Loader2, UserRound } from "lucide-react";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { cn } from "../ui/utils";
@@ -10,6 +10,7 @@ export type CaseStepperStep = {
   id: string;
   label: string;
   owner: string;
+  subtitle?: string;
 };
 
 export function CaseOperationalStepper({
@@ -42,6 +43,7 @@ export function CaseOperationalStepper({
                   {index + 1}
                 </span>
               }
+              subtitle={isCurrent ? (step.subtitle ?? "Huidige stap") : undefined}
               metric={null}
               title={<span className="text-[12px] leading-tight md:text-[12px]">{step.label}</span>}
               active={isCurrent}
@@ -60,6 +62,9 @@ export function CasePrimaryActionPanel({
   waitingOnLabel,
   nextStepLabel,
   nextActionReason,
+  statusTitle,
+  statusDescription,
+  statusTone = "default",
   primaryCtaLabel,
   onPrimaryAction,
   primaryDisabled,
@@ -73,6 +78,9 @@ export function CasePrimaryActionPanel({
   nextStepLabel: string;
   /** Backend NBA reason — shown whenever present so operators know why. */
   nextActionReason?: string | null;
+  statusTitle?: string | null;
+  statusDescription?: string | null;
+  statusTone?: "default" | "blocked";
   primaryCtaLabel: string | null;
   onPrimaryAction: () => void;
   primaryDisabled: boolean;
@@ -80,43 +88,66 @@ export function CasePrimaryActionPanel({
   disabledReason?: string | null;
   errorMessage?: string | null;
 }) {
+  const blocked = primaryDisabled;
+  const leadTitle = statusTitle ?? (blocked ? "Deze casus is geblokkeerd" : statusLabel);
+  const leadDescription = statusDescription ?? (blocked ? (nextActionReason ?? statusLabel) : nextActionReason ?? statusLabel);
   return (
     <div
       data-testid="next-best-action"
       data-priority="primary"
       data-blocked={Boolean(primaryDisabled && (disabledReason || errorMessage))}
       data-reason-present={Boolean(nextActionReason)}
-      className="space-y-3"
+      className="grid gap-5 md:grid-cols-[1.15fr_0.82fr_0.82fr] md:items-center"
     >
-      <div className="grid gap-3 md:grid-cols-[0.74fr_1.06fr_1fr] md:items-end">
-        <div className="space-y-1">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Status</p>
-          <p className="text-[12px] font-semibold leading-tight text-foreground">{statusLabel}</p>
+      <div className="flex items-start gap-4 md:border-r md:border-border/40 md:pr-5">
+        <div className={cn(
+          "mt-0.5 flex h-20 w-20 shrink-0 items-center justify-center rounded-full",
+          statusTone === "blocked"
+            ? "bg-destructive/20 text-destructive"
+            : blocked
+              ? "bg-destructive/20 text-destructive"
+              : "bg-primary/12 text-primary",
+        )}>
+          <Lock size={32} strokeWidth={2.1} aria-hidden />
         </div>
-        <div className="space-y-1">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Actiehouder</p>
-          <p className="text-[14px] font-semibold leading-tight text-foreground">{actionHolderLabel}</p>
-          <p className="text-[10px] leading-tight text-muted-foreground">{waitingOnLabel}</p>
-        </div>
-        <div className="space-y-1 md:text-right">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Volgende stap</p>
-          <p className="text-[12px] font-semibold leading-tight text-foreground">{nextStepLabel}</p>
+        <div className="min-w-0 space-y-2">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Huidige situatie</p>
+          <p className="text-[18px] font-semibold leading-tight text-foreground md:text-[20px]">{leadTitle}</p>
+          <p className="max-w-[34rem] text-[13px] leading-6 text-muted-foreground md:text-[14px]">
+            {leadDescription}
+          </p>
         </div>
       </div>
-      {primaryCtaLabel ? (
-        <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:justify-start">
+      <div className="space-y-1 md:border-r md:border-border/40 md:px-5">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Actiehouder</p>
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground ring-1 ring-border/60">
+            <UserRound size={18} aria-hidden />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[16px] font-semibold leading-tight text-foreground">{actionHolderLabel}</p>
+            <p className="mt-1 text-[12px] leading-tight text-muted-foreground">{waitingOnLabel}</p>
+          </div>
+        </div>
+      </div>
+      <div className="space-y-3 md:pl-0 md:text-left">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Volgende actie</p>
+        <p className="text-[14px] font-semibold leading-tight text-foreground">{nextStepLabel}</p>
+        {primaryCtaLabel ? (
+          <div className="pt-1">
           <Button
             type="button"
             onClick={onPrimaryAction}
             disabled={primaryDisabled}
-            className="h-11 min-h-11 w-full gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-md hover:bg-primary/90 sm:w-auto sm:min-w-[220px]"
+            className="h-12 min-h-12 w-full gap-2 rounded-full bg-primary px-5 text-[14px] font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 sm:w-auto sm:min-w-[232px]"
           >
             {primaryPending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
             {primaryCtaLabel}
             {!primaryPending ? <ArrowRight size={16} aria-hidden /> : null}
           </Button>
-        </div>
-      ) : null}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

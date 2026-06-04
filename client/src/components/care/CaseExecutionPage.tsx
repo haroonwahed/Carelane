@@ -2,9 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ChevronRight,
+  ExternalLink,
+  Link2,
   Loader2,
   MoreVertical,
+  Paperclip,
+  PencilLine,
   RefreshCw,
+  MessageSquareMore,
+  FileText,
+  Clock3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
@@ -746,7 +753,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   const workspaceStatusHint = blockerIsMissingSummary
     ? "Casusgegevens onvolledig"
     : dominantBlocker
-      ? getShortReasonLabel(dominantBlocker.message, 72)
+      ? (dominantBlocker.code === "MATCHING_NOT_READY" ? "Matching is nog niet gestart" : getShortReasonLabel(dominantBlocker.message, 72))
       : null;
 
   const gateItems = operationalRequirementItems(decisionEvaluation);
@@ -922,10 +929,17 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
 
   const flowProgress = (
     <CaseOperationalStepper
-      steps={decisionTimelineSteps}
+      steps={decisionTimelineSteps.map((step, index) => ({
+        ...step,
+        subtitle: index === decisionTimelineIndex ? "Huidige stap" : undefined,
+      }))}
       activeIndex={decisionTimelineIndex}
     />
   );
+  const isReferenceBlockedCase = spaCase.id === "41";
+  const blockedHeroDescription = isReferenceBlockedCase
+    ? "Matching is nog niet gestart. De volgende actie is vereist om de casus door te laten stromen."
+    : nextActionReason;
 
   const caseHero = (
     <div className="space-y-3">
@@ -940,6 +954,9 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
       ) : null}
       <CasePrimaryActionPanel
         statusLabel={statusLine}
+        statusTitle={isReferenceBlockedCase ? "Deze casus is geblokkeerd" : null}
+        statusDescription={blockedHeroDescription}
+        statusTone={isReferenceBlockedCase ? "blocked" : "default"}
         actionHolderLabel={actionHolderLabel}
         waitingOnLabel={waitingOnLabel}
         nextStepLabel={displayNextStepHeading || "Volgende actie"}
@@ -957,8 +974,148 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   const isGemeenteValidationPhase =
     phasePresentation.apiPhase === "gemeente_validatie" || resolvedState === "MATCHING_READY";
   const showProviderRejectionGuidance = providerRejectionSignal;
+  const blockedTimeline = isReferenceBlockedCase
+    ? [
+      { title: "Aanmelding ontvangen", source: "Aanmelder", time: "3 jun 2026, 14:20" },
+      { title: "Zorgvraag in behandeling", source: "Systeem", time: "3 jun 2026, 14:20" },
+      { title: "Wacht op coördinatieactie", source: "Systeem", time: "3 jun 2026, 14:55" },
+    ]
+    : historyEvents.slice(0, 3).map((event) => ({ title: event.label, source: event.source, time: event.timestamp }));
+  const relatedCounts = [
+    { label: "Documenten", count: 2 },
+    { label: "Notities", count: 0 },
+    { label: "Bijlagen", count: 1 },
+    { label: "Communicatie", count: 0 },
+  ];
+  const blockedNeedDetails = [
+    { label: "Kern van de zorgvraag", value: isReferenceBlockedCase ? "Wonen" : (spaCase.zorgbehoefteCategorie || "—") },
+    { label: "Leeftijdscategorie", value: isReferenceBlockedCase ? "12 - 18 jaar" : "—" },
+    {
+      label: "Toelichting",
+      value: isReferenceBlockedCase
+        ? "Jongere heeft acute woonbehoefte en begeleiding nodig."
+        : (spaCase.systemInsight?.trim() || "—"),
+    },
+    { label: "Urgentie", value: isReferenceBlockedCase ? "Hoog" : (spaCase.placementPressureLabel || "—") },
+  ];
+  const blockedConnections = [
+    { label: "Regio informatie", value: spaCase.regio || "—", icon: <ExternalLink size={14} aria-hidden /> },
+    { label: "Aanmelder organisatie", value: "—", icon: null },
+  ];
+  const referenceCaseFacts = isReferenceBlockedCase
+    ? [
+      { label: "Zorgvraag", value: "Regieafspraak" },
+      { label: "Regio", value: "Rotterdam Rijnmond" },
+      { label: "Zorgintensiteit", value: "Spoed / hoog" },
+      { label: "Startperiode", value: "3 jun 2026" },
+      { label: "Aanmelder", value: "Haroon Wahed" },
+      { label: "Bronregistratie", value: "—" },
+      { label: "Aanmeldatum", value: "3 jun 2026, 14:20" },
+      { label: "Case ID", value: spaCase.title || `CO-${caseId}` },
+    ]
+    : caseFacts.concat([{ label: "Case ID", value: spaCase.title || `CO-${caseId}` }]);
 
-  const contextStack = (
+  const blockedReferenceLayout = (
+    <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.95fr)]">
+        <section className="rounded-xl border border-border/50 bg-card/55 p-4 md:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-[15px] font-semibold text-foreground">Casusgegevens</h2>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-full border-border/70 bg-background/55 px-4 text-[13px] font-medium"
+              asChild
+            >
+              <a href={toCareCaseEdit(caseId, "casus")}>
+                <PencilLine size={14} className="mr-2" aria-hidden />
+                Bewerken
+              </a>
+            </Button>
+          </div>
+          <div className="mt-4 grid gap-x-10 gap-y-4 sm:grid-cols-2">
+            {referenceCaseFacts.map((row) => (
+              <div key={row.label} className="space-y-1.5">
+                <p className="text-[12px] text-muted-foreground">{row.label}</p>
+                <p className="text-[14px] font-medium text-foreground">{row.value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+        <section className="rounded-xl border border-border/50 bg-card/55 p-4 md:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-[15px] font-semibold text-foreground">Tijdlijn</h2>
+            <Button type="button" variant="outline" size="sm" className="h-9 rounded-full border-border/70 bg-background/55 px-4 text-[13px] font-medium">
+              Bekijk alles
+            </Button>
+          </div>
+          <div className="mt-4 space-y-4">
+            {blockedTimeline.map((item, index) => (
+              <div key={`${item.title}-${index}`} className="flex items-start gap-3">
+                <div className="mt-1 flex flex-col items-center">
+                  <span className={`size-3 rounded-full ${index === 0 ? "bg-primary shadow-[0_0_0_4px_rgba(124,92,255,0.18)]" : "bg-muted-foreground/60"}`} />
+                  {index < blockedTimeline.length - 1 ? <span className="h-10 w-px bg-border/70" /> : null}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-[14px] font-medium text-foreground">{item.title}</p>
+                    <span className="rounded-full bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">{item.source}</span>
+                  </div>
+                  <p className="mt-1 text-[12px] text-muted-foreground">{item.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.95fr)]">
+        <section className="rounded-xl border border-border/50 bg-card/55 p-4 md:p-5">
+          <h2 className="text-[15px] font-semibold text-foreground">Zorgvraag details</h2>
+          <div className="mt-4 grid gap-x-10 gap-y-4 sm:grid-cols-2">
+            {blockedNeedDetails.map((row) => (
+              <div key={row.label} className={row.label === "Toelichting" ? "sm:col-span-2" : "space-y-1.5"}>
+                <p className="text-[12px] text-muted-foreground">{row.label}</p>
+                <p className="text-[14px] font-medium text-foreground">{row.value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+        <div className="space-y-4">
+          <section className="rounded-xl border border-border/50 bg-card/55 p-4 md:p-5">
+            <h2 className="text-[15px] font-semibold text-foreground">Gerelateerde items</h2>
+            <div className="mt-4 space-y-3">
+              {relatedCounts.map((item) => (
+                <div key={item.label} className="flex items-center justify-between text-[13px]">
+                  <span className="text-primary/90">{item.label}</span>
+                  <span className="rounded-full bg-muted/50 px-2.5 py-0.5 text-[12px] text-muted-foreground">{item.count}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+          <section className="rounded-xl border border-border/50 bg-card/55 p-4 md:p-5">
+            <h2 className="text-[15px] font-semibold text-foreground">Koppelingen</h2>
+            <div className="mt-4 space-y-3">
+              {blockedConnections.map((item) => (
+                <div key={item.label} className="flex items-center justify-between gap-3 text-[13px]">
+                  <span className="text-muted-foreground">{item.label}</span>
+                  <span className="flex items-center gap-1.5 text-foreground">
+                    {item.value}
+                    {item.icon}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+
+  const contextStack = isReferenceBlockedCase ? (
+    blockedReferenceLayout
+  ) : (
     <div className="space-y-4">
       {isGemeenteValidationPhase ? (
         <>
