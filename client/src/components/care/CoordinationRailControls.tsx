@@ -21,7 +21,7 @@ export function CoordinationRailToggleButton({ collapsed, onToggle, testId }: Co
       className="h-9 gap-2 rounded-xl px-3 text-[13px] font-semibold"
     >
       <PanelRightOpen size={14} aria-hidden />
-      {collapsed ? "Open rail" : "Sluit rail"}
+      Open rail
     </Button>
   );
 }

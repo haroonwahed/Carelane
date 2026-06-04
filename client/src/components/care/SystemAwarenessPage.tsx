@@ -1247,9 +1247,12 @@ export function SystemAwarenessPage({
       : `${dominantMetric} aanvragen vragen directe afstemming`;
   const dominantAlertDescription =
     uiMode === "crisis" ? gemeenteActieLine : dominantPanelDescription;
-  const dominantPrimaryLabel = coordinationNba.primaryAction.label;
-  const dominantSecondaryLabel = coordinationNba.secondaryAction?.label;
-  const dominantCasesLinkLabel = uiMode === "crisis" ? "Bekijk kritieke aanvragen" : "Open aanvragen";
+  const dominantPrimaryLabel = uiMode === "crisis"
+    ? `Open aanvragen (${coordinationNba.panel.linkCount})`
+    : coordinationNba.primaryAction.label;
+  const dominantSecondaryLabel = uiMode === "crisis"
+    ? "Bekijk kritieke aanvragen"
+    : coordinationNba.secondaryAction?.label;
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -1350,31 +1353,34 @@ export function SystemAwarenessPage({
               title={coordinationNba.title}
               description={dominantAlertDescription}
               supportingLink={
-                coordinationNba.panel.showCasesLink && coordinationNba.panel.linkCount > 0 ? (
+                uiMode === "crisis" && coordinationNba.panel.linkCount > 0 ? (
                   <button
                     type="button"
+                    hidden
                     className="text-left text-sm font-medium text-primary underline-offset-4 hover:underline"
                     onClick={applyModeCasesLink}
                     data-testid="coordination-dominant-cases-link"
-                    >
-                    {dominantCasesLinkLabel} ({coordinationNba.panel.linkCount})
+                  >
+                    Bekijk kritieke aanvragen ({coordinationNba.panel.linkCount})
                   </button>
                 ) : undefined
               }
               primaryAction={
                 <CareQueueInlineAction
                   type="button"
-                  onClick={runModePrimary}
+                  onClick={uiMode === "crisis" ? applyModeCasesLink : runModePrimary}
+                  className={uiMode === "crisis" ? "gap-2" : undefined}
                   data-testid="coordination-dominant-primary-cta"
                 >
-                  {dominantPrimaryLabel}
+                  <span>{dominantPrimaryLabel}</span>
+                  {uiMode === "crisis" ? <ChevronRight size={14} aria-hidden /> : null}
                 </CareQueueInlineAction>
               }
               secondaryAction={
-                coordinationNba.secondaryAction ? (
+                coordinationNba.secondaryAction || uiMode === "crisis" ? (
                   <CareQueueInlineAction
                     type="button"
-                    onClick={runModeSecondary}
+                    onClick={uiMode === "crisis" ? applyModeCasesLink : runModeSecondary}
                     data-testid="coordination-dominant-secondary-cta"
                   >
                     {dominantSecondaryLabel}

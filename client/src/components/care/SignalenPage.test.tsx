@@ -74,8 +74,6 @@ describe("SignalenPage", () => {
     expect(screen.getByRole("heading", { name: "Signalen" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Bekijk kritiek" })).toBeInTheDocument();
 
-    await user.click(screen.getByTestId("signalen-page-uitleg"));
-    expect(screen.getByText(/coördinatie-overzicht/i)).toBeInTheDocument();
-    expect(screen.getByText(/sidebar Acties blijft de aparte takenlijst/i)).toBeInTheDocument();
+    expect(screen.queryByTestId("signalen-page-uitleg")).not.toBeInTheDocument();
   });
 });

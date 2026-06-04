@@ -220,7 +220,7 @@ describe("CoordinationControlCenter", () => {
     expect(screen.getByRole("button", { name: /^Filters$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ververs" })).toBeInTheDocument();
     expect(screen.getByTestId("coordination-dominant-action")).toHaveAttribute("data-coordination-mode", "crisis");
-    expect(screen.getByTestId("coordination-dominant-primary-cta")).toHaveTextContent(/Los blokkades op/i);
+    expect(screen.getByTestId("coordination-dominant-primary-cta")).toHaveTextContent(/Open aanvragen \(1\)/i);
 
     expect(screen.queryByText(/Casusdetail|Case detail/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Genereer samenvatting" })).not.toBeInTheDocument();
@@ -665,7 +665,7 @@ describe("CoordinationControlCenter", () => {
     expect(screen.getByRole("option", { name: "Aanbieder reacties" })).toBeInTheDocument();
   });
 
-  it("renders crisis dominant NBA with Los blokkades op", () => {
+  it("renders crisis dominant NBA with open-requests emphasis", () => {
     mockUseCoordinationDecisionOverview.mockReturnValue({
       data: makeOverview(),
       loading: false,
@@ -676,7 +676,7 @@ describe("CoordinationControlCenter", () => {
     render(<CoordinationControlCenter onCaseClick={vi.fn()} />);
 
     expect(screen.getByTestId("coordination-dominant-action")).toHaveAttribute("data-coordination-mode", "crisis");
-    expect(screen.getByTestId("coordination-dominant-primary-cta")).toHaveTextContent(/Los blokkades op/i);
+    expect(screen.getByTestId("coordination-dominant-primary-cta")).toHaveTextContent(/Open aanvragen \(1\)/i);
   });
 
   it("renders critical alert regions with metric, text block, and actions", () => {
@@ -692,7 +692,8 @@ describe("CoordinationControlCenter", () => {
     expect(screen.getByTestId("coordination-dominant-action-metric")).toHaveTextContent("1");
     expect(screen.getByTestId("coordination-dominant-action-content")).toHaveTextContent(/verhoogde coördinatie-aandacht/i);
     expect(screen.getByTestId("coordination-dominant-action-content")).toHaveTextContent("1 casus vraagt directe afstemming");
-    expect(screen.getByTestId("coordination-dominant-action-actions")).toHaveTextContent("Los blokkades op");
+    expect(screen.getByTestId("coordination-dominant-action-actions")).toHaveTextContent("Bekijk kritieke aanvragen");
+    expect(screen.getByTestId("coordination-dominant-action-actions")).toHaveTextContent("Open aanvragen (1)");
   });
 
   it("places search and filters inside the Werkvoorraad section header", () => {
@@ -712,7 +713,7 @@ describe("CoordinationControlCenter", () => {
     expect(within(workSection).getByRole("button", { name: /^Filters$/i })).toBeInTheDocument();
   });
 
-  it("does not duplicate flow titles inside flow card body", () => {
+  it("keeps the flow card body focused on the active step only", () => {
     mockUseCoordinationDecisionOverview.mockReturnValue({
       data: makeOverview(),
       loading: false,
@@ -724,7 +725,7 @@ describe("CoordinationControlCenter", () => {
 
     const casusCard = screen.getByTestId("coordination-phase-column-casus_gestart");
     expect(within(casusCard).getAllByText("Aanmelding & zorgvraag")).toHaveLength(1);
-    expect(within(casusCard).getByText("Geblokkeerd")).toBeInTheDocument();
+    expect(within(casusCard).getByText("0")).toBeInTheDocument();
     expect(within(casusCard).queryByText("Matching & validatie")).not.toBeInTheDocument();
   });
 
