@@ -13,6 +13,7 @@ Primary references:
 - [`CareOn_Operational_Constitution_v2.md`](CareOn_Operational_Constitution_v2.md)
 - [`CAREON_UI_GOVERNANCE_WORKFLOW.md`](CAREON_UI_GOVERNANCE_WORKFLOW.md)
 - [`CARE_SPA_PAGE_LAYOUTS.md`](CARE_SPA_PAGE_LAYOUTS.md)
+- [`CAREON_PAGE_REVIEW_CHECKLIST.md`](CAREON_PAGE_REVIEW_CHECKLIST.md)
 
 ---
 
@@ -474,4 +475,3 @@ Its job is to apply the same discipline to care coordination:
 - one next action
 - stable hierarchy
 - platform-wide consistency
-
