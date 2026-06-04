@@ -223,7 +223,7 @@ export function PlacementTrackingPage({ onCaseClick, onNavigateToMatching }: Pla
                           density="operational"
                           leading={<FlowPhaseBadge phaseId={normalizeBoardColumnToPhaseId(item.boardColumn)} />}
                           title={formatClientReference(item.id)}
-                          context={`${item.id} · ${item.recommendedProviderName ?? "Nog niet gekozen"}`}
+                          context={item.recommendedProviderName ?? "Nog niet gekozen"}
                           status={<CareDominantStatus>{placementTrackingRowStatusLabel(item)}</CareDominantStatus>}
                           time={<CareMetaChip>{item.daysInCurrentPhase}d in fase</CareMetaChip>}
                           contextInfo={

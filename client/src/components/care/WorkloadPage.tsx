@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  AlertCircle,
   Building2,
+  ArrowUpRight,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -10,26 +10,24 @@ import {
   ClipboardList,
   GitBranch,
   MapPin,
+  Plus,
+  Zap,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import {
-  CareAttentionBar,
-  CareQueueInlineAction,
   CareDominantStatus,
   CareFlowBoard,
   CareFlowStepCard,
   CareMetaChip,
   CareOperationalQueueHeader,
   CarePageScaffold,
+  CareFilterTabButton,
+  CareFilterTabGroup,
   CarePrimaryList,
-  CareSection,
-  CareSectionBody,
-  CareSectionHeader,
   CareOperationalSelect,
   CareSearchFiltersBar,
   CareWorkListCard,
   CareWorkRow,
-  CareWorkspaceSection,
   CARE_RHYTHM,
   EmptyState,
   ErrorState,
@@ -37,14 +35,12 @@ import {
   normalizeBoardColumnToPhaseId,
 } from "./CareDesignPrimitives";
 import { cn } from "../ui/utils";
-import { CoordinationNotesPanel } from "./CoordinationNotesPanel";
-import { CoordinationRailEdgeTab, CoordinationRailToggleButton } from "./CoordinationRailControls";
-import { useCurrentUser } from "../../hooks/useCurrentUser";
+import { CoordinationRailToggleButton } from "./CoordinationRailControls";
 import { useRailCollapsed } from "../../hooks/useRailCollapsed";
 import { useCases } from "../../hooks/useCases";
 import { useProviders } from "../../hooks/useProviders";
 import { consumeCasussenPreferredFocus } from "../../lib/casussenNavigation";
-import { CARE_PATHS } from "../../lib/routes";
+import { tokens } from "../../design/tokens";
 import { getShortReasonLabel } from "../../lib/uxCopy";
 import {
   buildWorkflowCases,
@@ -63,12 +59,7 @@ import {
   OPERATIEVE_WACHTLIJN_VOLGORDE,
   type OperatieveWachtrijGroepKey,
 } from "./casusOperatieveWachtrijGroep";
-import { CareInfoPopover } from "./CareUnifiedPage";
-import {
-  GuidanceContextBanner,
-  InlineHelpChip,
-} from "../guidance";
-import { tokens } from "../../design/tokens";
+import { InlineHelpChip } from "../guidance";
 import {
   DECISION_UI_PHASE_IDS,
   DECISION_UI_PHASE_LABELS,
@@ -104,12 +95,8 @@ type FocusChip = "my-worklist" | "all" | "pipeline" | "critical" | "recent";
 type FlowColumnFilter = "all" | "plaatsing" | "intake";
 type TaxonomyFilter = "all" | string;
 
-/** Compacte statusregel voor de paginabadge (contrast met vage “vragen actie”-formuleringen elders). */
-function casussenWerkvoorraadMetric(filteredCount: number, attentionCount: number): string {
-  if (filteredCount === 0) return "Geen casussen in deze weergave";
-  if (attentionCount === 0) return `${filteredCount} casussen · geen open actie voor jou`;
-  if (attentionCount === 1) return `${filteredCount} casussen · 1 wacht op jouw actie`;
-  return `${filteredCount} casussen · ${attentionCount} wachten op jouw actie`;
+function casussenWerkvoorraadCountLabel(count: number): string {
+  return `${count} Aanvraag${count === 1 ? "" : "en"}`;
 }
 
 function urgencyRank(urgency: WorkflowCaseView["urgency"]): number {
@@ -384,7 +371,6 @@ function CasussenOperatieveWachtrijItem({
         title={item.clientLabel}
         context={
           <>
-            <CareMetaChip className="font-mono text-[11px]">{item.id}</CareMetaChip>
             <CareMetaChip>{item.region}</CareMetaChip>
             {taxonomySummary ? (
               <CareMetaChip className="max-w-[min(100%,16rem)] truncate text-[11px]" title={taxonomySummary}>
@@ -474,6 +460,10 @@ export function WorkloadPage({
   const [collapsedQueueGroups, setCollapsedQueueGroups] = useState<Partial<Record<OperatieveWachtrijGroepKey, boolean>>>({});
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+
+  useEffect(() => {
+    setRailCollapsed(true);
+  }, [setRailCollapsed]);
 
   const { cases, loading, error, refetch } = useCases({ q: searchQuery });
   const { providers } = useProviders({ q: "" });
@@ -612,9 +602,6 @@ export function WorkloadPage({
     return bestN > 0 ? best : null;
   }, [stripCounts]);
 
-  const { me } = useCurrentUser();
-  const gemeenteDisplayName = me?.organization?.name?.trim() || "Gemeente";
-
   const filteredItems = useMemo(() => {
     return baseFilteredItems.filter(({ item, decision }) => {
       if (focusChip === "my-worklist") return decision.requiresCurrentUserAction;
@@ -648,17 +635,6 @@ export function WorkloadPage({
   }, [sortedForFocus]);
 
   const attentionCount = classifiedItems.filter(({ classification }) => classification.section === "attention").length;
-
-  const avgDaysInPhase = useMemo(() => {
-    if (classifiedItems.length === 0) return 0;
-    const sum = classifiedItems.reduce((acc, { item }) => acc + item.daysInCurrentPhase, 0);
-    return Math.max(1, Math.round(sum / classifiedItems.length));
-  }, [classifiedItems]);
-
-  const riskSignalCount = useMemo(
-    () => classifiedItems.filter(({ item }) => item.urgency === "critical" || item.isBlocked).length,
-    [classifiedItems],
-  );
 
   const queueGroupTotals = useMemo(() => {
     const acc = emptyQueueGroupTotals();
@@ -726,16 +702,6 @@ export function WorkloadPage({
     onNavigateToWorkflow?.(nav);
   };
 
-  const focusCriticalCases = () => {
-    // Avoid stale phase scoping so critical focus behaves predictably.
-    setSelectedPhase("all");
-    setFocusChip("critical");
-    const werkvoorraadHeading = document.getElementById("casussen-werkvoorraad-heading");
-    if (werkvoorraadHeading && typeof werkvoorraadHeading.scrollIntoView === "function") {
-      werkvoorraadHeading.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
   const toggleQueueGroup = (group: OperatieveWachtrijGroepKey) => {
     setCollapsedQueueGroups((current) => ({ ...current, [group]: !current[group] }));
   };
@@ -752,50 +718,21 @@ export function WorkloadPage({
     return DECISION_UI_PHASE_LABELS[id];
   };
 
-  /**
-   * Snelt naar tabblad Kritiek of terug naar Alles — knop verdwijnt niet meer zonder uitleg:
-   * op tab Kritiek tonen we "Toon alle casussen" i.p.v. de knop te verbergen.
-   */
-  const primaryShortcut = useMemo((): { label: string; onClick: () => void } | null => {
-    if (workflowCases.length === 0) {
-      return null;
-    }
-    if (focusChip === "critical") {
-      return {
-        label: "Toon alle casussen",
-        onClick: () => setFocusChip("all"),
-      };
-    }
-    if (attentionCount > 0) {
-      return {
-        label: "Bekijk kritieke casussen",
-        onClick: focusCriticalCases,
-      };
-    }
-    if (focusChip === "my-worklist") {
-      return null;
-    }
-    return {
-      label: "Bekijk mijn werkvoorraad",
-      onClick: () => setFocusChip("my-worklist"),
-    };
-  }, [workflowCases.length, focusChip, attentionCount]);
-
-  const workloadAttentionMessage =
-    workflowCases.length === 0
-      ? canCreateCase
-        ? "Er zijn nog geen lopende casussen; start een doorstroom of pas filters aan."
-        : "Er zijn nog geen lopende casussen; pas filters aan."
-      : attentionCount > 0
-        ? `${attentionCount} casus${attentionCount === 1 ? "" : "sen"} wachten op vervolgactie in de keten; blokkades en wachttijd bepalen de eigenaar.`
-        : "De werkvoorraad is rustig; gebruik filters om de volgende casus en stap te vinden.";
-
-  const workloadAttentionAction =
-    primaryShortcut !== null ? (
-      <CareQueueInlineAction type="button" onClick={primaryShortcut.onClick}>
-        {primaryShortcut.label}
-      </CareQueueInlineAction>
-    ) : null;
+  const dominantAttentionItem =
+    attentionCount > 0 ? filteredItems.find(({ decision }) => decision.requiresCurrentUserAction) ?? filteredItems[0] ?? null : null;
+  const dominantAttentionTitle =
+    attentionCount === 1 ? "1 casus wacht op aanmelder" : `${attentionCount} casussen wachten op aanmelder`;
+  const dominantAttentionCopy =
+    attentionCount > 0
+      ? "Los blokkades op om de doorstroom te behouden."
+      : workflowCases.length === 0
+        ? "Er zijn nog geen casussen in deze lijst."
+        : "Pas filters aan om de eerstvolgende actie te vinden.";
+  const dominantAttentionAction = dominantAttentionItem
+    ? () => {
+        onCaseClick(dominantAttentionItem.item.id);
+      }
+    : undefined;
 
   const headerActions = (
     <div className="flex flex-col items-start gap-1 md:pt-3 md:items-end">
@@ -859,233 +796,277 @@ export function WorkloadPage({
     return 0;
   })();
 
+  const worklistHeader = (
+    <div className="flex flex-col gap-4 px-4 py-4 md:px-5 md:py-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <h2 id="casussen-werkvoorraad-heading" className="text-[30px] font-semibold tracking-tight text-foreground">
+            Werkvoorraad
+          </h2>
+          <InlineHelpChip title="Waarom staat dit bovenaan?" triggerLabel="Prioriteit" testId="werkvoorraad-prioriteit-help">
+            <p>Items worden geprioriteerd op urgentie, blokkades en benodigde actie.</p>
+          </InlineHelpChip>
+        </div>
+        <div className="w-full lg:max-w-[31rem]">
+          <CareSearchFiltersBar
+            variant="workspace"
+            className="px-0"
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Zoek casussen, regio's, aanbieders…"
+            showSecondaryFilters={showSecondaryFilters}
+            onToggleSecondaryFilters={() => setShowSecondaryFilters((current) => !current)}
+            secondaryFiltersLabel="Filters"
+            secondaryFilters={
+              <>
+                <div className="grid items-end gap-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+                  <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                    Werkvoorraad-weergave
+                    <CareOperationalSelect
+                      aria-label="Werkvoorraad-weergave"
+                      value={focusChip}
+                      onChange={(event) => setFocusChip(event.target.value as FocusChip)}
+                    >
+                      <option value="my-worklist">Mijn werkvoorraad ({tabCounts.myWorklist})</option>
+                      <option value="all">Alle casussen ({tabCounts.all})</option>
+                      <option value="pipeline">Wacht op actie ({tabCounts.pipeline})</option>
+                      <option value="critical">Kritiek ({tabCounts.critical})</option>
+                      <option value="recent">Recent bijgewerkt ({tabCounts.recent})</option>
+                    </CareOperationalSelect>
+                  </label>
+                  <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                    Stap
+                    <CareOperationalSelect
+                      aria-label="Stap in de keten"
+                      value={selectedPhase}
+                      onChange={(event) => {
+                        setSelectedPhase(event.target.value as "all" | DecisionUiPhaseId);
+                        setSelectedFlowColumn("all");
+                      }}
+                    >
+                      <option value="all">Alle fases</option>
+                      {phaseOptions.map((phase) => (
+                        <option key={phase.value} value={phase.value}>
+                          {phase.label}
+                        </option>
+                      ))}
+                    </CareOperationalSelect>
+                  </label>
+                  <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                    Urgentie
+                    <CareOperationalSelect
+                      aria-label="Urgentie"
+                      value={selectedUrgency}
+                      onChange={(event) => setSelectedUrgency(event.target.value)}
+                    >
+                      <option value="all">Alle urgentie</option>
+                      <option value="critical">Kritiek</option>
+                      <option value="warning">Hoog</option>
+                      <option value="normal">Normaal / laag</option>
+                    </CareOperationalSelect>
+                  </label>
+                  <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                    Regio
+                    <CareOperationalSelect
+                      aria-label="Regio"
+                      value={selectedRegion}
+                      onChange={(event) => setSelectedRegion(event.target.value)}
+                    >
+                      {regions.map((region) => (
+                        <option key={region} value={region}>
+                          {region === "all" ? "Alle regio's" : region}
+                        </option>
+                      ))}
+                    </CareOperationalSelect>
+                  </label>
+                  <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                    Verantwoordelijke
+                    <CareOperationalSelect
+                      aria-label="Verantwoordelijke"
+                      value={selectedOwner}
+                      onChange={(event) => setSelectedOwner(event.target.value as "all" | "Gemeente" | "Zorgaanbieder" | "Systeem")}
+                    >
+                      <option value="all">Alle verantwoordelijken</option>
+                      <option value="Gemeente">Aanmelder / gemeente</option>
+                      <option value="Zorgaanbieder">Zorgaanbieder</option>
+                      <option value="Systeem">Systeem</option>
+                    </CareOperationalSelect>
+                  </label>
+                </div>
+                <div className="grid items-end gap-2 md:grid-cols-2">
+                  <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                    Zorgbehoefte categorie
+                    <CareOperationalSelect
+                      aria-label="Zorgbehoefte categorie"
+                      value={selectedTaxonomyCategory}
+                      onChange={(event) => {
+                        setSelectedTaxonomyCategory(event.target.value);
+                        setSelectedTaxonomySubcategory("all");
+                      }}
+                    >
+                      <option value="all">Alle categorieën</option>
+                      {taxonomyCategoryOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </CareOperationalSelect>
+                  </label>
+                  <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                    Specifieke zorgbehoefte
+                    <CareOperationalSelect
+                      aria-label="Specifieke zorgbehoefte"
+                      value={selectedTaxonomySubcategory}
+                      disabled={selectedTaxonomyCategory === "all" || taxonomySubcategoryOptions.length === 0}
+                      onChange={(event) => setSelectedTaxonomySubcategory(event.target.value)}
+                    >
+                      <option value="all">Alle specifieke behoeften</option>
+                      {taxonomySubcategoryOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </CareOperationalSelect>
+                  </label>
+                </div>
+              </>
+            }
+          />
+        </div>
+      </div>
+
+      <CareFilterTabGroup aria-label="Werkvoorraad tabbladen" className="w-fit">
+        <CareFilterTabButton
+          selected={focusChip === "my-worklist"}
+          accentSelected
+          accentHex={tokens.colors.casussenAccent}
+          onClick={() => setFocusChip("my-worklist")}
+        >
+          {casussenWerkvoorraadCountLabel(tabCounts.myWorklist)}
+        </CareFilterTabButton>
+        <CareFilterTabButton
+          selected={focusChip === "pipeline"}
+          accentSelected
+          accentHex={tokens.colors.casussenAccent}
+          onClick={() => setFocusChip("pipeline")}
+        >
+          Wachten {tabCounts.pipeline}
+        </CareFilterTabButton>
+      </CareFilterTabGroup>
+    </div>
+  );
+
+  const matchingFooter = (
+    <section className="rounded-[22px] border border-border/60 bg-card/35 px-5 py-4 shadow-sm md:px-6 md:py-5">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-primary/10 bg-primary/10 text-primary">
+            <Zap className="size-6" aria-hidden />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[17px] font-semibold tracking-tight text-foreground">Meer doen in Matching</p>
+            <p className="mt-1 max-w-2xl text-[13px] leading-5 text-muted-foreground">
+              Bekijk de matching rail voor geselecteerde cases of open een nieuwe aanvraag.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 rounded-xl border-border/70 px-4 text-[14px] font-medium text-foreground"
+            onClick={() => handleNavigate("matching")}
+          >
+            Naar Matching rail
+            <ArrowUpRight className="ml-2 size-4" aria-hidden />
+          </Button>
+          {canCreateCase && onCreateCase ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 rounded-xl border-border/70 px-4 text-[14px] font-medium text-foreground"
+              onClick={onCreateCase}
+            >
+              Nieuwe aanvraag
+              <Plus className="ml-2 size-4" aria-hidden />
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+
   return (
     <div className={CARE_RHYTHM.layoutWithRail}>
       <div className="care-layout-with-rail__main min-w-0 flex-1">
-    <CarePageScaffold
-      archetype="queue"
-      className="pb-8"
-      title="Casussen"
-      subtitleInfoTestId="casussen-page-info"
-      subtitleAriaLabel="Uitleg casussen"
-      subtitle={
-        <div className="space-y-2">
-          <p className="font-semibold text-foreground">Hoe deze lijst werkt</p>
-          <p>
-            Tabbladen en zoekveld bepalen welke casussen je ziet. Sidebar Acties (taken) staat los van het tabblad Mijn werkvoorraad op
-            deze pagina.
-          </p>
-          <p>Doorstroom toont casussen per fase (na je filters). De werklijst toont de eerstvolgende passende actie per casus.</p>
-          <p className="text-muted-foreground">
-            Tijdelijke werkvoorraad — na plaatsing en validatie gaat het traject naar externe systemen (uitstroom).
-          </p>
-        </div>
-      }
-      metric={
-        <span title="Telling voor je huidige tabblad en filters — geen knop, alleen status." className="inline-flex shrink-0">
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold"
-            style={{
-              backgroundColor: tokens.colors.casussenMetricBg,
-              borderColor: tokens.colors.casussenMetricBorder,
-              color: tokens.colors.casussenMetricText,
-            }}
-          >
-            <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: tokens.colors.casussenMetricDot }} />
-            {casussenWerkvoorraadMetric(filteredItems.length, attentionCount)}
-          </span>
-        </span>
-      }
-      actions={headerActions}
-      kpiStrip={
-        <CareAttentionBar
-          layout="compact"
-          tone={workflowCases.length === 0 ? "warning" : attentionCount > 0 ? "critical" : "info"}
-          message={workloadAttentionMessage}
-          action={workloadAttentionAction}
-        />
-      }
-    >
-      {attentionCount > 0 || riskSignalCount > 0 ? (
-        <GuidanceContextBanner testId="werkvoorraad-blokkades-banner" className="mb-4">
-          Los blokkades eerst op om doorstroom te behouden.
-        </GuidanceContextBanner>
-      ) : null}
-      <CareWorkspaceSection
-        testId="casussen-uitvoerlijst"
-        aria-labelledby="casussen-werkvoorraad-heading"
-        header={(
-        <CareSectionHeader
-          className="lg:flex-col lg:items-stretch"
-          title={
-            <span id="casussen-werkvoorraad-heading" className="inline-flex flex-wrap items-center gap-2">
-              Werkvoorraad
-              <InlineHelpChip
-                title="Waarom staat dit bovenaan?"
-                triggerLabel="Prioriteit"
-                testId="werkvoorraad-prioriteit-help"
-              >
-                <p>Items worden geprioriteerd op urgentie, blokkades en benodigde actie.</p>
-              </InlineHelpChip>
-            </span>
-          }
-          meta={
-            <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
-              <span className="inline-flex w-fit items-center rounded-full bg-muted/35 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
-                {filteredItems.length} aanvragen
+        <CarePageScaffold
+          archetype="queue"
+          className="pb-4"
+          title="Casussen"
+          subtitleInfoTestId="casussen-page-info"
+          subtitleAriaLabel="Uitleg casussen"
+          metric={
+            <div className="inline-flex items-center gap-3 text-[14px] font-medium text-muted-foreground">
+              <span className="inline-flex items-center gap-2">
+                <span className="size-2 rounded-full bg-slate-500" aria-hidden />
+                {filteredItems.length} casus{filteredItems.length === 1 ? "" : "sen"}
               </span>
-              <div className="flex flex-wrap items-center gap-2 pb-1">
-                <InlineHelpChip
-                  title="Waarom wachten?"
-                  triggerLabel="Wachten"
-                  testId="werkvoorraad-wachten-help"
-                >
-                  <p>Er is nu geen actie nodig totdat externe opvolging of reactie binnenkomt.</p>
-                </InlineHelpChip>
-              </div>
-              <CareSearchFiltersBar
-                variant="workspace"
-                className="px-0"
-                searchValue={searchQuery}
-                onSearchChange={setSearchQuery}
-                searchPlaceholder="Zoek casussen, regio's, aanbieders…"
-                showSecondaryFilters={showSecondaryFilters}
-                onToggleSecondaryFilters={() => setShowSecondaryFilters((current) => !current)}
-                secondaryFiltersLabel="Filters"
-                secondaryFilters={
-                  <>
-                    <div className="grid items-end gap-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Werkvoorraad-weergave
-                      <CareOperationalSelect
-                        aria-label="Werkvoorraad-weergave"
-                        value={focusChip}
-                        onChange={(event) => setFocusChip(event.target.value as FocusChip)}
-                      >
-                        <option value="my-worklist">Mijn werkvoorraad ({tabCounts.myWorklist})</option>
-                        <option value="all">Alle casussen ({tabCounts.all})</option>
-                        <option value="pipeline">Wacht op actie ({tabCounts.pipeline})</option>
-                        <option value="critical">Kritiek ({tabCounts.critical})</option>
-                        <option value="recent">Recent bijgewerkt ({tabCounts.recent})</option>
-                      </CareOperationalSelect>
-                    </label>
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Stap
-                      <CareOperationalSelect
-                        aria-label="Stap in de keten"
-                        value={selectedPhase}
-                        onChange={(event) => {
-                          setSelectedPhase(event.target.value as "all" | DecisionUiPhaseId);
-                          setSelectedFlowColumn("all");
-                        }}
-                        
-                      >
-                        <option value="all">Alle fases</option>
-                        {phaseOptions.map((phase) => (
-                          <option key={phase.value} value={phase.value}>
-                            {phase.label}
-                          </option>
-                        ))}
-                      </CareOperationalSelect>
-                    </label>
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Urgentie
-                      <CareOperationalSelect
-                        aria-label="Urgentie"
-                        value={selectedUrgency}
-                        onChange={(event) => setSelectedUrgency(event.target.value)}
-                      >
-                        <option value="all">Alle urgentie</option>
-                        <option value="critical">Kritiek</option>
-                        <option value="warning">Hoog</option>
-                        <option value="normal">Normaal / laag</option>
-                      </CareOperationalSelect>
-                    </label>
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Regio
-                      <CareOperationalSelect
-                        aria-label="Regio"
-                        value={selectedRegion}
-                        onChange={(event) => setSelectedRegion(event.target.value)}
-                      >
-                        {regions.map((region) => (
-                          <option key={region} value={region}>
-                            {region === "all" ? "Alle regio's" : region}
-                          </option>
-                        ))}
-                      </CareOperationalSelect>
-                    </label>
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Verantwoordelijke
-                      <CareOperationalSelect
-                        aria-label="Verantwoordelijke"
-                        value={selectedOwner}
-                        onChange={(event) => setSelectedOwner(event.target.value as "all" | "Gemeente" | "Zorgaanbieder" | "Systeem")}
-                      >
-                        <option value="all">Alle verantwoordelijken</option>
-                        <option value="Gemeente">Aanmelder / gemeente</option>
-                        <option value="Zorgaanbieder">Zorgaanbieder</option>
-                        <option value="Systeem">Systeem</option>
-                      </CareOperationalSelect>
-                    </label>
-                    </div>
-                    <div className="grid items-end gap-2 md:grid-cols-2">
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Zorgbehoefte categorie
-                      <CareOperationalSelect
-                        aria-label="Zorgbehoefte categorie"
-                        value={selectedTaxonomyCategory}
-                        onChange={(event) => {
-                          setSelectedTaxonomyCategory(event.target.value);
-                          setSelectedTaxonomySubcategory("all");
-                        }}
-                      >
-                        <option value="all">Alle categorieën</option>
-                        {taxonomyCategoryOptions.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </CareOperationalSelect>
-                    </label>
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Specifieke zorgbehoefte
-                      <CareOperationalSelect
-                        aria-label="Specifieke zorgbehoefte"
-                        value={selectedTaxonomySubcategory}
-                        disabled={selectedTaxonomyCategory === "all" || taxonomySubcategoryOptions.length === 0}
-                        onChange={(event) => setSelectedTaxonomySubcategory(event.target.value)}
-                      >
-                        <option value="all">Alle specifieke behoeften</option>
-                        {taxonomySubcategoryOptions.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </CareOperationalSelect>
-                    </label>
-                    </div>
-                  </>
-                }
-              />
+              <span className="h-4 w-px bg-border/70" aria-hidden />
+              <span className="inline-flex items-center gap-2">
+                <span className="size-2 rounded-full bg-amber-400" aria-hidden />
+                {attentionCount} wacht op jouw actie
+              </span>
             </div>
           }
-        />
-        )}
-      >
-          {focusChip === "critical" && workflowCases.length > 0 ? (
-            <div data-testid="worklist-blocked-filter-hint">
-              <CareAttentionBar
-                tone="critical"
-                message={
-                  <>
-                    Weergave: kritiek / geblokkeerd. Gebruik <span className="font-medium text-foreground">Toon alle casussen</span> rechtsboven om
-                    terug te gaan naar de volledige lijst.
-                  </>
-                }
-              />
-            </div>
-          ) : null}
+          actions={headerActions}
+          dominantAction={
+            dominantAttentionItem ? (
+              <section
+                className={cn(
+                  "rounded-[22px] border border-border/60 bg-card/35 px-5 py-4 shadow-sm md:px-6 md:py-5",
+                  "border-l-2 border-l-amber-500/80",
+                )}
+              >
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex min-w-0 items-start gap-4">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-400">
+                      <Clock3 className="size-8" aria-hidden />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-300">Wacht op jouw actie</p>
+                      <p className="mt-2 text-[24px] font-semibold tracking-tight text-foreground">{dominantAttentionTitle}</p>
+                      <p className="mt-2 max-w-2xl text-[14px] leading-6 text-muted-foreground">{dominantAttentionCopy}</p>
+                    </div>
+                  </div>
+                  {dominantAttentionAction ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 rounded-xl border-border/70 px-5 text-[14px] font-medium text-foreground"
+                      onClick={dominantAttentionAction}
+                    >
+                      Bekijk casus
+                      <ChevronRight className="ml-2 size-4" aria-hidden />
+                    </Button>
+                  ) : null}
+                </div>
+              </section>
+            ) : null
+          }
+          insights={matchingFooter}
+        >
           {loading && <LoadingState title="Casussen laden…" copy="De werkvoorraad wordt opgebouwd." />}
 
           {!loading && error && (
-          <ErrorState title="Casussen laden mislukt" copy={getShortReasonLabel(error, 100)} action={<Button variant="outline" onClick={refetch}>Opnieuw</Button>} />
+            <ErrorState
+              title="Casussen laden mislukt"
+              copy={getShortReasonLabel(error, 100)}
+              action={
+                <Button variant="outline" onClick={refetch}>
+                  Opnieuw
+                </Button>
+              }
+            />
           )}
 
           {!loading && !error && workflowCases.length === 0 && (
@@ -1109,12 +1090,13 @@ export function WorkloadPage({
               ) : (
                 <>
                   <CareWorkListCard
-                    header={
+                    header={worklistHeader}
+                  >
+                    <div className="border-b border-border/35 px-4 py-3 md:px-5">
                       <CareOperationalQueueHeader
                         labels={["Urgentie", "Casus", "Operationeel", "Fase", "Bijgewerkt", "Volgende actie"]}
                       />
-                    }
-                  >
+                    </div>
                     {groupedPageSections.map(({ key: groupKey, items }, groupIndex) => {
                       const totalInGroup = queueGroupTotals[groupKey];
                       const isCollapsed = isQueueGroupCollapsed(groupKey);
@@ -1142,9 +1124,7 @@ export function WorkloadPage({
                                 {items.map(({ item, decision, classification, queueGroup }) => {
                                   const phaseHuman = phasePillLabel(item);
                                   const headline = buildOperationalHeadline(item, decision, phaseHuman);
-                                  const showPrimaryCta = Boolean(
-                                    decision.requiresCurrentUserAction && decision.primaryActionEnabled,
-                                  );
+                                  const showPrimaryCta = Boolean(decision.requiresCurrentUserAction && decision.primaryActionEnabled);
                                   return (
                                     <CasussenOperatieveWachtrijItem
                                       key={item.id}
@@ -1169,8 +1149,8 @@ export function WorkloadPage({
                   </CareWorkListCard>
 
                   <p className="text-[12px] leading-snug text-muted-foreground" data-testid="worklist-pagination-hint">
-                    Paginering loopt plat over alle wachtrijen (volgorde: wachtrij → urgentie → casus). Tellingen bij elke kop
-                    zijn voor je huidige filters, niet alleen voor deze pagina.
+                    Paginering loopt plat over alle wachtrijen (volgorde: wachtrij → urgentie → casus). Tellingen bij elke kop zijn voor je
+                    huidige filters, niet alleen voor deze pagina.
                   </p>
 
                   <div className="flex flex-col gap-3 border-t border-border/50 pt-3 text-[13px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
@@ -1227,117 +1207,8 @@ export function WorkloadPage({
               )}
             </div>
           )}
-
-      </CareWorkspaceSection>
-    </CarePageScaffold>
+        </CarePageScaffold>
       </div>
-
-      {!railCollapsed && (
-        <aside
-          data-testid="casussen-right-rail"
-          className="care-layout-with-rail__rail hidden space-y-4 pt-1 xl:sticky xl:top-4 xl:z-10 xl:block xl:overflow-y-auto xl:self-start"
-          style={{ maxHeight: tokens.layout.coordinationRailMaxHeight }}
-        >
-          <CasussenInsightsPanels
-            gemeenteDisplayName={gemeenteDisplayName}
-            filteredTotal={filteredItems.length}
-            attentionCount={attentionCount}
-            criticalCount={tabCounts.critical}
-            avgDaysInPhase={avgDaysInPhase}
-            riskSignalCount={riskSignalCount}
-            onCriticalClick={focusCriticalCases}
-          />
-        </aside>
-      )}
-
-      {railCollapsed && (
-        <CoordinationRailEdgeTab
-          onExpand={() => setRailCollapsed(false)}
-          testId="casussen-rail-edge-tab"
-        />
-      )}
     </div>
-  );
-}
-
-function CasussenInsightsPanels({
-  gemeenteDisplayName,
-  filteredTotal,
-  attentionCount,
-  criticalCount,
-  avgDaysInPhase,
-  riskSignalCount,
-  onCriticalClick,
-}: {
-  gemeenteDisplayName: string;
-  filteredTotal: number;
-  attentionCount: number;
-  criticalCount: number;
-  avgDaysInPhase: number;
-  riskSignalCount: number;
-  onCriticalClick: () => void;
-}) {
-  return (
-    <>
-      <section className="rounded-xl border border-border/50 bg-card/40 p-4 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-background/40">
-            <Building2 size={18} className="text-primary" aria-hidden />
-          </div>
-          <div className="min-w-0 space-y-3">
-            <p className="text-sm font-semibold leading-tight text-foreground">{gemeenteDisplayName}</p>
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">Zichtbaar in lijst</dt>
-                <dd className="tabular-nums font-semibold text-foreground">{filteredTotal}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">Wacht op jouw actie</dt>
-                <dd className="tabular-nums font-semibold text-foreground">{attentionCount}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">Gem. dagen in fase</dt>
-                <dd className="tabular-nums font-semibold text-foreground">{avgDaysInPhase > 0 ? avgDaysInPhase : "—"}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">Risico-/spoedsignalen</dt>
-                <dd className={cn("tabular-nums font-semibold", riskSignalCount > 0 ? "text-red-400" : "text-foreground")}>
-                  {riskSignalCount}
-                </dd>
-              </div>
-            </dl>
-            <a
-              href={CARE_PATHS.COORDINATION}
-              className="inline-block text-sm font-semibold text-primary underline-offset-4 hover:underline"
-              data-testid="casussen-rail-naar-coordination"
-            >
-              Bekijk coördinatie-overzicht
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-border/50 bg-card/40 p-4 shadow-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Snelle focus</p>
-        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-          Fasefilters en doorlooptellingen staan in <span className="font-medium text-foreground">Doorstroom</span> boven de werklijst — zo blijft deze
-          kolom licht en contextueel.
-        </p>
-        <button
-          type="button"
-          data-testid="casussen-quick-critical"
-          onClick={onCriticalClick}
-          className="mt-3 flex w-full items-center justify-between gap-2 rounded-lg border border-border/50 bg-background/30 px-3 py-2.5 text-left text-sm transition hover:border-border/80 hover:bg-muted/25"
-        >
-          <span className="flex min-w-0 items-center gap-2 font-medium text-foreground">
-            <AlertCircle size={16} className="shrink-0 text-red-400" aria-hidden />
-            Kritieke aanvragen
-          </span>
-          <span className="tabular-nums font-semibold text-foreground">{criticalCount}</span>
-        </button>
-      </section>
-
-      <CoordinationNotesPanel testId="casussen-notes-panel" />
-    </>
   );
 }
