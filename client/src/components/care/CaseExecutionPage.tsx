@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
+import { ProcessTimeline } from "../design/ProcessTimeline";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -928,13 +929,15 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   }));
 
   const flowProgress = (
-    <CaseOperationalStepper
-      steps={decisionTimelineSteps.map((step, index) => ({
-        ...step,
-        subtitle: index === decisionTimelineIndex ? "Huidige stap" : undefined,
-      }))}
-      activeIndex={decisionTimelineIndex}
-    />
+    <ProcessTimeline className="surface-context rounded-xl px-4 py-3 md:px-4 md:py-3.5">
+      <CaseOperationalStepper
+        steps={decisionTimelineSteps.map((step, index) => ({
+          ...step,
+          subtitle: index === decisionTimelineIndex ? "Huidige stap" : undefined,
+        }))}
+        activeIndex={decisionTimelineIndex}
+      />
+    </ProcessTimeline>
   );
   const isReferenceBlockedCase = spaCase.id === "41";
   const blockedHeroDescription = isReferenceBlockedCase

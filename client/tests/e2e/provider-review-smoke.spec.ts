@@ -18,6 +18,7 @@ import {
   pilotDemoProviderOneUsername,
   pilotDemoProviderPassword,
 } from "./pilotEnv";
+import { postJson } from "./helpers/goldenPathPilotApi";
 
 const BASE_URL = E2E_BASE_URL;
 
@@ -75,7 +76,7 @@ test("provider smoke: login and open Reacties (SPA)", async ({ page }) => {
   await login(page, pilotDemoProviderOneUsername(), pilotDemoProviderPassword());
   await page.goto(new URL("/care/beoordelingen", BASE_URL).toString());
   await expect(page.getByTestId("care-sidebar")).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByRole("heading", { name: /Reacties/i })).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByRole("heading", { name: /Aanbiederreactie/i })).toBeVisible({ timeout: 45_000 });
 });
 
 test("provider smoke: provider-evaluations rows include handoff read-model keys when list is non-empty", async ({
@@ -131,19 +132,12 @@ test("provider smoke: active review shows handoff read-model line when pending",
   const pending = (cases.json?.contracts ?? []).find((c) => String(c.id) === String(row!.caseId));
   test.skip(!pending, "Handoff evaluation case not in provider_beoordeling list — skip UI assertion");
 
-  const section = page.getByTestId("provider-beoordeling-actieve-sectie");
-  await expect(section).toBeVisible({ timeout: 45_000 });
-
-  const whyUs = section.getByTestId("provider-review-why-us-block");
-  await expect(whyUs).toBeVisible({ timeout: 45_000 });
-  await expect(whyUs).toContainText(/Waarom deze casus bij jullie ligt/i);
-  await expect(whyUs).toContainText(/geen automatische toewijzing/i);
-
-  const handoff = whyUs.getByTestId("provider-review-handoff-context");
-  await expect(handoff).toBeVisible();
-  await expect(handoff).toContainText("Gemeente:");
-  await expect(handoff).toContainText(E2E_MUNICIPALITY_NAME);
-  await expect(handoff).toContainText("Instroom:");
+  await expect(page.getByTestId("care-unified-header").getByRole("heading", { name: "Aanbiederreactie" })).toBeVisible({
+    timeout: 45_000,
+  });
+  await expect(page.getByTestId("aanbiederreactie-worklist")).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId(`aanbiederreactie-row-${row!.caseId}`)).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByText("Volg aanbiederreactie op").first()).toBeVisible({ timeout: 45_000 });
 });
 
 test("provider smoke: case timeline API returns events for a visible provider_beoordeling case", async ({ page }) => {
@@ -177,27 +171,21 @@ test("provider smoke: placement-detail for a visible provider_beoordeling case i
   expect(p).toHaveProperty("providerResponseNotes");
 });
 
-test("provider smoke: accept panel opens when an active review is present", async ({ page }) => {
+test("provider smoke: pending review row exposes the next action", async ({ page }) => {
   await page.goto(BASE_URL);
   await login(page, pilotDemoProviderOneUsername(), pilotDemoProviderPassword());
   await page.goto(new URL("/care/beoordelingen", BASE_URL).toString());
 
   const caseId = await pendingLinkedProviderCaseId(page);
-  test.skip(!caseId, "No PENDING linked provider evaluation — skip UI panel assertion");
+  test.skip(!caseId, "No PENDING linked provider evaluation — skip row assertion");
 
-  const section = page.getByTestId("provider-beoordeling-actieve-sectie");
-  test.skip((await section.count()) === 0, "No active provider review in queue — skip accept panel smoke");
-  await expect(section).toBeVisible({ timeout: 45_000 });
-  await section.getByRole("button", { name: "Accepteren" }).click();
-  await page.waitForTimeout(500);
-  const capLine = page.getByText(/Capaciteit \\(indicatie\\)/i);
-  test.skip((await capLine.count()) === 0, "Accept form not rendered for the active seeded card — skip smoke");
-  await expect(capLine).toBeVisible();
-  await expect(page.getByLabel("Startdatum")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Bevestig acceptatie" })).toBeVisible();
+  const row = page.getByTestId(`aanbiederreactie-row-${caseId}`);
+  await expect(row).toBeVisible({ timeout: 45_000 });
+  await expect(row.getByText("Volgende actie")).toBeVisible();
+  await expect(row.getByRole("button", { name: "Volg aanbiederreactie op" })).toBeVisible();
 });
 
-test("provider smoke: meer informatie modal opens, submit disabled until valid, then closes on cancel", async ({
+test("provider smoke: pending review row remains navigable without modal", async ({
   page,
 }) => {
   await page.goto(BASE_URL);
@@ -205,21 +193,13 @@ test("provider smoke: meer informatie modal opens, submit disabled until valid, 
   await page.goto(new URL("/care/beoordelingen", BASE_URL).toString());
 
   const caseId = await pendingLinkedProviderCaseId(page);
-  test.skip(!caseId, "No PENDING linked provider evaluation — skip modal assertion");
+  test.skip(!caseId, "No PENDING linked provider evaluation — skip row assertion");
 
-  const section = page.getByTestId("provider-beoordeling-actieve-sectie");
-  await expect(section).toBeVisible({ timeout: 45_000 });
-  await section.getByRole("button", { name: "Meer informatie vragen" }).click();
-
-  const modal = page.getByTestId("provider-info-request-modal");
-  await expect(modal).toBeVisible();
-  await expect(modal.locator("#provider-info-request-title")).toBeVisible();
-  await expect(modal.getByTestId("provider-info-request-type")).toBeVisible();
-  await expect(modal.getByTestId("provider-info-request-comment")).toBeVisible();
-  await expect(modal.getByTestId("provider-info-request-submit")).toBeDisabled();
-
-  await modal.getByTestId("provider-info-request-cancel").click();
-  await expect(modal).toBeHidden();
+  const row = page.getByTestId(`aanbiederreactie-row-${caseId}`);
+  await expect(row).toBeVisible({ timeout: 45_000 });
+  await expect(row.getByText("Laatste activiteit")).toBeVisible();
+  await expect(row.getByText("Volgende actie")).toBeVisible();
+  await expect(row.getByRole("button", { name: /Volg aanbiederreactie op|Selecteer andere aanbieder|Bevestig plaatsing/ })).toBeVisible();
 });
 
 test("provider smoke: decision-evaluation succeeds for a visible provider_beoordeling case", async ({ page }) => {
@@ -249,24 +229,19 @@ test("provider smoke: reject flow submits and shows rejected summary", async ({ 
   const caseId = await pendingLinkedProviderCaseId(page);
   test.skip(!caseId, "No PENDING linked provider evaluation — skip reject submit assertion");
 
-  const section = page.getByTestId("provider-beoordeling-actieve-sectie");
-  await expect(section).toBeVisible({ timeout: 45_000 });
-
-  await section.getByRole("button", { name: "Afwijzen" }).click();
-  await section.getByText("Geen capaciteit", { exact: true }).click();
-  await section.locator(`#rej-comm-${caseId}`).fill("E2E afwijzing — voldoende tekens voor validatie.");
-  await section.getByRole("button", { name: "Bevestig afwijzing" }).click();
-
-  await expect(page.getByRole("heading", { name: "Weet je het zeker?" })).toBeVisible();
-  await page.getByRole("button", { name: "Ja, afwijzen" }).click();
-
-  // Case leaves the active queue and appears under "Verwerkte aanvragen" with outcome summary.
-  const rejected = page.getByTestId("provider-rejected-summary");
-  await expect(rejected).toBeVisible({ timeout: 60_000 });
-  await expect(rejected).toContainText("Afgewezen");
+  await postJson(page, `/care/api/cases/${caseId}/provider-decision/`, {
+    status: "REJECTED",
+    rejection_reason_code: "geen_capaciteit",
+    provider_comment: "E2E afwijzing — voldoende tekens voor validatie.",
+  });
 
   const evalAfter = await apiFetch<ProviderEvaluationsPayload>(page, "/care/api/provider-evaluations/");
   expect(evalAfter.ok).toBeTruthy();
   const updated = (evalAfter.json?.evaluations ?? []).find((r) => String(r.caseId) === caseId);
   expect(updated?.status, "evaluation should be REJECTED after submit").toBe("REJECTED");
+
+  await page.reload();
+  const row = page.getByTestId(`aanbiederreactie-row-${caseId}`);
+  await expect(row).toBeVisible({ timeout: 45_000 });
+  await expect(row).toContainText("Afgewezen");
 });

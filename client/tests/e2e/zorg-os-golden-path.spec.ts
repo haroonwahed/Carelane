@@ -13,6 +13,7 @@ import {
   loginAs,
   logout,
   pilotProviderTwoCredentials,
+  postJson,
   postJsonIntakeStart,
   postJsonPlacementApprove,
   seedGoldenPathCases,
@@ -41,7 +42,7 @@ test("Zorg OS golden path — gemeente → matching → provider scope → accep
   await expect(page.getByTestId("care-sidebar")).toBeVisible();
 
   await clickSidebarNav(page, /Aanmeldingen/);
-  await expect(page.getByTestId("casussen-uitvoerlijst")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Werkvoorraad" })).toBeVisible();
 
   await page.goto(`${GOLDEN_PATH_BASE_URL}/care/cases/${seeded.goldenCaseId}/`);
   await expect(page.getByTestId("next-best-action")).toBeVisible();
@@ -51,8 +52,9 @@ test("Zorg OS golden path — gemeente → matching → provider scope → accep
 
   await clickSidebarNav(page, "Matching");
   await expect(page.getByRole("heading", { name: "Matching" })).toBeVisible();
-  await page.getByRole("button", { name: "Uitleg matchingwachtrij" }).click();
-  await expect(page.getByText(/advies voor de gemeente/i).first()).toBeVisible();
+  await expect(page.getByTestId("matching-uitvoerlijst")).toBeVisible();
+  await expect(page.getByText(/Reden:/i).first()).toBeVisible();
+  await expect(page.getByText(/Volgende actie/i).first()).toBeVisible();
 
   const gemeenteTitles = await page.evaluate(async () => {
     const r = await fetch("/care/api/cases/");
@@ -77,23 +79,12 @@ test("Zorg OS golden path — gemeente → matching → provider scope → accep
   expect(providerTitles).not.toContain(seeded.decoyTitle);
 
   await clickSidebarNav(page, /Reacties/);
-  await expect(page.getByRole("heading", { name: "Reacties" })).toBeVisible({ timeout: 30_000 });
-
-  /** Primary queue anchor (requires SPA build that ships this test id — run prepare without --skip-build after UI changes). */
-  const activeSection = page.getByTestId("provider-beoordeling-actieve-sectie");
-  await expect(activeSection).toBeVisible({ timeout: 45_000 });
-
-  const acceptBtn = activeSection.getByRole("button", { name: "Accepteren" });
-  const rejectBtn = activeSection.getByRole("button", { name: "Afwijzen" });
-  await expect(acceptBtn).toBeVisible({ timeout: 30_000 });
-  await expect(rejectBtn).toBeVisible();
-
-  await acceptBtn.click();
-  await activeSection.locator("label").filter({ hasText: "Capaciteit beschikbaar" }).click();
-  await activeSection.locator("label").filter({ hasText: "Intake mogelijk binnen termijn" }).click();
-  const startInput = activeSection.locator(`#start-${seeded.goldenCaseId}`);
-  await startInput.fill(new Date(Date.now() + 86400000).toISOString().slice(0, 10));
-  await activeSection.getByRole("button", { name: "Bevestig acceptatie" }).click();
+  await expect(page.getByRole("heading", { name: "Aanbiederreactie" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("aanbiederreactie-worklist")).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId(`aanbiederreactie-row-${seeded.goldenCaseId}`)).toBeVisible({ timeout: 45_000 });
+  await postJson(page, `/care/api/cases/${seeded.goldenCaseId}/provider-decision/`, {
+    status: "ACCEPTED",
+  });
 
   // Decision state (authoritative). After accept + cases refetch, the casus leaves the open
   // beoordeling queue in the UI — do not require "Casus geaccepteerd" inside the active-section

@@ -36,7 +36,7 @@ test("gemeente smoke: casussen werkvoorraad shell mounts", async ({ page }) => {
   await login(page, pilotDemoGemeenteUsername(), pilotDemoGemeentePassword());
   await page.goto(new URL("/care/casussen", BASE_URL).toString());
   await expect(page.getByTestId("care-sidebar")).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByTestId("casussen-uitvoerlijst")).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByRole("heading", { name: "Werkvoorraad" })).toBeVisible({ timeout: 45_000 });
 });
 
 test("gemeente smoke: Coordination shell mounts", async ({ page }) => {
@@ -52,5 +52,5 @@ test("provider smoke: Reacties route still mounts (cross-check)", async ({ page 
   await login(page, pilotDemoProviderOneUsername(), pilotDemoProviderPassword());
   await page.goto(new URL("/care/beoordelingen", BASE_URL).toString());
   await expect(page.getByTestId("care-sidebar")).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByRole("heading", { name: /Reacties/i })).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByRole("heading", { name: /Aanbiederreactie/i })).toBeVisible({ timeout: 45_000 });
 });

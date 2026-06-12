@@ -1676,8 +1676,8 @@ def _build_blockers_and_alerts(
                 _serialize_alert(
                     "PROVIDER_REVIEW_PENDING_SLA",
                     "high",
-                    "Aanbieder beoordeling wacht te lang",
-                    "De providerreactie is SLA-overschreden; volg de aanbieder op.",
+                    "Aanbiederreactie wacht te lang",
+                    "De aanbiederreactie is SLA-overschreden; volg de aanbieder op.",
                     "FOLLOW_UP_PROVIDER",
                     {"hours_in_current_state": hours_in_current_state},
                 )
@@ -1877,12 +1877,12 @@ def _next_best_action(
                 "nog geen definitieve plaatsing."
             )
         else:
-            reason = "Validatie is afgerond; stuur de casus naar aanbiederbeoordeling."
+            reason = "Validatie is afgerond; stuur de casus naar aanbiederreactie."
     elif current_state == WorkflowState.PROVIDER_REVIEW_PENDING:
         if provider_pending_sla_breached:
             action = "FOLLOW_UP_PROVIDER"
             priority = "critical"
-            reason = "De aanbiederbeoordeling is SLA-overschreden."
+            reason = "De aanbiederreactie is SLA-overschreden."
         else:
             action = "WAIT_PROVIDER_RESPONSE"
             priority = "medium"

@@ -3,7 +3,6 @@ import { ArrowRight, Lock, Loader2, UserRound } from "lucide-react";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { cn } from "../ui/utils";
-import { ProcessTimeline } from "../design/ProcessTimeline";
 import { CareFlowBoard, CareFlowStepCard } from "./CareDesignPrimitives";
 
 export type CaseStepperStep = {
@@ -21,38 +20,36 @@ export function CaseOperationalStepper({
   activeIndex: number;
 }) {
   return (
-    <ProcessTimeline className="surface-context rounded-xl px-4 py-3 md:px-4 md:py-3.5">
-      <CareFlowBoard variant="pipeline" activeStepIndex={activeIndex} stepCount={steps.length}>
-        {steps.map((step, index) => {
-          const isCurrent = index === activeIndex;
-          const isCompleted = index < activeIndex;
-          return (
-            <CareFlowStepCard
-              key={step.id}
-              icon={
-                  <span
-                    className={cn(
-                    "flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-semibold",
-                    isCurrent
-                      ? "bg-primary/90 text-primary-foreground"
-                      : isCompleted
-                        ? "bg-emerald-500/15 text-emerald-200"
-                        : "bg-muted/50 text-muted-foreground",
-                  )}
-                >
-                  {index + 1}
-                </span>
-              }
-              subtitle={isCurrent ? (step.subtitle ?? "Huidige stap") : undefined}
-              metric={null}
-              title={<span className="text-[12px] leading-tight md:text-[12px]">{step.label}</span>}
-              active={isCurrent}
-              completed={isCompleted}
-            />
-          );
-        })}
-      </CareFlowBoard>
-    </ProcessTimeline>
+    <CareFlowBoard variant="pipeline" activeStepIndex={activeIndex} stepCount={steps.length}>
+      {steps.map((step, index) => {
+        const isCurrent = index === activeIndex;
+        const isCompleted = index < activeIndex;
+        return (
+          <CareFlowStepCard
+            key={step.id}
+            icon={
+                <span
+                  className={cn(
+                  "flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-semibold",
+                  isCurrent
+                    ? "bg-primary/90 text-primary-foreground"
+                    : isCompleted
+                      ? "bg-emerald-500/15 text-emerald-200"
+                      : "bg-muted/50 text-muted-foreground",
+                )}
+              >
+                {index + 1}
+              </span>
+            }
+            subtitle={isCurrent ? (step.subtitle ?? "Huidige stap") : undefined}
+            metric={null}
+            title={<span className="text-[12px] leading-tight md:text-[12px]">{step.label}</span>}
+            active={isCurrent}
+            completed={isCompleted}
+          />
+        );
+      })}
+    </CareFlowBoard>
   );
 }
 
