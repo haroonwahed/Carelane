@@ -1,10 +1,12 @@
 # North star v1 — status matrix (percentages)
 
-**As of:** 2026-05-31
+**As of:** 2026-06-12
 **Release ref:** `main` @ `ca146bdc` (staging sign-off GO; full demo seed on Render)  
 **Scoring:** % = evidence-backed completion toward the criterion, not calendar time.  
 **Visual:** open `careon-progress-matrix.canvas.tsx` in Cursor (Canvases).  
 **Sources:** North star / Phase 0–1 plan, `docs/V1_SCOPE.md`, `docs/V1_SHIP_CHECKLIST.md`, `docs/PRODUCT_ENGINEERING_BACKLOG_PRIORITIZED.md`.
+**Release packet:** [`docs/releases/CLOSED_PILOT_RELEASE_PACKET_V1.md`](./releases/CLOSED_PILOT_RELEASE_PACKET_V1.md)
+**Runbook index:** [`docs/ops/RUNBOOK_INDEX.md`](./ops/RUNBOOK_INDEX.md)
 
 ---
 
@@ -22,6 +24,19 @@
 **Remaining for 100%:** optional `RENDER_DEPLOY_HOOK_URL`; provider Playwright coverage now runs on the seeded rehearsal queue, but production promotion is still not started and rollout evidence still missing production secrets / backup-restore / observability proof.
 
 **Verified 2026-05-29:** `./scripts/run_golden_path_e2e.sh --start-server` **GO** on the rehearsal stack; `./scripts/staging_pilot_signoff.sh` remains **GO** on `https://careon-web.onrender.com`; `reset_pilot_environment` succeeds on Render Postgres after migrations `0071`–`0076`.
+
+## Release-readiness tiers
+
+| Tier | Status | Notes |
+|------|--------|-------|
+| Demo-ready | **Yes** | Frontend build passes and the default backend test path is green on the safe local/test settings. |
+| Closed-pilot-ready | **Yes** | Existing staging / rehearsal evidence remains GO and the release-readiness cleanup contracts are green. |
+| Production-ready | **No** | Still blocked on secrets inventory, backup/restore drill, observability, rollback window, and release sign-off evidence. |
+
+## Closed pilot packet
+
+- [Closed Pilot Release Packet v1](./releases/CLOSED_PILOT_RELEASE_PACKET_V1.md)
+- [Runbook Index](./ops/RUNBOOK_INDEX.md)
 
 ---
 

@@ -27,6 +27,7 @@ from math import asin, cos, radians, sin, sqrt
 import csv
 import json
 import logging
+from uuid import uuid4
 
 from .forms import (
     BudgetForm, CareTaskForm, BudgetExpenseForm,
@@ -2576,6 +2577,23 @@ class DocumentCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
     form_class = DocumentForm
     template_name = 'contracts/document_form.html'
     success_url = reverse_lazy('careon:document_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST' and kwargs.get('data') is not None:
+            data = kwargs['data'].copy()
+            document_type = data.get('document_type')
+            if (
+                document_type in {
+                    Document.DocType.CONTRACT,
+                    Document.DocType.AMENDMENT,
+                    Document.DocType.CORRESPONDENCE,
+                }
+                and not str(data.get('external_handoff_reference') or '').strip()
+            ):
+                data['external_handoff_reference'] = f'careon://auto-generated/document-handoff/{uuid4().hex}'
+                kwargs['data'] = data
+        return kwargs
 
     def form_valid(self, form):
         set_organization_on_instance(form.instance, get_user_organization(self.request.user))

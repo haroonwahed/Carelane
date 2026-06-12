@@ -380,7 +380,7 @@ class Command(BaseCommand):
                 'score': 88,
                 'summary': 'Passende ondersteuning voor autisme, structuur en thuisbegeleiding.',
                 'trade_offs': ['Regio is passend en capaciteit is beschikbaar.', 'Inhoudelijke fit is sterk.'],
-                'verification': 'Bevestig de gemeentevalidatie en vraag de aanbiederbeoordeling op.',
+                'verification': 'Bevestig de matching en vraag de aanbiederreactie op.',
             },
         ]
 
@@ -689,7 +689,7 @@ class Command(BaseCommand):
                 'care_form': CaseIntakeProcess.CareForm.OUTPATIENT,
                 'status': CaseIntakeProcess.ProcessStatus.DECISION,
                 'workflow_state': CaseIntakeProcess.WorkflowState.PROVIDER_REVIEW_PENDING,
-                'summary': 'Wacht op aanbiederbeoordeling; gemeente mag hier niet namens de aanbieder beslissen.',
+                'summary': 'Wacht op aanbiederreactie; gemeente mag hier niet namens de aanbieder beslissen.',
                 'description': 'De casus is doorgezet en wacht op inhoudelijke reactie van de aanbieder.',
                 'assessment_status': CaseAssessment.AssessmentStatus.APPROVED_FOR_MATCHING,
                 'matching_ready': True,
@@ -698,7 +698,7 @@ class Command(BaseCommand):
                 'signal_type': CareSignal.SignalType.WAIT_EXCEEDED,
                 'deadline_type': Deadline.TaskType.CONTACT_PROVIDER,
                 'deadline_title': 'Aanbieder opvolgen',
-                'signal_title': 'Aanbiederbeoordeling open',
+                'signal_title': 'Aanbiederreactie open',
                 'placement_status': PlacementRequest.Status.IN_REVIEW,
                 'provider_response_status': PlacementRequest.ProviderResponseStatus.PENDING,
                 'provider_name': 'Groei & Co',
@@ -976,10 +976,29 @@ class Command(BaseCommand):
             organization=organization,
             municipality_name=spec['city'],
         )
-        region = RegionalConfiguration.objects.get(
-            organization=organization,
-            region_name__startswith=spec['city'],
+        region = (
+            RegionalConfiguration.objects
+            .filter(
+                organization=organization,
+                served_municipalities=municipality,
+            )
+            .order_by('region_name', 'pk')
+            .first()
         )
+        if region is None:
+            region = (
+                RegionalConfiguration.objects
+                .filter(
+                    organization=organization,
+                    region_name__startswith=spec['city'],
+                )
+                .order_by('region_name', 'pk')
+                .first()
+            )
+        if region is None:
+            raise RegionalConfiguration.DoesNotExist(
+                f'No regional configuration found for municipality {spec["city"]!r}.'
+            )
 
         intake_defaults = {
             'organization': organization,

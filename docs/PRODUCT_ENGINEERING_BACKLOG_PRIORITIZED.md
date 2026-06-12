@@ -70,7 +70,7 @@
 - Anonimisatie full service path (DPIA-gated).
 - CareOn structural terminology migration.
 - Timeline export / hash-chains (`CASE_TIMELINE_V1.md` future).
-- Page-local `<style>` remediation; EN/NL comment cleanup; geo TODO in `contracts/views.py` when schema lands.
+- Page-local `<style>` remediation; EN/NL comment cleanup; geo follow-up in `contracts/views.py` when schema lands.
 - **`regiekamer` / test id rename** — dedicated refactor (`ZORG_OS_V1_3_STRATEGIC_REALIGNMENT_EVIDENCE` §10).
 
 ### Won’t (now)

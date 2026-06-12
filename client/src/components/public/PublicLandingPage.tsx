@@ -67,36 +67,70 @@ const problemCards = [
   },
 ] as const;
 
-const workflowRows = [
+const workflowStepperSteps = [
   {
     step: "01",
-    title: "Aanvraag vastleggen",
-    copy: "De aanvraag start met een helder beginpunt, eigenaarschap en reden.",
-    state: "Start",
+    title: "Aanmelding",
+    copy: "Casus vastleggen en compleet maken.",
+    state: "Compleet maken",
   },
   {
     step: "02",
-    title: "Samenvatting en matching",
-    copy: "Passende routes blijven zichtbaar, maar de keuze blijft menselijk.",
+    title: "Matching",
+    copy: "Passende aanbieders met uitlegbare afwegingen.",
     state: "Adviserend",
   },
   {
     step: "03",
-    title: "Gemeente valideert",
-    copy: "Financiering en arrangement worden gecontroleerd in dezelfde werkstroom.",
-    state: "Validatie",
+    title: "Aanbiederreactie",
+    copy: "Accepteren, afwijzen of verduidelijking vragen.",
+    state: "Reactie",
   },
   {
     step: "04",
-    title: "Aanbieder beoordeelt",
-    copy: "De aanbieder ziet alleen wat nodig is om te reageren en te handelen.",
-    state: "Wacht op reactie",
+    title: "Plaatsing",
+    copy: "Plaatsing bevestigen en voorbereiden.",
+    state: "Bevestiging",
   },
   {
     step: "05",
-    title: "Plaatsing en intake",
-    copy: "De overdracht blijft zichtbaar tot de stap is bevestigd.",
-    state: "Volgende stap",
+    title: "Intake",
+    copy: "Overdracht afronden en intake plannen.",
+    state: "Start zorg",
+  },
+] as const;
+
+const workflowValueCards = [
+  {
+    title: "Eén gedeeld proces",
+    copy: "Gemeente en aanbieder werken vanuit dezelfde status en volgende actie.",
+  },
+  {
+    title: "Uitlegbare keuzes",
+    copy: "Matching toont waarom een route passend is, zonder de menselijke beslissing over te nemen.",
+  },
+  {
+    title: "Minder overdrachtsruis",
+    copy: "Eigenaarschap, status en vervolgstap blijven zichtbaar tijdens de hele flow.",
+  },
+] as const;
+
+const workflowPrinciples = [
+  {
+    title: "Eén context",
+    copy: "Vraag, status en vervolgstap blijven zichtbaar in dezelfde werkruimte.",
+  },
+  {
+    title: "Rolzuiver",
+    copy: "Iedere actor ziet alleen wat nodig is voor de eigen taak.",
+  },
+  {
+    title: "Herleidbaar",
+    copy: "Elke stap blijft uitlegbaar en auditbaar zonder het proces zwaar te maken.",
+  },
+  {
+    title: "Minder wachttijd",
+    copy: "Eigenaarschap en volgende actie blijven duidelijk tussen partijen.",
   },
 ] as const;
 
@@ -225,9 +259,20 @@ function LandingPill({ children }: { children: string }) {
   );
 }
 
-function IconBadge({ children }: { children: ReactNode }) {
+function IconBadge({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-700/80 bg-slate-900/70 text-slate-200">
+    <div
+      className={cn(
+        "flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-700/80 bg-slate-900/70 text-slate-200",
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -369,31 +414,30 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
           </div>
         </section>
 
-        <section className="pb-8 pt-6 sm:pt-8 lg:pb-10 lg:pt-10" aria-label="Waardecriteria">
-          <div className="rounded-[28px] border border-slate-800/80 bg-slate-950/55 shadow-[0_18px_50px_rgba(2,6,23,0.28)]">
-            <div className="grid gap-0 lg:grid-cols-4">
-              {valueCards.map((card, index) => {
-                const Icon = card.icon;
-                return (
-                  <HoverPanel
-                    key={card.title}
-                    className={`flex items-start gap-3 px-4 py-4 ${index < valueCards.length - 1 ? "border-b border-slate-800/80 lg:border-b-0 lg:border-r" : ""}`}
-                  >
-                    <IconBadge>
-                      <Icon size={16} />
-                    </IconBadge>
-                    <div className="min-w-0 pt-0.5">
-                      <h2 className="text-[14px] font-semibold leading-tight text-white transition-colors group-hover:text-white">{card.title}</h2>
-                      <p className="mt-1 text-[12px] leading-snug text-slate-300 transition-colors group-hover:text-slate-200">{card.copy}</p>
-                    </div>
-                  </HoverPanel>
-                );
-              })}
-            </div>
+        <section className="pb-6 pt-4 sm:pt-6 lg:pb-8 lg:pt-8" aria-label="Waardecriteria">
+          <div className="grid gap-3 lg:grid-cols-4">
+            {valueCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <HoverPanel key={card.title} className="flex h-full items-start gap-3 px-4 py-3 sm:px-5 sm:py-4">
+                  <IconBadge className="mt-0.5">
+                    <Icon size={16} />
+                  </IconBadge>
+                  <div className="min-w-0 pt-0.5">
+                    <h2 className="text-[14px] font-semibold leading-tight text-white transition-colors group-hover:text-white">
+                      {card.title}
+                    </h2>
+                    <p className="mt-1 text-[12px] leading-snug text-slate-300 transition-colors group-hover:text-slate-200">
+                      {card.copy}
+                    </p>
+                  </div>
+                </HoverPanel>
+              );
+            })}
           </div>
         </section>
 
-        <section className="group border-t border-slate-800/80 py-14 sm:py-16">
+        <section className="group py-14 sm:py-16">
           <p className="text-center text-sm text-slate-400 transition-colors group-hover:text-slate-300">
             Gebouwd met gemeenten en zorgaanbieders in dezelfde keten
           </p>
@@ -468,61 +512,82 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
           <SectionHeading
             eyebrow="Werkstroom"
             title="Eén operationele laag boven de keten."
-            copy="Van aanvraag tot intake blijft de route zichtbaar. De pagina moet niet uitleggen dat er een systeem is; ze moet laten zien hoe het systeem werkt."
+            copy="Gemeenten en zorgaanbieders werken in dezelfde context, met heldere rolafbakening en minder overdrachtsruis."
           />
 
-          <div className="mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <HoverPanel className="rounded-[28px] p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Gedeelde werkstroom</p>
-              <h3 className="mt-2 text-xl font-semibold text-white">Aanvraag, validatie en plaatsing blijven samen leesbaar.</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                CareOn geeft gemeenten, aanbieders en uitvoerders dezelfde operationele context, met de juiste
-                beperking per rol. Daardoor blijft de werkstroom rustig, verantwoordelijk en herleidbaar.
-              </p>
+          <div className="mt-10 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+            <HoverPanel className="rounded-[28px] p-6 md:p-7">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Gedeelde werkstroom</p>
+                  <h3 className="mt-2 text-xl font-semibold text-white">Twee partijen, één regielaag.</h3>
+                </div>
+                <span className="hidden rounded-full border border-slate-800/80 bg-white/[0.02] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400 sm:inline-flex">
+                  Overzicht
+                </span>
+              </div>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-slate-800/80 bg-white/[0.02] px-3 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Eigenaarschap</p>
-                  <p className="mt-1 text-sm text-slate-100">Altijd zichtbaar</p>
+              <div className="mt-6 rounded-[26px] border border-slate-800/80 bg-[#0a1020]/90 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] sm:p-5">
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                  <div className="flex flex-col items-start gap-2">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-slate-700/80 bg-slate-900/80 px-3 py-2 text-sm font-medium text-slate-100">
+                      <span className="flex h-2 w-2 rounded-full bg-slate-500" />
+                      Gemeente
+                    </div>
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500">Aanvraag en validatie</p>
+                  </div>
+
+                  <div className="relative flex h-full items-center justify-center px-1 sm:px-2">
+                    <div className="h-px w-8 bg-slate-700/70 sm:w-10" />
+                    <div className="mx-2 h-2.5 w-2.5 rounded-full border border-violet-300/40 bg-violet-300/15 shadow-[0_0_0_4px_rgba(124,58,237,0.06)]" />
+                    <div className="h-px w-8 bg-slate-700/70 sm:w-10" />
+                  </div>
+
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-slate-700/80 bg-slate-900/80 px-3 py-2 text-sm font-medium text-slate-100">
+                      <span className="flex h-2 w-2 rounded-full bg-slate-500" />
+                      Zorgaanbieder
+                    </div>
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500">Reactie en uitvoering</p>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-slate-800/80 bg-white/[0.02] px-3 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Herleiding</p>
-                  <p className="mt-1 text-sm text-slate-100">Elke stap auditeerbaar</p>
+
+                <div className="mt-5 flex flex-col items-center">
+                  <div className="h-7 w-px bg-slate-700/70" aria-hidden="true" />
+                  <div className="rounded-[22px] border border-slate-700/80 bg-slate-950/80 px-4 py-4 text-center shadow-[0_10px_30px_rgba(2,6,23,0.22)] sm:px-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-200/90">CareOn regielaag</p>
+                    <p className="mt-1 text-sm font-semibold text-white">Status · Eigenaarschap · Audit · Volgende actie</p>
+                  </div>
+                  <div className="h-7 w-px bg-slate-700/70" aria-hidden="true" />
                 </div>
-                <div className="rounded-2xl border border-slate-800/80 bg-white/[0.02] px-3 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Tempo</p>
-                  <p className="mt-1 text-sm text-slate-100">Minder wachten</p>
+
+                <div className="mt-4 grid gap-2 sm:grid-cols-4">
+                  {["Status", "Eigenaarschap", "Audit", "Volgende actie"].map((item) => (
+                    <div
+                      key={item}
+                      className="rounded-full border border-slate-800/80 bg-white/[0.02] px-3 py-2 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-slate-300"
+                    >
+                      {item}
+                    </div>
+                  ))}
                 </div>
               </div>
             </HoverPanel>
 
-            <HoverPanel className="overflow-hidden rounded-[28px]">
-              <div className="border-b border-slate-800/80 px-6 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Werkstroomoverzicht</p>
-                <h3 className="mt-2 text-lg font-semibold text-white">Eén route, vijf gecontroleerde stappen.</h3>
+            <HoverPanel className="rounded-[28px] p-6 md:p-7">
+              <div className="border-b border-slate-800/80 pb-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Werkstroomprincipes</p>
+                <h3 className="mt-2 text-lg font-semibold text-white">Wat de laag zichtbaar houdt.</h3>
               </div>
 
-              <div className="divide-y divide-slate-800/80">
-                {workflowRows.map((row, index) => (
-                  <div key={row.title} className="flex items-start gap-4 px-6 py-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-700/80 bg-slate-900/80 text-[11px] font-semibold text-slate-200">
-                      {row.step}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-white">{row.title}</p>
-                        <span
-                          className={`rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] ${
-                            index === 2
-                              ? "border-violet-300/20 bg-violet-400/10 text-violet-200"
-                              : "border-slate-700/80 bg-slate-900/80 text-slate-400"
-                          }`}
-                        >
-                          {row.state}
-                        </span>
-                      </div>
-                      <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-300">{row.copy}</p>
-                    </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {workflowPrinciples.map((item) => (
+                  <div
+                    key={item.title}
+                    className="rounded-2xl border border-slate-800/80 bg-white/[0.02] px-4 py-4 transition-colors hover:border-slate-700/90 hover:bg-white/[0.035]"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{item.title}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">{item.copy}</p>
                   </div>
                 ))}
               </div>
@@ -530,36 +595,70 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
           </div>
         </section>
 
-        <section id="hoe-het-werkt" className="scroll-mt-24 border-t border-slate-800/80 py-16">
+        <section id="hoe-het-werkt" className="scroll-mt-24 border-t border-slate-800/80 py-14 sm:py-16">
           <SectionHeading
             eyebrow="Hoe het werkt"
-            title="Van signaal naar bevestigde overdracht."
+            title="Van aanvraag naar bevestigde overdracht"
+            copy="CareOn brengt gemeenten en zorgaanbieders samen in één gecontroleerde werkstroom, met duidelijke eigenaarschap, uitlegbare keuzes en minder overdrachtsruis."
           />
 
-          <div className="mt-10 grid gap-4">
-            {workflowRows.map((step) => (
-              <HoverPanel
-                key={step.title}
-                className="grid gap-3 rounded-[24px] px-5 py-4 sm:grid-cols-[auto_1fr_auto]"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-700/80 bg-slate-900/80 text-[11px] font-semibold text-slate-200">
-                    {step.step}
+          <div className="mt-8 overflow-hidden rounded-[28px] border border-slate-800/80 bg-slate-950/55 shadow-[0_18px_50px_rgba(2,6,23,0.28)]">
+            <div className="relative grid gap-px bg-slate-800/80 lg:grid-cols-5">
+              <div
+                className="pointer-events-none absolute left-6 right-6 top-10 hidden h-px bg-gradient-to-r from-transparent via-slate-600/80 to-transparent lg:block"
+                aria-hidden="true"
+              />
+              {workflowStepperSteps.map((step, index) => (
+                <div
+                  key={step.title}
+                  className="relative bg-[#0a1020] px-4 py-4 transition-colors duration-200 hover:bg-slate-900/80 sm:px-5 sm:py-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex shrink-0 items-center gap-3">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-2xl border text-[11px] font-semibold ${
+                          index === 1
+                            ? "border-violet-300/30 bg-slate-950 text-violet-100 shadow-[0_0_0_1px_rgba(124,58,237,0.16)]"
+                            : "border-slate-700/80 bg-slate-900/80 text-slate-200"
+                        }`}
+                      >
+                        {step.step}
+                      </div>
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.12em] ${
+                          index === 1
+                            ? "border-violet-300/25 bg-slate-950 text-violet-200"
+                            : "border-slate-700/80 bg-slate-900/80 text-slate-400"
+                        }`}
+                      >
+                        {step.state}
+                      </span>
+                    </div>
                   </div>
-                  <div className="sm:hidden">
-                    <p className="text-sm font-semibold text-white">{step.title}</p>
-                    <p className="text-xs text-slate-400">{step.state}</p>
+
+                  <div className="mt-3 min-w-0">
+                    <p className="text-[13px] font-semibold text-white sm:text-sm">{step.title}</p>
+                    <p className="mt-1.5 max-w-[17rem] text-[13px] leading-5 text-slate-300 sm:mt-2 sm:text-sm sm:leading-6">
+                      {step.copy}
+                    </p>
                   </div>
+
+                  {index < workflowStepperSteps.length - 1 ? (
+                    <div
+                      className="pointer-events-none absolute right-0 top-7 hidden h-px w-3 translate-x-1/2 bg-slate-700/70 lg:block"
+                      aria-hidden="true"
+                    />
+                  ) : null}
                 </div>
-                <div className="min-w-0">
-                  <p className="hidden text-sm font-semibold text-white sm:block">{step.title}</p>
-                  <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-300">{step.copy}</p>
-                </div>
-                <div className="hidden sm:flex sm:items-start">
-                  <span className="rounded-full border border-slate-700/80 bg-slate-900/80 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
-                    {step.state}
-                  </span>
-                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {workflowValueCards.map((card) => (
+              <HoverPanel key={card.title} className="rounded-[22px] p-4 sm:p-5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">{card.title}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{card.copy}</p>
               </HoverPanel>
             ))}
           </div>
@@ -592,23 +691,23 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
         </section>
 
         <section className="border-t border-slate-800/80 py-16">
-          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-stretch">
+          <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
             <HoverPanel className="rounded-[28px] p-6 md:p-7">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Waarom dit landt</p>
-              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">Rustige coördinatie, duidelijke fases, minder omwegen.</h3>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">Sneller duidelijkheid, minder herstelwerk, meer vertrouwen.</h3>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-                CareOn sluit aan op de manier waarop gemeenten en aanbieders al werken, maar brengt de stappen samen in
-                één gecontroleerde werkstroom met heldere eigenaarschap en auditability.
+                CareOn helpt teams sneller tot een gedeelde beslissing te komen, met minder afstemming achteraf en
+                meer grip op waarom een route gekozen is.
               </p>
             </HoverPanel>
 
-            <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 lg:min-w-[320px]">
+            <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-3">
               {[
-                ["Eén werkstroom", "Van aanvraag tot intake in dezelfde taal."],
-                ["Begrensde toegang", "Iedere rol ziet alleen wat nodig is."],
-                ["Bevestigde overdracht", "De stap blijft zichtbaar tot hij rond is."],
+                ["Sneller duidelijk", "Teams zien eerder wat nodig is om verder te kunnen."],
+                ["Minder herstelwerk", "Minder losse afstemming en minder dubbele uitleg."],
+                ["Meer vertrouwen", "Beslissingen blijven uitlegbaar voor alle betrokkenen."],
               ].map(([title, copy]) => (
-                <HoverPanel key={title} className="rounded-[24px] p-5">
+                <HoverPanel key={title} className="rounded-[24px] p-5 md:p-6">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{title}</p>
                   <p className="mt-2 text-sm leading-6 text-slate-300">{copy}</p>
                 </HoverPanel>
@@ -677,9 +776,42 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
             ))}
           </div>
         </section>
+
+        <section id="over-ons" className="scroll-mt-24 border-t border-slate-800/80 py-16">
+          <SectionHeading
+            eyebrow="Over ons"
+            title="Een operationele laag voor veilige coördinatie."
+            copy="CareOn is gebouwd voor gemeenten en zorgaanbieders die een helder, auditbaar en rustig proces willen. We brengen de werkstroom boven de bestaande keten, zonder de menselijke beslissing over te nemen."
+          />
+
+          <div className="mt-10 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+            <HoverPanel className="rounded-[28px] p-6 md:p-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Waar we voor staan</p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">
+                Minder ruis, meer herleiding, duidelijke volgende stappen.
+              </h3>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+                We ontwerpen CareOn om vraag, validatie, beoordeling en overdracht in één gecontroleerde omgeving te
+                houden. Dat helpt teams sneller te handelen zonder de keten onduidelijker te maken.
+              </p>
+            </HoverPanel>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              {[
+                ["Werkstroom eerst", "Het systeem stuurt op de volgende actie, niet op losse data."],
+                ["Rolzuiver", "Gemeente en aanbieder zien en doen alleen wat bij hun taak hoort."],
+              ].map(([title, copy]) => (
+                <HoverPanel key={title} className="rounded-[24px] p-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{title}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{copy}</p>
+                </HoverPanel>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
 
-      <footer id="over-ons" className="border-t border-slate-800/80 bg-[#060910] scroll-mt-24">
+      <footer className="border-t border-slate-800/80 bg-[#060910]">
         <div className="mx-auto grid max-w-[1440px] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8">
           <div className="space-y-4">
             <a href="/" className="inline-flex items-center gap-3">
@@ -703,7 +835,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
               ["Werkstroom", "#oplossing"],
               ["Voor gemeenten", "#voor-wie"],
               ["Voor aanbieders", "#voor-wie"],
-              ["Privacy", "#over-ons"],
+              ["Privacy", "#resources"],
               ["Contact", "#resources"],
             ].map(([label, href]) => (
               <a key={label} href={href} className="text-sm text-slate-300 transition-colors hover:text-white">
