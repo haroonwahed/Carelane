@@ -102,6 +102,7 @@ export async function loginAs(page: import("@playwright/test").Page, username: s
   await expect(
     page.getByText("Ongeldige gebruikersnaam of wachtwoord. Probeer opnieuw."),
   ).toHaveCount(0);
+  await expect(page.getByTestId("care-sidebar")).toBeVisible({ timeout: 45_000 });
   await expect(page).not.toHaveURL(/\/login\/?$/);
 }
 
@@ -230,7 +231,7 @@ export async function seedGoldenPathCases(page: import("@playwright/test").Page)
     complexity: "MULTIPLE",
     zorgvorm_gewenst: "OUTPATIENT",
     preferred_care_form: "OUTPATIENT",
-    preferred_region_type: "GEMEENTELIJK",
+    preferred_region_type: bootstrap.json?.initial_values.preferred_region_type ?? "JEUGDREGIO",
     preferred_region: region?.value ?? bootstrap.json?.initial_values.preferred_region,
     gemeente: municipality?.value ?? bootstrap.json?.initial_values.gemeente,
     case_coordinator: coordinator?.value ?? bootstrap.json?.initial_values.case_coordinator,

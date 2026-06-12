@@ -334,9 +334,9 @@ export function shortenAttentionLabel(headline: string, body: string): string {
   const raw = body.trim();
   if (!raw) return headline;
   const lower = raw.toLowerCase();
-  if (lower.includes("samenvatting") && lower.includes("ontbreekt")) return "Samenvatting ontbreekt";
+  if (lower.includes("casusoverzicht") && lower.includes("ontbreekt")) return "Casusoverzicht ontbreekt";
   if (lower.includes("gemeentelijke validatie") || lower.includes("gemeentevalidatie")) {
-    return "Gemeentelijke validatie vereist";
+    return "Toetsing vereist";
   }
   if (lower.includes("tarief") || lower.includes("bekostiging")) {
     return "Tarief/bekostiging handmatig toetsen";

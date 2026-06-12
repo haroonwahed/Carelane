@@ -79,7 +79,7 @@ export const E2E_PROVIDER_ONE_NAME = process.env.E2E_PROVIDER_ONE_NAME ?? "Horiz
 export const E2E_PROVIDER_TWO_NAME = process.env.E2E_PROVIDER_TWO_NAME ?? "Kompas Zorg";
 /** Labels from `seed_demo_data` MunicipalityConfiguration / RegionalConfiguration (see intake-form API). */
 export const E2E_MUNICIPALITY_NAME = process.env.E2E_MUNICIPALITY_NAME ?? "Utrecht";
-export const E2E_REGION_NAME = process.env.E2E_REGION_NAME ?? "Utrecht Regio";
+export const E2E_REGION_NAME = process.env.E2E_REGION_NAME ?? "Utrecht Stad";
 export const E2E_DEMO_CASE_TITLE =
   process.env.E2E_DEMO_CASE_TITLE ?? "Pilot demo casus: urgente jeugdzorg";
 

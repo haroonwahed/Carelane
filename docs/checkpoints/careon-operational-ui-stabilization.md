@@ -52,6 +52,10 @@ Aanmelding → Matching → Aanbiederreactie → Plaatsing → Intake
 - Legacy aliases may remain in adapters/helpers if they are not exposed as primary visible UI language.
 - `Regio ontbreekt` may appear when the payload lacks a safe region value.
 
+## Stabilization Closed
+
+The operational UI stabilization wave is complete. No open stabilization tasks remain in this checkpoint.
+
 ## Guardrails Going Forward
 
 - Do not reintroduce `Samenvatting`, `Gemeente Validatie`, `Beoordeling`, or `Aanbieder Beoordeling` as visible primary phases.
@@ -60,11 +64,3 @@ Aanmelding → Matching → Aanbiederreactie → Plaatsing → Intake
 - Empty states must only appear when no visible rows exist.
 - No new hardcoded colors, one-off badge systems, duplicate button systems, or decorative helper cards.
 - Use `CarePageScaffold`, `PageHeroHeader`, `CareAlertCard`, `CareWorkspaceSection`, `CareWorkRow`, and `CareStatusBadge` patterns.
-
-## Recommended Next Work
-
-- Full screenshot review for detail pages.
-- Data quality improvement for missing region fields.
-- Backend/API alignment for provider response naming if needed.
-- Route cleanup only if the compatibility strategy is approved.
-- Demo script and pilot scenario preparation.

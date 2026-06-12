@@ -77,13 +77,6 @@ const gemeenteNavigation: NavSection[] = [
         icon: FileText,
         href: "/casussen",
         surfaceStatus: "ACTIVE_PRODUCT",
-      },
-      {
-        id: "acties",
-        label: "Acties",
-        icon: CheckSquare,
-        href: "/acties",
-        surfaceStatus: "ACTIVE_PRODUCT",
       }
     ]
   },
@@ -113,6 +106,20 @@ const gemeenteNavigation: NavSection[] = [
         href: "/plaatsingen",
         surfaceStatus: "ACTIVE_PRODUCT",
       },
+    ]
+  },
+  {
+    id: "support",
+    label: "ONDERSTEUNING",
+    color: "muted",
+    items: [
+      {
+        id: "acties",
+        label: "Acties",
+        icon: CheckSquare,
+        href: "/acties",
+        surfaceStatus: "ACTIVE_PRODUCT",
+      }
     ]
   },
   {
@@ -188,13 +195,6 @@ const zorgaanbiederNavigation: NavSection[] = [
         surfaceStatus: "ACTIVE_PRODUCT",
       },
       {
-        id: "nieuwe-casus",
-        label: "Nieuwe aanvraag",
-        icon: Plus,
-        href: "/casussen/nieuw",
-        surfaceStatus: "ACTIVE_PRODUCT",
-      },
-      {
         id: "beoordelingen",
         label: "Reacties",
         icon: FileCheck,
@@ -207,14 +207,21 @@ const zorgaanbiederNavigation: NavSection[] = [
         icon: FileText,
         href: "/mijn-casussen",
         surfaceStatus: "ACTIVE_PRODUCT",
-      }
+      },
     ]
   },
   {
-    id: "instellingen",
-    label: "INSTELLINGEN",
+    id: "support",
+    label: "ONDERSTEUNING",
     color: "muted",
     items: [
+      {
+        id: "nieuwe-casus",
+        label: "Nieuwe aanvraag",
+        icon: Plus,
+        href: "/casussen/nieuw",
+        surfaceStatus: "ACTIVE_PRODUCT",
+      },
       {
         id: "documenten",
         label: "Documenten",
@@ -246,13 +253,6 @@ const adminNavigation: NavSection[] = [
         icon: FileText,
         href: "/casussen",
         surfaceStatus: "ACTIVE_PRODUCT",
-      },
-      {
-        id: "acties",
-        label: "Acties",
-        icon: CheckSquare,
-        href: "/acties",
-        surfaceStatus: "ACTIVE_PRODUCT",
       }
     ]
   },
@@ -282,6 +282,20 @@ const adminNavigation: NavSection[] = [
         href: "/plaatsingen",
         surfaceStatus: "ACTIVE_PRODUCT",
       },
+    ]
+  },
+  {
+    id: "support",
+    label: "ONDERSTEUNING",
+    color: "muted",
+    items: [
+      {
+        id: "acties",
+        label: "Acties",
+        icon: CheckSquare,
+        href: "/acties",
+        surfaceStatus: "ACTIVE_PRODUCT",
+      }
     ]
   },
   {

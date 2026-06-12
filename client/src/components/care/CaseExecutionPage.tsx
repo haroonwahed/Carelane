@@ -116,9 +116,9 @@ type FlowStepId =
 function phaseDecisionEyebrow(stepId: FlowStepId): string {
   const labels: Record<FlowStepId, string> = {
     casus: "Casusbasis",
-    samenvatting: "Samenvatting",
+    samenvatting: "Casusoverzicht",
     matching: "Matching",
-    gemeente_validatie: CARE_TERMS.workflow.gemeenteValidatie,
+    gemeente_validatie: "Toetsing",
     aanbieder_beoordeling: CARE_TERMS.workflow.aanbiederBeoordeling,
     plaatsing: CARE_TERMS.workflow.plaatsing,
     intake: CARE_TERMS.workflow.intake,
@@ -128,13 +128,13 @@ function phaseDecisionEyebrow(stepId: FlowStepId): string {
 
 function phaseDecisionTitle(stepId: FlowStepId, blockerIsMissingSummary: boolean): string {
   if (blockerIsMissingSummary) {
-    return "Samenvatting vereist";
+    return "Casusoverzicht vereist";
   }
   const titles: Record<FlowStepId, string> = {
     casus: "Casus vastleggen",
-    samenvatting: "Samenvatting vereist",
+    samenvatting: "Casusoverzicht vereist",
     matching: "Matching resultaat",
-    gemeente_validatie: "Matchadvies controleren",
+    gemeente_validatie: "Matchadvies toetsen",
     aanbieder_beoordeling: CARE_TERMS.workflow.aanbiederBeoordeling,
     plaatsing: `${CARE_TERMS.workflow.plaatsing} afronden`,
     intake: `${CARE_TERMS.workflow.intake} starten`,
@@ -199,7 +199,7 @@ function operationalRequirementItems(evaluation: DecisionEvaluation | null): str
     items.push("Vul ontbrekende casusgegevens aan");
   }
   if (!evaluation.decision_context.matching_summary_ready && !evaluation.decision_context.has_summary) {
-    items.push("Controleer en voltooi samenvatting");
+    items.push("Controleer en voltooi casusoverzicht");
   }
   if (!evaluation.decision_context.has_matching_result && evaluation.decision_context.matching_summary_ready) {
     items.push("Start matching");
@@ -212,7 +212,7 @@ function operationalRequirementItems(evaluation: DecisionEvaluation | null): str
       || evaluation.current_state === "BUDGET_REVIEW_PENDING")
     && evaluation.decision_context.provider_review_status !== "ACCEPTED"
   ) {
-    items.push("Wacht op aanbiederbeoordeling of stuur opvolging");
+    items.push("Wacht op aanbiederreactie of stuur opvolging");
   }
   if (
     evaluation.current_state === "PROVIDER_ACCEPTED"
@@ -263,10 +263,10 @@ function waitingOnForWorkflowState(
   summaryNeedsCaseCompletion: boolean,
 ): string {
   if (summaryNeedsCaseCompletion) {
-    return "Samenvatting wordt verwerkt";
+    return "Casusoverzicht wordt verwerkt";
   }
   if (state === "MATCHING_READY" && !ctx?.selected_provider_id) {
-    return `Wacht op ${CARE_TERMS.workflow.gemeenteValidatie.toLowerCase()}`;
+    return "Wacht op toetsing";
   }
   if (isProviderReviewState(state)) {
     return "Wacht op reactie aanbieder";
@@ -664,18 +664,18 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
       tone: decisionEvaluation?.decision_context.required_data_complete ? "success" : "warning",
     },
     {
-      label: "Samenvatting",
+      label: "Casusoverzicht",
       value: decisionEvaluation?.decision_context.has_summary ? "Beschikbaar" : "Ontbreekt",
       impact: decisionEvaluation?.decision_context.has_summary
         ? "Matching-input is aanwezig."
-        : "Zonder samenvatting is matchadvies niet betrouwbaar.",
+        : "Zonder casusoverzicht is matchadvies niet betrouwbaar.",
       tone: decisionEvaluation?.decision_context.has_summary ? "success" : "danger",
     },
     {
       label: "Matchresultaat",
       value: decisionEvaluation?.decision_context.has_matching_result ? "Beschikbaar" : "Niet beschikbaar",
       impact: decisionEvaluation?.decision_context.has_matching_result
-        ? "Gemeentevalidatie kan plaatsvinden."
+        ? "Toetsing kan plaatsvinden."
         : "Nog geen voorstel om te valideren.",
       tone: decisionEvaluation?.decision_context.has_matching_result ? "info" : "warning",
     },
@@ -709,8 +709,8 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     },
   ];
   const lockedActionFallbackReasons: Record<string, string> = {
-    START_MATCHING: "Samenvatting ontbreekt.",
-    SEND_TO_PROVIDER: "Gemeentevalidatie ontbreekt.",
+    START_MATCHING: "Casusoverzicht ontbreekt.",
+    SEND_TO_PROVIDER: "Toetsing ontbreekt.",
     CONFIRM_PLACEMENT: "Acceptatie door de aanbieder ontbreekt.",
     START_INTAKE: "Plaatsing ontbreekt.",
   };
@@ -722,7 +722,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     neutral: "🟢",
   };
   const compactEvidenceRows = evidenceRows.filter((row) => (
-    row.label === "Samenvatting"
+    row.label === "Casusoverzicht"
     || row.label === "Matchresultaat"
     || row.label === "Onderbouwing matchadvies"
     || row.label === "Laatste aanbiederreactie"
@@ -733,12 +733,12 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     ?? "Matching is nog niet beschikbaar.";
   const summaryPreview = spaCase.systemInsight?.trim()
     ? spaCase.systemInsight.trim()
-    : "Samenvatting gereed. Controleer de casuscontext en start daarna matching.";
+    : "Casusoverzicht gereed. Controleer de casuscontext en start daarna matching.";
   const summaryRiskItems = decisionEvaluation?.risks?.length
     ? decisionEvaluation.risks.slice(0, 3).map((risk) => risk.message)
     : [
       blockerIsMissingSummary
-        ? "Samenvatting ontbreekt nog; matching blijft vergrendeld."
+        ? "Casusoverzicht ontbreekt nog; matching blijft vergrendeld."
         : "Geen kritieke blokkades op basis van huidige casuscontext.",
     ];
   const summaryMatchInputs = [
@@ -827,7 +827,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     summaryNeedsCaseCompletion,
   );
   const ctaSupportLine = summaryNeedsCaseCompletion
-    ? "Matching wordt gestart zodra samenvatting compleet is."
+    ? "Matching wordt gestart zodra casusoverzicht compleet is."
     : nextBestAction?.action === "START_MATCHING"
       ? (
         decisionEvaluation?.decision_context.has_summary
@@ -1120,7 +1120,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
       {isGemeenteValidationPhase ? (
         <>
           <GuidanceContextBanner testId="case-gemeente-validatie-intro">
-            Gemeentevalidatie bevestigt of de voorgestelde route inhoudelijk en financieel gedragen kan worden.
+            Toetsing bevestigt of de voorgestelde route inhoudelijk en financieel gedragen kan worden.
           </GuidanceContextBanner>
           <div className="flex flex-wrap items-center gap-2">
             <InlineHelpChip
@@ -1133,8 +1133,8 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
               </p>
             </InlineHelpChip>
             <VideoHelpTrigger
-              title="Gemeentevalidatie"
-                script="De gemeente controleert of de voorgestelde plaatsingsroute akkoord is. Bij akkoord kan de casus verder richting aanbiederbeoordeling of plaatsing. Bij afwijzing moet duidelijk zijn welke vervolgstap nodig is."
+              title="Toetsing"
+                script="De gemeente controleert of de voorgestelde plaatsingsroute akkoord is. Bij akkoord kan de casus verder richting aanbiederreactie of plaatsing. Bij afwijzing moet duidelijk zijn welke vervolgstap nodig is."
               testId="case-gemeente-validatie-video"
             />
           </div>
@@ -1220,9 +1220,9 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
         validatie={(
           <CaseDetailEvidenceList
             rows={[
-              { label: "Gemeentelijke validatie", value: resolvedState === "MATCHING_READY" ? "Vereist" : "Niet actief" },
+              { label: "Toetsing route", value: resolvedState === "MATCHING_READY" ? "Vereist" : "Niet actief" },
               { label: "Verplichte gegevens", value: decisionEvaluation?.decision_context.required_data_complete ? "Compleet" : "Onvolledig" },
-              { label: "Samenvatting", value: decisionEvaluation?.decision_context.has_summary ? "Beschikbaar" : "Ontbreekt" },
+              { label: "Casusoverzicht", value: decisionEvaluation?.decision_context.has_summary ? "Beschikbaar" : "Ontbreekt" },
             ]}
           />
         )}
@@ -1262,7 +1262,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => setSummaryFlowOpen(true)}>Samenvatting</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSummaryFlowOpen(true)}>Casusoverzicht</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setArchiveOpen(true)}>Casus archiveren</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
@@ -1307,11 +1307,11 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
       <Dialog open={summaryFlowOpen} onOpenChange={setSummaryFlowOpen}>
         <DialogContent className="sm:max-w-none" style={{ maxWidth: tokens.layout.dialogWideMaxWidth }}>
           <DialogHeader>
-            <DialogTitle>Samenvatting</DialogTitle>
+            <DialogTitle>Casusoverzicht</DialogTitle>
             <DialogDescription>
               {summaryNeedsCaseCompletion
-                ? "Casusgegevens zijn nog niet compleet; samenvatting volgt automatisch zodra de casus is aangevuld."
-                : "Controleer de samenvatting en ga daarna verder met matching."}
+                ? "Casusgegevens zijn nog niet compleet; casusoverzicht volgt automatisch zodra de casus is aangevuld."
+                : "Controleer het casusoverzicht en ga daarna verder met matching."}
             </DialogDescription>
           </DialogHeader>
 
@@ -1320,13 +1320,13 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
               <div className="border border-border/70 p-3 text-sm text-foreground space-y-2">
                 <p className="font-medium">Casusgegevens onvolledig</p>
                 <p className="text-muted-foreground">
-                  Vul de casus aan zodat samenvatting en matching automatisch kunnen doorlopen.
+                  Vul de casus aan zodat casusoverzicht en matching automatisch kunnen doorlopen.
                 </p>
               </div>
               <div className="border border-border/70 p-3 text-sm text-foreground space-y-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Samenvatting</p>
-                  <p>Samenvatting wordt automatisch verwerkt zodra de casus compleet is.</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Casusoverzicht</p>
+                  <p>Casusoverzicht wordt automatisch verwerkt zodra de casus compleet is.</p>
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Volgende stap</p>

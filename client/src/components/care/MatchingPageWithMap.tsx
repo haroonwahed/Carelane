@@ -562,7 +562,7 @@ export function MatchingPageWithMap({
                   className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[12px] text-amber-100"
                   role="status"
                 >
-                  Samenvatting nog incompleet — live matchscores volgen zodra de samenvatting gereed is. Onderstaande rangorde blijft indicatief.
+                  Casusoverzicht nog incompleet — live matchscores volgen zodra het casusoverzicht gereed is. Onderstaande rangorde blijft indicatief.
                 </p>
               ) : null}
               {liveApiRanked && liveApiRanked.length > 0 ? (

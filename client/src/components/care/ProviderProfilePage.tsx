@@ -223,6 +223,7 @@ export function ProviderProfilePage({
 
             {/* QUICK SUMMARY */}
             <Samenvatting
+              title="Casusoverzicht"
               items={[
                 {
                   icon: "success" as const,

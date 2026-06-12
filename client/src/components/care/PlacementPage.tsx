@@ -397,7 +397,7 @@ export function PlacementPage({
         <div className="col-span-3">
       <CarePanel className="sticky p-4" style={{ top: tokens.layout.edgeZero }}>
             <h3 className="text-sm font-semibold text-foreground mb-4">
-              Samenvatting
+              Casusoverzicht
             </h3>
             
             <div className="space-y-3 text-sm">

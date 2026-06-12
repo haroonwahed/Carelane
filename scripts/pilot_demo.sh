@@ -34,7 +34,7 @@ export E2E_PROVIDER_TWO_USERNAME="${E2E_PROVIDER_TWO_USERNAME:-demo_provider_kom
 export E2E_PROVIDER_ONE_NAME="${E2E_PROVIDER_ONE_NAME:-Horizon Jeugdzorg}"
 export E2E_PROVIDER_TWO_NAME="${E2E_PROVIDER_TWO_NAME:-Kompas Zorg}"
 export E2E_MUNICIPALITY_NAME="${E2E_MUNICIPALITY_NAME:-Utrecht}"
-export E2E_REGION_NAME="${E2E_REGION_NAME:-Utrecht Regio}"
+export E2E_REGION_NAME="${E2E_REGION_NAME:-Utrecht Stad}"
 export E2E_DEMO_CASE_TITLE="${E2E_DEMO_CASE_TITLE:-Pilot demo casus: urgente jeugdzorg}"
 
 mkdir -p logs
@@ -189,6 +189,10 @@ for provider_name, username in [
     profile.save()
     profile.served_regions.set([region])
 
+    provider_user = User.objects.get(username=username)
+    provider_client.responsible_coordinator = provider_user
+    provider_client.save(update_fields=["responsible_coordinator", "updated_at"])
+
 print("seeded pilot demo org", org.slug)
 PY
 
@@ -222,6 +226,7 @@ echo "[pilot-demo] Normalizing rejected placement for the rematch phase..."
 "$PYTHON_BIN" manage.py shell <<'PY'
 import os
 from contracts.models import CareCase, CaseIntakeProcess, OutcomeReasonCode, PlacementRequest
+from contracts.workflow_state_machine import WorkflowState
 
 title = os.environ["E2E_DEMO_CASE_TITLE"]
 intake = CaseIntakeProcess.objects.select_related("contract").get(title=title)
@@ -240,7 +245,8 @@ placement.provider_response_reason_code = OutcomeReasonCode.NONE
 placement.save(update_fields=["status", "provider_response_status", "provider_response_reason_code", "updated_at"])
 
 intake.status = CaseIntakeProcess.ProcessStatus.MATCHING
-intake.save(update_fields=["status", "updated_at"])
+intake.workflow_state = WorkflowState.MATCHING_READY
+intake.save(update_fields=["status", "workflow_state", "updated_at"])
 
 if intake.case_record is not None:
     intake.case_record.case_phase = CareCase.CasePhase.MATCHING
