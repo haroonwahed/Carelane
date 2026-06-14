@@ -3,7 +3,7 @@ import type { CasusPhase } from "../../lib/phaseEngine";
 export type CareUrgencyTone = "urgent" | "warning" | "positive" | "normal";
 export type CareValidationTone = "error" | "warning" | "info" | "success";
 export type CareQuickFilterTone = "no-match" | "delayed" | "high-risk" | "ready-placement";
-export type CareCaseStatusTone = "intake" | "beoordeling" | "matching" | "plaatsing" | "afgerond";
+export type CareCaseStatusTone = "aanmelding" | "aanbiederreactie" | "matching" | "plaatsing" | "afgerond";
 export type CareWorkflowStatusTone =
   | "intake"
   | "assessment"
@@ -49,12 +49,12 @@ export function urgencyToneClasses(level: CareUrgencyTone) {
 
 export function caseStatusToneClass(status: CareCaseStatusTone): string {
   switch (status) {
-    case "intake":
-      return "text-blue-300";
-    case "beoordeling":
+    case "aanmelding":
       return "text-blue-300";
     case "matching":
       return "text-amber-300";
+    case "aanbiederreactie":
+      return "text-fuchsia-300";
     case "plaatsing":
       return "text-emerald-300";
     default:
@@ -137,15 +137,15 @@ export function validationToneClasses(level: CareValidationTone) {
 
 export function phaseToneClass(phase: CasusPhase): string {
   switch (phase) {
-    case "intake_initial":
+    case "aanmelding":
       return "text-primary";
-    case "beoordeling":
-      return "text-blue-300";
     case "matching":
       return "text-amber-300";
+    case "aanbiederreactie":
+      return "text-fuchsia-300";
     case "plaatsing":
       return "text-cyan-300";
-    case "intake_provider":
+    case "intake":
       return "text-emerald-300";
     case "geblokkeerd":
       return "text-destructive";

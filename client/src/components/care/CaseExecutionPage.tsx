@@ -931,7 +931,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     </div>
   );
 
-  const isGemeenteValidationPhase =
+  const showGemeenteToetsingGuidance =
     phasePresentation.apiPhase === "gemeente_validatie" || resolvedState === "MATCHING_READY";
   const showProviderRejectionGuidance = providerRejectionSignal;
   const blockedTimeline = isReferenceBlockedCase
@@ -1077,7 +1077,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     blockedReferenceLayout
   ) : (
     <div className="space-y-4">
-      {isGemeenteValidationPhase ? (
+      {showGemeenteToetsingGuidance ? (
         <>
           <GuidanceContextBanner testId="case-gemeente-validatie-intro">
             Toetsing bevestigt of de voorgestelde route inhoudelijk en financieel gedragen kan worden.

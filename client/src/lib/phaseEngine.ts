@@ -7,15 +7,12 @@
  *  - Signal computation
  *  - Allowed actions per phase + role
  *
- * UI never guesses what to show. It calls computeCaseState(casus, role)
- * and renders what it receives.
+ * Canonical 5-phase flow (v1.2):
+ *   Aanmelding → Matching → Aanbiederreactie → Plaatsing → Intake
  *
- * NEW FLOW (v2):
- *   Casus → Matching → Aanbieder selecteren → Aanbiederbeoordeling → Intake → Afgerond
- *
- *   Gemeente:   casus aanmaken → matching uitvoeren → aanbieder kiezen → verzoek versturen
- *   Aanbieder:  verzoek ontvangen → beoordelen → accepteren/afwijzen/wachtlijst → intake plannen
- *   Municipality-side provider review is REMOVED as a workflow gate.
+ *   Gemeente:    aanmelden → samenvatting → matching uitvoeren → aanbieder kiezen
+ *   Aanbieder:   verzoek ontvangen → reageren → intake plannen en uitvoeren
+ *   Gemeente-toetsing is een goedkeuringsstatus binnen Matching, geen aparte fase.
  */
 
 import { CARE_TERMS } from "./terminology";
@@ -23,11 +20,11 @@ import { CARE_TERMS } from "./terminology";
 // ─── Phase & Status types ─────────────────────────────────────────────────────
 
 export type CasusPhase =
-  | "casus"               // Case created, ready for matching
-  | "matching"            // Gemeente runs matching & selects provider
-  | "aanbieder_selectie"  // Provider selected, sending placement request
-  | "provider_beoordeling" // Provider is reviewing the request
-  | "intake_provider"     // Provider accepted, planning/executing intake
+  | "aanmelding"        // Case created and summary ready
+  | "matching"          // Gemeente runs matching, selects provider, toetsing
+  | "aanbiederreactie"  // Provider is reviewing the placement request
+  | "plaatsing"         // Placement confirmed, preparing intake
+  | "intake"            // Provider executing intake
   | "afgerond"
   | "geblokkeerd";
 
@@ -218,18 +215,18 @@ export const PHASE_TRANSITIONS: Record<CasusStatus, CasusStatus[]> = {
 
 export function statusToPhase(status: CasusStatus): CasusPhase {
   const map: Record<CasusStatus, CasusPhase> = {
-    nieuw:                     "casus",
-    klaar_voor_matching:       "casus",
+    nieuw:                     "aanmelding",
+    klaar_voor_matching:       "aanmelding",
     in_matching:               "matching",
-    match_gevonden:            "aanbieder_selectie",
-    voorgesteld_aan_aanbieder: "provider_beoordeling",
-    provider_beoordeelt:       "provider_beoordeling",
-    geaccepteerd_voor_intake:  "intake_provider",
+    match_gevonden:            "matching",
+    voorgesteld_aan_aanbieder: "aanbiederreactie",
+    provider_beoordeelt:       "aanbiederreactie",
+    geaccepteerd_voor_intake:  "plaatsing",
     afgewezen_door_aanbieder:  "geblokkeerd",
     op_wachtlijst:             "geblokkeerd",
-    meer_info_nodig:           "provider_beoordeling",
-    intake_gepland:            "intake_provider",
-    intake_gestart:            "intake_provider",
+    meer_info_nodig:           "aanbiederreactie",
+    intake_gepland:            "intake",
+    intake_gestart:            "intake",
     zorg_gestart:              "afgerond",
     gesloten:                  "afgerond",
     geblokkeerd:               "geblokkeerd",
@@ -238,12 +235,12 @@ export function statusToPhase(status: CasusStatus): CasusPhase {
 }
 
 export const ALL_PHASES: { id: CasusPhase; label: string; shortLabel: string }[] = [
-  { id: "casus",               label: CARE_TERMS.workflow.casus,                 shortLabel: CARE_TERMS.workflow.casus      },
-  { id: "matching",            label: CARE_TERMS.workflow.matching,              shortLabel: CARE_TERMS.workflow.matching   },
-  { id: "aanbieder_selectie",  label: "Aanbieder selecteren",  shortLabel: "Selectie"   },
-  { id: "provider_beoordeling", label: CARE_TERMS.workflow.aanbiederBeoordeling, shortLabel: CARE_TERMS.workflow.aanbiederBeoordeling },
-  { id: "intake_provider",     label: "Intake aanbieder",      shortLabel: CARE_TERMS.workflow.intake     },
-  { id: "afgerond",            label: "Afgerond",              shortLabel: "Afgerond"   },
+  { id: "aanmelding",       label: "Aanmelding",                                 shortLabel: "Aanmelding"     },
+  { id: "matching",         label: CARE_TERMS.workflow.matching,                 shortLabel: CARE_TERMS.workflow.matching },
+  { id: "aanbiederreactie", label: CARE_TERMS.workflow.aanbiederBeoordeling,     shortLabel: "Aanbiederreactie" },
+  { id: "plaatsing",        label: "Plaatsing",                                  shortLabel: "Plaatsing"      },
+  { id: "intake",           label: CARE_TERMS.workflow.intake,                   shortLabel: CARE_TERMS.workflow.intake },
+  { id: "afgerond",         label: "Afgerond",                                   shortLabel: "Afgerond"       },
 ];
 
 // ─── next_action computation ──────────────────────────────────────────────────
@@ -252,9 +249,7 @@ function computeNextAction(casus: Casus): { label: string; detail: string; type:
   const { phase, matchResults, placement, intake, waitingDays } = casus;
 
   switch (phase) {
-    case "intake_initial":
-    case "beoordeling":
-    case "casus":
+    case "aanmelding":
       return {
         label:  "Start matching",
         detail: "Casus is klaar. Voer matching uit om een geschikte aanbieder te vinden.",
@@ -276,22 +271,7 @@ function computeNextAction(casus: Casus): { label: string; detail: string; type:
       };
     }
 
-    case "aanbieder_selectie": {
-      if (casus.selectedProviderId) {
-        return {
-          label:  "Verstuur plaatsingsverzoek",
-          detail: `Aanbieder geselecteerd: ${placement.providerName ?? "onbekend"}. Stuur het verzoek naar de aanbieder.`,
-          type:   "action",
-        };
-      }
-      return {
-        label:  "Selecteer aanbieder",
-        detail: "Kies een aanbieder uit de matchresultaten om door te gaan.",
-        type:   "action",
-      };
-    }
-
-    case "provider_beoordeling": {
+    case "aanbiederreactie": {
       if (placement.status === "rejected") {
         return {
           label:  "Aanbieder afgewezen — herstart matching",
@@ -313,7 +293,14 @@ function computeNextAction(casus: Casus): { label: string; detail: string; type:
       };
     }
 
-    case "intake_provider": {
+    case "plaatsing":
+      return {
+        label:  "Plaatsing bevestigen",
+        detail: "Aanbieder heeft geaccepteerd. Bevestig de plaatsing om de intake te starten.",
+        type:   "action",
+      };
+
+    case "intake": {
       if (!intake.plannedAt) {
         return {
           label:  "Plan intake",
@@ -407,7 +394,7 @@ function computeSignals(casus: Casus): CasusSignal[] {
     });
   }
 
-  if ((phase === "matching" || phase === "aanbieder_selectie") && matchResults.length === 0) {
+  if (phase === "matching" && matchResults.length === 0) {
     signals.push({
       id: "sig-geen-aanbieder",
       type: "matching",
@@ -418,7 +405,7 @@ function computeSignals(casus: Casus): CasusSignal[] {
     });
   }
 
-  if ((phase === "matching" || phase === "aanbieder_selectie") && matchResults.length > 0 && matchResults[0].availableSpots <= 1) {
+  if (phase === "matching" && matchResults.length > 0 && matchResults[0].availableSpots <= 1) {
     signals.push({
       id: "sig-capaciteit",
       type: "capaciteit",
@@ -429,7 +416,7 @@ function computeSignals(casus: Casus): CasusSignal[] {
     });
   }
 
-  if (phase === "provider_beoordeling" && placement.status === "rejected") {
+  if (phase === "aanbiederreactie" && placement.status === "rejected") {
     signals.push({
       id: "sig-aanbieder-afgewezen",
       type: "matching",
@@ -440,7 +427,7 @@ function computeSignals(casus: Casus): CasusSignal[] {
     });
   }
 
-  if (phase === "provider_beoordeling" && intake.providerResponseDays > 3) {
+  if (phase === "aanbiederreactie" && intake.providerResponseDays > 3) {
     signals.push({
       id: "sig-aanbieder-geen-reactie",
       type: "intake",
@@ -451,7 +438,7 @@ function computeSignals(casus: Casus): CasusSignal[] {
     });
   }
 
-  if (phase === "intake_provider" && !intake.plannedAt && intake.providerResponseDays > 3) {
+  if (phase === "intake" && !intake.plannedAt && intake.providerResponseDays > 3) {
     signals.push({
       id: "sig-intake-niet-gepland",
       type: "intake",
@@ -462,7 +449,7 @@ function computeSignals(casus: Casus): CasusSignal[] {
     });
   }
 
-  if (!placement.validations?.dossierComplete && (phase === "aanbieder_selectie" || phase === "provider_beoordeling")) {
+  if (!placement.validations?.dossierComplete && (phase === "matching" || phase === "aanbiederreactie")) {
     signals.push({
       id: "sig-dossier-onvolledig",
       type: "matching",
@@ -490,9 +477,9 @@ function computeAllowedActions(casus: Casus, role: UserRole): CasusAction[] {
   ) => actions.push({ id: `act-${type}`, type, label, priority, assignedTo: null, dueAt: null, ...extra });
 
   switch (phase) {
-    case "casus":
+    case "aanmelding":
       if (role !== "zorgaanbieder") {
-        add("start_matching",     "Start matching",      "primary");
+        add("start_matching",     "Start matching",       "primary");
         add("edit_basisgegevens", "Bewerk basisgegevens", "secondary");
         add("upload_document",    "Upload document",      "secondary");
       }
@@ -500,52 +487,51 @@ function computeAllowedActions(casus: Casus, role: UserRole): CasusAction[] {
 
     case "matching":
       if (role !== "zorgaanbieder") {
-        add("select_provider",  "Selecteer aanbieder",    "primary");
-        add("rerun_matching",   "Herstart matching",      "secondary");
-        add("expand_radius",    "Vergroot zoekgebied",    "secondary");
-        add("escalate_case",    "Escaleer casus",      "destructive");
-      }
-      break;
-
-    case "aanbieder_selectie":
-      if (role !== "zorgaanbieder") {
         if (selectedProviderId) {
-          add("verstuur_plaatsingsverzoek", "Verstuur plaatsingsverzoek",  "primary");
-          add("stuur_naar_aanbieder",       "Stuur naar aanbieder",        "primary");
-          add("return_to_matching",         "Andere aanbieder kiezen",     "secondary");
+          add("verstuur_plaatsingsverzoek", "Verstuur plaatsingsverzoek", "primary");
+          add("return_to_matching",         "Andere aanbieder kiezen",    "secondary");
         } else {
-          add("select_provider",  "Aanbieder selecteren",   "primary");
+          add("select_provider", "Selecteer aanbieder", "primary");
         }
-        add("escalate_case",      "Escaleer casus",      "destructive");
+        add("rerun_matching",  "Herstart matching",    "secondary");
+        add("expand_radius",   "Vergroot zoekgebied",  "secondary");
+        add("escalate_case",   "Escaleer casus",       "destructive");
       }
       break;
 
-    case "provider_beoordeling":
+    case "aanbiederreactie":
       if (role === "gemeente" || role === "admin") {
         add("follow_up_provider", "Volg op bij aanbieder", "primary");
         add("view_handover",      "Bekijk overdracht",     "secondary");
         add("return_to_matching", "Herstart matching",     "secondary");
-        add("escalate_case",      "Escaleer casus",      "destructive");
+        add("escalate_case",      "Escaleer casus",        "destructive");
       }
       if (role === "zorgaanbieder" || role === "admin") {
-        add("provider_accept_case",    "Accepteren",                "primary");
-        add("provider_reject_case",    "Afwijzen",                  "destructive");
-        add("provider_waitlist_case",  "Op wachtlijst plaatsen",    "secondary");
-        add("provider_request_info",   "Meer informatie nodig",     "secondary");
+        add("provider_accept_case",    "Accepteren",             "primary");
+        add("provider_reject_case",    "Afwijzen",               "destructive");
+        add("provider_waitlist_case",  "Op wachtlijst plaatsen", "secondary");
+        add("provider_request_info",   "Meer informatie nodig",  "secondary");
       }
       break;
 
-    case "intake_provider":
+    case "plaatsing":
+      if (role !== "zorgaanbieder") {
+        add("follow_up_provider", "Volg op bij aanbieder", "primary");
+        add("escalate_case",      "Escaleer casus",        "destructive");
+      }
+      break;
+
+    case "intake":
       if (role === "gemeente" || role === "admin") {
         add("follow_up_provider", "Volg op bij aanbieder", "primary");
         add("view_handover",      "Bekijk overdracht",     "secondary");
-        add("escalate_case",      "Escaleer casus",      "destructive");
+        add("escalate_case",      "Escaleer casus",        "destructive");
       }
       if (role === "zorgaanbieder" || role === "admin") {
-        add("plan_intake",           "Plan intake",          "primary");
-        add("mark_intake_started",   "Intake gestart",       "secondary");
-        add("mark_intake_completed", "Intake afgerond",      "secondary");
-        add("provider_reject_case",  "Alsnog afwijzen",      "destructive");
+        add("plan_intake",           "Plan intake",     "primary");
+        add("mark_intake_started",   "Intake gestart",  "secondary");
+        add("mark_intake_completed", "Intake afgerond", "secondary");
+        add("provider_reject_case",  "Alsnog afwijzen", "destructive");
       }
       break;
 
@@ -584,7 +570,7 @@ function computeTimeline(casus: Casus): CasusTimelineEvent[] {
     date: casus.createdAt,
   });
 
-  if (["matching", "aanbieder_selectie", "provider_beoordeling", "intake_provider", "afgerond", "geblokkeerd"].includes(phase)) {
+  if (["matching", "aanbiederreactie", "plaatsing", "intake", "afgerond", "geblokkeerd"].includes(phase)) {
     events.push({
       id: "tl-matching-started",
       type: "phase_change",
@@ -606,7 +592,7 @@ function computeTimeline(casus: Casus): CasusTimelineEvent[] {
     });
   }
 
-  if (["provider_beoordeling", "intake_provider", "afgerond"].includes(phase)) {
+  if (["aanbiederreactie", "plaatsing", "intake", "afgerond"].includes(phase)) {
     events.push({
       id: "tl-verzoek-verstuurd",
       type: "phase_change",
@@ -617,7 +603,7 @@ function computeTimeline(casus: Casus): CasusTimelineEvent[] {
     });
   }
 
-  if (["intake_provider", "afgerond"].includes(phase) && placement.confirmedAt) {
+  if (["plaatsing", "intake", "afgerond"].includes(phase) && placement.confirmedAt) {
     events.push({
       id: "tl-aanbieder-accepted",
       type: "phase_change",
@@ -628,7 +614,7 @@ function computeTimeline(casus: Casus): CasusTimelineEvent[] {
     });
   }
 
-  if (phase === "intake_provider" && intake.plannedAt) {
+  if (phase === "intake" && intake.plannedAt) {
     events.push({
       id: "tl-intake-planned",
       type: "action",

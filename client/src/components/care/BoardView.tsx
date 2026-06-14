@@ -8,7 +8,7 @@ import {
   Clock
 } from "lucide-react";
 
-type CaseStatus = "intake" | "beoordeling" | "matching" | "plaatsing" | "afgerond";
+type CaseStatus = "aanmelding" | "matching" | "aanbiederreactie" | "plaatsing" | "afgerond";
 type CaseUrgency = "critical" | "high" | "medium" | "low";
 
 interface CaseData {
@@ -28,9 +28,9 @@ interface BoardViewProps {
 
 export function BoardView({ cases, onCaseClick }: BoardViewProps) {
   const columns: { status: CaseStatus; label: string; icon: any; color: string }[] = [
-    { status: "intake", label: "Casus", icon: Inbox, color: "blue" },
-    { status: "beoordeling", label: "Aanbieder beoordeling", icon: ClipboardList, color: "purple" },
+    { status: "aanmelding", label: "Aanmelding", icon: Inbox, color: "blue" },
     { status: "matching", label: "Matching", icon: GitMerge, color: "orange" },
+    { status: "aanbiederreactie", label: "Aanbiederreactie", icon: ClipboardList, color: "purple" },
     { status: "plaatsing", label: "Plaatsing", icon: CheckCircle2, color: "green" },
     { status: "afgerond", label: "Afgerond", icon: FileCheck, color: "gray" }
   ];

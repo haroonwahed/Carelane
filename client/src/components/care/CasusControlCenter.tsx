@@ -311,8 +311,7 @@ function DecisionStrip({
 // ─── 2. Phase Bar ─────────────────────────────────────────────────────────────
 
 function PhaseBar({ currentPhase }: { currentPhase: CasusPhase }) {
-  const visiblePhases = ALL_PHASES.filter(p => p.id !== "geblokkeerd" && p.id !== "intake_initial");
-  const fullPhases = [{ id: "intake_initial", label: "Intake", shortLabel: "Intake" } as (typeof ALL_PHASES)[0], ...visiblePhases];
+  const fullPhases = ALL_PHASES.filter(p => p.id !== "geblokkeerd" && p.id !== "afgerond");
 
   const currentIndex = fullPhases.findIndex(p => p.id === currentPhase);
   const isBlocked = currentPhase === "geblokkeerd";
@@ -441,15 +440,15 @@ function renderCasePhase(
   onAction: (type: ActionType) => void
 ) {
   switch (casus.phase) {
-    case "intake_initial":
+    case "aanmelding":
       return <IntakeInitialPanel casus={casus} state={state} onAction={onAction} />;
-    case "beoordeling":
+    case "aanbiederreactie":
       return <AanbiederreactiePanel casus={casus} state={state} onAction={onAction} />;
     case "matching":
       return <MatchingPanel casus={casus} state={state} role={role} onAction={onAction} />;
     case "plaatsing":
       return <PlaatsingPanel casus={casus} state={state} providers={providers} onAction={onAction} />;
-    case "intake_provider":
+    case "intake":
       return <IntakeProviderPanel casus={casus} state={state} role={role} onAction={onAction} />;
     case "afgerond":
       return <AfgerondPanel casus={casus} />;
@@ -1063,10 +1062,7 @@ function IntelligencePanel({
   state: ComputedCaseState;
   currentPhase: CasusPhase;
 }) {
-  const visiblePhases = [
-    { id: "intake_initial", label: "Intake", shortLabel: "Intake" } as (typeof ALL_PHASES)[0],
-    ...ALL_PHASES.filter(p => p.id !== "geblokkeerd" && p.id !== "intake_initial"),
-  ];
+  const visiblePhases = ALL_PHASES.filter(p => p.id !== "geblokkeerd" && p.id !== "afgerond");
   const currentIndex = visiblePhases.findIndex(p => p.id === currentPhase);
   const isBlocked = currentPhase === "geblokkeerd";
 

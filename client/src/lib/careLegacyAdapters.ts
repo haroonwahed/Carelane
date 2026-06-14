@@ -157,13 +157,13 @@ export function toPhaseCasus(spaCase: SpaCase, providers: SpaProvider[]): Casus 
     urgency: toCasusUrgency(legacy.urgency),
     complexity: legacy.risk === "high" ? "high" : legacy.risk === "medium" ? "medium" : "low",
     phase: status === "nieuw" || status === "klaar_voor_matching"
-      ? "intake_initial"
+      ? "aanmelding"
       : status === "matching_bezig"
           ? "matching"
           : status === "aanbieder_geselecteerd"
-            ? "provider_beoordeling"
+            ? "aanbiederreactie"
             : status === "geaccepteerd_voor_intake"
-              ? "intake_provider"
+              ? "intake"
             : "afgerond",
     status,
     assignedTo: legacy.assignedTo,

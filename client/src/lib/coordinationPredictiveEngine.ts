@@ -64,7 +64,7 @@ function scoreCase(caseItem: Casus): CoordinationCaseForecast {
     reasons.push(`Wachttijd overschrijdt norm (${SLA_DAYS} dagen)`);
   }
 
-  if (caseItem.phase === "beoordeling" && !(caseItem.assessment?.isComplete ?? false)) {
+  if (caseItem.phase === "aanmelding" && !(caseItem.assessment?.isComplete ?? false)) {
     score += 15;
     reasons.push("Beoordeling is nog niet compleet");
   }
@@ -82,7 +82,7 @@ function scoreCase(caseItem: Casus): CoordinationCaseForecast {
     reasons.push("Plaatsing wacht op bevestiging");
   }
 
-  if (caseItem.phase === "intake_provider" && (caseItem.intake?.providerResponseDays ?? 0) > 3) {
+  if (caseItem.phase === "intake" && (caseItem.intake?.providerResponseDays ?? 0) > 3) {
     score += 12;
     reasons.push("Aanbieder reageert traag op intake");
   }
@@ -107,7 +107,7 @@ function scoreCase(caseItem: Casus): CoordinationCaseForecast {
   let nextBestAction = "Monitor voortgang";
   let projectedImpact = "Houdt het dossier actueel";
 
-  if (caseItem.phase === "beoordeling" && !(caseItem.assessment?.isComplete ?? false)) {
+  if (caseItem.phase === "aanmelding" && !(caseItem.assessment?.isComplete ?? false)) {
     nextBestAction = "Rond beoordeling af";
     projectedImpact = "Ontgrendelt matching voor deze casus";
   } else if ((caseItem.phase === "matching" || caseItem.phase === "geblokkeerd") && !caseItem.selectedProviderId) {
@@ -144,8 +144,8 @@ function findProjectedBottleneck(cases: Casus[], forecast: Record<string, Coordi
     const weighted = risk.risk_band === "critical" ? 3 : risk.risk_band === "high" ? 2 : risk.risk_band === "medium" ? 1 : 0;
     if (weighted === 0) continue;
 
-    if (caseItem.phase === "intake_initial" || caseItem.phase === "intake_provider") stageRisk.casussen += weighted;
-    else if (caseItem.phase === "beoordeling") stageRisk.beoordelingen += weighted;
+    if (caseItem.phase === "aanmelding" || caseItem.phase === "intake") stageRisk.casussen += weighted;
+    else if (caseItem.phase === "aanbiederreactie") stageRisk.beoordelingen += weighted;
     else if (caseItem.phase === "matching" || caseItem.phase === "geblokkeerd") stageRisk.matching += weighted;
     else if (caseItem.phase === "plaatsing") stageRisk.plaatsingen += weighted;
   }
@@ -167,7 +167,7 @@ export function buildCoordinationPredictiveSummary(
   }, {});
 
   const assessmentDelayIds = activeCases
-    .filter((c) => c.phase === "beoordeling" && (!(c.assessment?.isComplete ?? false) || c.waitingDays > 4))
+    .filter((c) => c.phase === "aanmelding" && (!(c.assessment?.isComplete ?? false) || c.waitingDays > 4))
     .map((c) => c.id);
 
   const matchFailureIds = activeCases

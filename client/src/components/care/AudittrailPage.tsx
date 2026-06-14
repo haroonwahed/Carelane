@@ -43,7 +43,7 @@ import {
 import { useAuditLog } from "../../hooks/useAuditLog";
 import { tokens } from "../../design/tokens";
 
-type EntityType = "casus" | "beoordeling" | "matching" | "plaatsing" | "intake" | "document" | "gebruiker" | "instellingen";
+type EntityType = "casus" | "aanbiederreactie" | "matching" | "plaatsing" | "intake" | "document" | "gebruiker" | "instellingen";
 type ActionType = "aangemaakt" | "gewijzigd" | "verwijderd" | "bevestigd" | "toegewezen" | "geupload" | "bekeken";
 
 interface AuditEntry {
@@ -69,7 +69,7 @@ interface AuditEntry {
 
 const entityTypeConfig: Record<EntityType, { label: string; icon: any; color: string }> = {
   casus: { label: "Casus", icon: FileText, color: "text-purple-500" },
-  beoordeling: { label: "Aanbieder beoordeling", icon: FileText, color: "text-blue-500" },
+  aanbiederreactie: { label: "Aanbiederreactie", icon: FileText, color: "text-blue-500" },
   matching: { label: "Matching", icon: CheckCircle2, color: "text-green-500" },
   plaatsing: { label: "Plaatsing", icon: CheckCircle2, color: "text-emerald-500" },
   intake: { label: "Intake", icon: FileText, color: "text-amber-500" },
@@ -111,7 +111,7 @@ export function AudittrailPage({ onOpenEntity }: AudittrailPageProps) {
     action: e.action,
     actionType: (["aangemaakt","gewijzigd","verwijderd","bevestigd","toegewezen","geupload","bekeken"]
       .includes(e.action) ? e.action : "gewijzigd") as ActionType,
-    entityType: (["casus","beoordeling","matching","plaatsing","intake","document","gebruiker","instellingen"]
+    entityType: (["casus","aanbiederreactie","matching","plaatsing","intake","document","gebruiker","instellingen"]
       .includes(e.modelName?.toLowerCase() ?? "") ? e.modelName!.toLowerCase() : "casus") as EntityType,
     entityId: e.objectId ?? undefined,
     entityName: e.objectRepr ?? "",
@@ -245,7 +245,7 @@ export function AudittrailPage({ onOpenEntity }: AudittrailPageProps) {
                       >
                         <option value="all">Alle types</option>
                         <option value="casus">Casus</option>
-                        <option value="beoordeling">Aanbieder beoordeling</option>
+                        <option value="aanbiederreactie">Aanbiederreactie</option>
                         <option value="matching">Matching</option>
                         <option value="plaatsing">Plaatsing</option>
                         <option value="intake">Intake</option>

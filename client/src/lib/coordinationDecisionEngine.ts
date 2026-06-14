@@ -123,23 +123,23 @@ export function buildCoordinationDecisionSummary(
   const casesInScope = cases.filter((caseItem) => caseItem.phase !== "afgerond");
 
   const flow_counts: CoordinationFlowCounts = {
-    casussen: casesInScope.filter((c) => c.phase === "casus").length,
-    klaar_voor_matching: casesInScope.filter((c) => c.phase === "casus" || (c.status === "klaar_voor_matching" as string)).length,
-    matching: casesInScope.filter((c) => c.phase === "matching" || c.phase === "aanbieder_selectie" || c.phase === "geblokkeerd").length,
-    bij_aanbieder: casesInScope.filter((c) => c.phase === "provider_beoordeling").length,
-    intake_pending: casesInScope.filter((c) => c.phase === "intake_provider" && c.intake?.status !== "completed").length,
+    casussen: casesInScope.filter((c) => c.phase === "aanmelding").length,
+    klaar_voor_matching: casesInScope.filter((c) => c.phase === "aanmelding" || (c.status === "klaar_voor_matching" as string)).length,
+    matching: casesInScope.filter((c) => c.phase === "matching" || c.phase === "geblokkeerd").length,
+    bij_aanbieder: casesInScope.filter((c) => c.phase === "aanbiederreactie").length,
+    intake_pending: casesInScope.filter((c) => c.phase === "intake" && c.intake?.status !== "completed").length,
   };
 
   const blockedCases = casesInScope.filter((c) => c.phase === "geblokkeerd" || c.status === "geblokkeerd");
-  const casesKlaarVoorMatching = casesInScope.filter((c) => c.phase === "casus");
-  const wachtOpAanbieder = casesInScope.filter((c) => c.phase === "provider_beoordeling");
+  const casesKlaarVoorMatching = casesInScope.filter((c) => c.phase === "aanmelding");
+  const wachtOpAanbieder = casesInScope.filter((c) => c.phase === "aanbiederreactie");
   const afgewezenDoorAanbieder = casesInScope.filter((c) => c.status === "afgewezen_door_aanbieder" as string);
   const casesWithoutMatch = casesInScope.filter(
     (c) => (c.phase === "matching" || c.phase === "geblokkeerd") && !c.selectedProviderId
   );
   const waitingExceeded = casesInScope.filter((c) => c.waitingDays > slaDays);
   const placementPending = casesInScope.filter(
-    (c) => c.phase === "provider_beoordeling" || c.placement?.status === "proposed" || c.placement?.status === "pending"
+    (c) => c.phase === "aanbiederreactie" || c.placement?.status === "proposed" || c.placement?.status === "pending"
   );
   const highRisk = casesInScope.filter(
     (c) => c.urgency === "critical" || c.urgency === "high" || c.complexity === "high"

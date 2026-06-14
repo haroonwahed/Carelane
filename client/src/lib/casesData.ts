@@ -673,7 +673,7 @@ export const mockCasusList: Casus[] = [
     },
   },
 
-  // ⑥ intake_provider — waiting for provider to plan intake
+  // ⑥ intake — waiting for provider to plan intake
   {
     id: "C-2026-0873",
     clientName: "Cliënt N.H.",
@@ -682,7 +682,7 @@ export const mockCasusList: Casus[] = [
     careType: "Gezinsbehandeling",
     urgency: "medium",
     complexity: "medium",
-    phase: "intake_provider",
+    phase: "intake",
     status: "plaatsing_bevestigd",
     assignedTo: "Mark de Vries",
     createdAt: "2026-04-04",
