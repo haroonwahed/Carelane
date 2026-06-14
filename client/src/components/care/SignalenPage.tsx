@@ -22,6 +22,7 @@ import {
   CareWorkListCard,
   CARE_RHYTHM,
   CareWorkRow,
+  CareBadge,
   CareQueueInlineAction,
   EmptyState,
   ErrorState,
@@ -413,9 +414,7 @@ export function SignalenPage({ onOpenCase, onNavigateToWorkflow }: SignalenPageP
           title="Werkvoorraad"
           meta={(
             <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
-              <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
-                {filteredSignals.length} signalen
-              </span>
+              <CareBadge tone="cyan">{filteredSignals.length} signalen</CareBadge>
               <CareSearchFiltersBar
                 className="px-0"
                 tabs={

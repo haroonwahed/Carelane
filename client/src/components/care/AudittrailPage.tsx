@@ -34,6 +34,7 @@ import {
   CarePageScaffold,
   CareSection,
   CareSectionBody,
+  CareBadge,
   CareSectionHeader,
   CareSearchFiltersBar,
   EmptyState,
@@ -223,9 +224,7 @@ export function AudittrailPage({ onOpenEntity }: AudittrailPageProps) {
           title="Werkvoorraad"
           meta={(
             <div className="w-full min-w-0 space-y-2">
-              <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
-                {totalEntries} activiteiten · {todayCount} vandaag · {distinctUsers} gebruikers
-              </span>
+              <CareBadge tone="cyan">{totalEntries} activiteiten · {todayCount} vandaag · {distinctUsers} gebruikers</CareBadge>
               <CareSearchFiltersBar
                 className="px-0"
                 searchValue={searchQuery}

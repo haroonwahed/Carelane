@@ -32,6 +32,7 @@ import {
   CarePageScaffold,
   CareSection,
   CareSectionBody,
+  CareBadge,
   CareSectionHeader,
   CareSearchFiltersBar,
   EmptyState,
@@ -230,9 +231,7 @@ export function DocumentenPage() {
           description="Zoek, filter, bekijk en koppel documenten zonder de context uit het oog te verliezen."
           meta={(
             <div className="w-full min-w-0 space-y-2">
-              <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
-                {filteredDocuments.length} resultaten · {activeCount} actief · {linkedCount} gekoppeld · {recentCount} recent
-              </span>
+              <CareBadge tone="cyan">{filteredDocuments.length} resultaten · {activeCount} actief · {linkedCount} gekoppeld · {recentCount} recent</CareBadge>
               <CareSearchFiltersBar
                 className="px-0"
                 searchValue={searchQuery}

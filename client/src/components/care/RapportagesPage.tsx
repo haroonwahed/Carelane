@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { Download, Eye, FileBarChart2, TrendingUp, CalendarClock, ShieldCheck } from "lucide-react";
+import { Construction, Download, Eye, ShieldCheck } from "lucide-react";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { FieldHelperBox } from "../ui/form";
 import { toast } from "sonner@2.0.3";
 import { tokens } from "../../design/tokens";
 import {
+  CareBadge,
   CareAttentionBar,
   CareInfoPopover,
   CareMetricBadge,
@@ -88,36 +89,10 @@ const exportHistory: ExportHistoryItem[] = [
   },
 ];
 
-function buildReportContent(report: ReportTemplate, sourceLabel: string) {
-  return [
-    `Rapport: ${report.title}`,
-    `Categorie: ${report.category}`,
-    `Bron: ${sourceLabel}`,
-    `Laatste run: ${report.lastRun}`,
-    `Frequentie: ${report.frequency}`,
-    "",
-    report.description,
-    "",
-    "Dit is een demo-export in de frontend.",
-  ].join("\n");
-}
-
-function triggerTextDownload(filename: string, content: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
 export function RapportagesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ReportCategory | "all">("all");
-  const [historyItems, setHistoryItems] = useState<ExportHistoryItem[]>(exportHistory);
+  const [historyItems] = useState<ExportHistoryItem[]>(exportHistory);
   const [previewReport, setPreviewReport] = useState<ReportTemplate | null>(null);
   const [previewSource, setPreviewSource] = useState<string>("Template");
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -138,44 +113,12 @@ export function RapportagesPage() {
   const readyCount = reportTemplates.filter((report) => report.status === "ready").length;
   const firstReadyReport = filteredReports.find((report) => report.status === "ready") ?? reportTemplates.find((report) => report.status === "ready") ?? null;
 
-  const formatExportedNow = () => {
-    const now = new Date();
-    return now.toLocaleString("nl-NL", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const appendHistoryItem = (report: ReportTemplate, format: "csv" | "pdf") => {
-    const entry: ExportHistoryItem = {
-      id: `EXP-${Date.now()}`,
-      templateId: report.id,
-      label: report.title,
-      format,
-      exportedAt: formatExportedNow(),
-      source: "manual",
-    };
-    setHistoryItems((previous) => [entry, ...previous].slice(0, 8));
-  };
-
-  const handleDownloadTemplate = (report: ReportTemplate, sourceLabel = "Template") => {
+  const handleDownloadTemplate = (report: ReportTemplate, _sourceLabel = "Template") => {
     if (report.status !== "ready") {
       toast.warning("Deze rapportage wordt nog klaargezet en is nog niet te downloaden.");
       return;
     }
-
-    const now = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-    const extension = report.category === "kwaliteit" ? "pdf" : "csv";
-    const mimeType = extension === "pdf" ? "application/pdf" : "text/csv;charset=utf-8";
-    const filename = `${report.title.toLowerCase().replace(/\s+/g, "-")}-${now}.${extension}`;
-    const content = buildReportContent(report, sourceLabel);
-
-    triggerTextDownload(filename, content, mimeType);
-    appendHistoryItem(report, extension as "csv" | "pdf");
-    toast.success(`${report.title} is gedownload.`);
+    toast.info(`Exportfunctie voor "${report.title}" is in ontwikkeling. Exports worden binnenkort via de server beschikbaar gesteld.`);
   };
 
   const handleViewTemplate = (report: ReportTemplate, sourceLabel = "Template") => {
@@ -247,15 +190,18 @@ export function RapportagesPage() {
           {reportTemplates.length} templates · {readyCount} exporteerbaar
         </CareMetricBadge>
       }    >
+      <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/8 px-4 py-3 text-sm text-amber-300">
+        <Construction size={16} className="mt-0.5 shrink-0" />
+        <span>Rapportages zijn <strong>in ontwikkeling</strong>. De catalogus en filters zijn operationeel; exportfunctionaliteit wordt binnenkort via de server beschikbaar gesteld.</span>
+      </div>
+
       <CareSection>
         <CareSectionHeader
           className="lg:flex-col lg:items-stretch"
           title="Exportcatalogus"
           meta={(
             <div className="w-full min-w-0 space-y-2">
-              <span className="inline-flex w-fit items-center rounded-full border border-border/60 bg-muted/30 px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground">
-                {filteredReports.length} rapportages
-              </span>
+              <CareBadge tone="muted">{filteredReports.length} rapportages</CareBadge>
               <CareSearchFiltersBar
                 className="px-0"
                 searchValue={searchQuery}
@@ -287,18 +233,10 @@ export function RapportagesPage() {
         {filteredReports.map((report) => (
           <article key={report.id} className="rounded-xl border border-border/70 bg-card/55 p-4">
             <div className="mb-3 flex items-center justify-between">
-              <span className="rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                {report.category}
-              </span>
-              <span
-                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                  report.status === "ready"
-                    ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                    : "border border-amber-500/30 bg-amber-500/10 text-amber-300"
-                }`}
-              >
+              <CareBadge tone="muted" className="uppercase tracking-[0.08em]">{report.category}</CareBadge>
+              <CareBadge tone={report.status === "ready" ? "emerald" : "amber"}>
                 {report.status === "ready" ? "Klaar" : "Wordt klaargezet"}
-              </span>
+              </CareBadge>
             </div>
 
             <h2 className="text-lg font-semibold text-foreground">{report.title}</h2>

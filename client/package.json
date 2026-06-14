@@ -66,6 +66,7 @@
     "jest-axe": "^10.0.0",
     "jsdom": "^25.0.1",
     "tailwindcss": "4.1.12",
+    "typescript": "^5.8.3",
     "vite": "6.3.5",
     "vitest": "^2.1.9"
   },
@@ -73,6 +74,7 @@
     "dev": "vite",
     "prebuild": "node ./scripts/clean-spa-output.mjs",
     "build": "vite build",
+    "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
     "check:careon-design": "python3 ../scripts/check_careon_design_tokens.py",
     "test:e2e": "playwright test tests/e2e/pilot-smoke.spec.ts tests/e2e/instellingen-workspace.spec.ts tests/e2e/provider-review-smoke.spec.ts tests/e2e/staging-shell-smoke.spec.ts",

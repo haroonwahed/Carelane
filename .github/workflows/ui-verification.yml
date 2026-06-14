@@ -35,8 +35,20 @@ jobs:
       - name: Python compile smoke
         run: python -m compileall config contracts
 
+      - name: Pyright type check (Python)
+        run: python -m pyright contracts config
+
       - name: Terminology guard (CareOn blueprint)
         run: python scripts/terminology_guard.py
+
+      - name: Install Node dependencies
+        run: npm ci --prefix client
+
+      - name: Frontend unit tests (vitest)
+        run: npm --prefix client run test
+
+      - name: TypeScript type check
+        run: npm --prefix client run typecheck
 
       - name: Ensure verifier is executable
         run: chmod +x scripts/verify_ui.sh

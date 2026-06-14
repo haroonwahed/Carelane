@@ -58,6 +58,41 @@ export type { CareWorkRowProps } from "./CareUnifiedPage";
 /** Empty list / zero-yet state — prefer over ad-hoc dashed boxes. */
 export { CareEmptyState as EmptyState } from "./CareSurface";
 
+export type CareBadgeTone = "emerald" | "amber" | "red" | "blue" | "cyan" | "purple" | "muted";
+
+const CARE_BADGE_TONE: Record<CareBadgeTone, string> = {
+  emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+  amber:   "border-amber-500/30 bg-amber-500/10 text-amber-300",
+  red:     "border-destructive/30 bg-destructive/10 text-destructive",
+  blue:    "border-blue-500/30 bg-blue-500/10 text-blue-300",
+  cyan:    "border-cyan-500/30 bg-cyan-500/10 text-cyan-200",
+  purple:  "border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300",
+  muted:   "border-border/60 bg-muted/30 text-muted-foreground",
+};
+
+/** Canonical semantic status badge. Replaces ad-hoc coloured `<span>` chips across care pages. */
+export function CareBadge({
+  tone,
+  children,
+  className,
+}: {
+  tone: CareBadgeTone;
+  children: import("react").ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-[12px] font-semibold",
+        CARE_BADGE_TONE[tone],
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 export type CasusWorkspaceStatusVariant = "active" | "blocked" | "progress";
 
 /**

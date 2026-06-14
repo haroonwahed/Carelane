@@ -35,6 +35,7 @@ import {
   CarePageScaffold,
   CareSectionHeader,
   CareWorkspaceSection,
+  CareBadge,
   CareQueueInlineAction,
   CARE_RHYTHM,
   EmptyState,
@@ -246,9 +247,7 @@ export function RegiosPage({
           title={<span id="regios-netwerk-heading">Netwerkoverzicht</span>}
           meta={(
             <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
-              <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
-                {filteredRegions.length} zichtbaar · {systemState.totalCases} aanvragen · {systemState.systemUtilization}% bezetting
-              </span>
+              <CareBadge tone="cyan">{filteredRegions.length} zichtbaar · {systemState.totalCases} aanvragen · {systemState.systemUtilization}% bezetting</CareBadge>
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
                 <RegionTypeahead
                   regions={regions}

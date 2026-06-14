@@ -75,6 +75,7 @@ from contracts.permissions import (
     filter_care_tasks_for_provider_actor,
     filter_documents_for_provider_actor,
     filter_placement_requests_for_provider_actor,
+    provider_client_ids_for_user,
     visible_provider_scoped_care_cases,
 )
 from contracts.provider_workspace import build_provider_workspace_summary
@@ -867,18 +868,32 @@ def cases_bulk_update_api(request):
         case_ids = data.get('case_ids', data.get('contract_ids', []))
         updates = data.get('updates', {})
 
-        disallowed_workflow_fields = {
-            'status',
-            'case_phase',
-            'lifecycle_stage',
-            'phase_entered_at',
-        }
-        blocked_fields = sorted(field for field in updates.keys() if field in disallowed_workflow_fields)
+        _BULK_UPDATE_ALLOWED_FIELDS = frozenset({
+            'title',
+            'content',
+            'risk_level',
+            'policy_framework',
+            'service_region',
+            'preferred_provider',
+            'contract_type',
+            'value',
+            'currency',
+            'start_date',
+            'end_date',
+            'renewal_date',
+            'auto_renew',
+            'notice_period_days',
+            'language',
+            'data_transfer_flag',
+            'dpa_attached',
+            'scc_attached',
+        })
+        blocked_fields = sorted(field for field in updates.keys() if field not in _BULK_UPDATE_ALLOWED_FIELDS)
         if blocked_fields:
             return JsonResponse(
                 {
                     'success': False,
-                    'error': 'Workflowvelden zijn niet toegestaan in bulk updates.',
+                    'error': 'Eén of meer velden zijn niet toegestaan in bulk updates.',
                     'blocked_fields': blocked_fields,
                 },
                 status=400,
@@ -2011,6 +2026,14 @@ def _provider_decision_api_inner(request, case_id):
         if placement is None:
             return JsonResponse({'ok': False, 'error': 'Nog geen plaatsing beschikbaar.'}, status=400)
 
+        if placement.selected_provider_id is not None:
+            actor_client_ids = provider_client_ids_for_user(request.user, organization)
+            if placement.selected_provider_id not in actor_client_ids:
+                return JsonResponse(
+                    {'ok': False, 'error': 'Niet gemachtigd: u bent niet de geselecteerde aanbieder voor deze casus.'},
+                    status=403,
+                )
+
         previous_state = derive_workflow_state(intake=intake, placement=placement)
         now = timezone.now()
 
@@ -2774,6 +2797,11 @@ def audit_log_api(request):
                     'ok': False,
                     'error': 'Auditlog is niet beschikbaar voor deze rol.',
                 },
+                status=403,
+            )
+        if organization is None and not request.user.is_superuser:
+            return JsonResponse(
+                {'ok': False, 'error': 'Geen organisatie gevonden voor auditlog.'},
                 status=403,
             )
         qs = AuditLog.objects.select_related('user')

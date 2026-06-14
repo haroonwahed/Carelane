@@ -30,6 +30,7 @@ import {
   CareSectionHeader,
   CareSearchFiltersBar,
   CareWorkspaceSection,
+  CareBadge,
   CareQueueInlineAction,
   CARE_RHYTHM,
   EmptyState,
@@ -153,9 +154,7 @@ export function GemeentenPage({ onGemeenteClick }: GemeentenPageProps = {}) {
             title={<span id="gemeenten-netwerk-heading">Netwerkoverzicht</span>}
             meta={
               <div className={cn("w-full min-w-0", CARE_RHYTHM.metaStack)}>
-                <span className="inline-flex w-fit items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-cyan-200">
-                  {filteredGemeenten.length} zichtbaar · {totals.totalCases} aanvragen · {totals.avgWaitTime}d
-                </span>
+                <CareBadge tone="cyan">{filteredGemeenten.length} zichtbaar · {totals.totalCases} aanvragen · {totals.avgWaitTime}d</CareBadge>
                 <CareSearchFiltersBar
                   className="px-0"
                   tabs={

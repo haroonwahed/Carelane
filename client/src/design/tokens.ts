@@ -1,3 +1,6 @@
+/** Canonical CareOn accent — Zorg OS primary purple. Single source of truth. */
+const ACCENT_PRIMARY = "#7C4DFF" as const;
+
 export const tokens = {
   layout: {
     pageMaxWidth: "1536px",
@@ -80,7 +83,7 @@ export const tokens = {
     textPrimary: "#E8ECF3",
     textSecondary: "#94A3B8",
 
-    accentPrimary: "#7C4DFF",
+    accentPrimary: ACCENT_PRIMARY,
     accentSecondary: "#8B7CFF",
     accentWarning: "#D9A441",
     accentDanger: "#C96B6B",
@@ -88,7 +91,7 @@ export const tokens = {
     accentInfo: "#6B9AD4",
 
     /** Casussen list chrome — aligned with operational shell (accent used sparingly). */
-    casussenAccent: "#7C4DFF",
+    casussenAccent: ACCENT_PRIMARY,
     casussenSurfaceRaised: "#1B2236",
     casussenPageChrome: "#0B1020",
     casussenMetricBg: "rgba(21, 27, 46, 0.92)",
@@ -106,7 +109,7 @@ export const tokens = {
     pageTopPadding: "56px",
     cardRadius: "24px",
     sectionCardRadius: "22px",
-    primaryCta: "#7C4DFF",
+    primaryCta: ACCENT_PRIMARY,
     warningCta: "#F5A900",
     background: "#070B18",
     surface1: "#0E1424",

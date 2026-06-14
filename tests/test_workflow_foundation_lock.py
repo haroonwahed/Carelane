@@ -670,3 +670,83 @@ class WorkflowFoundationLockTests(TestCase):
         )
         self.assertEqual(response.status_code, 200, response.content.decode())
         self.assertEqual(response.json().get('case_id'), intake.case_record.pk)
+
+    def test_provider_decision_api_blocks_non_selected_provider(self):
+        """A provider linked as proposed (not selected) must receive 403."""
+        intake = self._create_matching_ready_case()
+        intake.workflow_state = 'PROVIDER_REVIEW_PENDING'
+        intake.save(update_fields=['workflow_state', 'updated_at'])
+
+        other_user = User.objects.create_user(
+            username='other_provider_user',
+            email='other@example.com',
+            password='testpass123',
+        )
+        OrganizationMembership.objects.create(
+            organization=self.organization,
+            user=other_user,
+            role=OrganizationMembership.Role.MEMBER,
+            is_active=True,
+        )
+        UserProfile.objects.update_or_create(user=other_user, defaults={'role': UserProfile.Role.CLIENT})
+
+        other_provider = CareProvider.objects.create(
+            organization=self.organization,
+            name='Other Provider',
+            status=CareProvider.Status.ACTIVE,
+            created_by=self.gemeente_user,
+            responsible_coordinator=other_user,
+        )
+        PlacementRequest.objects.create(
+            due_diligence_process=intake,
+            status=PlacementRequest.Status.IN_REVIEW,
+            proposed_provider=other_provider,
+            selected_provider=self.provider,
+            provider_response_status=PlacementRequest.ProviderResponseStatus.PENDING,
+            care_form=PlacementRequest.CareForm.OUTPATIENT,
+        )
+
+        self.client.login(username='other_provider_user', password='testpass123')
+        response = self.client.post(
+            reverse('careon:provider_decision_api', kwargs={'case_id': intake.contract_id}),
+            data='{"status":"ACCEPTED"}',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 403)
+        data = response.json()
+        self.assertFalse(data.get('ok'))
+
+    def test_cases_bulk_update_api_rejects_non_allowlisted_fields(self):
+        """Bulk update must reject fields outside the explicit allowlist."""
+        intake = self._create_matching_ready_case()
+        self.client.login(username='gemeente_user', password='testpass123')
+
+        response = self.client.post(
+            reverse('careon:cases_bulk_update_api'),
+            data=json.dumps({
+                'case_ids': [intake.contract_id],
+                'updates': {'workflow_state': 'HACKED', 'status': 'APPROVED'},
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertFalse(data.get('success'))
+        self.assertIn('workflow_state', data.get('blocked_fields', []))
+        self.assertIn('status', data.get('blocked_fields', []))
+
+    def test_cases_bulk_update_api_accepts_allowlisted_fields(self):
+        """Bulk update must succeed for fields on the explicit allowlist."""
+        intake = self._create_matching_ready_case()
+        self.client.login(username='gemeente_user', password='testpass123')
+
+        response = self.client.post(
+            reverse('careon:cases_bulk_update_api'),
+            data=json.dumps({
+                'case_ids': [intake.contract_id],
+                'updates': {'risk_level': 'HIGH'},
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('success'))

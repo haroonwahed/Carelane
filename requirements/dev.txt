@@ -10,6 +10,9 @@ pre-commit
 # Type stubs for Django (reduces Pylance false positives)
 django-stubs[compatible-mypy]
 
+# Python type checker — run as `pyright` in CI (pyrightconfig.json at repo root)
+pyright==1.1.401
+
 # Test/data helpers
 Faker==17.3.0
 
