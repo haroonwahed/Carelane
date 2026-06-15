@@ -28,6 +28,7 @@ import { AudittrailPage } from "../care/AudittrailPage";
 import { RapportagesPage } from "../care/RapportagesPage";
 import { InstellingenPage } from "../care/InstellingenPage";
 import { GebruikersPage } from "../care/GebruikersPage";
+import { AanbiederPortaalPage } from "../care/AanbiederPortaalPage";
 import { CareAppFrame } from "../care/CareAppFrame";
 import { buildAanbiederreactieRows } from "../care/AanbiederreactiePage";
 import { tokens } from "../../design/tokens";
@@ -627,6 +628,12 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
 
   return (
     <div data-testid="care-app-shell" className="flex h-screen bg-background overflow-hidden">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[9999] focus:rounded focus:bg-background focus:px-3 focus:py-1.5 focus:text-sm focus:font-semibold focus:text-foreground focus:shadow-md focus:ring-2 focus:ring-primary"
+      >
+        Ga naar hoofdinhoud
+      </a>
       {/* SIDEBAR */}
       <Sidebar
         role={screenshotContext.type}
@@ -681,9 +688,10 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
 
         {/* CONTENT */}
         <main data-testid="care-app-main" className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+          <div id="main-content" className="flex-1 overflow-y-auto">
             <CareAppFrame
               className="min-h-full"
+              noVerticalPadding={currentPage === "coordination"}
               layoutMaxWidth={
                 currentPage === "coordination"
                   ? tokens.layout.pageMaxWidth
@@ -896,15 +904,8 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
                 )}
 
                 {currentPage === "beoordelingen" && (
-                  <AanbiederreactiePage
-                    role="zorgaanbieder"
+                  <AanbiederPortaalPage
                     onCaseClick={handleCaseClick}
-                    onNavigateToPlaatsingen={() => {
-                      goToPage("intake");
-                    }}
-                    onNavigateToCasussen={() => {
-                      goToPage("mijn-casussen");
-                    }}
                   />
                 )}
 

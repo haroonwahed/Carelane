@@ -13,19 +13,27 @@ export function CareAppFrame({
   className,
   /** When set, overrides the default `tokens.layout.pageMaxWidth` (e.g. coördinatie + right rail). */
   layoutMaxWidth,
+  /** When true, removes vertical padding and gap (useful for full-bleed coordination pages). */
+  noVerticalPadding,
 }: {
   children: ReactNode;
   className?: string;
   layoutMaxWidth?: string;
+  noVerticalPadding?: boolean;
 }) {
   return (
     <div
       data-testid="care-app-frame"
       className={cn(
-        "mx-auto flex w-full min-w-0 max-w-full flex-col gap-4 px-4 py-3 md:px-5 md:py-4",
+        "mx-auto flex w-full min-w-0 max-w-full flex-col",
+        !noVerticalPadding && "gap-4 py-3 md:py-4",
         className,
       )}
-      style={{ maxWidth: layoutMaxWidth ?? tokens.layout.pageMaxWidth }}
+      style={{
+        maxWidth: layoutMaxWidth ?? tokens.layout.pageMaxWidth,
+        paddingLeft: "var(--care-page-h-padding)",
+        paddingRight: "var(--care-page-h-padding)",
+      }}
     >
       {children}
     </div>

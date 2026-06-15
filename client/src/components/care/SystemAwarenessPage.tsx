@@ -3,15 +3,22 @@ import {
   AlertCircle,
   Building2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Clock3,
   FileText,
   FolderOpen,
   Home,
+  Mail,
+  MoreHorizontal,
   PanelRight,
+  Phone,
   RefreshCw,
+  Search,
+  SlidersHorizontal,
   UserCheck,
   Users,
+  X,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import {
@@ -921,85 +928,473 @@ function regiekamerFlowStepIcon(stepId: RegiekamerFlowStepId) {
   }
 }
 
+type RegiekamerPhaseTab = "alle" | RegiekamerFlowStepId | "hoog-urgent";
+
+function getPriorityDotClass(item: CoordinationDecisionOverviewItem): string {
+  if (item.priority_score >= 100 || item.urgency === "critical") return "bg-red-500";
+  if (item.priority_score >= 70 || item.urgency === "high") return "bg-orange-400";
+  if (item.priority_score >= 30) return "bg-yellow-300";
+  return "bg-gray-300";
+}
+
+function getPhaseStyleInfo(phase: string): { label: string; className: string } {
+  const normalized = normalizeApiPhaseId(phase) as string;
+  const map: Record<string, { label: string; className: string }> = {
+    casus: { label: "Aanmelding", className: "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400" },
+    samenvatting: { label: "Aanmelding", className: "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400" },
+    matching: { label: "Matching", className: "bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-400" },
+    gemeente_validatie: { label: "Matching", className: "bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-400" },
+    wacht_op_validatie: { label: "Matching", className: "bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-400" },
+    aanbieder_beoordeling: { label: "Aanbiederreactie", className: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400" },
+    plaatsing: { label: "Plaatsing", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400" },
+    intake: { label: "Intake", className: "bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-400" },
+  };
+  return map[normalized] ?? {
+    label: normalized.charAt(0).toUpperCase() + normalized.slice(1),
+    className: "bg-gray-100 text-gray-600 dark:bg-muted/40 dark:text-muted-foreground",
+  };
+}
+
+/**
+ * SLA-grenzen per fase — spiegelt DECISION_ENGINE_THRESHOLDS in
+ * contracts/decision_engine.py, zodat de UI-aftelling en de backend-breach
+ * exact dezelfde grenzen hanteren.
+ */
+const SLA_TARGET_HOURS = {
+  urgentIdle: 48, // urgent_idle_hours — HIGH/CRISIS in elke fase
+  providerResponse: 72, // provider_response_sla_hours — Aanbiederreactie
+  intakeStart: 120, // intake_start_sla_days (5d) — Plaatsing/Intake
+} as const;
+
+type SlaStatus = "breached" | "soon" | "ok" | "none";
+
+const SLA_STATUS_RANK: Record<SlaStatus, number> = { breached: 0, soon: 1, ok: 2, none: 3 };
+
+function getSlaTarget(item: CoordinationDecisionOverviewItem): { hours: number; basis: string } | null {
+  const isUrgent = item.urgency === "high" || item.urgency === "critical";
+  const phaseLabel = getPhaseStyleInfo(item.phase).label;
+  const candidates: Array<{ hours: number; basis: string }> = [];
+  if (isUrgent) candidates.push({ hours: SLA_TARGET_HOURS.urgentIdle, basis: "Urgentie" });
+  if (phaseLabel === "Aanbiederreactie") candidates.push({ hours: SLA_TARGET_HOURS.providerResponse, basis: "Aanbiederreactie" });
+  if (phaseLabel === "Plaatsing" || phaseLabel === "Intake") candidates.push({ hours: SLA_TARGET_HOURS.intakeStart, basis: "Intake-start" });
+  if (candidates.length === 0) return null;
+  return candidates.reduce((a, b) => (a.hours <= b.hours ? a : b));
+}
+
+function formatDurationShort(hours: number): string {
+  const h = Math.abs(hours);
+  if (h < 1) return "<1u";
+  if (h < 24) return `${Math.round(h)}u`;
+  const days = Math.floor(h / 24);
+  const rem = Math.round(h % 24);
+  if (days >= 3 || rem === 0) return `${days}d`;
+  return `${days}d ${rem}u`;
+}
+
+interface SlaCountdown {
+  hasSla: boolean;
+  status: SlaStatus;
+  remainingHours: number;
+  label: string;
+  sublabel: string;
+  className: string;
+}
+
+function getSlaCountdown(item: CoordinationDecisionOverviewItem): SlaCountdown {
+  const elapsed = item.hours_in_current_state ?? item.age_hours ?? 0;
+  const phaseLabel = getPhaseStyleInfo(item.phase).label;
+  const target = getSlaTarget(item);
+
+  if (!target) {
+    return {
+      hasSla: false,
+      status: "none",
+      remainingHours: Number.POSITIVE_INFINITY,
+      label: formatDurationShort(elapsed),
+      sublabel: `in ${phaseLabel}`,
+      className: "text-gray-500 dark:text-muted-foreground",
+    };
+  }
+
+  const remaining = target.hours - elapsed;
+  const soonThreshold = Math.max(8, target.hours * 0.2);
+
+  if (remaining <= 0) {
+    return {
+      hasSla: true,
+      status: "breached",
+      remainingHours: remaining,
+      label: `${formatDurationShort(remaining)} te laat`,
+      sublabel: `SLA ${target.hours}u`,
+      className: "font-semibold text-red-600 dark:text-red-400",
+    };
+  }
+  if (remaining <= soonThreshold) {
+    return {
+      hasSla: true,
+      status: "soon",
+      remainingHours: remaining,
+      label: `nog ${formatDurationShort(remaining)}`,
+      sublabel: `SLA ${target.hours}u`,
+      className: "font-medium text-orange-500 dark:text-orange-400",
+    };
+  }
+  return {
+    hasSla: true,
+    status: "ok",
+    remainingHours: remaining,
+    label: `nog ${formatDurationShort(remaining)}`,
+    sublabel: `SLA ${target.hours}u`,
+    className: "text-emerald-600 dark:text-emerald-400",
+  };
+}
+
+function formatOwnerName(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0] ?? fullName;
+  const first = parts[0] ?? "";
+  const lastInitial = parts[parts.length - 1]?.[0] ?? "";
+  return `${first} ${lastInitial}.`;
+}
+
 function RegiekamerWorkRow({
   item,
+  isSelected,
+  currentUserName,
+  onSelect,
   onCaseClick,
 }: {
   item: CoordinationDecisionOverviewItem;
-  onCaseClick: (caseId: string) => void;
+  isSelected: boolean;
+  currentUserName: string;
+  onSelect: (id: string) => void;
+  onCaseClick: (id: string) => void;
 }) {
   const rowId = String(item.case_id);
-  const urgencyTone =
-    item.priority_score >= 100 || item.urgency === "critical"
-      ? "critical"
-      : item.priority_score >= 70 || item.urgency === "high"
-        ? "warning"
-        : "neutral";
-  const statusTone =
-    item.priority_score >= 100 || item.urgency === "critical"
-      ? "border-red-500/35 bg-red-500/10 text-red-100"
-      : "border-amber-500/35 bg-amber-500/10 text-amber-100";
+  const phaseInfo = getPhaseStyleInfo(item.phase);
+  const sla = getSlaCountdown(item);
+  const dotClass = getPriorityDotClass(item);
   const actionLabel = rowNextActionLabel(item);
+  const blokkadeTitle = item.top_blocker?.title || item.top_alert?.title || null;
+  const blokkadeMsg = item.top_blocker?.message || item.top_alert?.message || null;
+  const hasBlocker = !!(blokkadeTitle || blokkadeMsg);
+  const ownerDisplay = formatOwnerName(currentUserName);
 
   return (
     <article
       data-care-work-row
       data-testid="coordination-worklist-item"
-      className="grid min-w-[980px] grid-cols-[5.5rem_16rem_minmax(11rem,1fr)_11rem_9rem_12rem] items-center gap-x-4 border-b border-border/35 px-4 py-3 last:border-b-0 md:px-5"
+      tabIndex={0}
+      role="button"
+      aria-pressed={isSelected}
+      className={cn(
+        "group grid cursor-pointer items-start border-b border-gray-100 dark:border-border/25",
+        "min-w-[860px] grid-cols-[1.75rem_minmax(13rem,2fr)_minmax(11rem,1.6fr)_9rem_minmax(8rem,1fr)_minmax(10rem,1.1fr)]",
+        "gap-x-4 px-6 py-3.5 transition-colors",
+        isSelected ? "bg-violet-50/60 dark:bg-primary/8" : "hover:bg-gray-50 dark:hover:bg-muted/10",
+      )}
+      onClick={() => onSelect(rowId)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(rowId); } }}
     >
-      <div className="flex items-center">
-        <span
-          className={cn(
-            "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[12px] font-medium leading-none",
-            urgencyTone === "critical"
-              ? "border-red-500/35 bg-red-500/10 text-red-100"
-              : urgencyTone === "warning"
-                ? "border-amber-500/35 bg-amber-500/10 text-amber-100"
-                : "border-border/60 bg-muted/20 text-muted-foreground",
-          )}
-        >
-          <span className={cn("size-2 rounded-full", urgencyTone === "critical" ? "bg-red-400" : "bg-amber-400")} aria-hidden />
-          {priorityDotLabel(item)}
-        </span>
+      {/* Priority dot */}
+      <div className="flex pt-1 items-center justify-center">
+        <span className={cn("size-2 rounded-full shrink-0", dotClass)} aria-hidden />
       </div>
 
-      <button
-        type="button"
-        onClick={() => onCaseClick(rowId)}
-        className="min-w-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-1"
-      >
-        <span className="block truncate text-[14px] font-semibold leading-tight text-foreground">{item.case_reference}</span>
-        <span className="mt-0.5 block truncate text-[12px] leading-tight text-muted-foreground">{item.title}</span>
-      </button>
-
-      <div className="min-w-0 text-[13px] leading-tight text-muted-foreground">
-        <span className="block truncate">{rowRegionLabel(item)}</span>
-      </div>
-
+      {/* Casus: fase badge + ref + name */}
       <div className="min-w-0">
-        <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-[12px] font-semibold leading-none", statusTone)}>
-          {rowStatusLabel(item)}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className={cn("inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold shrink-0", phaseInfo.className)}>
+            {phaseInfo.label}
+          </span>
+          <span className="font-mono text-[12px] font-semibold tracking-tight text-gray-500 dark:text-muted-foreground">
+            {item.case_reference}
+          </span>
+          {item.urgency_applied && (
+            <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 shrink-0">
+              Urgentie
+            </span>
+          )}
+        </div>
+        <span className="mt-1 block text-[13px] font-medium leading-snug text-gray-900 dark:text-foreground line-clamp-2">
+          {item.title}
         </span>
-        <span className="mt-1 block truncate text-[12px] leading-tight text-muted-foreground">{rowStatusReason(item)}</span>
       </div>
 
-      <div className="min-w-0 text-[13px] leading-tight">
-        <span className="block truncate font-medium text-foreground">{rowLastActionLabel(item)}</span>
-        <span className="mt-1 block truncate text-muted-foreground">{rowLastActionDateLabel(item)}</span>
+      {/* Blokkade — prominent, readable */}
+      <div className="min-w-0">
+        {hasBlocker ? (
+          <div className="flex items-start gap-1.5">
+            <AlertCircle size={13} className="mt-0.5 shrink-0 text-red-500 dark:text-red-400" aria-hidden />
+            <div className="min-w-0">
+              {blokkadeTitle && (
+                <p className="text-[12px] font-semibold leading-snug text-red-700 dark:text-red-400 line-clamp-1">{blokkadeTitle}</p>
+              )}
+              {blokkadeMsg && (
+                <p className="mt-0.5 text-[12px] leading-snug text-red-600/80 dark:text-red-400/70 line-clamp-2">{blokkadeMsg}</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <span className="text-[12px] text-gray-400 dark:text-muted-foreground/50 italic">Geen blokkade</span>
+        )}
       </div>
 
-      <div className="flex min-w-0 justify-end">
-        <Button
+      {/* Eigenaar — readable name */}
+      <div className="flex items-start gap-2 pt-0.5">
+        <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+          {currentUserName.charAt(0).toUpperCase()}
+        </span>
+        <span className="text-[12px] leading-snug text-gray-700 dark:text-foreground/80 pt-0.5">{ownerDisplay}</span>
+      </div>
+
+      {/* Wachttijd — SLA-aftelling: time-to-breach, niet verstreken tijd */}
+      <div className="pt-0.5">
+        <p className={cn("flex items-center gap-1 text-[13px] font-medium tabular-nums leading-snug", sla.className)}>
+          {sla.status === "breached" && <AlertCircle size={12} className="shrink-0" aria-hidden />}
+          {sla.label}
+        </p>
+        <p className="mt-0.5 text-[11px] text-gray-400 dark:text-muted-foreground/60">{sla.sublabel}</p>
+      </div>
+
+      {/* Volgende actie — always visible */}
+      <div className="flex items-start pt-0.5">
+        <button
           type="button"
-          variant="default"
-          onClick={() => onCaseClick(rowId)}
-          className="h-10 rounded-full px-4 text-[13px] font-semibold shadow-md shadow-primary/20"
+          aria-label={actionLabel}
+          className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-border/60 bg-white dark:bg-muted/10 px-3 py-1.5 text-[12px] font-semibold text-gray-800 dark:text-foreground shadow-sm hover:border-primary/40 hover:bg-primary/5 hover:text-primary dark:hover:text-primary transition-colors"
+          onClick={(e) => { e.stopPropagation(); onCaseClick(rowId); }}
         >
           {actionLabel}
-          <ChevronRight size={16} className="ml-2" aria-hidden />
-        </Button>
+          <ChevronRight size={12} className="shrink-0 opacity-60" aria-hidden />
+        </button>
       </div>
     </article>
+  );
+}
+
+function CasusdetailsPanel({
+  item,
+  currentUserName,
+  onClose,
+  onCaseClick,
+}: {
+  item: CoordinationDecisionOverviewItem;
+  currentUserName: string;
+  onClose: () => void;
+  onCaseClick: (id: string) => void;
+}) {
+  const [activeDetailTab, setActiveDetailTab] = useState<"overzicht" | "documenten" | "tijdlijn" | "taken" | "contactmomenten">("overzicht");
+  const phaseInfo = getPhaseStyleInfo(item.phase);
+  const sla = getSlaCountdown(item);
+  const isHoog = item.priority_score >= 70 || item.urgency === "high" || item.urgency === "critical";
+  const blokkadeTitle = item.top_blocker?.title || item.top_alert?.title || null;
+  const blokkadeMsg = item.top_blocker?.message || item.top_alert?.message || null;
+  const ctaLabel = rowNextActionLabel(item);
+  const region = rowRegionLabel(item);
+  const regionDisplay = region === "Regio ontbreekt" ? null : region;
+  const provider = (item.assigned_provider ?? "").trim() || "Niet toegewezen";
+  const currentPhaseIdx = REGIEKAMER_FLOW_STEPS.findIndex((s) => phaseMatchesFlowStep(item, s.id));
+
+  return (
+    <aside
+      className="fixed inset-y-0 right-0 z-40 flex w-[380px] flex-col border-l border-gray-200 dark:border-border/60 bg-white dark:bg-card"
+      style={{ boxShadow: "-4px 0 24px rgba(0,0,0,0.06)" }}
+    >
+      <div className="flex items-center justify-between border-b border-gray-100 dark:border-border/40 px-5 py-3.5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className={cn("shrink-0 inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold", phaseInfo.className)}>
+            {phaseInfo.label}
+          </span>
+          <span className="truncate font-mono text-[13px] font-semibold tracking-tight text-gray-900 dark:text-foreground">
+            {item.case_reference}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Paneel sluiten"
+          className="ml-2 shrink-0 rounded-md p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-muted/30 hover:text-gray-700 dark:hover:text-foreground transition-colors"
+        >
+          <X size={16} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="border-b border-gray-100 dark:border-border/40 px-5 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-[16px] font-bold leading-snug text-gray-900 dark:text-foreground">{item.title}</h2>
+              {regionDisplay && <p className="mt-0.5 text-[12px] text-gray-500 dark:text-muted-foreground">{regionDisplay}</p>}
+            </div>
+            <div className="flex shrink-0 items-center gap-0.5">
+              <button type="button" className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-muted/30 hover:text-gray-700 dark:hover:text-foreground transition-colors">
+                <Phone size={14} />
+              </button>
+              <button type="button" className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-muted/30 hover:text-gray-700 dark:hover:text-foreground transition-colors">
+                <Mail size={14} />
+              </button>
+              <button type="button" className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-muted/30 hover:text-gray-700 dark:hover:text-foreground transition-colors">
+                <MoreHorizontal size={14} />
+              </button>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold", isHoog ? "bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400" : "bg-gray-100 text-gray-600 dark:bg-muted/40 dark:text-muted-foreground")}>
+              {isHoog ? "Hoog" : "Normaal"}
+            </span>
+            <span className={cn("inline-flex items-center rounded-full bg-gray-100 dark:bg-muted/40 px-2.5 py-0.5 text-[11px] font-semibold", sla.className)}>
+              {sla.label}
+            </span>
+          </div>
+        </div>
+
+        {blokkadeTitle && (
+          <div className="border-b border-gray-100 dark:border-border/40 px-5 py-3.5">
+            <button
+              type="button"
+              className="flex w-full items-start gap-3 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 px-3.5 py-3 text-left transition-colors hover:bg-red-100/60 dark:hover:bg-red-950/30"
+              onClick={() => onCaseClick(String(item.case_id))}
+            >
+              <AlertCircle size={15} className="mt-0.5 shrink-0 text-red-500" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-semibold text-red-800 dark:text-red-400">{blokkadeTitle}</p>
+                {blokkadeMsg && <p className="mt-0.5 line-clamp-2 text-[12px] text-red-600/80 dark:text-red-400/80">{blokkadeMsg}</p>}
+              </div>
+              <ChevronRight size={14} className="mt-0.5 shrink-0 text-red-400" aria-hidden />
+            </button>
+          </div>
+        )}
+
+        <div className="border-b border-gray-100 dark:border-border/40 px-5 py-4">
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 dark:text-muted-foreground/60">Casusinfo</p>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+              <dt className="text-[11px] text-gray-400 dark:text-muted-foreground">Fase</dt>
+              <dd className="mt-0.5">
+                <span className={cn("inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold", phaseInfo.className)}>{phaseInfo.label}</span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[11px] text-gray-400 dark:text-muted-foreground">Urgentie</dt>
+              <dd className="mt-0.5 text-[13px] font-medium text-gray-800 dark:text-foreground">{isHoog ? "Hoog" : "Normaal"}</dd>
+            </div>
+            {regionDisplay && (
+              <div>
+                <dt className="text-[11px] text-gray-400 dark:text-muted-foreground">Gemeente</dt>
+                <dd className="mt-0.5 text-[13px] text-gray-800 dark:text-foreground">{regionDisplay}</dd>
+              </div>
+            )}
+            <div>
+              <dt className="text-[11px] text-gray-400 dark:text-muted-foreground">Aanbieder</dt>
+              <dd className={cn("mt-0.5 text-[13px]", provider === "Niet toegewezen" ? "text-gray-400 dark:text-muted-foreground/60" : "text-gray-800 dark:text-foreground")}>{provider}</dd>
+            </div>
+            <div>
+              <dt className="text-[11px] text-gray-400 dark:text-muted-foreground">Eigenaar</dt>
+              <dd className="mt-0.5 flex items-center gap-1.5">
+                <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+                  {currentUserName.charAt(0).toUpperCase()}
+                </span>
+                <span className="text-[13px] text-gray-800 dark:text-foreground">{currentUserName}</span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[11px] text-gray-400 dark:text-muted-foreground">SLA</dt>
+              <dd className={cn("mt-0.5 text-[13px]", sla.className)}>{sla.label}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div className="flex overflow-x-auto border-b border-gray-100 dark:border-border/40 px-5">
+          {(
+            [
+              { id: "overzicht" as const, label: "Overzicht" },
+              { id: "documenten" as const, label: "Documenten", count: 3 },
+              { id: "tijdlijn" as const, label: "Tijdlijn" },
+              { id: "taken" as const, label: "Taken", count: 2 },
+              { id: "contactmomenten" as const, label: "Contactmomenten" },
+            ]
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveDetailTab(tab.id)}
+              className={cn(
+                "flex shrink-0 items-center gap-1 border-b-2 px-3 py-2.5 text-[12px] font-medium whitespace-nowrap transition-colors",
+                activeDetailTab === tab.id
+                  ? "border-gray-900 dark:border-foreground text-gray-900 dark:text-foreground"
+                  : "border-transparent text-gray-500 dark:text-muted-foreground hover:text-gray-800 dark:hover:text-foreground",
+              )}
+            >
+              {tab.label}
+              {tab.count !== undefined && (
+                <span className={cn("rounded-full px-1.5 text-[10px] font-bold", activeDetailTab === tab.id ? "bg-gray-900/10 dark:bg-foreground/10 text-gray-900 dark:text-foreground" : "bg-gray-100 dark:bg-muted/40 text-gray-500 dark:text-muted-foreground")}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="border-b border-gray-100 dark:border-border/40 px-5 py-4">
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 dark:text-muted-foreground/60">Doorstroom</p>
+          <div className="relative flex justify-between">
+            <div className="absolute inset-x-3 top-[11px] h-px bg-gray-200 dark:bg-border/40" aria-hidden />
+            {REGIEKAMER_FLOW_STEPS.map((step, idx) => {
+              const Icon = regiekamerFlowStepIcon(step.id);
+              const isActive = idx === currentPhaseIdx || (currentPhaseIdx < 0 && idx === 0);
+              const isDone = idx < (currentPhaseIdx >= 0 ? currentPhaseIdx : 0);
+              return (
+                <div key={step.id} className="relative z-10 flex flex-col items-center gap-1.5">
+                  <div className={cn("flex size-[22px] items-center justify-center rounded-full border-2 transition-colors", isActive ? "border-primary bg-primary text-white shadow-sm shadow-primary/30" : isDone ? "border-primary/40 bg-primary/10 text-primary/80" : "border-gray-200 dark:border-border/50 bg-white dark:bg-card text-gray-400")}>
+                    <Icon size={11} className="text-current" />
+                  </div>
+                  <span className={cn("max-w-[3.5rem] text-center text-[10px] leading-tight", isActive ? "font-semibold text-primary" : isDone ? "text-primary/60 dark:text-primary/50" : "text-gray-400 dark:text-muted-foreground/50")}>
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="px-5 py-4">
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 dark:text-muted-foreground/60">Actiepunten</p>
+          <div className="space-y-3">
+            {[
+              { label: blokkadeTitle ? `Los op: ${blokkadeTitle}` : "Controleer en upload geldige verwijzing", due: "Vandaag", urgent: true },
+              { label: "Vraag aanvullende informatie op bij verwijzer", due: "Binnen 2 dagen", urgent: false },
+            ].map((action, idx) => (
+              <div key={idx} className="flex items-start gap-2.5">
+                <div className="mt-0.5 size-4 shrink-0 rounded border-2 border-gray-300 dark:border-border/60 cursor-pointer hover:border-primary transition-colors" />
+                <p className="flex-1 text-[13px] text-gray-800 dark:text-foreground">{action.label}</p>
+                <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium", action.urgent ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400" : "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400")}>
+                  {action.due}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100 dark:border-border/40 p-5">
+        <Button
+          type="button"
+          className="flex w-full items-center justify-between gap-2 rounded-xl py-2.5 text-[13px] font-semibold"
+          onClick={() => onCaseClick(String(item.case_id))}
+        >
+          <span>{ctaLabel}</span>
+          <ChevronRight size={16} aria-hidden />
+        </Button>
+        <button
+          type="button"
+          className="mt-3 w-full text-center text-[12px] text-gray-400 dark:text-muted-foreground hover:text-primary dark:hover:text-primary transition-colors"
+          onClick={() => onCaseClick(String(item.case_id))}
+        >
+          Bekijk alle taken en details →
+        </button>
+      </div>
+    </aside>
   );
 }
 
@@ -1022,6 +1417,9 @@ export function SystemAwarenessPage({
   const [showSecondaryFilters, setShowSecondaryFilters] = useState(false);
   const [railSheetOpen, setRailSheetOpen] = useState(false);
   const { collapsed: railCollapsed, toggle: toggleRail, setCollapsed: setRailCollapsed } = useRailCollapsed();
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<RegiekamerPhaseTab>("alle");
+  const [showFiltersBar, setShowFiltersBar] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -1229,6 +1627,38 @@ export function SystemAwarenessPage({
 
   const coordinationListCapped = !filtersActive && visibleItems.length > coordinationListItems.length;
 
+  const currentUserDisplayName = me?.fullName?.trim() || me?.username || "Regisseur";
+  const phaseTabCounts = useMemo<Record<RegiekamerPhaseTab, number>>(() => ({
+    alle: coordinationListItems.length,
+    aanmelding: coordinationListItems.filter((i) => phaseMatchesFlowStep(i, "aanmelding")).length,
+    matching: coordinationListItems.filter((i) => phaseMatchesFlowStep(i, "matching")).length,
+    aanbiederreactie: coordinationListItems.filter((i) => phaseMatchesFlowStep(i, "aanbiederreactie")).length,
+    plaatsing: coordinationListItems.filter((i) => phaseMatchesFlowStep(i, "plaatsing")).length,
+    intake: coordinationListItems.filter((i) => phaseMatchesFlowStep(i, "intake")).length,
+    "hoog-urgent": coordinationListItems.filter((i) => i.priority_score >= 70 || i.urgency === "high" || i.urgency === "critical").length,
+  }), [coordinationListItems]);
+  const tabFilteredItems = useMemo(() => {
+    const base =
+      activeTab === "alle"
+        ? coordinationListItems
+        : activeTab === "hoog-urgent"
+          ? coordinationListItems.filter((i) => i.priority_score >= 70 || i.urgency === "high" || i.urgency === "critical")
+          : coordinationListItems.filter((i) => phaseMatchesFlowStep(i, activeTab as RegiekamerFlowStepId));
+    // Self-sorterende worklist: SLA-breaches en bijna-breaches bovenaan.
+    return [...base].sort((a, b) => {
+      const sa = getSlaCountdown(a);
+      const sb = getSlaCountdown(b);
+      const rankDelta = SLA_STATUS_RANK[sa.status] - SLA_STATUS_RANK[sb.status];
+      if (rankDelta !== 0) return rankDelta;
+      if (sa.remainingHours !== sb.remainingHours) return sa.remainingHours - sb.remainingHours;
+      return b.priority_score - a.priority_score;
+    });
+  }, [coordinationListItems, activeTab]);
+  const selectedItem = useMemo(
+    () => tabFilteredItems.find((i) => String(i.case_id) === selectedCaseId) ?? null,
+    [tabFilteredItems, selectedCaseId],
+  );
+
   const criticalBlockers = data?.totals.critical_blockers ?? 0;
   const highPriorityAlerts = data?.totals.high_priority_alerts ?? 0;
   const providerSlaBreaches = data?.totals.provider_sla_breaches ?? 0;
@@ -1236,6 +1666,8 @@ export function SystemAwarenessPage({
   const urgencyApplicationsOpen = data?.totals.urgency_applications_open ?? 0;
 
   const allOverviewItems = data?.items ?? [];
+  const directActieCount = useMemo(() => allOverviewItems.filter((i) => i.priority_score >= 100 || i.urgency === "critical").length, [allOverviewItems]);
+  const blockedCount = useMemo(() => allOverviewItems.filter((i) => !!(i.top_blocker?.title || i.top_blocker?.message || i.top_alert?.message)).length, [allOverviewItems]);
   const taxonomyCategoryOptions = useMemo(() => collectTaxonomyCategoryOptions(allOverviewItems), [allOverviewItems]);
   const taxonomySubcategoryOptions = useMemo(
     () => collectTaxonomySubcategoryOptions(allOverviewItems, categoryFilter),
@@ -1611,111 +2043,48 @@ export function SystemAwarenessPage({
   const showCoordinationPhaseBoard = !loading && !error && hasActiveData && allOverviewItems.length > 0;
 
   return (
-    <CarePageScaffold
-      archetype="command"
-      className="pb-8"
-      titleClassName="text-[32px] sm:text-[36px] lg:text-[38px]"
-      title="Regiekamer"
-      subtitle="Stuur op doorstroom, blokkades en urgente casussen."
-      dominantAction={
-        hasActiveData ? (
-          <CareAlertCard
-            density="compact"
-            testId="coordination-dominant-action"
-            data-coordination-mode={uiMode}
-            tone="warning"
-            icon={<AlertCircle size={18} aria-hidden />}
-            metric={0}
-            showMetric={false}
-            title={coordinationNba.title}
-            description={dominantAlertDescription}
-            primaryAction={(
-                <Button
-                  type="button"
-                  className="h-10 rounded-full bg-amber-400 px-5 text-[13px] font-semibold leading-none text-amber-950 shadow-sm hover:bg-amber-300"
-                  onClick={uiMode === "crisis" ? applyModeCasesLink : runModePrimary}
-                  data-testid="coordination-dominant-primary-cta"
-                >
-                  {dominantPrimaryLabel}
-                  <ChevronRight size={16} className="ml-2 translate-y-px" aria-hidden />
-                </Button>
-            )}
-            secondaryAction={(
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 rounded-full border-border/70 px-5 text-[13px] font-semibold leading-none text-foreground hover:bg-muted/20"
-                onClick={uiMode === "crisis" ? applyModeSignalenLink : runModeSecondary}
-                data-testid="coordination-dominant-secondary-cta"
-              >
-                {dominantSecondaryLabel}
-              </Button>
-            )}
-          />
-        ) : undefined
-      }
-      workflow={
-        showCoordinationPhaseBoard ? (
-          <CareSection tone="context" testId="coordination-phase-board" aria-label="Aantallen per beslisstap">
-            <CareSectionHeader
-              title="Doorstroom"
-              action={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="gap-1 px-2 text-[13px] font-semibold text-primary hover:bg-muted/35 hover:text-primary"
-                  onClick={() => {
-                    setCasussenPreferredFocus("pipeline");
-                    onAppNavigate?.("/casussen");
-                  }}
-                  data-testid="coordination-doorstroom-open-werkvoorraad"
-                >
-                  Bekijk gehele stroom
-                  <ChevronRight size={14} aria-hidden />
-                </Button>
-              }
-            />
-            <CareSectionBody>
-              <CareFlowBoard
-                testId="coordination-flow-board"
-                variant="pipeline"
-                activeStepIndex={activeRegiekamerStepIndex}
-                stepCount={REGIEKAMER_FLOW_STEPS.length}
-              >
-                {REGIEKAMER_FLOW_STEPS.map((step, stepIndex) => {
-                  const Icon = regiekamerFlowStepIcon(step.id);
-                  const count = regiekamerFlowCounts[step.id];
-                  const isBottleneck = count > 0 && stepIndex === activeRegiekamerStepIndex;
-                  const completed = stepIndex < activeRegiekamerStepIndex && !isBottleneck;
-                  return (
-                    <CareFlowStepCard
-                      key={step.id}
-                      testId={`coordination-phase-column-${step.id}`}
-                      onClick={() => {
-                        const phaseMap: Record<RegiekamerFlowStepId, CoordinationFlowPhase> = {
-                          aanmelding: "aanmelding",
-                          matching: "matching",
-                          aanbiederreactie: "aanbiederreactie",
-                          plaatsing: "plaatsing",
-                          intake: "intake",
-                        };
-                        applyPhaseBoardFilter(phaseMap[step.id]);
-                      }}
-                      active={isBottleneck}
-                      completed={completed}
-                      icon={<Icon size={18} className="text-current" />}
-                      metric={count}
-                      subtitle={step.subtitle}
-                      title={step.label}
-                    />
-                  );
-                })}
-              </CareFlowBoard>
-            </CareSectionBody>
-          </CareSection>
-        ) : undefined
-      }
-    >
+    <div className="flex min-h-0 flex-col" data-testid="regiekamer-page">
+      {/* Page header */}
+      <div className="flex items-start justify-between gap-4 pb-5">
+        <div>
+          <h1 className="text-[28px] font-bold tracking-tight text-gray-900 dark:text-foreground">Regiekamer</h1>
+          <p className="mt-0.5 text-[14px] text-gray-500 dark:text-muted-foreground">Stuur op doorstroom, blokkades en urgente casussen.</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 pt-1 text-[12px] text-gray-400 dark:text-muted-foreground">
+          {lastUpdateLabel && <span>{lastUpdateLabel}</span>}
+          <button type="button" onClick={refetch} aria-label="Vernieuwen" className="rounded p-0.5 hover:text-gray-700 dark:hover:text-foreground transition-colors">
+            <RefreshCw size={13} />
+          </button>
+        </div>
+      </div>
+
+      {/* KPI cards */}
+      <div className="mb-5 grid grid-cols-3 gap-3">
+        <button
+          type="button"
+          onClick={applyCriticalDrillFilter}
+          className="flex flex-col gap-1 rounded-xl border border-red-200/60 dark:border-red-900/30 bg-red-50/60 dark:bg-red-950/20 px-4 py-3 text-left transition-colors hover:bg-red-100/60 dark:hover:bg-red-950/30"
+        >
+          <span className="text-[28px] font-bold tabular-nums leading-none text-red-600 dark:text-red-400">{directActieCount}</span>
+          <span className="text-[12px] font-medium text-red-700/70 dark:text-red-400/70">Direct actie nodig</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setIssueFilter("blockers")}
+          className="flex flex-col gap-1 rounded-xl border border-red-200/60 dark:border-red-900/30 bg-red-50/40 dark:bg-red-950/10 px-4 py-3 text-left transition-colors hover:bg-red-100/50 dark:hover:bg-red-950/20"
+        >
+          <span className="text-[28px] font-bold tabular-nums leading-none text-red-500 dark:text-red-400">{blockedCount}</span>
+          <span className="text-[12px] font-medium text-red-600/70 dark:text-red-400/70">Geblokkeerd</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setIssueFilter("SLA")}
+          className="flex flex-col gap-1 rounded-xl border border-amber-200/60 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/15 px-4 py-3 text-left transition-colors hover:bg-amber-100/60 dark:hover:bg-amber-950/25"
+        >
+          <span className="text-[28px] font-bold tabular-nums leading-none text-amber-600 dark:text-amber-400">{slaRiskTotal}</span>
+          <span className="text-[12px] font-medium text-amber-700/70 dark:text-amber-400/70">Termijnrisico</span>
+        </button>
+      </div>
       {loading && (
         <LoadingState title="Regiekamer synchroniseren…" copy="Operationeel overzicht wordt opgebouwd." />
       )}
@@ -1782,145 +2151,162 @@ export function SystemAwarenessPage({
       )}
 
       {!loading && !error && coordinationListItems.length > 0 && (
-        <section
+        <div
           data-testid="coordination-uitvoerlijst"
-          aria-labelledby="coordination-uitvoerlijst-heading"
-          className="surface-workspace rounded-[22px] border border-border/60 bg-card/45 p-4 shadow-sm md:p-5"
+          className="overflow-hidden rounded-xl border border-gray-200 dark:border-border/60 bg-white dark:bg-card/45"
+          style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}
         >
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <h2 id="coordination-uitvoerlijst-heading" className="text-[22px] font-semibold tracking-tight text-foreground">
-                Werkvoorraad
-              </h2>
-              <p className="text-[13px] leading-6 text-muted-foreground">Actuele casussen die jouw aandacht vragen.</p>
+          {/* Phase tabs */}
+          <div className="flex overflow-x-auto border-b border-gray-100 dark:border-border/35 px-2">
+            {(
+              [
+                { id: "alle" as const, label: "Alle casussen" },
+                { id: "aanmelding" as const, label: "Aanmelding" },
+                { id: "matching" as const, label: "Matching" },
+                { id: "aanbiederreactie" as const, label: "Aanbiederreactie" },
+                { id: "plaatsing" as const, label: "Plaatsing" },
+                { id: "intake" as const, label: "Intake" },
+                { id: "hoog-urgent" as const, label: "Hoog urgent" },
+              ] satisfies Array<{ id: RegiekamerPhaseTab; label: string }>
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => { setActiveTab(tab.id); setSelectedCaseId(null); }}
+                className={cn(
+                  "flex shrink-0 items-center gap-1.5 border-b-2 px-3.5 py-3 text-[13px] font-medium whitespace-nowrap transition-colors",
+                  activeTab === tab.id
+                    ? "border-gray-900 dark:border-foreground text-gray-900 dark:text-foreground"
+                    : "border-transparent text-gray-500 dark:text-muted-foreground hover:text-gray-800 dark:hover:text-foreground",
+                )}
+              >
+                {tab.label}
+                <span className={cn("rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums", activeTab === tab.id ? "bg-gray-900/10 dark:bg-foreground/10 text-gray-900 dark:text-foreground" : "bg-gray-100 dark:bg-muted/40 text-gray-500 dark:text-muted-foreground")}>
+                  {phaseTabCounts[tab.id]}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Toolbar */}
+          <div className="flex items-center gap-3 border-b border-gray-100 dark:border-border/35 px-4 py-2.5">
+            <div className="relative max-w-xs flex-1">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
+              <input
+                type="search"
+                placeholder="Zoek in werkvoorraad..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-8 w-full rounded-lg border border-gray-200 dark:border-border/50 bg-transparent pl-8 pr-3 text-[13px] text-gray-900 dark:text-foreground placeholder:text-gray-400 dark:placeholder:text-muted-foreground outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-colors"
+              />
             </div>
-
-            <CareSearchFiltersBar
-              variant="workspace"
-              className="px-0"
-              searchValue={searchQuery}
-              onSearchChange={setSearchQuery}
-              searchPlaceholder="Zoek casussen, regio's, aanbieders..."
-              showSecondaryFilters={showSecondaryFilters}
-              onToggleSecondaryFilters={() => setShowSecondaryFilters((current) => !current)}
-              secondaryFiltersLabel="Filters"
-              secondaryFilters={(
-                <>
-                  <div className="grid items-end gap-2 md:grid-cols-2 xl:grid-cols-4">
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      <span className="inline-flex flex-wrap items-center gap-1.5">
-                        Prioriteit
-                        <InlineHelpChip
-                          title="Waarom staat dit bovenaan?"
-                          triggerLabel="Uitleg"
-                          testId="coordination-prioriteit-help"
-                        >
-                          <p>Items worden geprioriteerd op urgentie, blokkades en benodigde actie.</p>
-                        </InlineHelpChip>
-                      </span>
-                      <CareOperationalSelect
-                        aria-label="Prioriteit"
-                        value={priorityFilter}
-                        onChange={(event) => setPriorityFilter(event.target.value as PriorityFilter)}
-                      >
-                        {Object.entries(PRIORITY_LABELS).map(([key, label]) => (
-                          <option key={key} value={key}>{label}</option>
-                        ))}
-                      </CareOperationalSelect>
-                    </label>
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Type
-                      <CareOperationalSelect
-                        aria-label="Type"
-                        value={issueFilter}
-                        onChange={(event) => setIssueFilter(event.target.value as IssueFilter)}
-                      >
-                        {Object.entries(ISSUE_LABELS).map(([key, label]) => (
-                          <option key={key} value={key}>{label}</option>
-                        ))}
-                      </CareOperationalSelect>
-                    </label>
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Stap
-                      <CareOperationalSelect
-                        aria-label="Stap in de keten"
-                        value={phaseFilter}
-                        onChange={(event) => setPhaseFilter(event.target.value as PhaseFilter)}
-                      >
-                        <option value="all">Alles</option>
-                        {DECISION_UI_PHASE_IDS.map((id) => (
-                          <option key={id} value={id}>{DECISION_UI_PHASE_LABELS[id]}</option>
-                        ))}
-                      </CareOperationalSelect>
-                    </label>
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Rol
-                      <CareOperationalSelect
-                        aria-label="Rol"
-                        value={ownershipFilter}
-                        onChange={(event) => setOwnershipFilter(event.target.value as OwnershipFilter)}
-                      >
-                        {Object.entries(OWNERSHIP_LABELS).map(([key, label]) => (
-                          <option key={key} value={key}>{label}</option>
-                        ))}
-                      </CareOperationalSelect>
-                    </label>
-                  </div>
-                  <div className="grid items-end gap-2 md:grid-cols-2">
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Zorgbehoefte categorie
-                      <CareOperationalSelect
-                        aria-label="Zorgbehoefte categorie"
-                        value={categoryFilter}
-                        onChange={(event) => {
-                          setCategoryFilter(event.target.value);
-                          setSubcategoryFilter("all");
-                        }}
-                      >
-                        <option value="all">Alle categorieën</option>
-                        {taxonomyCategoryOptions.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </CareOperationalSelect>
-                    </label>
-                    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-                      Specifieke zorgbehoefte
-                      <CareOperationalSelect
-                        aria-label="Specifieke zorgbehoefte"
-                        value={subcategoryFilter}
-                        disabled={categoryFilter === "all" || taxonomySubcategoryOptions.length === 0}
-                        onChange={(event) => setSubcategoryFilter(event.target.value)}
-                      >
-                        <option value="all">Alle specifieke behoeften</option>
-                        {taxonomySubcategoryOptions.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </CareOperationalSelect>
-                    </label>
-                  </div>
-                </>
-              )}
-            />
-
-            <div className="overflow-hidden rounded-[20px] border border-border/45 bg-background/20">
-              <div className="grid min-w-[980px] grid-cols-[5.5rem_16rem_minmax(11rem,1fr)_11rem_9rem_12rem] border-b border-border/35 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground md:px-5">
-                <span>Urgentie</span>
-                <span>Casus</span>
-                <span>Regio</span>
-                <span>Status</span>
-                <span>Laatste actie</span>
-                <span>Volgende actie</span>
-              </div>
-              <div className="divide-y divide-border/35">
-                {coordinationListItems.map((item) => (
-                  <RegiekamerWorkRow key={item.case_id} item={item} onCaseClick={onCaseClick} />
-                ))}
-              </div>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowFiltersBar((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition-colors",
+                  showFiltersBar || filtersActive
+                    ? "border-primary/40 bg-primary/5 text-primary dark:border-primary/30 dark:bg-primary/10"
+                    : "border-gray-200 dark:border-border/60 text-gray-600 dark:text-muted-foreground hover:border-gray-300 hover:text-gray-900 dark:hover:text-foreground",
+                )}
+              >
+                <SlidersHorizontal size={13} aria-hidden />
+                Filters
+                {filtersActive && <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">!</span>}
+              </button>
             </div>
           </div>
-        </section>
+
+          {/* Inline filters */}
+          {showFiltersBar && (
+            <div className="border-b border-gray-100 dark:border-border/35 bg-gray-50/50 dark:bg-muted/5 px-4 py-3">
+              <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <label className="flex min-w-0 flex-col gap-1 text-[11px] text-gray-500 dark:text-muted-foreground">
+                  Prioriteit
+                  <CareOperationalSelect aria-label="Prioriteit" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value as PriorityFilter)}>
+                    {Object.entries(PRIORITY_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                  </CareOperationalSelect>
+                </label>
+                <label className="flex min-w-0 flex-col gap-1 text-[11px] text-gray-500 dark:text-muted-foreground">
+                  Type
+                  <CareOperationalSelect aria-label="Type" value={issueFilter} onChange={(e) => setIssueFilter(e.target.value as IssueFilter)}>
+                    {Object.entries(ISSUE_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                  </CareOperationalSelect>
+                </label>
+                <label className="flex min-w-0 flex-col gap-1 text-[11px] text-gray-500 dark:text-muted-foreground">
+                  Rol
+                  <CareOperationalSelect aria-label="Rol" value={ownershipFilter} onChange={(e) => setOwnershipFilter(e.target.value as OwnershipFilter)}>
+                    {Object.entries(OWNERSHIP_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                  </CareOperationalSelect>
+                </label>
+                <Button type="button" variant="ghost" className="self-end text-[12px]" onClick={clearFilters}>Wis filters</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <div
+              className="grid min-w-[860px] gap-x-4 border-b border-gray-100 dark:border-border/25 px-6 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400 dark:text-muted-foreground"
+              style={{ gridTemplateColumns: "1.75rem minmax(13rem,2fr) minmax(11rem,1.6fr) 9rem minmax(8rem,1fr) minmax(10rem,1.1fr)" }}
+            >
+              <span aria-hidden />
+              <span>Casus</span>
+              <span>Blokkade</span>
+              <span>Eigenaar</span>
+              <span>Wachttijd ↓</span>
+              <span>Volgende actie</span>
+            </div>
+            <div role="list">
+              {tabFilteredItems.map((item) => (
+                <RegiekamerWorkRow
+                  key={item.case_id}
+                  item={item}
+                  isSelected={selectedCaseId === String(item.case_id)}
+                  currentUserName={currentUserDisplayName}
+                  onSelect={(id) => setSelectedCaseId((prev) => (prev === id ? null : id))}
+                  onCaseClick={onCaseClick}
+                />
+              ))}
+              {tabFilteredItems.length === 0 && (
+                <div className="px-6 py-8 text-center text-[13px] text-gray-400 dark:text-muted-foreground">
+                  Geen casussen in dit filter.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between border-t border-gray-100 dark:border-border/35 px-6 py-3">
+            <p className="text-[12px] text-gray-500 dark:text-muted-foreground">
+              {tabFilteredItems.length} {tabFilteredItems.length === 1 ? "resultaat" : "resultaten"}
+            </p>
+            <div className="flex items-center gap-1">
+              <button type="button" disabled aria-label="Vorige pagina" className="flex size-7 items-center justify-center rounded-md border border-gray-200 dark:border-border/60 text-gray-400 disabled:opacity-40">
+                <ChevronLeft size={13} aria-hidden />
+              </button>
+              <button type="button" className="flex h-7 min-w-[1.75rem] items-center justify-center rounded-md bg-gray-900 dark:bg-foreground px-1.5 text-[12px] font-medium text-white dark:text-background">
+                1
+              </button>
+              <button type="button" disabled aria-label="Volgende pagina" className="flex size-7 items-center justify-center rounded-md border border-gray-200 dark:border-border/60 text-gray-500 hover:bg-gray-50 dark:hover:bg-muted/20 disabled:opacity-40 transition-colors">
+                <ChevronRight size={13} aria-hidden />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-    </CarePageScaffold>
+
+      {/* Right detail panel */}
+      {selectedItem != null && (
+        <CasusdetailsPanel
+          item={selectedItem}
+          currentUserName={currentUserDisplayName}
+          onClose={() => setSelectedCaseId(null)}
+          onCaseClick={onCaseClick}
+        />
+      )}
+    </div>
   );
 }
 

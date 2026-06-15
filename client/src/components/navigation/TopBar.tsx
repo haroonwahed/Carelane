@@ -8,18 +8,18 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { 
+import {
   Search,
   Bell,
-  Moon,
-  Sun,
   ChevronDown,
   Building2,
   MapPin,
   Shield,
   User,
   Settings,
-  LogOut
+  LogOut,
+  HelpCircle,
+  Mail,
 } from "lucide-react";
 import { Input } from "../ui/input";
 import { NOTIFICATIONS, formatNotificationTimestamp } from "../../lib/notificationsData";
@@ -107,8 +107,6 @@ export function TopBar({
   onSettingsClick,
   onLogout
 }: TopBarProps) {
-  const canSwitchRole = showRoleSwitcher && availableContexts.length > 1;
-  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -141,13 +139,11 @@ export function TopBar({
 
   const handleContextSwitch = (contextId: string) => {
     onContextSwitch(contextId);
-    setRoleDropdownOpen(false);
   };
 
   const handleNotificationsToggle = () => {
     setNotificationsOpen((currentState) => !currentState);
     setAccountDropdownOpen(false);
-    setRoleDropdownOpen(false);
     onNotificationClick?.();
   };
 
@@ -157,194 +153,30 @@ export function TopBar({
     submitLogoutForm();
   };
 
-  const getRoleIcon = (type: RoleType) => {
-    switch (type) {
-      case "gemeente":
-        return MapPin;
-      case "zorgaanbieder":
-        return Building2;
-      case "admin":
-        return Shield;
-    }
-  };
-
-  const getRoleLabel = (type: RoleType) => {
-    switch (type) {
-      case "gemeente":
-        return "Gemeente";
-      case "zorgaanbieder":
-        return "Zorgaanbieder";
-      case "admin":
-        return "Admin";
-    }
-  };
-
-  const RoleIcon = getRoleIcon(currentContext.type);
-
-  const pilotContextIds = useMemo(
-    () => new Set(availableContexts.map((context) => context.id)),
-    [availableContexts],
-  );
-  /** Session-backed org (e.g. auto-provisioned "test1's Coördinatie") is not a pilot chip — show it explicitly above the switch list. */
-  const showActiveWorkspaceOutsidePilot = !pilotContextIds.has(currentContext.id);
 
   return (
     <header
       data-testid="care-top-bar"
-      className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border/60 bg-card/45 px-5 backdrop-blur-[2px]"
+      className="sticky top-0 flex items-center justify-between border-b border-border/60 bg-card/45 backdrop-blur-[2px]"
+      style={{
+        zIndex: "var(--care-z-topbar)",
+        height: "var(--care-topbar-height)",
+        paddingLeft: "var(--care-page-h-padding)",
+        paddingRight: "var(--care-page-h-padding)",
+      }}
     >
       
-      {/* LEFT: ROLE/CONTEXT SWITCHER */}
-      <div className="shrink-0">
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => canSwitchRole && setRoleDropdownOpen(!roleDropdownOpen)}
-            className="group flex items-center gap-3 rounded-xl border border-transparent px-4 py-2 transition-colors hover:border-border/55 hover:bg-card/35"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-border/60 bg-background/35">
-              <RoleIcon size={16} className="text-foreground" />
-            </div>
-            
-            <div className="text-left">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  {getRoleLabel(currentContext.type)}
-                </span>
-                {canSwitchRole && (
-                  <ChevronDown 
-                    size={14} 
-                    className={`text-muted-foreground transition-transform ${
-                      roleDropdownOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                )}
-              </div>
-              <p className="text-sm font-bold text-foreground">
-                {currentContext.name}
-              </p>
-            </div>
-          </button>
-
-          {/* Role Dropdown */}
-          {roleDropdownOpen && canSwitchRole && (
-            <>
-              {/* Backdrop */}
-              <div 
-                className="fixed inset-0 z-40"
-                onClick={() => setRoleDropdownOpen(false)}
-              />
-              
-              {/* Dropdown */}
-              <div className="absolute top-full left-0 mt-2 w-72 rounded-xl border border-border/80 bg-popover px-2 py-2 text-popover-foreground shadow-2xl backdrop-blur-none z-50">
-                <div className="space-y-1">
-                  {showActiveWorkspaceOutsidePilot ? (
-                    <>
-                      <div className="px-3 pt-1 pb-0.5">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          Actieve organisatie
-                        </p>
-                      </div>
-                      <div
-                        className="flex w-full items-center gap-3 rounded-lg border border-border/70 bg-muted/25 px-3 py-2.5 text-left"
-                        role="status"
-                        aria-label={`Actieve werkruimte: ${currentContext.name}`}
-                      >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10">
-                          <RoleIcon size={16} className="text-primary" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                            {getRoleLabel(currentContext.type)}
-                          </p>
-                          <p className="truncate text-sm font-bold text-primary">
-                            {currentContext.name}
-                          </p>
-                          {currentContext.subtitle ? (
-                            <p className="truncate text-xs text-muted-foreground">{currentContext.subtitle}</p>
-                          ) : null}
-                        </div>
-                        <div className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
-                      </div>
-                      <div className="px-3 pt-2 pb-0.5">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          Pilotwerkruimten
-                        </p>
-                      </div>
-                    </>
-                  ) : null}
-                  {availableContexts.map((context) => {
-                    const Icon = getRoleIcon(context.type);
-                    const isActive = context.id === currentContext.id;
-                    
-                    return (
-                      <button
-                        key={context.id}
-                        onClick={() => handleContextSwitch(context.id)}
-                        className={`
-                          w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-                          transition-all text-left
-                          ${isActive
-                            ? "bg-primary/10 border border-primary/20"
-                            : "hover:bg-muted/30"
-                          }
-                        `}
-                      >
-                        <div className={`
-                          w-8 h-8 rounded-lg flex items-center justify-center border
-                          ${isActive
-                            ? "bg-primary/10 border-primary/20"
-                            : "bg-muted/20 border-border"
-                          }
-                        `}>
-                          <Icon 
-                            size={16} 
-                            className={isActive ? "text-primary" : "text-muted-foreground"}
-                          />
-                        </div>
-                        
-                        <div className="flex-1">
-                          <p className={`text-xs font-semibold uppercase tracking-wide ${
-                            isActive ? "text-primary" : "text-muted-foreground"
-                          }`}>
-                            {getRoleLabel(context.type)}
-                          </p>
-                          <p className={`text-sm font-bold ${
-                            isActive ? "text-primary" : "text-foreground"
-                          }`}>
-                            {context.name}
-                          </p>
-                          {context.subtitle && (
-                            <p className="text-xs text-muted-foreground">
-                              {context.subtitle}
-                            </p>
-                          )}
-                        </div>
-
-                        {isActive && (
-                          <div className="w-2 h-2 rounded-full bg-primary" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
       {/* CENTER: GLOBAL SEARCH */}
       <div className="flex-1 max-w-xl mx-8">
         <div className="relative">
-          <Search 
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" 
-            size={18} 
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            size={18}
           />
           <Input
             ref={searchInputRef}
             type="search"
-            placeholder="Zoek casussen, regio's, aanbieders…"
+            placeholder="Zoek op casus, cliënt, aanbieder of document..."
             value={searchQuery}
             onChange={handleSearchChange}
             className="bg-muted/20 pl-10 pr-[4.5rem] border-muted/30 focus:bg-muted/30"
@@ -361,19 +193,17 @@ export function TopBar({
 
       {/* RIGHT: ACTIONS */}
       <div className="flex items-center gap-3">
+        {/* Help */}
         <button
-          onClick={onThemeToggle}
+          type="button"
           className="p-2 rounded-lg hover:bg-muted/30 transition-colors"
-          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label="Help"
+          title="Help"
         >
-          {theme === "dark" ? (
-            <Sun size={20} className="text-muted-foreground" />
-          ) : (
-            <Moon size={20} className="text-muted-foreground" />
-          )}
+          <HelpCircle size={20} className="text-muted-foreground" />
         </button>
 
+        {/* Notifications (Bell) */}
         <div className="relative">
           <button
             onClick={handleNotificationsToggle}
@@ -392,7 +222,7 @@ export function TopBar({
           {notificationsOpen && (
             <>
               <div
-                className="fixed inset-0 z-40"
+                className="fixed inset-0" style={{ zIndex: "var(--care-z-topbar)" }}
                 onClick={() => setNotificationsOpen(false)}
               />
 
@@ -454,6 +284,19 @@ export function TopBar({
           )}
         </div>
 
+        {/* Mail with badge (hardcoded 7) */}
+        <button
+          type="button"
+          className="relative p-2 rounded-lg hover:bg-muted/30 transition-colors"
+          aria-label="Berichten (7)"
+          title="Berichten"
+        >
+          <Mail size={20} className="text-muted-foreground" />
+          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-white shadow-sm shadow-primary/20">
+            7
+          </span>
+        </button>
+
         {/* Divider */}
         <div className="w-px h-8 bg-border" />
 
@@ -463,7 +306,6 @@ export function TopBar({
             onClick={() => {
               setAccountDropdownOpen(!accountDropdownOpen);
               setNotificationsOpen(false);
-              setRoleDropdownOpen(false);
             }}
             className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/30 transition-colors"
           >
@@ -503,7 +345,7 @@ export function TopBar({
             <>
               {/* Backdrop */}
               <div 
-                className="fixed inset-0 z-40"
+                className="fixed inset-0" style={{ zIndex: "var(--care-z-topbar)" }}
                 onClick={() => setAccountDropdownOpen(false)}
               />
               
