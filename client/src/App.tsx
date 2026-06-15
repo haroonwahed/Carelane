@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { MultiTenantDemo } from "./components/examples/MultiTenantDemo";
 import { PublicLandingPage } from "./components/public/PublicLandingPage";
-import { isAuthDocumentPath, PUBLIC_LANDING_URL, redirectIfAuthDocumentPath } from "./lib/routes";
+import { LoginPage } from "./components/care/LoginPage";
+import { LOGIN_URL, PUBLIC_LANDING_URL, LOGOUT_URL, REGISTER_URL } from "./lib/routes";
 
 /** Keep SPA routing in sync with `window.location` when the shell uses `history.pushState` / `replaceState`. */
 function useSyncedPathname(): string {
@@ -30,18 +31,6 @@ function useSyncedPathname(): string {
   return pathname;
 }
 
-/** Leave the Vite SPA and load Django’s HTML for login/register/logout (session + forms). */
-function AuthDocumentRedirect() {
-  useEffect(() => {
-    redirectIfAuthDocumentPath();
-  }, []);
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-8 text-foreground">
-      <p className="text-sm text-muted-foreground">Doorverbinden naar aanmelden…</p>
-    </div>
-  );
-}
-
 export default function App() {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window === "undefined") {
@@ -50,7 +39,6 @@ export default function App() {
 
     const storedTheme = window.localStorage.getItem("careon-theme");
     if (storedTheme === "light" || storedTheme === "dark") {
-      // Apply immediately to avoid flash of wrong theme on portals
       if (storedTheme === "dark") document.documentElement.classList.add("dark");
       return storedTheme;
     }
@@ -61,19 +49,27 @@ export default function App() {
   const [isDashboardView] = useState(() => new URLSearchParams(window.location.search).get("view") === "dashboard");
   const pathname = useSyncedPathname();
   const isPublicRoute = pathname === PUBLIC_LANDING_URL;
-  const isAuthRoute = isAuthDocumentPath(pathname);
+  const normalizedPath = pathname.replace(/\/+$/, "") || "/";
+  const isLoginRoute = normalizedPath === LOGIN_URL.replace(/\/+$/, "");
+  const isLegacyAuthRoute = [LOGOUT_URL, REGISTER_URL].some(
+    u => normalizedPath === u.replace(/\/+$/, ""),
+  );
   const effectiveTheme: "light" | "dark" = theme;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     window.localStorage.setItem("careon-theme", theme);
-    // Apply dark class to <html> so Radix UI portals rendered to document.body
-    // inherit the correct CSS custom properties (Select, Dialog, Popover, etc.)
     if (effectiveTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
   }, [effectiveTheme, theme]);
+
+  // Legacy Django pages (logout, register) — redirect to Django directly
+  if (isLegacyAuthRoute) {
+    window.location.replace(`http://127.0.0.1:8000${window.location.pathname}${window.location.search}`);
+    return null;
+  }
 
   if (isPublicRoute && !isDashboardView) {
     return (
@@ -85,12 +81,8 @@ export default function App() {
     );
   }
 
-  if (isAuthRoute) {
-    return (
-      <div className={effectiveTheme === "dark" ? "dark" : ""}>
-        <AuthDocumentRedirect />
-      </div>
-    );
+  if (isLoginRoute) {
+    return <LoginPage />;
   }
 
   return (

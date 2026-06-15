@@ -1112,6 +1112,36 @@ def _build_match_context_from_intake(intake, organization):
     )
 
 
+@ensure_csrf_cookie
+@require_http_methods(["POST", "GET"])
+def auth_login_api(request):
+    if request.method == "GET":
+        return JsonResponse({'csrfReady': True})
+    """JSON login endpoint — lets the React SPA authenticate without a full-page redirect."""
+    from django.contrib.auth import authenticate, login as auth_login
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'ok': False, 'error': 'Ongeldig verzoek.'}, status=400)
+    username = (body.get('username') or '').strip()
+    password = body.get('password') or ''
+    if not username or not password:
+        return JsonResponse({'ok': False, 'error': 'Gebruikersnaam en wachtwoord zijn verplicht.'}, status=400)
+    user = authenticate(request, username=username, password=password)
+    if user is None:
+        return JsonResponse({'ok': False, 'error': 'De gebruikersnaam of het wachtwoord is onjuist.'}, status=401)
+    auth_login(request, user)
+    return JsonResponse({'ok': True, 'next': '/dashboard/'})
+
+
+@require_http_methods(["POST"])
+def auth_logout_api(request):
+    """JSON logout endpoint."""
+    from django.contrib.auth import logout as auth_logout
+    auth_logout(request)
+    return JsonResponse({'ok': True})
+
+
 @login_required
 @ensure_csrf_cookie
 @require_http_methods(["GET"])

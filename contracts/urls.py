@@ -7,6 +7,9 @@ from .navigation import SPA_LANDING_URL
 app_name = 'careon'
 
 urlpatterns = [
+    # API — auth (JSON, session-cookie based; used by the React SPA login form)
+    path('api/auth/login/', api_views.auth_login_api, name='auth_login_api'),
+    path('api/auth/logout/', api_views.auth_logout_api, name='auth_logout_api'),
     # API
     path('api/me/', api_views.current_user_api, name='current_user_api'),
     path(
