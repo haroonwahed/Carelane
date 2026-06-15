@@ -23,9 +23,7 @@ export function MetricStrip({ children, className }: MetricStripProps) {
       data-density="compact"
       className={className}
       style={{
-        backgroundColor: tokens.colors.surface,
-        border: `1px solid ${tokens.colors.border}`,
-        borderRadius: tokens.radius.md,
+        borderRadius: tokens.visual.radiusCard,
         minHeight: tokens.density.metricStripHeight,
       }}
     >

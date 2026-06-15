@@ -257,6 +257,87 @@
   --color-surface-3: var(--surface-3);
   --color-glow-primary: var(--glow-primary);
   --color-glow-primary-soft: var(--glow-primary-soft);
+
+  /* CareOn Design System V1 — Tailwind aliases for semantic tokens */
+  --care-sidebar-width: var(--care-sidebar-width);
+  --care-sidebar-width-expanded: var(--care-sidebar-width-expanded);
+  --care-sidebar-width-collapsed: var(--care-sidebar-width-collapsed);
+  --care-topbar-height: var(--care-topbar-height);
+  --care-page-h-padding: var(--care-page-h-padding);
+  --care-page-max-width: var(--care-page-max-width);
+  --care-radius-large: var(--care-radius-large);
+  --care-radius-card: var(--care-radius-card);
+  --care-radius-control: var(--care-radius-control);
+  --care-radius-pill: var(--care-radius-pill);
+  --care-shadow-card: var(--care-shadow-card);
+  --care-shadow-section: var(--care-shadow-section);
+  --care-shadow-control: var(--care-shadow-control);
+  --care-shadow-overlay: var(--care-shadow-overlay);
+  --care-shadow-dialog: var(--care-shadow-dialog);
+  --care-cta-primary: var(--care-cta-primary);
+  --care-cta-warning: var(--care-cta-warning);
+  --care-badge-red-bg: var(--care-badge-red-bg);
+  --care-badge-red-text: var(--care-badge-red-text);
+  --care-badge-amber-bg: var(--care-badge-amber-bg);
+  --care-badge-amber-text: var(--care-badge-amber-text);
+  --care-badge-blue-bg: var(--care-badge-blue-bg);
+  --care-badge-blue-text: var(--care-badge-blue-text);
+  --care-badge-purple-bg: var(--care-badge-purple-bg);
+  --care-badge-purple-text: var(--care-badge-purple-text);
+  --care-badge-green-bg: var(--care-badge-green-bg);
+  --care-badge-green-text: var(--care-badge-green-text);
+  --care-badge-muted-bg: var(--care-badge-muted-bg);
+  --care-badge-muted-text: var(--care-badge-muted-text);
+
+  /* Semantic colour intents (meaning, not chroma) */
+  --color-care-urgent-bg: var(--care-semantic-urgent-bg);
+  --color-care-urgent-text: var(--care-semantic-urgent-text);
+  --color-care-urgent-border: var(--care-semantic-urgent-border);
+  --color-care-urgent-solid: var(--care-semantic-urgent-solid);
+  --color-care-warning-bg: var(--care-semantic-warning-bg);
+  --color-care-warning-text: var(--care-semantic-warning-text);
+  --color-care-warning-border: var(--care-semantic-warning-border);
+  --color-care-warning-solid: var(--care-semantic-warning-solid);
+  --color-care-info-bg: var(--care-semantic-info-bg);
+  --color-care-info-text: var(--care-semantic-info-text);
+  --color-care-info-border: var(--care-semantic-info-border);
+  --color-care-info-solid: var(--care-semantic-info-solid);
+  --color-care-success-bg: var(--care-semantic-success-bg);
+  --color-care-success-text: var(--care-semantic-success-text);
+  --color-care-success-border: var(--care-semantic-success-border);
+  --color-care-success-solid: var(--care-semantic-success-solid);
+  --color-care-neutral-bg: var(--care-semantic-neutral-bg);
+  --color-care-neutral-text: var(--care-semantic-neutral-text);
+  --color-care-neutral-border: var(--care-semantic-neutral-border);
+  --color-care-brand-bg: var(--care-semantic-brand-bg);
+  --color-care-brand-text: var(--care-semantic-brand-text);
+  --color-care-brand-border: var(--care-semantic-brand-border);
+  --color-care-brand-solid: var(--care-semantic-brand-solid);
+  --color-care-focus-bg: var(--care-focus-bg);
+  --color-care-focus-border: var(--care-focus-border);
+
+  /* Motion */
+  --care-motion-fast: var(--care-motion-fast);
+  --care-motion-standard: var(--care-motion-standard);
+  --care-motion-slow: var(--care-motion-slow);
+  --care-motion-easing: var(--care-motion-easing);
+
+  /* Z-index */
+  --care-z-sticky: var(--care-z-sticky);
+  --care-z-topbar: var(--care-z-topbar);
+  --care-z-overlay: var(--care-z-overlay);
+  --care-z-dialog: var(--care-z-dialog);
+  --care-z-toast: var(--care-z-toast);
+
+  /* Surface states */
+  --care-state-selected-bg: var(--care-state-selected-bg);
+  --care-state-selected-border: var(--care-state-selected-border);
+  --care-state-active-bg: var(--care-state-active-bg);
+
+  /* Layout widths */
+  --care-context-rail-width: var(--care-context-rail-width);
+  --care-queue-width: var(--care-queue-width);
+  --care-panel-detail-width: var(--care-panel-detail-width);
 }
 
 @layer base {
@@ -1112,6 +1193,7 @@ select:not([multiple]):not([size]):disabled {
   border-color: color-mix(in srgb, var(--primary) 42%, transparent);
   background-color: color-mix(in srgb, var(--surface-2) 66%, var(--card) 34%);
   box-shadow:
+    0 0 0 2px color-mix(in srgb, white 20%, transparent),
     0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent),
     0 14px 30px rgba(11, 16, 32, 0.22);
   transform: translateY(-1px);
@@ -1124,36 +1206,25 @@ select:not([multiple]):not([size]):disabled {
 
 .care-flow-connector {
   display: none;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  align-items: stretch;
   justify-content: center;
-  align-self: center;
-  gap: 0.2rem;
-  padding: 0 0.15rem;
+  align-self: stretch;
+  flex-shrink: 0;
+  padding: 0;
   z-index: 1;
+}
+
+.care-flow-connector__bar {
+  width: 1px;
+  align-self: stretch;
+  background: color-mix(in srgb, var(--border) 50%, transparent);
 }
 
 @media (min-width: 768px) {
   .care-flow-connector {
     display: flex;
   }
-}
-
-.care-flow-connector__dot {
-  width: 3px;
-  height: 3px;
-  border-radius: 999px;
-  background-color: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
-}
-
-.care-flow-connector__stem {
-  width: 1px;
-  height: 0.65rem;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--muted-foreground) 30%, transparent),
-    color-mix(in srgb, var(--muted-foreground) 8%, transparent)
-  );
 }
 
 /* Operational empty state */
@@ -1321,6 +1392,192 @@ select:not([multiple]):not([size]):disabled {
     color-mix(in srgb, var(--green-light) 38%, var(--surface-2) 62%),
     color-mix(in srgb, var(--surface-2) 86%, var(--background) 14%)
   );
+}
+
+/* --------------------------------------------------------------------------
+   CareOn Design System V1 — Semantic token layer
+   One source of truth for shell geometry, radius, shadows, CTAs, and badges.
+   Components consume --care-* tokens; never hardcode equivalent values.
+   -------------------------------------------------------------------------- */
+:root {
+  /* Shell geometry (responsive — JS applies wide variant at ≥1440px via class) */
+  --care-sidebar-width-expanded: 256px;
+  --care-sidebar-width-collapsed: 72px;
+  --care-sidebar-width: var(--care-sidebar-width-expanded);
+  --care-topbar-height: 64px;
+  --care-page-h-padding: 24px;
+  --care-page-h-padding-wide: 32px;
+  --care-page-max-width: 1536px;
+
+  /* Radius — four semantic values, each with a distinct visual function */
+  --care-radius-large: 20px;    /* page-header shell, modals, dialogs */
+  --care-radius-card: 16px;     /* section cards, panels, containers */
+  --care-radius-control: 10px;  /* buttons, inputs, selects, tabs */
+  --care-radius-pill: 9999px;   /* badges, avatars, pill-tabs */
+
+  /* Shadows */
+  --care-shadow-card: 0 10px 28px rgba(11, 16, 32, 0.16);
+  --care-shadow-section: 0 6px 20px rgba(11, 16, 32, 0.12);
+  --care-shadow-control: 0 2px 8px rgba(11, 16, 32, 0.08);
+  --care-shadow-overlay: rgba(0, 0, 0, 0.50);
+  --care-shadow-dialog: 0 20px 60px rgba(0, 0, 0, 0.40);
+
+  /* CTA tokens */
+  --care-cta-primary: var(--primary);
+  --care-cta-warning: #F5A900;
+  --care-cta-secondary-border: var(--border-strong);
+
+  /* Badge semantic tokens (map to per-mode badge-* primitives) */
+  --care-badge-red-bg: var(--badge-red-bg);
+  --care-badge-red-text: var(--badge-red-text);
+  --care-badge-amber-bg: var(--badge-yellow-bg);
+  --care-badge-amber-text: var(--badge-yellow-text);
+  --care-badge-blue-bg: var(--badge-blue-bg);
+  --care-badge-blue-text: var(--badge-blue-text);
+  --care-badge-purple-bg: var(--badge-purple-bg);
+  --care-badge-purple-text: var(--badge-purple-text);
+  --care-badge-green-bg: var(--badge-green-bg);
+  --care-badge-green-text: var(--badge-green-text);
+  --care-badge-muted-bg: var(--muted);
+  --care-badge-muted-text: var(--muted-foreground);
+
+  /* Motion tokens — three tiers with a shared easing curve */
+  --care-motion-fast: 120ms;
+  --care-motion-standard: 200ms;
+  --care-motion-slow: 350ms;
+  --care-motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --care-motion-easing-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --care-motion-easing-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Z-index scale — every layer documented; no ad-hoc values */
+  --care-z-base: 0;
+  --care-z-raised: 1;        /* relative stacking within a section */
+  --care-z-sticky: 20;       /* sticky context bar, sticky table headers */
+  --care-z-topbar: 40;       /* top navigation bar */
+  --care-z-overlay: 50;      /* sheet / drawer backdrops */
+  --care-z-dialog: 60;       /* modals and dialogs */
+  --care-z-toast: 70;        /* toast notifications */
+
+  /* Surface state tokens */
+  --care-state-selected-bg: var(--primary-light);
+  --care-state-selected-border: var(--primary);
+  --care-state-active-bg: var(--bg-subtle);
+  --care-state-disabled-opacity: 0.45;
+
+  /* Layout width tokens */
+  --care-context-rail-width: 280px;
+  --care-queue-width: 320px;
+  --care-panel-detail-width: 400px;
+
+  /* Typography scale — closed set, two weights (400/500). See CAREON_DESIGN_LANGUAGE.md §3.
+     Consume via the .care-text-* utility classes; never hardcode text-[Npx]. */
+  --care-text-display-size: 1.625rem;     /* 26px — KPI numbers */
+  --care-text-display-leading: 1.25;
+  --care-text-title-size: 1.3125rem;      /* 21px — page / workspace title */
+  --care-text-title-leading: 1.25;
+  --care-text-heading-size: 1.0625rem;    /* 17px — card / focus-card title */
+  --care-text-heading-leading: 1.35;
+  --care-text-subheading-size: 0.9375rem; /* 15px — row title, section label */
+  --care-text-subheading-leading: 1.4;
+  --care-text-body-size: 0.9375rem;       /* 15px — default body */
+  --care-text-body-leading: 1.6;
+  --care-text-body-compact-size: 0.8125rem; /* 13px — row subtitle, meta line */
+  --care-text-body-compact-leading: 1.5;
+  --care-text-meta-size: 0.75rem;         /* 12px — stat label, faint hint */
+  --care-text-meta-leading: 1.4;
+  --care-text-eyebrow-size: 0.6875rem;    /* 11px — UPPERCASE eyebrow */
+  --care-text-eyebrow-leading: 1.3;
+  --care-text-eyebrow-tracking: 0.05em;
+  --care-weight-regular: 400;
+  --care-weight-medium: 500;
+
+  /* Semantic colour intents — meaning, not chroma. Map onto per-mode primitives
+     so they peer light/dark automatically. See CAREON_DESIGN_LANGUAGE.md §4.
+     Write `urgent`, never `red`. */
+  --care-semantic-urgent-bg: var(--badge-red-bg);
+  --care-semantic-urgent-text: var(--badge-red-text);
+  --care-semantic-urgent-border: var(--red-border);
+  --care-semantic-urgent-solid: var(--red-base);
+  --care-semantic-warning-bg: var(--badge-yellow-bg);
+  --care-semantic-warning-text: var(--badge-yellow-text);
+  --care-semantic-warning-border: var(--yellow-border);
+  --care-semantic-warning-solid: var(--yellow-base);
+  --care-semantic-info-bg: var(--badge-blue-bg);
+  --care-semantic-info-text: var(--badge-blue-text);
+  --care-semantic-info-border: var(--blue-border);
+  --care-semantic-info-solid: var(--blue-base);
+  --care-semantic-success-bg: var(--badge-green-bg);
+  --care-semantic-success-text: var(--badge-green-text);
+  --care-semantic-success-border: var(--green-border);
+  --care-semantic-success-solid: var(--green-base);
+  --care-semantic-neutral-bg: var(--muted);
+  --care-semantic-neutral-text: var(--muted-foreground);
+  --care-semantic-neutral-border: var(--border-default);
+  --care-semantic-neutral-solid: var(--muted-foreground);
+  --care-semantic-brand-bg: var(--badge-purple-bg);
+  --care-semantic-brand-text: var(--badge-purple-text);
+  --care-semantic-brand-border: var(--primary);
+  --care-semantic-brand-solid: var(--primary);
+
+  /* Focus surface — the "Volgende stap" / "Jouw focus nu" hero card (§6a) */
+  --care-focus-bg: var(--primary-light);
+  --care-focus-border: var(--primary);
+}
+
+/* --------------------------------------------------------------------------
+   Typography scale utilities — the closed type system (CAREON_DESIGN_LANGUAGE.md §3).
+   Use these classes in product code instead of arbitrary text-[Npx] values.
+   -------------------------------------------------------------------------- */
+.care-text-display {
+  font-size: var(--care-text-display-size);
+  line-height: var(--care-text-display-leading);
+  font-weight: var(--care-weight-medium);
+  letter-spacing: -0.011em;
+}
+.care-text-title {
+  font-size: var(--care-text-title-size);
+  line-height: var(--care-text-title-leading);
+  font-weight: var(--care-weight-medium);
+  letter-spacing: -0.011em;
+}
+.care-text-heading {
+  font-size: var(--care-text-heading-size);
+  line-height: var(--care-text-heading-leading);
+  font-weight: var(--care-weight-medium);
+}
+.care-text-subheading {
+  font-size: var(--care-text-subheading-size);
+  line-height: var(--care-text-subheading-leading);
+  font-weight: var(--care-weight-medium);
+}
+.care-text-body {
+  font-size: var(--care-text-body-size);
+  line-height: var(--care-text-body-leading);
+  font-weight: var(--care-weight-regular);
+}
+.care-text-body-compact {
+  font-size: var(--care-text-body-compact-size);
+  line-height: var(--care-text-body-compact-leading);
+  font-weight: var(--care-weight-regular);
+}
+.care-text-meta {
+  font-size: var(--care-text-meta-size);
+  line-height: var(--care-text-meta-leading);
+  font-weight: var(--care-weight-regular);
+}
+.care-text-eyebrow {
+  font-size: var(--care-text-eyebrow-size);
+  line-height: var(--care-text-eyebrow-leading);
+  font-weight: var(--care-weight-medium);
+  letter-spacing: var(--care-text-eyebrow-tracking);
+  text-transform: uppercase;
+}
+
+/* Wide viewport: promote page padding */
+@media (min-width: 1440px) {
+  :root {
+    --care-page-h-padding: var(--care-page-h-padding-wide);
+  }
 }
 
 /* --------------------------------------------------------------------------

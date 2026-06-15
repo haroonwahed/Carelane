@@ -17,5 +17,5 @@
     }
   },
   "include": ["src/**/*", "vite.config.ts"],
-  "exclude": ["node_modules", "build", "tests/e2e/**"]
+  "exclude": ["node_modules", "build", "tests/e2e/**", "src/**/*.stories.tsx", "src/**/*.stories.ts", ".storybook/**"]
 }

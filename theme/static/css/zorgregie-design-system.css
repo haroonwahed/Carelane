@@ -3733,3 +3733,34 @@ a:focus-visible {
   }
 }
 
+/* ── Auth pages (login / register / logout) ──────────────── */
+.auth-page-body {
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+.auth-frame {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-card-shell {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 18px 48px rgba(7, 11, 18, 0.28);
+}
+

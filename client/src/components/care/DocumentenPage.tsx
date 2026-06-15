@@ -229,7 +229,6 @@ export function DocumentenPage() {
         <CareSectionHeader
           className="lg:flex-col lg:items-stretch"
           title="Werkvoorraad"
-          description="Zoek, filter, bekijk en koppel documenten zonder de context uit het oog te verliezen."
           meta={(
             <div className="w-full min-w-0 space-y-2">
               <CareBadge tone="cyan">{filteredDocuments.length} resultaten · {activeCount} actief · {linkedCount} gekoppeld · {recentCount} recent</CareBadge>

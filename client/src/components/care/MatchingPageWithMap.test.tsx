@@ -161,7 +161,7 @@ describe("MatchingPageWithMap", () => {
     await user.click(selectButtons[0]);
 
     expect(await screen.findByRole("dialog", { name: /Bevestig keuze/i })).toBeVisible();
-    expect(screen.getByText(/voorkeurskeuze vast voor deze doorleiding/i)).toBeVisible();
+    expect(screen.getByText(/te selecteren voor doorleiding/i)).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: /^Annuleren$/i }));
     expect(screen.queryByRole("dialog", { name: /Bevestig keuze/i })).not.toBeInTheDocument();
@@ -242,5 +242,98 @@ describe("MatchingPageWithMap", () => {
     const alert = screen.getByRole("alert");
     expect(alert).toHaveTextContent("Je kunt nog niet verder");
     expect(alert).toHaveTextContent("Kies eerst een casus of probeer opnieuw.");
+  });
+
+  it("requires override reason when selecting a non-top ranked provider", async () => {
+    const user = userEvent.setup();
+    mockUseCases.mockReturnValue({
+      cases: [makeCase({ id: "C-MATCH-1" })],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseProviders.mockReturnValue({
+      providers: [
+        makeProvider("1", "Zorggroep A", 2),
+        makeProvider("2", "Zorggroep B", 3),
+      ],
+      loading: false,
+      error: null,
+      totalCount: 2,
+      networkSummary: null,
+      lastUpdatedAt: Date.now(),
+      refetch: vi.fn(),
+    });
+    mockUseMatchingCandidates.mockReturnValue({
+      matches: [
+        makeApiMatch("Zorggroep A", 1),
+        makeApiMatch("Zorggroep B", 2),
+      ],
+      loading: false,
+      error: null,
+      incompleteCode: null,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <MatchingPageWithMap caseId="C-MATCH-1" onBack={() => {}} onConfirmMatch={() => {}} />,
+    );
+
+    await screen.findByRole("heading", { name: /Matching voor casus/i });
+
+    const selectButtons = screen.getAllByRole("button", { name: /Selecteer aanbieder/i });
+    expect(selectButtons.length).toBeGreaterThanOrEqual(2);
+    await user.click(selectButtons[1]);
+
+    const dialog = await screen.findByRole("dialog", { name: /Afwijking van topaanbeveling/i });
+    expect(dialog).toBeVisible();
+    expect(screen.getByText(/Handmatige overschrijving vereist/i)).toBeVisible();
+
+    const confirmBtn = screen.getByRole("button", { name: /Selecteren met toelichting/i });
+    expect(confirmBtn).toBeDisabled();
+
+    await user.type(screen.getByRole("textbox", { name: /Reden van overschrijving/i }), "Cliëntvoorkeur");
+    expect(confirmBtn).not.toBeDisabled();
+  });
+
+  it("shows tradeoffs in the provider card when a match is selected", async () => {
+    const user = userEvent.setup();
+    mockUseCases.mockReturnValue({
+      cases: [makeCase({ id: "C-MATCH-1" })],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseProviders.mockReturnValue({
+      providers: [makeProvider("1", "Zorggroep A", 2)],
+      loading: false,
+      error: null,
+      totalCount: 1,
+      networkSummary: null,
+      lastUpdatedAt: Date.now(),
+      refetch: vi.fn(),
+    });
+    mockUseMatchingCandidates.mockReturnValue({
+      matches: [{ ...makeApiMatch("Zorggroep A", 1), trade_offs: ["Capaciteit nog niet bevestigd", "Reistijd hoog"] }],
+      loading: false,
+      error: null,
+      incompleteCode: null,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <MatchingPageWithMap caseId="C-MATCH-1" onBack={() => {}} onConfirmMatch={() => {}} />,
+    );
+
+    await screen.findByRole("heading", { name: /Matching voor casus/i });
+
+    const articleCards = screen.getAllByRole("article");
+    expect(articleCards.length).toBeGreaterThanOrEqual(1);
+
+    await user.click(articleCards[0]);
+
+    const card = articleCards[0];
+    expect(card).toHaveTextContent("Afwegingen");
+    expect(card).toHaveTextContent("Capaciteit nog niet bevestigd");
   });
 });

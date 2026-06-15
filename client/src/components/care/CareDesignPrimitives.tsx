@@ -1,5 +1,5 @@
-import { Children, Fragment, type ComponentProps, type ReactNode } from "react";
-import { AlertTriangle } from "lucide-react";
+import { Children, Fragment, useEffect, useState, type ComponentProps, type ReactNode } from "react";
+import { AlertTriangle, ChevronRight } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { cn } from "../ui/utils";
@@ -19,7 +19,7 @@ export { CarePageScaffold } from "./CarePageScaffold";
 export { CareUnifiedHeader as PageHeader } from "./CareUnifiedPage";
 
 /** Full-width hero header with border-b — use sparingly for marketing-style surfaces. */
-export { CarePageHeader as PageHeroHeader };
+// PageHeroHeader alias removed — use CareUnifiedHeader instead
 
 /**
  * List surfaces, filters, and work rows — single import path for care pages.
@@ -63,14 +63,14 @@ export { CaseStatusBadge as CareStatusBadge } from "./CaseStatusBadge";
 
 export type CareBadgeTone = "emerald" | "amber" | "red" | "blue" | "cyan" | "purple" | "muted";
 
-const CARE_BADGE_TONE: Record<CareBadgeTone, string> = {
-  emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-  amber:   "border-amber-500/30 bg-amber-500/10 text-amber-300",
-  red:     "border-destructive/30 bg-destructive/10 text-destructive",
-  blue:    "border-blue-500/30 bg-blue-500/10 text-blue-300",
-  cyan:    "border-cyan-500/30 bg-cyan-500/10 text-cyan-200",
-  purple:  "border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300",
-  muted:   "border-border/60 bg-muted/30 text-muted-foreground",
+const CARE_BADGE_TONE: Record<CareBadgeTone, { bg: string; text: string; border: string }> = {
+  emerald: { bg: "var(--care-badge-green-bg)",   text: "var(--care-badge-green-text)",   border: "var(--care-badge-green-bg)" },
+  amber:   { bg: "var(--care-badge-amber-bg)",   text: "var(--care-badge-amber-text)",   border: "var(--care-badge-amber-bg)" },
+  red:     { bg: "var(--care-badge-red-bg)",     text: "var(--care-badge-red-text)",     border: "var(--care-badge-red-bg)" },
+  blue:    { bg: "var(--care-badge-blue-bg)",    text: "var(--care-badge-blue-text)",    border: "var(--care-badge-blue-bg)" },
+  cyan:    { bg: "var(--care-badge-blue-bg)",    text: "var(--care-badge-blue-text)",    border: "var(--care-badge-blue-bg)" },
+  purple:  { bg: "var(--care-badge-purple-bg)",  text: "var(--care-badge-purple-text)",  border: "var(--care-badge-purple-bg)" },
+  muted:   { bg: "var(--care-badge-muted-bg)",   text: "var(--care-badge-muted-text)",   border: "var(--border)" },
 };
 
 /** Canonical semantic status badge. Replaces ad-hoc coloured `<span>` chips across care pages. */
@@ -83,15 +83,47 @@ export function CareBadge({
   children: import("react").ReactNode;
   className?: string;
 }) {
+  const { bg, text, border } = CARE_BADGE_TONE[tone];
   return (
     <span
       className={cn(
         "inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-[12px] font-semibold",
-        CARE_BADGE_TONE[tone],
+        className,
+      )}
+      style={{ backgroundColor: bg, color: text, borderColor: border }}
+    >
+      {children}
+    </span>
+  );
+}
+
+export type PriorityTone = "spoed" | "hoog" | "normaal";
+
+/** Priority badge for operational work rows — 3 tones matching the Regiekamer target design. */
+export function PriorityBadge({
+  tone,
+  className,
+}: {
+  tone: PriorityTone;
+  className?: string;
+}) {
+  const styles: Record<PriorityTone, { dot: string; badge: string }> = {
+    spoed:   { dot: "bg-red-400",   badge: "border-[var(--care-badge-red-bg)]   bg-[var(--care-badge-red-bg)]   text-[var(--care-badge-red-text)]" },
+    hoog:    { dot: "bg-amber-400", badge: "border-[var(--care-badge-amber-bg)] bg-[var(--care-badge-amber-bg)] text-[var(--care-badge-amber-text)]" },
+    normaal: { dot: "bg-muted-foreground/40", badge: "border-border/60 bg-muted/20 text-muted-foreground" },
+  };
+  const labels: Record<PriorityTone, string> = { spoed: "Spoed", hoog: "Hoog", normaal: "Normaal" };
+  const { dot, badge } = styles[tone];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+        badge,
         className,
       )}
     >
-      {children}
+      <span className={cn("size-1.5 rounded-full flex-shrink-0", dot)} aria-hidden />
+      {labels[tone]}
     </span>
   );
 }
@@ -138,16 +170,28 @@ export function CasusWorkspaceStatusBadges({
 
 /**
  * Loading — one pattern for list/detail async shells (a11y: busy + status).
+ * Deferred by 150 ms to suppress flicker on fast responses (local dev, warm cache).
  */
 export function LoadingState({
   title = "Laden…",
   copy,
   className,
+  delayMs = 150,
 }: {
   title?: ReactNode;
   copy?: ReactNode;
   className?: string;
+  delayMs?: number;
 }) {
+  const [visible, setVisible] = useState(delayMs === 0);
+  useEffect(() => {
+    if (delayMs === 0) return;
+    const id = setTimeout(() => setVisible(true), delayMs);
+    return () => clearTimeout(id);
+  }, [delayMs]);
+
+  if (!visible) return null;
+
   return (
     <div role="status" aria-busy="true" aria-live="polite" data-testid="care-loading-state">
       <CareEmptyState title={title} copy={copy} className={className} />
@@ -184,8 +228,9 @@ export function PrimaryActionButton({ className, children, ...props }: Component
     <Button
       type="button"
       variant="default"
+      data-component="primary-action"
       className={cn(
-        "h-10 min-h-10 rounded-xl px-5 text-[13px] font-semibold shadow-md",
+        "h-10 min-h-10 rounded-full px-5 text-[13px] font-semibold shadow-[var(--care-shadow-control)]",
         className,
       )}
       {...props}
@@ -199,32 +244,42 @@ export function BlockingNotice({
   title = "Je kunt nog niet verder",
   message,
   className,
+  tone = "critical",
 }: {
   title?: string;
   message: ReactNode;
   className?: string;
+  tone?: "critical" | "warning" | "info";
 }) {
+  const variant = tone === "critical" ? "critical" : tone === "warning" ? "attention" : "neutral";
+  const iconClass =
+    tone === "critical"
+      ? "text-destructive"
+      : tone === "warning"
+        ? "text-amber-400"
+        : "text-muted-foreground";
   return (
     <CareAttentionSurface
       role="alert"
-      variant="critical"
+      variant={variant}
       density="compact"
       className={cn(className)}
       title={title}
       message={message}
-      icon={<AlertTriangle size={16} className="text-destructive" aria-hidden />}
+      icon={<AlertTriangle size={16} className={iconClass} aria-hidden />}
     />
   );
 }
 
-type CareSectionTone = "default" | "muted" | "context" | "workspace";
+type CareSectionTone = "default" | "muted" | "context" | "workspace" | "elevated";
 type CareAlertTone = "critical" | "warning" | "info" | "success";
 
 const CARE_SECTION_TONE_CLASSES: Record<CareSectionTone, string> = {
   default: "surface-section border border-border/60 bg-card/45 shadow-sm",
-  muted: "rounded-[22px] border border-border/60 bg-card/40 p-4 shadow-sm md:p-5",
+  muted: "border border-border/60 bg-card/40 shadow-sm",
   context: "surface-context border border-border/60 bg-card/40 shadow-sm",
   workspace: "surface-workspace overflow-hidden border border-border/60 bg-card/45 shadow-sm",
+  elevated: "panel-surface border border-border/60 bg-card/50 shadow-sm",
 };
 
 const CARE_ALERT_TONE_CLASSES: Record<
@@ -237,7 +292,7 @@ const CARE_ALERT_TONE_CLASSES: Record<
 > = {
   critical: {
     shell: "care-dominant-focus care-alert-shell care-alert-shell--critical",
-    icon: "border border-yellow-500/15 bg-yellow-500/10 text-yellow-100",
+    icon: "border border-yellow-500/15 bg-yellow-500/10 text-red-100",
     metric: "text-yellow-100",
   },
   warning: {
@@ -280,6 +335,11 @@ export function CareSection({
   );
 }
 
+/**
+ * @deprecated Use `<CareSection tone="elevated">` instead.
+ * CarePanel is kept as a thin alias to avoid breaking existing callers.
+ * Migrate callsites when touching the surrounding file.
+ */
 export function CarePanel({
   children,
   className,
@@ -291,13 +351,9 @@ export function CarePanel({
   testId?: string;
 } & ComponentProps<"section">) {
   return (
-    <section
-      data-testid={testId}
-      className={cn("panel-surface rounded-[22px] border border-border/60 bg-card/50 shadow-sm", className)}
-      {...props}
-    >
+    <CareSection tone="elevated" className={className} testId={testId} {...props}>
       {children}
-    </section>
+    </CareSection>
   );
 }
 
@@ -310,9 +366,6 @@ export function CareSectionHeader({
 }: {
   eyebrow?: ReactNode;
   title: ReactNode;
-  description?: ReactNode;
-  descriptionAriaLabel?: string;
-  descriptionTestId?: string;
   action?: ReactNode;
   meta?: ReactNode;
   className?: string;
@@ -321,9 +374,9 @@ export function CareSectionHeader({
     <div className={cn("care-section-header flex flex-col lg:flex-row lg:items-start lg:justify-between", className)}>
       <div className="min-w-0 shrink-0 space-y-1.5 lg:min-w-[12rem] lg:max-w-[min(100%,28rem)]">
         {eyebrow ? (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{eyebrow}</p>
+          <p className="care-text-eyebrow text-muted-foreground">{eyebrow}</p>
         ) : null}
-        <h2 className="text-[22px] font-semibold tracking-tight text-foreground">{title}</h2>
+        <h2 className="care-text-title text-foreground">{title}</h2>
       </div>
       {(meta || action) ? (
         <div className="flex w-full min-w-0 flex-col items-stretch gap-2 lg:w-auto lg:max-w-none lg:flex-1 lg:items-end">
@@ -499,6 +552,7 @@ export function CareFlowStepCard({
   title,
   active = false,
   completed = false,
+  isBottleneck = false,
   onClick,
   testId,
 }: {
@@ -508,6 +562,8 @@ export function CareFlowStepCard({
   title: ReactNode;
   active?: boolean;
   completed?: boolean;
+  /** Highlights this step as the current flow bottleneck (non-zero count + active phase). */
+  isBottleneck?: boolean;
   onClick?: () => void;
   testId?: string;
 }) {
@@ -520,6 +576,7 @@ export function CareFlowStepCard({
         "care-flow-step__card group flex h-full w-full flex-col gap-0.5 rounded-xl px-2.5 py-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35",
         active && "care-flow-step__card--active",
         completed && !active && "care-flow-step__card--completed",
+        isBottleneck && "ring-1 ring-[var(--care-badge-amber-bg)]",
       )}
     >
       <div className="flex min-w-0 items-start justify-between gap-2">
@@ -537,7 +594,12 @@ export function CareFlowStepCard({
           </div>
         </div>
         {metric != null ? (
-          <span className={cn("shrink-0 text-[16px] font-semibold leading-none tabular-nums", active ? "text-foreground" : "text-muted-foreground")}>
+          <span className={cn(
+            "shrink-0 text-[16px] font-semibold leading-none tabular-nums",
+            isBottleneck && typeof metric === "number" && metric > 0
+              ? "text-[var(--care-badge-amber-text)]"
+              : active ? "text-foreground" : "text-muted-foreground",
+          )}>
             {metric}
           </span>
         ) : null}
@@ -586,9 +648,7 @@ export function CareFlowBoard({
             <Fragment key={i}>
               {i > 0 ? (
                 <div className="care-flow-connector" aria-hidden>
-                  <span className="care-flow-connector__dot" />
-                  <span className="care-flow-connector__stem" />
-                  <span className="care-flow-connector__dot" />
+                  <span className="care-flow-connector__bar" />
                 </div>
               ) : null}
               <div className="care-flow-step min-w-0 flex-1 basis-[calc(50%-0.25rem)] lg:basis-0" role="listitem">
@@ -601,12 +661,100 @@ export function CareFlowBoard({
     );
   }
 
+  const items = Children.toArray(children).filter(Boolean);
+  const cols = stepCount ?? items.length;
   return (
     <div
       data-testid={testId}
-      className={cn("grid gap-2 md:grid-cols-[repeat(4,minmax(0,1fr))]", className)}
+      className={cn("grid gap-2", className)}
+      style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
     >
       {children}
+    </div>
+  );
+}
+
+/** Trade-off comparison for matching recommendations. Each item has a label and a tone. */
+export interface CareTradeoffItem {
+  label: string;
+  tone?: "positive" | "negative" | "neutral";
+  detail?: string;
+}
+
+/**
+ * Structured trade-off list for matching explainability.
+ * Shows pros (positive), cons (negative), and neutral constraints.
+ * Never imply certainty — always show why a provider may be preferable OR less suitable.
+ */
+export function CareTradeoffList({
+  items,
+  className,
+  heading,
+}: {
+  items: CareTradeoffItem[];
+  className?: string;
+  heading?: string;
+}) {
+  if (items.length === 0) {
+    return null;
+  }
+  const positives = items.filter((i) => i.tone === "positive");
+  const negatives = items.filter((i) => i.tone === "negative");
+  const neutrals = items.filter((i) => !i.tone || i.tone === "neutral");
+
+  const renderGroup = (group: CareTradeoffItem[], icon: string, itemClass: string) =>
+    group.map((item) => (
+      <li key={item.label} className={cn("flex min-w-0 items-start gap-2", itemClass)}>
+        <span className="mt-px shrink-0 text-[12px]" aria-hidden>{icon}</span>
+        <span className="min-w-0">
+          <span className="text-[13px]">{item.label}</span>
+          {item.detail && (
+            <span className="ml-1 text-[12px] text-muted-foreground">— {item.detail}</span>
+          )}
+        </span>
+      </li>
+    ));
+
+  return (
+    <div className={cn("space-y-2", className)}>
+      {heading && (
+        <p className="care-text-eyebrow text-muted-foreground/70">{heading}</p>
+      )}
+      <ul className="space-y-1.5">
+        {renderGroup(positives, "＋", "text-[var(--care-badge-green-text)]")}
+        {renderGroup(negatives, "−", "text-[var(--care-badge-red-text)]")}
+        {renderGroup(neutrals, "·", "text-muted-foreground")}
+      </ul>
+    </div>
+  );
+}
+
+/**
+ * Match score display — shows numeric score with advisory label.
+ * Matching is advisory only; never present the score as a certainty.
+ */
+export function CareMatchScore({
+  score,
+  maxScore = 100,
+  advisoryLabel,
+  className,
+}: {
+  score: number;
+  maxScore?: number;
+  advisoryLabel?: string;
+  className?: string;
+}) {
+  const pct = Math.min(100, Math.max(0, Math.round((score / maxScore) * 100)));
+  const tone = pct >= 70 ? "var(--care-badge-green-text)" : pct >= 45 ? "var(--care-badge-amber-text)" : "var(--care-badge-red-text)";
+  return (
+    <div className={cn("flex items-baseline gap-2", className)}>
+      <span className="text-[22px] font-bold tabular-nums" style={{ color: tone }}>
+        {pct}
+      </span>
+      <span className="text-[12px] text-muted-foreground">/100</span>
+      {advisoryLabel && (
+        <span className="text-[12px] font-medium text-muted-foreground">{advisoryLabel}</span>
+      )}
     </div>
   );
 }

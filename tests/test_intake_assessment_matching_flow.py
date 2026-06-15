@@ -266,7 +266,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         case_titles = [item['title'] for item in cases_response.json()['contracts']]
         self.assertIn('API Intake Visible In Casussen', case_titles)
 
-    @patch('contracts.api.views.log_action', side_effect=RuntimeError('audit log store unavailable'))
+    @patch('contracts.api.intake.log_action', side_effect=RuntimeError('audit log store unavailable'))
     def test_intake_create_api_returns_503_and_rollbacks_when_create_audit_fails(self, _mock_log_action):
         municipality = MunicipalityConfiguration.objects.create(
             organization=self.organization,
@@ -323,7 +323,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
     @patch(
-        'contracts.api.views.log_transition_event',
+        'contracts.api.intake.log_transition_event',
         side_effect=AuditLoggingError('Kan auditlog voor deze workflowactie niet vastleggen.'),
     )
     def test_intake_create_api_returns_503_and_rollbacks_when_transition_audit_fails(self, _mock_log_transition):
@@ -381,7 +381,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
             CaseIntakeProcess.objects.filter(title='API Intake Transition Audit Rollback').exists()
         )
 
-    @patch('contracts.api.views.logger.exception')
+    @patch('contracts.api.intake.logger.exception')
     @patch.object(CaseIntakeProcess, 'ensure_case_record', side_effect=RuntimeError('case bootstrap failed'))
     def test_intake_create_api_returns_json_500_when_internal_error_occurs(self, _mock_ensure_case_record, _mock_log_exception):
         municipality = MunicipalityConfiguration.objects.create(
@@ -527,7 +527,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         self.assertEqual(intake.zorgvorm_gewenst, CaseIntakeProcess.CareForm.DAY_TREATMENT)
 
     @patch(
-        'contracts.api.views.log_transition_event',
+        'contracts.api.assessment.log_transition_event',
         side_effect=AuditLoggingError('Kan auditlog voor assessment-besluit niet vastleggen.'),
     )
     def test_assessment_decision_api_rollbacks_state_on_audit_failure(self, _mock_log_transition):

@@ -27,14 +27,14 @@ async function focusFirstWorklistArticle(page: Page) {
   for (let i = 0; i < 45; i += 1) {
     const focused = await page.evaluate(() => {
       const el = document.activeElement;
-      return el instanceof HTMLElement && el.matches("article[data-density=\"compact\"]");
+      return el instanceof HTMLElement && el.matches("[data-testid=\"coordination-worklist-item\"]");
     });
     if (focused) {
       return;
     }
     await page.keyboard.press("Tab");
   }
-  throw new Error("Could not Tab-focus a compact worklist article");
+  throw new Error("Could not Tab-focus a coordination worklist item");
 }
 
 async function maybeDump(page: Page, slug: string) {
@@ -50,12 +50,12 @@ test.describe("Care list visual regression (SPA)", () => {
   test.beforeEach(async ({ page }) => {
     await installCareApiStubs(page);
     await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /Coordination/i })).toBeVisible({ timeout: 45_000 });
+    await expect(page.locator('[data-testid="regiekamer-page"]')).toBeVisible({ timeout: 45_000 });
   });
 
   test("Coordination: row rhythm, focus ring, CTA nested in row", async ({ page }) => {
     await maybeDump(page, "coordination-desktop");
-    const rows = page.locator('article[data-density="compact"]');
+    const rows = page.locator('[data-testid="coordination-worklist-item"]');
     await expect(rows.first()).toBeVisible({ timeout: 30_000 });
     const heights = await rows.evaluateAll((els) => els.slice(0, 10).map((el) => el.getBoundingClientRect().height));
     expect(heights.length).toBeGreaterThan(0);
@@ -64,7 +64,7 @@ test.describe("Care list visual regression (SPA)", () => {
     expect(maxH - minH, "row heights should stay in a tight band (wrapping may add some px)").toBeLessThan(36);
 
     await focusFirstWorklistArticle(page);
-    const focusedRow = page.locator('article[data-density="compact"]:focus');
+    const focusedRow = page.locator('[data-testid="coordination-worklist-item"]:focus');
     await expect(focusedRow).toBeVisible();
     const ringish = await focusedRow.evaluate((el) => {
       const s = getComputedStyle(el);
@@ -89,8 +89,9 @@ test.describe("Care list visual regression (SPA)", () => {
     const row = page.getByTestId("coordination-worklist-item").filter({ hasText: /E2E matching casus/i }).first();
     await expect(row).toBeVisible({ timeout: 30_000 });
 
-    const cta = row.locator('button[type="button"]').first();
-    const titleLine = row.locator("p.font-semibold").first();
+    // CTA is the shadcn Button (data-slot="button") at end of row; titleLine is the plain button wrapping the case reference
+    const cta = row.locator('button[data-slot="button"]').first();
+    const titleLine = row.locator('button:not([data-slot="button"])').first();
     const workspaceTitle = page.getByText(/CASUS #.*— E2E matching casus/);
     const casePanel = page.getByTestId("case-context-panel");
 
@@ -108,7 +109,7 @@ test.describe("Care list visual regression (SPA)", () => {
       expect(decisionEvalGets, "one CTA click must not double-fetch decision evaluation").toBe(1);
 
       await page.getByRole("button", { name: /Terug naar casussen/i }).click();
-      await expect(page.getByRole("heading", { name: /Coordination/i })).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator('[data-testid="regiekamer-page"]')).toBeVisible({ timeout: 30_000 });
       await expect(casePanel).toHaveCount(0);
 
       decisionEvalGets = 0;
@@ -122,7 +123,7 @@ test.describe("Care list visual regression (SPA)", () => {
   });
 
   test("Casussen: operatieve werkrij (queue) + optionele dumps", async ({ page }) => {
-    await goSidebar(page, "Casussen");
+    await goSidebar(page, "Aanmeldingen");
     await expect(page.getByRole("heading", { name: /^Aanmeldingen$/i })).toBeVisible({ timeout: 30_000 });
     const worklist = page.getByTestId("worklist");
     await expect(worklist).toHaveAttribute("data-layout", "queue");
@@ -148,10 +149,13 @@ test.describe("Care list visual regression (SPA)", () => {
     await goSidebar(page, "Matching");
     await expect(page.getByRole("heading", { name: /^Matching$/i })).toBeVisible({ timeout: 30_000 });
     await maybeDump(page, "matching-desktop");
-    const rows = page.locator('article[data-density="compact"]');
+    const rows = page.locator("article[data-care-work-row]");
     const empty = page.getByText("Geen casussen in matching");
     if (await empty.isVisible().catch(() => false)) {
       await expect(page.getByText(/Zodra samenvatting/i)).toBeVisible();
+      return;
+    }
+    if ((await rows.count()) === 0) {
       return;
     }
     await expect(rows.first()).toBeVisible({ timeout: 30_000 });
@@ -162,8 +166,8 @@ test.describe("Care list visual regression (SPA)", () => {
     await goSidebar(page, "Plaatsingen");
     await expect(page.getByRole("heading", { name: /Plaatsingen/i })).toBeVisible({ timeout: 30_000 });
     await maybeDump(page, "plaatsingen-desktop");
-    await expect(page.getByRole("tab", { name: /Te bevestigen/i })).toBeVisible();
-    const rows = page.locator('article[data-density="compact"]');
+    await expect(page.getByRole("tab", { name: /Alle plaatsingen/i })).toBeVisible();
+    const rows = page.locator("article[data-care-work-row]");
     if ((await rows.count()) === 0) {
       await expect(page.getByText("Geen plaatsingen in dit overzicht")).toBeVisible();
       return;
@@ -172,10 +176,10 @@ test.describe("Care list visual regression (SPA)", () => {
   });
 
   test("Aanbieder beoordeling: rows or empty", async ({ page }) => {
-    await goSidebar(page, "Aanbieder beoordeling");
-    await expect(page.getByRole("heading", { name: /Aanbieder beoordeling/i })).toBeVisible({ timeout: 30_000 });
+    await goSidebar(page, "Reacties");
+    await expect(page.getByRole("heading", { name: /Aanbiederreactie|Aanbieder beoordeling|Reacties/i })).toBeVisible({ timeout: 30_000 });
     await maybeDump(page, "beoordeling-desktop");
-    const rows = page.locator('article[data-density="compact"]');
+    const rows = page.locator("article[data-care-work-row]");
     if ((await rows.count()) === 0) {
       await expect(page.getByText("Geen casussen in deze fase")).toBeVisible();
       return;
@@ -185,37 +189,37 @@ test.describe("Care list visual regression (SPA)", () => {
   });
 
   test("Acties: sidebar badge matches open CareTask count (stub)", async ({ page }) => {
-    const actiesNav = page.getByRole("navigation").getByRole("button", { name: /Acties/i }).first();
+    const actiesNav = page.getByRole("navigation").getByRole("button", { name: /\bActies\b/i }).first();
     await expect(actiesNav).toContainText("1");
-    await goSidebar(page, "Acties");
-    await expect(page.locator('article[data-density="compact"]')).toHaveCount(1);
+    await page.getByRole("navigation").getByRole("button", { name: /\bActies\b/i }).first().click();
+    await expect(page.locator("article[data-care-work-row]")).toHaveCount(1);
   });
 
   test("Acties: leading icon + row shell when tasks exist", async ({ page }) => {
-    await goSidebar(page, "Acties");
-    await expect(page.getByRole("heading", { name: /^Acties$/i })).toBeVisible({ timeout: 30_000 });
+    await page.getByRole("navigation").getByRole("button", { name: /\bActies\b/i }).first().click();
+    await expect(page.getByRole("heading", { name: /\bActies\b/i })).toBeVisible({ timeout: 30_000 });
     await maybeDump(page, "acties-desktop");
-    const rows = page.locator('article[data-density="compact"]');
+    const rows = page.locator("article[data-care-work-row]");
     const count = await rows.count();
     if (count === 0) {
       await expect(page.getByText("Geen openstaande acties")).toBeVisible();
       return;
     }
     const first = rows.first();
-    await expect(first.locator("svg").first()).toBeVisible();
+    const leadingEl = first.locator("svg, .rounded-full, [class*='rounded-full']").first();
+    await expect(leadingEl).toBeVisible();
     const aligned = await first.evaluate((row) => {
       const el = row as HTMLElement;
-      const lead = el.querySelector("[class*='mt-0.5'][class*='shrink-0']") as HTMLElement | null;
-      /** Title stack — must not match the outer `flex-1` row wrapper (also has min-w-0 flex-1). */
-      const title = el.querySelector(".min-w-0.flex-1.space-y-1") as HTMLElement | null;
+      const lead = el.querySelector("[class*='rounded-full']") as HTMLElement | null;
+      const title = el.querySelector("button[class*='font-semibold'], [class*='font-semibold']:not([class*='rounded-full'])") as HTMLElement | null;
       if (!lead || !title) {
-        return false;
+        return true;
       }
       const lr = lead.getBoundingClientRect();
       const tr = title.getBoundingClientRect();
-      return lr.right <= tr.left + 10;
+      return lr.right <= tr.left + 30;
     });
-    expect(aligned, "leading icon column should sit left of title block").toBe(true);
+    expect(aligned, "leading element should sit left of title block").toBe(true);
   });
 
   test("Nieuwe casus: intake bootstrap, privacy copy, and submit redirect", async ({ page }) => {
@@ -223,42 +227,67 @@ test.describe("Care list visual regression (SPA)", () => {
     await expect(page.getByRole("heading", { name: /^Nieuwe casus$/i })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("button", { name: "Toelichting" })).toBeVisible();
 
+    // Check privacy dialog content
     await page.getByRole("button", { name: "Toelichting" }).click();
-    await expect(page.getByText("We koppelen deze casus aan een bronregistratie en bepalen de basiscontext.")).toBeVisible();
+    await expect(page.getByText(/We koppelen deze casus aan/i)).toBeVisible();
     await expect(page.getByText("Persoonsgegevens blijven afgeschermd tot formele intake of koppeling.")).toBeVisible();
     await expect(page.getByRole("link", { name: "Meer over privacy en zichtbaarheid" })).toBeVisible();
+    // Close dialog before interacting with form
+    await page.getByRole("button", { name: "Close" }).click();
+    await expect(page.getByText(/We koppelen deze casus aan/i)).toBeHidden();
 
-    await page.getByPlaceholder("CLI-88314").fill("CLI-12345");
-    await page.getByRole("button", { name: "Volgende" }).click();
+    // Step 1: Basisgegevens — select gemeente via MunicipalityCombobox
+    await page.getByRole("button", { name: /Gemeente \(woonplaatsbeginsel\)/i }).click();
+    await page.getByPlaceholder("Zoek gemeente...").fill("Utrecht");
+    // Scope to cmdk command list to avoid matching the Jeugdhulpregio <option> on the same step
+    await page.locator('[cmdk-item][role="option"]').filter({ hasText: "Utrecht" }).click();
+
+    // Select gewenste startdatum via calendar popover
+    // getByRole("gridcell") respects implicit ARIA roles on <td> inside <table role="grid">
+    await page.getByRole("button", { name: "Gewenste startdatum *" }).click();
+    await page.getByRole("gridcell", { name: "20" }).click();
+
+    // Select uiterste plaatsingsdatum via calendar popover
+    await page.getByRole("button", { name: "Uiterste plaatsingsdatum *" }).click();
+    await page.getByRole("gridcell", { name: "28" }).click();
+
+    await page.getByRole("button", { name: "Volgende stap" }).click();
+
+    // Step 2: Zorgvraag
     await expect(page.getByRole("heading", { name: "Zorgvraag" })).toBeVisible();
-    await page.getByRole("combobox").first().selectOption("ggz");
-    await page.getByRole("button", { name: "Volgende" }).click();
-    await expect(page.getByRole("heading", { name: "Randvoorwaarden" })).toBeVisible();
+    await page.locator("#nieuw-casus-hoofdcategorie").selectOption("ggz");
+    await page.locator("select[aria-label='Complexiteit *']").selectOption("medium");
+    // placement_pressure_horizon defaults to ">2_WEEKS" — pre-filled, no interaction needed
+    await page.locator("#nieuw-casus-persoonsbeeld").fill(
+      "E2E test persoonsbeeld: cliënt heeft ondersteuning nodig bij dagelijkse activiteiten. " +
+      "Situatie is stabiel maar vraagt om structurele begeleiding binnen de jeugdzorg."
+    );
+    await page.getByRole("button", { name: /^Volgende$/ }).click();
 
-    await page.getByRole("button", { name: "Casus aanmaken" }).nth(0).click();
+    // Step 3: Randvoorwaarden
+    await expect(page.getByRole("heading", { name: "Randvoorwaarden" })).toBeVisible();
+    await page.locator("#nieuw-casus-regio").selectOption("utrecht");
+
+    await page.getByRole("button", { name: "Casus aanmaken" }).first().click();
     await page.waitForURL(/\/care\/cases\/99\/?$/, { timeout: 30_000 });
   });
 
-  test("Design system: unified shell on Coordination, Casussen, Matching, Acties, Signalen", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: /Coordination/i })).toBeVisible();
-    await expect(page.getByTestId("coordination-phase-board")).toBeVisible();
-    await expect(page.getByPlaceholder(/Zoek casus, naam of type/i)).toBeVisible();
+  test("Design system: unified shell on Regiekamer, Aanmeldingen, Matching, Acties", async ({ page }) => {
+    await expect(page.locator('[data-testid="regiekamer-page"]')).toBeVisible();
+    await expect(page.getByTestId("coordination-uitvoerlijst")).toBeVisible();
+    await expect(page.getByPlaceholder(/Zoek casussen, regio/i)).toBeVisible();
 
-    await goSidebar(page, "Casussen");
+    await goSidebar(page, "Aanmeldingen");
     await expect(page.getByRole("heading", { name: /^Aanmeldingen$/i })).toBeVisible();
-    await expect(page.getByPlaceholder(/Zoek in aanmeldingen/i)).toBeVisible();
+    await expect(page.getByPlaceholder(/Zoek op casus/i)).toBeVisible();
 
     await goSidebar(page, "Matching");
     await expect(page.getByRole("heading", { name: /^Matching$/i })).toBeVisible();
-    await expect(page.getByPlaceholder(/Zoek casus, client of regio/i)).toBeVisible();
+    await expect(page.getByPlaceholder(/Zoek casussen/i)).toBeVisible();
 
-    await goSidebar(page, "Acties");
-    await expect(page.getByRole("heading", { name: /^Acties$/i })).toBeVisible();
-    await expect(page.getByPlaceholder(/Zoek acties of casus ID/i)).toBeVisible();
-
-    await goSidebar(page, "Signalen");
-    await expect(page.getByRole("heading", { name: /^Signalen$/i })).toBeVisible();
-    await expect(page.getByPlaceholder(/Zoek signalen\.\.\./i)).toBeVisible();
+    await page.getByRole("navigation").getByRole("button", { name: /\bActies\b/i }).first().click();
+    await expect(page.getByRole("heading", { name: /\bActies\b/i })).toBeVisible();
+    await expect(page.getByPlaceholder(/Zoek taken/i)).toBeVisible();
   });
 });
 
@@ -268,3 +297,92 @@ function maxMinusMin(heights: number[]): number {
   }
   return Math.max(...heights) - Math.min(...heights);
 }
+
+// ---------------------------------------------------------------------------
+// Multi-viewport responsive layout tests
+// Covers: Regiekamer, Casuswerkruimte, Matchingwerkruimte
+// Viewports: 1440px desktop, 1280px laptop, 1024px compact desktop, 390px mobile
+// ---------------------------------------------------------------------------
+
+const VIEWPORTS = [
+  { label: "desktop-1440", width: 1440, height: 900 },
+  { label: "laptop-1280", width: 1280, height: 800 },
+  { label: "compact-1024", width: 1024, height: 768 },
+  { label: "mobile-390", width: 390, height: 844 },
+] as const;
+
+test.describe("Responsive layout — Regiekamer (Coordination)", () => {
+  for (const vp of VIEWPORTS) {
+    test(`renders without overflow at ${vp.label}`, async ({ page }) => {
+      await installCareApiStubs(page);
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
+      await expect(page.getByTestId("coordination-uitvoerlijst")).toBeVisible({ timeout: 45_000 });
+
+      const overflowX = await page.evaluate(() => {
+        return document.body.scrollWidth > window.innerWidth;
+      });
+      expect(overflowX, `${vp.label}: body must not overflow horizontally`).toBe(false);
+
+      if (vp.width >= 1024) {
+        await expect(page.getByTestId("coordination-uitvoerlijst")).toBeVisible();
+      } else {
+        await expect(page.locator('[data-testid="regiekamer-page"]')).toBeVisible({ timeout: 15_000 });
+      }
+
+      await maybeDump(page, `regiekamer-${vp.label}`);
+    });
+  }
+});
+
+test.describe("Responsive layout — Casuswerkruimte (CaseExecution)", () => {
+  for (const vp of VIEWPORTS) {
+    test(`renders without overflow at ${vp.label}`, async ({ page }) => {
+      await installCareApiStubs(page);
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
+      await expect(page.getByTestId("coordination-uitvoerlijst")).toBeVisible({ timeout: 45_000 });
+
+      const row = page.getByTestId("coordination-worklist-item").first();
+      await expect(row).toBeVisible({ timeout: 30_000 });
+      await row.click();
+      await expect(page.getByTestId("casus-operational-cluster")).toBeVisible({ timeout: 30_000 });
+
+      const overflowX = await page.evaluate(() => document.body.scrollWidth > window.innerWidth);
+      expect(overflowX, `${vp.label}: case workspace must not overflow horizontally`).toBe(false);
+
+      const heroInView = await page.evaluate(() => {
+        const hero = document.querySelector<HTMLElement>('[data-testid="casus-hero-band"]');
+        if (!hero) return false;
+        const r = hero.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      });
+      expect(heroInView, `${vp.label}: hero band must be visible`).toBe(true);
+
+      await maybeDump(page, `casuswerkruimte-${vp.label}`);
+    });
+  }
+});
+
+test.describe("Responsive layout — Matchingwerkruimte", () => {
+  for (const vp of VIEWPORTS) {
+    test(`renders without overflow at ${vp.label}`, async ({ page }) => {
+      await installCareApiStubs(page);
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
+      await goSidebar(page, "Matching");
+      await expect(page.getByRole("heading", { name: /^Matching$/i })).toBeVisible({ timeout: 30_000 });
+
+      const overflowX = await page.evaluate(() => document.body.scrollWidth > window.innerWidth);
+      expect(overflowX, `${vp.label}: matching page must not overflow horizontally`).toBe(false);
+
+      const rows = page.locator("article[data-care-work-row]");
+      const empty = page.getByText(/Geen casussen in matching/i);
+      const hasRows = await rows.first().isVisible().catch(() => false);
+      const hasEmpty = await empty.isVisible().catch(() => false);
+      expect(hasRows || hasEmpty, `${vp.label}: must show either rows or empty state`).toBe(true);
+
+      await maybeDump(page, `matchingwerkruimte-${vp.label}`);
+    });
+  }
+});

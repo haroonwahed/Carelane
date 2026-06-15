@@ -49,7 +49,7 @@ describe("CareDesignPrimitives", () => {
   });
 
   it("LoadingState sets busy status", () => {
-    render(<LoadingState title="Aanvragen laden…" copy="Even geduld." />);
+    render(<LoadingState title="Aanvragen laden…" copy="Even geduld." delayMs={0} />);
     expect(screen.getByTestId("care-loading-state")).toHaveAttribute("aria-busy", "true");
     expect(screen.getByTestId("care-loading-state")).toHaveTextContent("Aanvragen laden…");
   });
@@ -66,7 +66,10 @@ describe("CareDesignPrimitives", () => {
 
   it("PrimaryActionButton renders a single dominant CTA", () => {
     render(<PrimaryActionButton>Volgende stap</PrimaryActionButton>);
-    expect(screen.getByRole("button", { name: "Volgende stap" })).toHaveClass("rounded-xl");
+    const btn = screen.getByRole("button", { name: "Volgende stap" });
+    // Design System V1: PrimaryActionButton uses rounded-full (pill) radius
+    expect(btn).toHaveClass("rounded-full");
+    expect(btn).toHaveAttribute("data-component", "primary-action");
   });
 
   it("BlockingNotice renders an alert near the action it blocks", () => {

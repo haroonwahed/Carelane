@@ -44,6 +44,9 @@ urlpatterns = [
     path('register/', careon_views.SignUpView.as_view(), name='register'),
     path('login/', auth_views.LoginView.as_view(redirect_authenticated_user=True), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    # Named SPA entry points (served by the same shell as the catch-all, but
+    # reversible by name so server-side redirects can target them).
+    path('casussen/nieuw/', careon_views.dashboard, name='spa_nieuwe_casus'),
     # Catch-all: serve the SPA shell for all client-side routes not matched above.
     re_path(r'^(?!admin/|care/|static/|media/|favicon\.ico|_health/|build-info/|ops/|internal/|profile/|settings/|register/|login/|logout/|oidc/).*$', careon_views.dashboard, name='spa_catchall'),
 ]

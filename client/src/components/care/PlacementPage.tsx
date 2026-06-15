@@ -87,7 +87,7 @@ export function PlacementPage({
   const legacyProviders = providers.map(toLegacyProvider);
 
   const caseData = legacyCases.find(c => c.id === caseId);
-  const provider = legacyProviders.find(p => p.id === providerId) ?? legacyProviders[0];
+  const provider = legacyProviders.find(p => p.id === providerId);
   const taxonomyReasons = placementDetail
     ? [
         placementDetail.placement.taxonomieLijn,

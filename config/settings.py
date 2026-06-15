@@ -227,6 +227,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'contracts.oidc_middleware.OIDCCanonicalPublicUrlMiddleware',
+    'contracts.middleware.ApiVersioningMiddleware',
     'contracts.middleware.OrganizationMiddleware',
     'contracts.middleware.SpaShellMigrationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',

@@ -46,7 +46,8 @@ import { toCareCaseDetail } from "../../lib/routes";
 import { ProviderMapSurface } from "./ProviderMapSurface";
 import { tokens } from "../../design/tokens";
 import { cn } from "../ui/utils";
-import { BlockingNotice, CarePanel, EmptyState, ErrorState, LoadingState } from "./CareDesignPrimitives";
+import { BlockingNotice, CareMatchScore, CarePanel, CareTradeoffList, EmptyState, ErrorState, LoadingState } from "./CareDesignPrimitives";
+import { Textarea } from "../ui/textarea";
 import { advisoryFromEngineConfidenceLabel } from "../../lib/matchingAdvisory";
 import {
   GuidanceContextBanner,
@@ -54,8 +55,8 @@ import {
   VideoHelpTrigger,
 } from "../guidance";
 
-const MATCH_BRAND = tokens.colors.casussenAccent;
-const MATCH_BG = tokens.colors.casussenPageChrome;
+const MATCH_BRAND = tokens.visual.primaryCta;
+const MATCH_BG = "var(--background)";
 
 function formatMatchingCaseTitle(caseId: string): string {
   /** Pilot / E2E ids map to marketing-style refs for layout parity with design mocks. */
@@ -210,6 +211,8 @@ export function MatchingPageWithMap({
         const distance: number | null = null;
         const taxonomyLines = taxonomyExplainabilityLines(api);
         const tradeFromApi = (api.trade_offs ?? []).map(t => String(t)).filter(Boolean);
+        const rawScore = Number(api.totaalscore) || 0;
+        const matchScore = rawScore > 0 && rawScore <= 1 ? Math.round(rawScore * 100) : Math.max(0, Math.min(100, Math.round(rawScore)));
         const strongParts = [api.fit_samenvatting, api.verificatie_advies].map(s => (s || "").trim()).filter(Boolean);
         const combinedStrongParts = [...taxonomyLines, ...strongParts];
         const strongPoints =
@@ -253,6 +256,7 @@ export function MatchingPageWithMap({
           whyMatch,
           tier,
           whyShownThird: index === 2 ? api.fit_samenvatting || null : null,
+          matchScore,
         };
       });
     }
@@ -288,6 +292,7 @@ export function MatchingPageWithMap({
   const [waitlistTargetMatch, setWaitlistTargetMatch] = useState<RankedMatchRow | null>(null);
   const [matchSubmitting, setMatchSubmitting] = useState(false);
   const [matchSubmitError, setMatchSubmitError] = useState<string | null>(null);
+  const [overrideReason, setOverrideReason] = useState("");
 
   useEffect(() => {
     setWaitlistModalOpen(false);
@@ -432,7 +437,10 @@ export function MatchingPageWithMap({
   const handleConfirmSelectionChoice = async () => {
     const match = selectionConfirmMatch;
     if (!match) return;
+    const isOverride = match.index !== 0;
+    if (isOverride && !overrideReason.trim()) return;
     setSelectionConfirmMatch(null);
+    setOverrideReason("");
     if (match.provider.availableSpots <= 0) {
       handleOpenWaitlistModal(match);
       return;
@@ -460,6 +468,7 @@ export function MatchingPageWithMap({
       await apiClient.post<Record<string, unknown>>(`/care/api/cases/${caseId}/matching/action/`, {
         action: "send_to_provider",
         provider_id: pid,
+        ...(match.index !== 0 && overrideReason.trim() ? { override_reason: overrideReason.trim() } : {}),
       });
       await onConfirmMatch(match.provider.id);
     } catch (err) {
@@ -778,7 +787,10 @@ export function MatchingPageWithMap({
                               </div>
                             </div>
 
-                            <div className="flex justify-center lg:justify-center">
+                            <div className="flex flex-col items-center gap-1.5 lg:justify-center">
+                              {(item.matchScore ?? 0) > 0 && (
+                                <CareMatchScore score={item.matchScore} className="text-[13px]" />
+                              )}
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <div>
@@ -853,6 +865,17 @@ export function MatchingPageWithMap({
                               </ul>
                             </div>
                           ) : null}
+                          {isSelected && item.tradeOffs.length > 0 && (
+                            <div className="mt-3 border-t border-border/40 pt-3">
+                              <CareTradeoffList
+                                heading="Afwegingen"
+                                items={item.tradeOffs.map((t) => ({
+                                  label: t,
+                                  tone: item.index === 0 ? "neutral" as const : "negative" as const,
+                                }))}
+                              />
+                            </div>
+                          )}
                         </article>
                       );
                     })
@@ -1143,47 +1166,78 @@ export function MatchingPageWithMap({
         <Dialog
           open={selectionConfirmMatch !== null}
           onOpenChange={(open) => {
-            if (!open) setSelectionConfirmMatch(null);
+            if (!open) { setSelectionConfirmMatch(null); setOverrideReason(""); }
           }}
         >
           <DialogContent
             className="gap-4 rounded-2xl border-border bg-card p-4"
             style={{ maxWidth: tokens.layout.dialogMaxWidth }}
           >
-            <DialogHeader className="gap-2 text-left">
-              <DialogTitle className="text-xl font-semibold">Bevestig keuze</DialogTitle>
-              <DialogDescription asChild>
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <p>
-                    Je staat op het punt om{" "}
-                    <span className="font-semibold text-foreground">{selectionConfirmMatch?.provider.name ?? "deze aanbieder"}</span>{" "}
-                    te selecteren voor doorleiding.
-                  </p>
-                  <p>Dit betekent:</p>
-                  <ul className="list-disc space-y-1 pl-5">
-                    <li>De casus gaat naar aanbiederreactie (advies; geen automatische plaatsing).</li>
-                    <li>
-                      Andere aanbieders worden niet automatisch afgewezen; dit legt een voorkeurskeuze vast voor deze
-                      doorleiding. Bij een andere route kun je opnieuw matchen.
-                    </li>
-                  </ul>
-                </div>
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" onClick={() => setSelectionConfirmMatch(null)}>
-                Annuleren
-              </Button>
-              <Button
-                type="button"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                disabled={isSubmittingMatch || matchSubmitting}
-                onClick={() => void handleConfirmSelectionChoice()}
-              >
-                {isSubmittingMatch || matchSubmitting ? "Bezig..." : "Bevestigen"}
-                <ArrowRight className="ml-1 size-4" aria-hidden />
-              </Button>
-            </DialogFooter>
+            {(() => {
+              const isOverride = (selectionConfirmMatch?.index ?? 0) !== 0;
+              const overrideReasonMissing = isOverride && !overrideReason.trim();
+              return (
+                <>
+                  <DialogHeader className="gap-2 text-left">
+                    <DialogTitle className="text-xl font-semibold">
+                      {isOverride ? "Afwijking van topaanbeveling" : "Bevestig keuze"}
+                    </DialogTitle>
+                    <DialogDescription asChild>
+                      <div className="space-y-3 text-sm text-muted-foreground">
+                        {isOverride && (
+                          <div className="rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2 text-[13px]">
+                            <p className="font-semibold text-amber-700 dark:text-amber-400">Handmatige overschrijving vereist</p>
+                            <p className="mt-0.5">Je selecteert niet de topbeaanbeveling van de keten-engine. Geef een toelichting — dit wordt vastgelegd in het auditlog.</p>
+                          </div>
+                        )}
+                        <p>
+                          Je staat op het punt om{" "}
+                          <span className="font-semibold text-foreground">{selectionConfirmMatch?.provider.name ?? "deze aanbieder"}</span>{" "}
+                          te selecteren voor doorleiding.
+                        </p>
+                        {!isOverride && (
+                          <ul className="list-disc space-y-1 pl-5">
+                            <li>De casus gaat naar aanbiederreactie (advies; geen automatische plaatsing).</li>
+                            <li>Andere aanbieders worden niet automatisch afgewezen.</li>
+                          </ul>
+                        )}
+                        {isOverride && (
+                          <div className="space-y-1.5">
+                            <label className="block text-[12px] font-semibold text-foreground" htmlFor="override-reason">
+                              Reden van overschrijving <span className="text-[var(--care-badge-red-text)]">*</span>
+                            </label>
+                            <Textarea
+                              id="override-reason"
+                              placeholder="Bijv. aanbieder heeft specifieke specialisatie die de engine niet meewoog, of cliëntvoorkeur…"
+                              value={overrideReason}
+                              onChange={(e) => setOverrideReason(e.target.value)}
+                              rows={3}
+                              className="text-[13px]"
+                              aria-required
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button type="button" variant="outline" onClick={() => { setSelectionConfirmMatch(null); setOverrideReason(""); }}>
+                      Annuleren
+                    </Button>
+                    <Button
+                      type="button"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                      disabled={isSubmittingMatch || matchSubmitting || overrideReasonMissing}
+                      title={overrideReasonMissing ? "Vul een reden in voor de overschrijving" : undefined}
+                      onClick={() => void handleConfirmSelectionChoice()}
+                    >
+                      {isSubmittingMatch || matchSubmitting ? "Bezig..." : isOverride ? "Selecteren met toelichting" : "Bevestigen"}
+                      <ArrowRight className="ml-1 size-4" aria-hidden />
+                    </Button>
+                  </DialogFooter>
+                </>
+              );
+            })()}
           </DialogContent>
         </Dialog>
 

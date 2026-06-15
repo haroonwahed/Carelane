@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Clock3, Loader2, Send, XCircle } from "lucide-react";
+import { Clock3, Loader2, Send } from "lucide-react";
 import { apiClient } from "../../lib/apiClient";
 import { useCases, type SpaCase } from "../../hooks/useCases";
 import { Button } from "../ui/button";
@@ -106,7 +106,7 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
         : `${visibleCases.length} casussen wachten op opvolging`
       : "Geen intakes om op te volgen");
 
-  const handleDecision = async (caseId: string, status: "ACCEPTED" | "REJECTED") => {
+  const handleDecision = async (caseId: string, status: "ACCEPTED") => {
     if (submittingCaseId) {
       return;
     }
@@ -258,24 +258,7 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
                         </CareMetaChip>
                       }
                       contextInfo={
-                        canDecide ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 shrink-0 px-2 text-xs"
-                            disabled={isBusy}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void handleDecision(caseItem.id, "REJECTED");
-                            }}
-                          >
-                            <XCircle size={14} className="mr-1" aria-hidden />
-                            Afwijzen
-                          </Button>
-                        ) : (
-                          <CareMetaChip>{maskParticipantIdentity(caseItem.title || caseItem.id)}</CareMetaChip>
-                        )
+                        <CareMetaChip>{maskParticipantIdentity(caseItem.title || caseItem.id)}</CareMetaChip>
                       }
                       actionLabel={canDecide ? (isBusy ? "Verwerken…" : "Accepteren") : "Bekijk casus"}
                       actionVariant={canDecide ? "primary" : "ghost"}

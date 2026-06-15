@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
+  AlertTriangle,
   ChevronRight,
   Filter,
   Plus,
@@ -22,6 +23,7 @@ import {
   EmptyState,
   ErrorState,
   LoadingState,
+  PrimaryActionButton,
 } from "./CareDesignPrimitives";
 import { cn } from "../ui/utils";
 import { useRailCollapsed } from "../../hooks/useRailCollapsed";
@@ -131,9 +133,7 @@ function CasussenInboxRow({
   };
 }) {
   const actionLabel = displayOverride?.actionLabel
-    ?? (item.isBlocked
-      ? "Maak casus compleet"
-      : decision.nextActionLabel.replace(/\s*→\s*$/u, "").trim() || decision.nextActionLabel);
+    ?? (decision.nextActionLabel.replace(/\s*→\s*$/u, "").trim() || "Vul casus aan");
   const urgencyLabel = displayOverride?.urgencyLabel ?? item.placementPressureLabel ?? item.urgencyLabel ?? "Spoed";
   const careNeedPrimary = displayOverride?.careNeedPrimary ?? item.zorgbehoefteCategorie ?? item.careType;
   const careNeedSecondary = displayOverride?.careNeedSecondary ?? item.zorgbehoefteSpecifiek ?? item.tags[0] ?? "";
@@ -169,7 +169,14 @@ function CasussenInboxRow({
       )}
       context={(
         <div className="min-w-0">
-          <div className="truncate text-[12px] leading-tight text-foreground">{region}</div>
+          {region ? (
+            <div className="truncate text-[12px] leading-tight text-foreground">{region}</div>
+          ) : (
+            <div className="inline-flex items-center gap-1 rounded border border-amber-500/35 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+              <AlertTriangle size={10} aria-hidden />
+              Regio ontbreekt
+            </div>
+          )}
           <div className="mt-0.5 truncate text-[11px] text-muted-foreground/80">
             {careNeedPrimary}
             {careNeedSecondary ? ` · ${careNeedSecondary}` : ""}
@@ -179,12 +186,16 @@ function CasussenInboxRow({
       status={(
         <div className="min-w-0">
           <CareDominantStatus className="max-w-full">{statusLabel}</CareDominantStatus>
-          <div className="mt-1 line-clamp-1 text-[11px] text-muted-foreground/80">{statusDetail}</div>
+          {statusDetail ? <div className="mt-1 line-clamp-1 text-[11px] text-muted-foreground/80">{statusDetail}</div> : null}
         </div>
       )}
       time={(
         <div className="min-w-0">
-          <div className="truncate text-[12px] font-medium text-foreground/90">{lastUpdatedLabel}</div>
+          {lastUpdatedLabel ? (
+            <div className="truncate text-[12px] font-medium text-foreground/90">{lastUpdatedLabel}</div>
+          ) : (
+            <div className="text-[11px] italic text-muted-foreground/50">Geen activiteit</div>
+          )}
           {lastUpdatedDetail ? <div className="truncate text-[11px] text-muted-foreground/75">{lastUpdatedDetail}</div> : null}
         </div>
       )}
@@ -320,8 +331,8 @@ export function WorkloadPage({
     return [...rows].sort((a, b) => a.item.daysInCurrentPhase - b.item.daysInCurrentPhase);
   }, [classifiedItems, focusChip, viewTab]);
 
-  const visibleRows = activeRows.slice(0, 1);
-  const stripCounts = useMemo(() => countWorkloadStatuses(visibleRows), [visibleRows]);
+  const visibleRows = activeRows;
+  const stripCounts = useMemo(() => countWorkloadStatuses(activeRows), [activeRows]);
   const filterBadgeCount = selectedStatus === "all" ? 0 : 1;
   const dominantAttentionItem = visibleRows.find(({ decision }) => decision.requiresCurrentUserAction) ?? visibleRows[0] ?? null;
   const isAanmeldingenView = role !== "zorgaanbieder";
@@ -429,15 +440,10 @@ export function WorkloadPage({
           )}
           actions={(
             isAanmeldingenView && onCreateCase ? (
-              <Button
-                type="button"
-                variant="default"
-                className="h-12 rounded-full bg-primary px-5 text-[14px] font-semibold leading-none shadow-lg shadow-primary/20"
-                onClick={onCreateCase}
-              >
+              <PrimaryActionButton data-care-surface="page-header" onClick={onCreateCase}>
                 Nieuwe aanmelding
                 <Plus className="ml-2 size-4 translate-y-px" aria-hidden />
-              </Button>
+              </PrimaryActionButton>
             ) : null
           )}
         >
@@ -445,7 +451,7 @@ export function WorkloadPage({
             {pageTabs}
 
             <div className="space-y-2">
-              <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-300">
+              <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--yellow-base)]">
                 WACHT OP JOUW ACTIE
               </p>
               <CareAlertCard
@@ -459,8 +465,8 @@ export function WorkloadPage({
                 primaryAction={(
                   <Button
                     type="button"
-                    className="h-10 rounded-full px-5 text-[13px] font-semibold leading-none text-black shadow-sm hover:brightness-105"
-                    style={{ backgroundColor: tokens.visualContract.warningCta }}
+                    variant="outline"
+                    className="h-10 rounded-full border-[var(--care-cta-warning)]/50 px-5 text-[13px] font-semibold leading-none text-[var(--care-cta-warning)] shadow-sm hover:bg-[var(--care-cta-warning)]/10"
                     onClick={dominantAttentionAction}
                   >
                     Maak casus compleet
@@ -496,6 +502,7 @@ export function WorkloadPage({
             {!loading && !error && workflowCases.length > 0 && (
               <CareWorkspaceSection
                 testId="worklist"
+                data-layout="queue"
                 aria-labelledby="worklist-heading"
                 className="gap-0"
                 header={(

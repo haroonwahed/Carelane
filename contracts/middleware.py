@@ -354,3 +354,26 @@ def log_action(user, action, model_name, object_id=None, object_repr='', changes
         ip_address=ip_address,
         user_agent=user_agent[:500],
     )
+
+
+
+class ApiVersioningMiddleware:
+    """Rewrite /care/api/v1/* → /care/api/* internally.
+
+    This lets SPA clients and API consumers use versioned URLs
+    (/care/api/v1/cases/) while the underlying Django URL patterns
+    remain unversioned. No redirects — the rewrite is transparent.
+    """
+
+    _PREFIX_V1 = "/care/api/v1/"
+    _PREFIX_UNVERSIONED = "/care/api/"
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path.startswith(self._PREFIX_V1):
+            new_path = self._PREFIX_UNVERSIONED + request.path[len(self._PREFIX_V1):]
+            request.path = new_path
+            request.path_info = new_path
+        return self.get_response(request)

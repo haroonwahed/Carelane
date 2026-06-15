@@ -294,6 +294,18 @@ describe("CaseExecutionPage workspace", () => {
     expect(screen.getByText("Aandachtspunten")).toBeInTheDocument();
   });
 
+  it("shows uitstroom (ARCHIVED exit) banner when workflow state is ARCHIVED", async () => {
+    setupCase(
+      makeDecisionEvaluation({ current_state: "ARCHIVED" }),
+    );
+    render(<CaseExecutionPage caseId="C-100" onBack={vi.fn()} />);
+
+    const banner = await screen.findByTestId("case-uitstroom-banner");
+    expect(banner).toBeVisible();
+    expect(banner).toHaveTextContent("Traject afgesloten");
+    expect(banner).toHaveAttribute("role", "status");
+  });
+
   it("keeps primary action wired to existing action executor", async () => {
     const onAppNavigate = vi.fn();
     setupCase(makeDecisionEvaluation());

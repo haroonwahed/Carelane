@@ -68,8 +68,9 @@ export function VideoHelpTrigger({
                 allowFullScreen
               />
             ) : (
-              <div className="flex size-full items-center justify-center">
+              <div className="flex size-full flex-col items-center justify-center gap-2">
                 <Play className="size-10 text-muted-foreground/60" aria-hidden />
+                <span className="text-[13px] text-muted-foreground/60">Video volgt</span>
               </div>
             )}
           </div>

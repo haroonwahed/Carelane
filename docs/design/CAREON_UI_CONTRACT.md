@@ -1,8 +1,24 @@
 # CareOn UI Contract
 
-This document is the hard visual contract for CareOn UI surfaces.
+> **⚠️ SUPERSEDED — 2026-06-15**
+>
+> This document is retired. The values below are **stale** and conflict with the live token system.
+>
+> **Authoritative source:** [`CAREON_DESIGN_SYSTEM_V1.md`](./CAREON_DESIGN_SYSTEM_V1.md) and `client/src/styles/globals.css` (`--care-*` namespace).
+>
+> Correct current values:
+> - Sidebar width: `256px` (`--care-sidebar-width-expanded`)
+> - Topbar height: `64px` (`--care-topbar-height`)
+> - Card radius: `20px` (`--care-radius-large`), section card: `16px` (`--care-radius-card`)
+> - Background: light `#F4F6FA` / dark `#0B1020` (bidirectional theme — this doc was dark-mode-only)
+>
+> Do not use any value from the sections below for new work.
+
+---
+
+~~This document is the hard visual contract for CareOn UI surfaces.
 If a component, page, or layout conflicts with this file, this file wins.
-Implementation must follow the contract; do not treat these values as suggestions.
+Implementation must follow the contract; do not treat these values as suggestions.~~
 
 ## Scope
 

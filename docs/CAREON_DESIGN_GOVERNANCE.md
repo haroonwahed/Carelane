@@ -457,6 +457,23 @@ This order catches the highest-risk hierarchy drift first.
 
 ---
 
+## 15) Master Brief Enforcement Rules
+
+These 10 rules are directly derived from the CareOn Design System Master Brief. Violations require an explicit exception documented in a page-level design note. Automated guards in `src/test/operationalDesignLawsGuard.test.ts` enforce a subset of these.
+
+1. **No duplicate primitives.** Do not create a new primitive when an approved one exists in `client/src/components/ui/` or `CareDesignPrimitives.tsx`.
+2. **No undocumented status colours.** Do not create a new status colour without adding a `--care-badge-*` token pair and documenting its semantic meaning.
+3. **No arbitrary spacing.** Do not use Tailwind spacing classes when a `--care-rhythm-*` token or design-system spacing constant exists for the same purpose.
+4. **No one-off card styles.** Do not create a card-like surface with custom border/radius/shadow values; use `CareSection` with the appropriate tone.
+5. **No duplicate badge systems.** All status chips, priority chips, phase badges, and urgency badges must derive from `CareBadge`, `PriorityBadge`, `FlowPhaseBadge`, or `CasusWorkspaceStatusBadges`. New badge files require explicit approval.
+6. **No undocumented page layouts.** Do not add a new page layout pattern without adding a page-archetype entry to `docs/design/CAREON_SCREEN_ARCHETYPE_MAP.md`.
+7. **No workflow actions without a functional contract.** Every `POST` to a workflow endpoint must be listed in `CAREON_UI_ACTION_BACKEND_MATRIX.md` with endpoint, permission, audit event, and workflow state.
+8. **No CTA without a complete action contract.** Every button that triggers a state change must have: role-based visibility, a backend permission check, a loading state, a failure state, an audit event, and a resulting workflow state.
+9. **Prefer removal over decoration.** If a piece of UI does not answer one of the five operational questions (what needs attention / why blocked / next best action / who owns it / what happens after), remove it before adding anything new.
+10. **Every exception must be documented.** If any rule above is violated, the exception must be documented in the relevant page's design note or in `CAREON_DESIGN_DEBT_REGISTER.md` with rationale and a remediation plan.
+
+---
+
 ## 14) Governance Summary
 
 CareOn should feel:

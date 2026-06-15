@@ -3,6 +3,8 @@ import { MultiTenantDemo } from "./components/examples/MultiTenantDemo";
 import { PublicLandingPage } from "./components/public/PublicLandingPage";
 import { LoginPage } from "./components/care/LoginPage";
 import { LOGIN_URL, PUBLIC_LANDING_URL, LOGOUT_URL, REGISTER_URL } from "./lib/routes";
+import { Toaster } from "./components/ui/sonner";
+import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 
 /** Keep SPA routing in sync with `window.location` when the shell uses `history.pushState` / `replaceState`. */
 function useSyncedPathname(): string {
@@ -86,11 +88,14 @@ export default function App() {
   }
 
   return (
-    <div className={effectiveTheme === "dark" ? "dark" : ""}>
-      <MultiTenantDemo
-        theme={effectiveTheme}
-        onThemeToggle={() => setTheme((currentTheme) => currentTheme === "dark" ? "light" : "dark")}
-      />
-    </div>
+    <ErrorBoundary>
+      <div className={effectiveTheme === "dark" ? "dark" : ""}>
+        <MultiTenantDemo
+          theme={effectiveTheme}
+          onThemeToggle={() => setTheme((currentTheme) => currentTheme === "dark" ? "light" : "dark")}
+        />
+        <Toaster position="bottom-right" richColors />
+      </div>
+    </ErrorBoundary>
   );
 }

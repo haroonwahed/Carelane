@@ -23,8 +23,7 @@ export function ProcessTimeline({ children, className }: ProcessTimelineProps) {
       data-density="compact"
       className={className}
       style={{
-        borderRadius: tokens.radius.md,
-        border: `1px solid ${tokens.colors.border}`,
+        borderRadius: tokens.visual.radiusCard,
         minHeight: tokens.density.processTimelineHeight,
       }}
     >

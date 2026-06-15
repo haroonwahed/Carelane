@@ -1,45 +1,37 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { tokens } from "../design/tokens";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const CONTRACT = join(ROOT, "..", "..", "docs", "design", "CAREON_UI_CONTRACT.md");
-
-describe("CareOn UI contract", () => {
-  it("pins the hard visual values", () => {
-    const contract = readFileSync(CONTRACT, "utf8");
-    expect(contract).toContain("Sidebar width: `280px` desktop");
-    expect(contract).toContain("Topbar height: `72px`");
-    expect(contract).toContain("Main content max width: `none`");
-    expect(contract).toContain("Page horizontal padding: `32px`");
-    expect(contract).toContain("Page top padding: `56px`");
-    expect(contract).toContain("Card radius: `24px`");
-    expect(contract).toContain("Section card radius: `22px`");
-    expect(contract).toContain("Primary CTA color: `#7C4DFF`");
-    expect(contract).toContain("Warning CTA color: `#F5A900`");
-    expect(contract).toContain("Background: `#070B18`");
-    expect(contract).toContain("Surface 1: `#0E1424`");
-    expect(contract).toContain("Surface 2: `#121A2C`");
-    expect(contract).toContain("Border: `rgba(148,163,184,0.12)`");
+/**
+ * CareOn Design System V1 — contract test
+ *
+ * Pins the canonical visual values from CAREON_DESIGN_SYSTEM_V1.md.
+ * Updated 2026-06-15: migrated from tokens.visualContract (deprecated) to tokens.visual.
+ * Shell geometry corrected: sidebar 256px, topbar 64px, padding 24/32px, 4 radius values.
+ */
+describe("CareOn Design System V1 — token contract", () => {
+  it("shell geometry matches CAREON_DESIGN_SYSTEM_V1.md spec", () => {
+    expect(tokens.visual.sidebarWidthExpanded).toBe("256px");
+    expect(tokens.visual.sidebarWidthCollapsed).toBe("72px");
+    expect(tokens.visual.topbarHeight).toBe("64px");
+    expect(tokens.visual.pageHPadding).toBe("24px");
+    expect(tokens.visual.pageHPaddingWide).toBe("32px");
+    expect(tokens.visual.pageMaxWidth).toBe("1536px");
   });
 
-  it("mirrors the contract in design tokens", () => {
-    expect(tokens.visualContract).toEqual({
-      sidebarWidth: "280px",
-      topbarHeight: "72px",
-      mainContentMaxWidth: "none",
-      pageHorizontalPadding: "32px",
-      pageTopPadding: "56px",
-      cardRadius: "24px",
-      sectionCardRadius: "22px",
-      primaryCta: "#7C4DFF",
-      warningCta: "#F5A900",
-      background: "#070B18",
-      surface1: "#0E1424",
-      surface2: "#121A2C",
-      border: "rgba(148,163,184,0.12)",
-    });
+  it("radius scale has exactly 4 semantic values", () => {
+    expect(tokens.visual.radiusLarge).toBe("20px");
+    expect(tokens.visual.radiusCard).toBe("16px");
+    expect(tokens.visual.radiusControl).toBe("10px");
+    expect(tokens.visual.radiusPill).toBe("9999px");
+  });
+
+  it("brand and CTA colors are canonical", () => {
+    expect(tokens.visual.primaryCta).toBe("#7C4DFF");
+    expect(tokens.visual.warningCta).toBe("#F5A900");
+    expect(tokens.visual.accent).toBe("#7C4DFF");
+  });
+
+  it("layout maximums are stable", () => {
+    expect(tokens.layout.pageMaxWidth).toBe("1536px");
   });
 });

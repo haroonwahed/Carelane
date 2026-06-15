@@ -38,6 +38,7 @@ function loadOptionalEnvE2e(): void {
 loadOptionalEnvE2e();
 
 const baseURL = process.env.E2E_BASE_URL || "http://127.0.0.1:8010";
+const spaURL = process.env.E2E_SPA_URL || process.env.PLAYWRIGHT_SPA_URL || "http://127.0.0.1:3000";
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -55,4 +56,12 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   reporter: [["list"]],
+  webServer: {
+    command: "npm run dev -- --port 3000 --host 127.0.0.1",
+    url: spaURL,
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+    stdout: "ignore",
+    stderr: "pipe",
+  },
 });

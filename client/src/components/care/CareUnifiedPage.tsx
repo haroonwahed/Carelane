@@ -44,16 +44,16 @@ export function CarePageTemplate({
       {attention ? <div className={CARE_RHYTHM.zoneAlert}>{attention}</div> : null}
       {workflow ? <div className={CARE_RHYTHM.zoneControl}>{workflow}</div> : null}
       {filters ? <div className={CARE_RHYTHM.zoneControl}>{filters}</div> : null}
-      <div className={CARE_RHYTHM.zoneMain}>{children}</div>
+      <div className={CARE_RHYTHM.zoneMain} aria-live="polite" aria-atomic="false">{children}</div>
       {detail ? <div className={CARE_RHYTHM.zoneStack}>{detail}</div> : null}
     </div>
   );
 }
 
-export function CareMetricBadge({ children }: { children: ReactNode }) {
+export function CareMetricBadge({ children, title }: { children: ReactNode; title?: string }) {
   return (
     <span
-      title="Status — geen actie"
+      title={title ?? "Status — geen actie"}
       className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/55 px-3 py-1 text-[12px] font-semibold leading-none text-muted-foreground shadow-sm"
     >
       <span className="size-1.5 shrink-0 rounded-full bg-muted-foreground/50" aria-hidden />
@@ -192,7 +192,7 @@ export function CareContextHint({
   return (
     <div
       data-component="care-context-hint"
-      className="care-hover-card mt-6 rounded-xl border border-border/70 bg-card/35 px-4 py-3"
+      className="care-hover-card rounded-xl border border-border/70 bg-card/35 px-4 py-3"
     >
       <div className="flex items-start gap-3">
         <div className="icon-surface flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/70">{icon}</div>
@@ -343,6 +343,7 @@ export function CareAttentionBar({
   action,
   icon,
   layout = "default",
+  title,
 }: {
   visible?: boolean;
   tone?: "warning" | "info" | "critical";
@@ -351,6 +352,7 @@ export function CareAttentionBar({
   icon?: ReactNode;
   /** `compact` = flat queue band without hero chrome (operational queues). */
   layout?: "default" | "compact";
+  title?: string;
 }) {
   if (!visible) return null;
   const variant = tone === "critical" ? "critical" : tone === "warning" ? "attention" : "neutral";
@@ -358,7 +360,7 @@ export function CareAttentionBar({
     <CareAttentionSurface
       variant={variant}
       density={layout === "compact" ? "compact" : "default"}
-      title="Operatieve aandacht"
+      title={title ?? "Operatieve aandacht"}
       message={message}
       action={action}
       icon={icon}
@@ -436,19 +438,15 @@ export function CareFilterTabButton({
       aria-selected={selected}
       onClick={onClick}
       style={
-        brandActive
-          ? {
-              backgroundColor: accentHex,
-              color: "hsl(var(--primary-foreground))",
-              borderColor: accentHex,
-            }
+        accentHex
+          ? ({ "--care-tab-accent": accentHex } as React.CSSProperties)
           : undefined
       }
       className={cn(
         "inline-flex h-9 min-w-[4.75rem] flex-1 items-center justify-center rounded-xl px-3 text-[13px] font-medium leading-none transition-colors sm:flex-none sm:px-4",
         selected
-          ? accentSelected && accentHex
-            ? "shadow-sm ring-1 ring-white/20"
+          ? brandActive
+            ? "shadow-sm ring-1 ring-white/20 [background-color:var(--care-tab-accent)] [border-color:var(--care-tab-accent)] [color:hsl(var(--primary-foreground))]"
             : accentSelected
               ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/35"
               : "bg-card text-foreground shadow-sm ring-1 ring-border/50"
@@ -642,9 +640,8 @@ export function CareOperationalQueueHeader({
 }) {
   return (
     <div className={cn(gridClassName ?? OPERATIONAL_QUEUE_HEADER_GRID_CLASS, className)} data-testid={testId}>
-      {labels.map((label) => (
-        // @ts-ignore
-        <span key={label} className="min-w-0 truncate">
+      {labels.map((label, index) => (
+        <span key={index} className="min-w-0 truncate">
           {label}
         </span>
       ))}
