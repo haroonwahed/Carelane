@@ -23,6 +23,11 @@ import {
   LoadingState,
   PrimaryActionButton,
 } from "./CareDesignPrimitives";
+import { CareSlaCountdown } from "./CareSlaCountdown";
+import { SLA_TARGET_HOURS } from "../../lib/careSla";
+
+/** Placement phases where the 5-day intake-start SLA is ticking (confirmed, awaiting intake). */
+const INTAKE_SLA_FILTER_KEYS = new Set(["startdate", "startdetails", "confirmed"]);
 
 interface PlacementTrackingPageProps {
   onCaseClick: (caseId: string) => void;
@@ -552,7 +557,16 @@ export function PlacementTrackingPage({
               )}
               owner={<span className="min-w-0 truncate text-foreground">{row.providerLabel}</span>}
               nextAction={<span className="min-w-0 truncate text-muted-foreground">{row.attentionReason}</span>}
-              time={<span className="min-w-0 truncate text-muted-foreground">{row.lastActivityLabel}</span>}
+              time={
+                INTAKE_SLA_FILTER_KEYS.has(row.filterKey) ? (
+                  <CareSlaCountdown
+                    elapsedHours={row.item.daysInCurrentPhase * 24}
+                    targetHours={SLA_TARGET_HOURS.intakeStart}
+                  />
+                ) : (
+                  <span className="min-w-0 truncate text-muted-foreground">{row.lastActivityLabel}</span>
+                )
+              }
               contextInfo={<span className="min-w-0 truncate text-muted-foreground">{row.startDateLabel}</span>}
               actionLabel={row.nextActionLabel}
               actionVariant={row.nextActionVariant}
