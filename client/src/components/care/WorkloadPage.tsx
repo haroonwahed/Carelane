@@ -451,7 +451,7 @@ export function WorkloadPage({
             {pageTabs}
 
             <div className="space-y-2">
-              <p className="px-1 care-text-eyebrow text-[var(--yellow-base)]">
+              <p className="px-1 care-text-eyebrow text-care-warning-solid">
                 WACHT OP JOUW ACTIE
               </p>
               <CareAlertCard
@@ -466,7 +466,7 @@ export function WorkloadPage({
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-10 rounded-full border-[var(--care-cta-warning)]/50 px-5 text-[13px] font-semibold leading-none text-[var(--care-cta-warning)] shadow-sm hover:bg-[var(--care-cta-warning)]/10"
+                    className="h-10 rounded-full border-care-warning-solid/50 px-5 text-[13px] font-semibold leading-none text-care-warning-solid shadow-sm hover:bg-care-warning-bg"
                     onClick={dominantAttentionAction}
                   >
                     Maak casus compleet
