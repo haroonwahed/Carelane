@@ -132,12 +132,11 @@ test("provider smoke: active review shows handoff read-model line when pending",
   const pending = (cases.json?.contracts ?? []).find((c) => String(c.id) === String(row!.caseId));
   test.skip(!pending, "Handoff evaluation case not in provider_beoordeling list — skip UI assertion");
 
-  await expect(page.getByTestId("care-unified-header").getByRole("heading", { name: "Aanbiederreactie" })).toBeVisible({
-    timeout: 45_000,
-  });
-  await expect(page.getByTestId("aanbiederreactie-worklist")).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByTestId(`aanbiederreactie-row-${row!.caseId}`)).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByText("Volg aanbiederreactie op").first()).toBeVisible({ timeout: 45_000 });
+  // Provider context renders the provider portal ("Mijn beoordelingen") with its pending queue.
+  await expect(page.getByRole("heading", { name: "Mijn beoordelingen" })).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId("aanbieder-pending-list")).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId(`aanbieder-pending-${row!.caseId}`)).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByRole("button", { name: /Accepteren/i }).first()).toBeVisible({ timeout: 45_000 });
 });
 
 test("provider smoke: case timeline API returns events for a visible provider_beoordeling case", async ({ page }) => {
@@ -179,10 +178,10 @@ test("provider smoke: pending review row exposes the next action", async ({ page
   const caseId = await pendingLinkedProviderCaseId(page);
   test.skip(!caseId, "No PENDING linked provider evaluation — skip row assertion");
 
-  const row = page.getByTestId(`aanbiederreactie-row-${caseId}`);
+  const row = page.getByTestId(`aanbieder-pending-${caseId}`);
   await expect(row).toBeVisible({ timeout: 45_000 });
-  await expect(row.getByText("Volgende actie")).toBeVisible();
-  await expect(row.getByRole("button", { name: "Volg aanbiederreactie op" })).toBeVisible();
+  // The provider's next action on a pending row is the inline decision control.
+  await expect(row.getByRole("button", { name: /Accepteren/i })).toBeVisible();
 });
 
 test("provider smoke: pending review row remains navigable without modal", async ({
@@ -195,11 +194,11 @@ test("provider smoke: pending review row remains navigable without modal", async
   const caseId = await pendingLinkedProviderCaseId(page);
   test.skip(!caseId, "No PENDING linked provider evaluation — skip row assertion");
 
-  const row = page.getByTestId(`aanbiederreactie-row-${caseId}`);
+  const row = page.getByTestId(`aanbieder-pending-${caseId}`);
   await expect(row).toBeVisible({ timeout: 45_000 });
-  await expect(row.getByText("Laatste activiteit")).toBeVisible();
-  await expect(row.getByText("Volgende actie")).toBeVisible();
-  await expect(row.getByRole("button", { name: /Volg aanbiederreactie op|Selecteer andere aanbieder|Bevestig plaatsing/ })).toBeVisible();
+  // Row keeps its decisions inline (no modal): accept and reject are available directly on the row.
+  await expect(row.getByRole("button", { name: /Accepteren/i })).toBeVisible();
+  await expect(row.getByRole("button", { name: /Afwijzen/i })).toBeVisible();
 });
 
 test("provider smoke: decision-evaluation succeeds for a visible provider_beoordeling case", async ({ page }) => {
@@ -241,7 +240,8 @@ test("provider smoke: reject flow submits and shows rejected summary", async ({ 
   expect(updated?.status, "evaluation should be REJECTED after submit").toBe("REJECTED");
 
   await page.reload();
-  const row = page.getByTestId(`aanbiederreactie-row-${caseId}`);
+  // After rejecting, the case leaves the pending queue and appears in "Eerder beantwoord".
+  const row = page.getByTestId(`aanbieder-responded-${caseId}`);
   await expect(row).toBeVisible({ timeout: 45_000 });
   await expect(row).toContainText("Afgewezen");
 });

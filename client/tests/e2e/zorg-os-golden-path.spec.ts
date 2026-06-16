@@ -79,9 +79,11 @@ test("Zorg OS golden path — gemeente → matching → provider scope → accep
   expect(providerTitles).not.toContain(seeded.decoyTitle);
 
   await clickSidebarNav(page, /Reacties/);
-  await expect(page.getByRole("heading", { name: "Aanbiederreactie" })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByTestId("aanbiederreactie-worklist")).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByTestId(`aanbiederreactie-row-${seeded.goldenCaseId}`)).toBeVisible({ timeout: 45_000 });
+  // Provider context renders the provider portal (AanbiederPortaalPage = "Mijn beoordelingen"),
+  // not the gemeente-side Aanbiederreactie worklist.
+  await expect(page.getByRole("heading", { name: "Mijn beoordelingen" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("aanbieder-pending-list")).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId(`aanbieder-pending-${seeded.goldenCaseId}`)).toBeVisible({ timeout: 45_000 });
   await postJson(page, `/care/api/cases/${seeded.goldenCaseId}/provider-decision/`, {
     status: "ACCEPTED",
   });
