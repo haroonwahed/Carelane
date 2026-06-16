@@ -39,6 +39,30 @@ function slaPhaseLabel(phase: string): string {
   return map[normalized] ?? normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
+/**
+ * SLA-doel (uren) voor een case-status string — voor pagina's op het SpaCase /
+ * WorkflowCaseView datamodel (status-strings i.p.v. coordination-phase ids).
+ * Spiegelt dezelfde grenzen als `getSlaTarget`; geeft de strengste toepasselijke
+ * grens, of null als er geen formele SLA voor die status geldt (bijv. matching).
+ */
+export function slaTargetHoursForStatus(status: string, urgency?: string): number | null {
+  const s = (status || "").toLowerCase();
+  // SpaCase maps "warning" -> "Hoog" (high); treat it as urgent alongside high/critical.
+  const isUrgent = urgency === "high" || urgency === "critical" || urgency === "warning";
+  const candidates: number[] = [];
+  if (isUrgent) candidates.push(SLA_TARGET_HOURS.urgentIdle);
+  if (s === "casus" || s === "samenvatting" || s === "draft" || s === "draft_case") {
+    candidates.push(SLA_TARGET_HOURS.aanmelding);
+  }
+  if (s === "provider_beoordeling" || s === "aanbieder_beoordeling") {
+    candidates.push(SLA_TARGET_HOURS.providerResponse);
+  }
+  if (s === "plaatsing" || s === "intake") {
+    candidates.push(SLA_TARGET_HOURS.intakeStart);
+  }
+  return candidates.length === 0 ? null : Math.min(...candidates);
+}
+
 export function getSlaTarget(item: CoordinationDecisionOverviewItem): { hours: number; basis: string } | null {
   const isUrgent = item.urgency === "high" || item.urgency === "critical";
   const phaseLabel = slaPhaseLabel(item.phase);

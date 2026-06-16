@@ -22,6 +22,8 @@ import {
   ErrorState,
   LoadingState,
 } from "./CareDesignPrimitives";
+import { CareSlaCountdown } from "./CareSlaCountdown";
+import { slaTargetHoursForStatus } from "../../lib/careSla";
 import { cn } from "../ui/utils";
 
 interface IntakeListPageProps {
@@ -251,12 +253,17 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
                               : "Intake / plaatsing"}
                         </CareDominantStatus>
                       }
-                      time={
-                        <CareMetaChip>
-                          <Clock3 size={12} aria-hidden />
-                          {caseItem.wachttijd}d wacht
-                        </CareMetaChip>
-                      }
+                      time={(() => {
+                        const slaTarget = slaTargetHoursForStatus(caseItem.status, caseItem.urgency);
+                        return slaTarget != null ? (
+                          <CareSlaCountdown elapsedHours={caseItem.wachttijd * 24} targetHours={slaTarget} />
+                        ) : (
+                          <CareMetaChip>
+                            <Clock3 size={12} aria-hidden />
+                            {caseItem.wachttijd}d wacht
+                          </CareMetaChip>
+                        );
+                      })()}
                       contextInfo={
                         <CareMetaChip>{maskParticipantIdentity(caseItem.title || caseItem.id)}</CareMetaChip>
                       }
