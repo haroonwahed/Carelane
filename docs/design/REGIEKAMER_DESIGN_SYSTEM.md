@@ -107,6 +107,27 @@ moment. Targets: Aanmelding 24h, Aanbiederreactie 72h, urgent (any phase) 48h, P
 
 ---
 
+## 7a. Shared operational toolkit & convergence status
+
+The reusable pieces of this redesign are extracted so other operational pages can adopt them:
+
+- **Elevation ramp** — applied at the shell (`#main-content` → `--surface-2`), so **every**
+  page already inherits it. No per-page work.
+- **`--care-*` semantic token layer** — status color across all care pages (urgent / warning /
+  success / info / brand). The Regiekamer's SLA + priority helpers use it too (`-solid` variants).
+- **`lib/careSla.ts`** — `getSlaCountdown(item)` for coordination items, plus
+  `slaCountdownFromHours(elapsedHours, targetHours, contextLabel)` for any other data model.
+- **`<CareSlaCountdown>`** (`components/care/CareSlaCountdown.tsx`) — drop-in two-line countdown;
+  accepts either `item={…}` or `elapsedHours` + `targetHours`.
+
+**What is intentionally NOT converged:** the *structure* of queue pages (CareWorkRow-based
+columnar queues) vs. this command center (bespoke action-list). They are different page types —
+share the toolkit (tokens, elevation, SLA primitive) where it fits, don't force the action-list
+shape onto every queue. Candidate adoptions worth a UX review: AanbiederreactiePage and
+PlacementTrackingPage have real wait/deadline data that could use `<CareSlaCountdown>`.
+
+---
+
 ## 8. Anti-patterns (do not)
 
 - Don't hardcode `gray-*`/`red-*` etc. with manual `dark:` pairs for structural elements —

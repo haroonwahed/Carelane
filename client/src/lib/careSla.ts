@@ -70,24 +70,30 @@ export interface SlaCountdown {
   className: string;
 }
 
-export function getSlaCountdown(item: CoordinationDecisionOverviewItem): SlaCountdown {
-  const elapsed = item.hours_in_current_state ?? item.age_hours ?? 0;
-  const phaseLabel = slaPhaseLabel(item.phase);
-  const target = getSlaTarget(item);
-
-  if (!target) {
+/**
+ * Generic SLA countdown from raw hours — reusable by any care page that has an
+ * elapsed duration and a target, not just coordination-overview items. Pass
+ * `targetHours = null` for "no formal SLA" (shows elapsed time, muted).
+ * `contextLabel` is the "in <phase>" suffix shown when there is no SLA.
+ */
+export function slaCountdownFromHours(
+  elapsedHours: number,
+  targetHours: number | null,
+  contextLabel?: string,
+): SlaCountdown {
+  if (targetHours == null) {
     return {
       hasSla: false,
       status: "none",
       remainingHours: Number.POSITIVE_INFINITY,
-      label: formatDurationShort(elapsed),
-      sublabel: `in ${phaseLabel}`,
+      label: formatDurationShort(elapsedHours),
+      sublabel: contextLabel ? `in ${contextLabel}` : "",
       className: "text-muted-foreground",
     };
   }
 
-  const remaining = target.hours - elapsed;
-  const soonThreshold = Math.max(8, target.hours * 0.2);
+  const remaining = targetHours - elapsedHours;
+  const soonThreshold = Math.max(8, targetHours * 0.2);
 
   if (remaining <= 0) {
     return {
@@ -95,7 +101,7 @@ export function getSlaCountdown(item: CoordinationDecisionOverviewItem): SlaCoun
       status: "breached",
       remainingHours: remaining,
       label: `${formatDurationShort(remaining)} te laat`,
-      sublabel: `SLA ${target.hours}u`,
+      sublabel: `SLA ${targetHours}u`,
       className: "font-semibold text-care-urgent-solid",
     };
   }
@@ -105,7 +111,7 @@ export function getSlaCountdown(item: CoordinationDecisionOverviewItem): SlaCoun
       status: "soon",
       remainingHours: remaining,
       label: `nog ${formatDurationShort(remaining)}`,
-      sublabel: `SLA ${target.hours}u`,
+      sublabel: `SLA ${targetHours}u`,
       className: "font-medium text-care-warning-solid",
     };
   }
@@ -114,7 +120,13 @@ export function getSlaCountdown(item: CoordinationDecisionOverviewItem): SlaCoun
     status: "ok",
     remainingHours: remaining,
     label: `nog ${formatDurationShort(remaining)}`,
-    sublabel: `SLA ${target.hours}u`,
+    sublabel: `SLA ${targetHours}u`,
     className: "text-care-success-solid",
   };
+}
+
+export function getSlaCountdown(item: CoordinationDecisionOverviewItem): SlaCountdown {
+  const elapsed = item.hours_in_current_state ?? item.age_hours ?? 0;
+  const target = getSlaTarget(item);
+  return slaCountdownFromHours(elapsed, target ? target.hours : null, slaPhaseLabel(item.phase));
 }
