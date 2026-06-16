@@ -32,6 +32,8 @@ import {
   OPERATIONAL_QUEUE_HEADER_GRID_CLASS,
   PrimaryActionButton,
 } from "./CareDesignPrimitives";
+import { CareSlaCountdown } from "./CareSlaCountdown";
+import { SLA_TARGET_HOURS } from "../../lib/careSla";
 
 interface AanbiederreactiePageProps {
   role: "gemeente" | "zorgaanbieder" | "admin";
@@ -63,6 +65,8 @@ type AanbiederreactieRow = {
   nextActionLabel: string;
   exactActivityLabel: string | null;
   accentTone: "critical" | "warning" | "neutral";
+  /** Elapsed hours against the 72h provider-response SLA; null when not awaiting a reaction. */
+  slaElapsedHours: number | null;
   searchText: string;
 };
 
@@ -311,6 +315,10 @@ export function buildAanbiederreactieRows(
       lastActivityLabel: formatRelativeDays(daysSinceActivity),
       nextActionLabel: responseNextActionLabel(statusKey),
       exactActivityLabel: updatedExact,
+      slaElapsedHours:
+        statusKey === "waiting" || statusKey === "reminder_needed"
+          ? daysSinceActivity * 24
+          : null,
       accentTone: statusKey === "approved"
         ? "neutral"
         : statusKey === "expired" || statusKey === "rejected"
@@ -587,6 +595,12 @@ export function AanbiederreactiePage({
                       <p className="max-w-full text-[11px] leading-snug text-muted-foreground">
                         {row.reasonLabel}
                       </p>
+                      {row.slaElapsedHours != null ? (
+                        <CareSlaCountdown
+                          elapsedHours={row.slaElapsedHours}
+                          targetHours={SLA_TARGET_HOURS.providerResponse}
+                        />
+                      ) : null}
                     </div>
                   )}
                   owner={(
