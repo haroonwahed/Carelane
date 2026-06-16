@@ -4,7 +4,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
-  FileText,
   FolderOpen,
   Home,
   Mail,
@@ -18,15 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "../ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "../ui/sheet";
 import { cn } from "../ui/utils";
-import { CareInfoPopover } from "./CareUnifiedPage";
 import {
   CareOperationalSelect,
   EmptyState,
@@ -35,9 +26,6 @@ import {
 } from "./CareDesignPrimitives";
 import { useCoordinationDecisionOverview } from "../../hooks/useCoordinationDecisionOverview";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
-import { useRailCollapsed } from "../../hooks/useRailCollapsed";
-import { CoordinationNotesPanel } from "./CoordinationNotesPanel";
-import { getShortReasonLabel } from "../../lib/uxCopy";
 import { imperativeLabelForActionCode } from "./nbaImperativeLabels";
 import type {
   CoordinationDecisionOverviewItem,
@@ -46,25 +34,15 @@ import type {
 } from "../../lib/coordinationDecisionOverview";
 import {
   computeCoordinationNextBestAction,
-  formatCoordinationDominantDescription,
-  type CoordinationNbaActionKey,
   type CoordinationNbaUiMode,
 } from "../../lib/coordinationNextBestAction";
-import {
-  derivePhaseBoard,
-  getDominantPhaseColumn,
-  type CoordinationListFilter,
-  type CoordinationFlowPhase,
-} from "../../lib/coordinationCommandCenter";
 import {
   buildCoordinationNbaInstrumentationPayload,
   emitCoordinationNbaEvent,
   shouldEmitCoordinationNbaShown,
 } from "../../lib/coordinationNbaInstrumentation";
-import { setCasussenPreferredFocus } from "../../lib/casussenNavigation";
 import {
   DECISION_UI_PHASE_IDS,
-  DECISION_UI_PHASE_LABELS,
   isDecisionUiPhaseId,
   mapApiPhaseToDecisionUiPhase,
   normalizeApiPhaseId,
@@ -223,25 +201,6 @@ function itemMatchesPhaseFilter(itemPhase: string, phaseFilter: PhaseFilter): bo
   return itemPhase === phaseFilter;
 }
 
-/** NBA action codes from API → korte Nederlandse label voor Coordination (alleen weergave). */
-const NBA_ACTION_CODE_LABELS: Record<string, string> = {
-  COMPLETE_CASE_DATA: "Vul casus aan",
-  GENERATE_SUMMARY: "Vul casus aan",
-  START_MATCHING: "Matching starten",
-  VALIDATE_MATCHING: "Matching valideren",
-  SEND_TO_PROVIDER: "Naar aanbieder sturen",
-  WAIT_PROVIDER_RESPONSE: "Wachten op aanbiederreactie",
-  FOLLOW_UP_PROVIDER: "Aanbieder opvolgen",
-  REMATCH_CASE: "Casus her-matchen",
-  CONFIRM_PLACEMENT: "Plaatsing bevestigen",
-  START_INTAKE: "Intake starten",
-  MONITOR_CASE: "Casus monitoren",
-  ARCHIVE_CASE: "Casus archiveren",
-  PROVIDER_ACCEPT: "Aanbieder accepteert",
-  PROVIDER_REJECT: "Aanbieder wijst af",
-  PROVIDER_REQUEST_INFO: "Aanvullende info opvragen",
-};
-
 const PRIORITY_LABELS: Record<PriorityFilter, string> = {
   all: "Alles",
   critical: "Kritiek",
@@ -292,272 +251,6 @@ function priorityBand(score: number): CoordinationPriorityBand {
   return "low";
 }
 
-function priorityLabel(score: number): string {
-  switch (priorityBand(score)) {
-    case "critical":
-      return "Kritiek";
-    case "high":
-      return "Hoog";
-    case "medium":
-      return "Gemiddeld";
-    default:
-      return "Laag";
-  }
-}
-
-function priorityBadgeClasses(score: number) {
-  switch (priorityBand(score)) {
-    case "critical":
-      return "border bg-care-urgent-bg text-care-urgent-text border-care-urgent-border";
-    case "high":
-      return "border bg-care-warning-bg text-care-warning-text border-care-warning-border";
-    case "medium":
-      return "border-border bg-muted/30 text-foreground";
-    default:
-      return "border-border bg-muted/15 text-muted-foreground";
-  }
-}
-
-function severityBadgeClasses(severity?: string | null) {
-  switch ((severity || "").toLowerCase()) {
-    case "critical":
-      return "border bg-care-urgent-bg text-care-urgent-text border-care-urgent-border";
-    case "high":
-    case "warning":
-      return "border bg-care-warning-bg text-care-warning-text border-care-warning-border";
-    case "medium":
-      return "border-border bg-muted/30 text-foreground";
-    default:
-      return "border-border bg-muted/20 text-muted-foreground";
-  }
-}
-
-function phaseCardIcon(phase: CoordinationFlowPhase) {
-  switch (phase) {
-    case "aanmelding":
-      return FolderOpen;
-    case "matching":
-      return Users;
-    case "aanbiederreactie":
-      return UserCheck;
-    case "plaatsing":
-      return Home;
-    case "intake":
-      return Clock3;
-    default:
-      return FileText;
-  }
-}
-
-function imperativeCtaLabel(item: CoordinationDecisionOverviewItem): string | null {
-  const nba = item.next_best_action;
-  if (!nba) {
-    return null;
-  }
-  return imperativeLabelForActionCode(nba.action, nba.label);
-}
-
-function summaryWorkflowState(item: CoordinationDecisionOverviewItem): {
-  statusLabel: string;
-  actionLabel: string | null;
-  processing: boolean;
-} | null {
-  const blockerCode = item.top_blocker?.code?.toUpperCase() ?? "";
-  const actionCode = item.next_best_action?.action?.toUpperCase() ?? "";
-  const summaryRelated =
-    blockerCode === "MISSING_SUMMARY" ||
-    actionCode === "GENERATE_SUMMARY" ||
-    actionCode === "VIEW_SUMMARY";
-  if (!summaryRelated) {
-    return null;
-  }
-
-  const summaryText = [
-    item.top_blocker?.message,
-    item.top_blocker?.title,
-    item.top_alert?.message,
-    item.top_alert?.title,
-    item.next_best_action?.reason,
-    item.next_best_action?.label,
-  ]
-    .filter((value): value is string => Boolean(value))
-    .join(" ")
-    .toLowerCase();
-
-  const processing = /(wordt|wacht op).*(gemaakt|verwerkt)|automatisch|verwerking/.test(summaryText);
-  if (processing) {
-    return {
-      statusLabel: "Zorgvraag wordt automatisch verwerkt",
-      actionLabel: null,
-      processing: true,
-    };
-  }
-
-  if (actionCode === "VIEW_SUMMARY") {
-    return {
-      statusLabel: "Zorgvraag vastgelegd",
-      actionLabel: null,
-      processing: false,
-    };
-  }
-
-    return {
-      statusLabel: "Casus onvolledig",
-      actionLabel: "Vul casus aan",
-      processing: false,
-    };
-}
-
-function normalizeWorklistActionLabel(item: CoordinationDecisionOverviewItem, label: string | null): string | null {
-  if (!label) {
-    return null;
-  }
-  const actionCode = (item.next_best_action?.action ?? "").toUpperCase();
-  const summaryState = summaryWorkflowState(item);
-  const lower = label.toLowerCase();
-  const summaryRelated = lower.includes("samenvatting") || actionCode === "GENERATE_SUMMARY";
-
-  if (summaryState?.processing) {
-    return null;
-  }
-  if (summaryState) {
-    if (summaryState.actionLabel == null) {
-      return null;
-    }
-    return summaryState.actionLabel;
-  }
-  if (actionCode === "START_MATCHING") {
-    return imperativeLabelForActionCode("START_MATCHING", item.next_best_action?.label) ?? "Zoek zorgcapaciteit";
-  }
-  if (actionCode === "VALIDATE_MATCHING") {
-    return imperativeLabelForActionCode("VALIDATE_MATCHING", item.next_best_action?.label) ?? "Controleer matchvoorstel";
-  }
-  if (actionCode === "SEND_TO_PROVIDER") {
-    return imperativeLabelForActionCode("SEND_TO_PROVIDER", item.next_best_action?.label) ?? "Vraag reactie aanbieder";
-  }
-  if (actionCode === "WAIT_PROVIDER_RESPONSE" || actionCode === "FOLLOW_UP_PROVIDER") {
-    return imperativeLabelForActionCode(actionCode, item.next_best_action?.label) ?? "Herinner aanbieder";
-  }
-  if (actionCode === "PROVIDER_REQUEST_INFO") {
-    return "Vraag informatie op";
-  }
-  if (actionCode === "CONFIRM_PLACEMENT") {
-    return "Rond plaatsing af";
-  }
-  if (actionCode === "START_INTAKE") {
-    return "Plan intake";
-  }
-  if (actionCode === "MONITOR_CASE") {
-    return "Bekijk status";
-  }
-  if (summaryRelated) {
-    return "Vul casus aan";
-  }
-
-  if (lower.includes("samenvatting")) {
-    return "Vul casus aan";
-  }
-  if (lower.includes("intake") || lower.includes("matching") || lower.includes("start")) {
-    return `Start ${label.replace(/^(start|starten)\s+/i, "").trim()}`.trim();
-  }
-  if (lower.includes("beoord")) {
-    return "Beoordeel casus";
-  }
-  if (lower.startsWith("stuur") || lower.startsWith("volg")) {
-    return "Geef opvolging";
-  }
-  return `Bekijk ${label.replace(/^bekijk\s+/i, "").trim()}`.trim();
-}
-
-function actionableProblemLabel(item: CoordinationDecisionOverviewItem): string {
-  const nbaReason = item.next_best_action?.reason?.trim();
-  if (nbaReason) {
-    return getShortReasonLabel(nbaReason, 72);
-  }
-  const code = item.top_blocker?.code ?? item.top_alert?.code ?? item.top_risk?.code ?? "";
-  const nextAction = (item.next_best_action?.action ?? "").toUpperCase();
-  const summaryState = summaryWorkflowState(item);
-  if (summaryState) {
-    return summaryState.statusLabel;
-  }
-  switch (code) {
-    case "MISSING_SUMMARY":
-      return "Casus onvolledig";
-    case "GEMEENTE_VALIDATION_REQUIRED":
-      return "Matching wacht op gemeente";
-    case "NO_MATCH_AVAILABLE":
-      if (nextAction === "START_MATCHING") {
-        return "Klaar voor matching";
-      }
-      return "Geen aanbieder toegewezen";
-    case "PROVIDER_REVIEW_PENDING_SLA":
-      return "Wacht op aanbieder";
-    case "REPEATED_PROVIDER_REJECTIONS":
-      return "Herhaalde afwijzingen";
-    case "INTAKE_NOT_STARTED":
-    case "INTAKE_DELAYED":
-      return "Wacht op intake";
-    default:
-      return getShortReasonLabel(primaryProblemText(item), 72);
-  }
-}
-
-function formatHours(hours: number | null) {
-  if (hours === null || Number.isNaN(hours)) {
-    return "Geen recente activiteit";
-  }
-  if (hours < 24) {
-    return `${Math.round(hours)} uur`;
-  }
-  return `${Math.round(hours / 24)} dagen`;
-}
-
-function issueTone(item: CoordinationDecisionOverviewItem) {
-  if (item.top_blocker) {
-    return item.top_blocker.severity;
-  }
-  if (item.top_alert) {
-    return item.top_alert.severity;
-  }
-  if (item.top_risk) {
-    return item.top_risk.severity;
-  }
-  return "low";
-}
-
-function primaryProblemText(item: CoordinationDecisionOverviewItem): string {
-  if (item.top_blocker?.message) {
-    if (/gemeentevalidatie/i.test(item.top_blocker.message)) {
-      return "Goedkeuring nodig vóór versturen naar aanbieder.";
-    }
-    return item.top_blocker.message;
-  }
-  if (item.top_blocker?.title) {
-    return item.top_blocker.title;
-  }
-  if (item.top_alert?.title && item.top_alert?.message) {
-    return `${item.top_alert.title}: ${item.top_alert.message}`;
-  }
-  if (item.top_alert?.message) {
-    return item.top_alert.message;
-  }
-  if (item.top_alert?.title) {
-    return item.top_alert.title;
-  }
-  if (item.top_risk?.message) {
-    return item.top_risk.message;
-  }
-  if (item.top_risk?.title) {
-    return item.top_risk.title;
-  }
-  return "Geen signaal vastgelegd — open de casus.";
-}
-
-function ownerLabel(item: CoordinationDecisionOverviewItem): string {
-  const role = (item.responsible_role ?? "coordinatie") as OwnershipFilter;
-  return OWNERSHIP_LABELS[role] ?? "Coördinatie";
-}
-
 function matchesIssueFilter(item: CoordinationDecisionOverviewItem, filter: IssueFilter) {
   if (filter === "all") {
     return true;
@@ -600,23 +293,6 @@ function searchText(item: CoordinationDecisionOverviewItem) {
     .toLowerCase();
 }
 
-function collectTaxonomyCategoryOptions(items: CoordinationDecisionOverviewItem[]) {
-  const map = new Map<string, string>();
-  for (const item of items) {
-    const code = (item.zorgbehoefte_categorie_code ?? "").trim();
-    const label = (item.zorgbehoefte_categorie ?? "").trim();
-    if (!code || !label) {
-      continue;
-    }
-    if (!map.has(code)) {
-      map.set(code, label);
-    }
-  }
-  return Array.from(map.entries())
-    .map(([value, label]) => ({ value, label }))
-    .sort((left, right) => left.label.localeCompare(right.label, "nl"));
-}
-
 function collectTaxonomySubcategoryOptions(items: CoordinationDecisionOverviewItem[], categoryFilter: TaxonomyFilter) {
   const map = new Map<string, string>();
   for (const item of items) {
@@ -636,15 +312,6 @@ function collectTaxonomySubcategoryOptions(items: CoordinationDecisionOverviewIt
   return Array.from(map.entries())
     .map(([value, label]) => ({ value, label }))
     .sort((left, right) => left.label.localeCompare(right.label, "nl"));
-}
-
-function buildTaxonomySummaryLabel(item: CoordinationDecisionOverviewItem): string {
-  const category = (item.zorgbehoefte_categorie ?? "").trim();
-  const specific = (item.zorgbehoefte_specifiek ?? "").trim();
-  if (category && specific) {
-    return `${category} · ${specific}`;
-  }
-  return category || specific || "";
 }
 
 type RegiekamerFlowStepId =
@@ -681,59 +348,6 @@ function pickItemString(item: CoordinationDecisionOverviewItem, keys: string[]):
   return "";
 }
 
-function pickItemDate(item: CoordinationDecisionOverviewItem): Date | null {
-  const source = normalizeInspectableItem(item);
-  const candidates = [
-    source.updated_at,
-    source.updatedAt,
-    source.last_action_at,
-    source.lastActionAt,
-    source.last_activity_at,
-    source.lastActivityAt,
-    source.case_updated_at,
-    source.caseUpdatedAt,
-    source.generated_at,
-  ];
-  for (const candidate of candidates) {
-    if (typeof candidate !== "string" || !candidate.trim()) {
-      continue;
-    }
-    const date = new Date(candidate);
-    if (!Number.isNaN(date.getTime())) {
-      return date;
-    }
-  }
-  return null;
-}
-
-function formatRegiekamerDate(date: Date | null): string {
-  if (!date) {
-    return "Geen recente activiteit";
-  }
-  const datePart = new Intl.DateTimeFormat("nl-NL", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-  const timePart = new Intl.DateTimeFormat("nl-NL", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(date);
-  return `${datePart}, ${timePart}`;
-}
-
-function formatRegiekamerRelativeTime(hours: number | null): string {
-  if (hours === null || Number.isNaN(hours)) {
-    return "Geen recente activiteit";
-  }
-  if (hours < 24) {
-    return `${Math.max(1, Math.round(hours))} uur geleden`;
-  }
-  const days = Math.max(1, Math.round(hours / 24));
-  return `${days} dag${days === 1 ? "" : "en"} geleden`;
-}
-
 function phaseMatchesFlowStep(item: CoordinationDecisionOverviewItem, stepId: RegiekamerFlowStepId): boolean {
   const phase = normalizeApiPhaseId(item.phase);
   switch (stepId) {
@@ -748,63 +362,6 @@ function phaseMatchesFlowStep(item: CoordinationDecisionOverviewItem, stepId: Re
     case "intake":
       return phase === "intake";
   }
-}
-
-function priorityDotLabel(item: CoordinationDecisionOverviewItem): string {
-  if (item.priority_score >= 100 || item.urgency === "critical") {
-    return "Spoed";
-  }
-  if (item.priority_score >= 70 || item.urgency === "high") {
-    return "Hoog";
-  }
-  if (item.priority_score >= 30 || item.urgency === "medium") {
-    return "Normaal";
-  }
-  return "Laag";
-}
-
-function rowStatusLabel(item: CoordinationDecisionOverviewItem): string {
-  const actionCode = (item.next_best_action?.action ?? "").toUpperCase();
-  const phase = normalizeApiPhaseId(item.phase);
-  if (
-    phase === "casus" ||
-    phase === "samenvatting" ||
-    actionCode === "COMPLETE_CASE_DATA" ||
-    actionCode === "GENERATE_SUMMARY" ||
-    actionCode === "VIEW_SUMMARY"
-  ) {
-    return "Wacht op aanmelder";
-  }
-  if (phase === "matching" || phase === "gemeente_validatie" || actionCode === "START_MATCHING" || actionCode === "VALIDATE_MATCHING") {
-    return "Wacht op gemeente";
-  }
-  if (phase === "aanbieder_beoordeling" || actionCode === "SEND_TO_PROVIDER" || actionCode === "WAIT_PROVIDER_RESPONSE" || actionCode === "FOLLOW_UP_PROVIDER") {
-    return "Wacht op reactie";
-  }
-  if (phase === "plaatsing") {
-    return "Plaatsing";
-  }
-  if (phase === "intake") {
-    return "Intake";
-  }
-  return "In behandeling";
-}
-
-function rowStatusReason(item: CoordinationDecisionOverviewItem): string {
-  const actionCode = (item.next_best_action?.action ?? "").toUpperCase();
-  if (
-    item.top_blocker?.code === "GEMEENTE_VALIDATION_REQUIRED" ||
-    actionCode === "VALIDATE_MATCHING"
-  ) {
-    return "Goedkeuring nodig vóór versturen naar aanbieder.";
-  }
-  return (
-    item.next_best_action?.reason?.trim() ||
-    item.top_blocker?.message?.trim() ||
-    item.top_alert?.message?.trim() ||
-    item.top_risk?.message?.trim() ||
-    "Aanvullende informatie nodig"
-  );
 }
 
 function rowNextActionLabel(item: CoordinationDecisionOverviewItem): string {
@@ -853,32 +410,6 @@ function rowRegionLabel(item: CoordinationDecisionOverviewItem): string {
       "municipalityName",
     ]) || "Regio ontbreekt"
   );
-}
-
-function rowLastActionLabel(item: CoordinationDecisionOverviewItem): string {
-  return formatRegiekamerRelativeTime(item.hours_in_current_state ?? item.age_hours ?? null);
-}
-
-function rowLastActionDateLabel(item: CoordinationDecisionOverviewItem): string {
-  return formatRegiekamerDate(pickItemDate(item));
-}
-
-function buildRegiekamerFlowCounts(items: CoordinationDecisionOverviewItem[]): Record<RegiekamerFlowStepId, number> {
-  const counts: Record<RegiekamerFlowStepId, number> = {
-    aanmelding: 0,
-    matching: 0,
-    aanbiederreactie: 0,
-    plaatsing: 0,
-    intake: 0,
-  };
-  for (const item of items) {
-    for (const step of REGIEKAMER_FLOW_STEPS) {
-      if (phaseMatchesFlowStep(item, step.id)) {
-        counts[step.id] += 1;
-      }
-    }
-  }
-  return counts;
 }
 
 function regiekamerFlowStepIcon(stepId: RegiekamerFlowStepId) {
@@ -1389,9 +920,6 @@ export function SystemAwarenessPage({
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>(initialFromUrl.ownershipFilter);
   const [categoryFilter, setCategoryFilter] = useState<TaxonomyFilter>(initialFromUrl.categoryFilter);
   const [subcategoryFilter, setSubcategoryFilter] = useState<TaxonomyFilter>(initialFromUrl.subcategoryFilter);
-  const [showSecondaryFilters, setShowSecondaryFilters] = useState(false);
-  const [railSheetOpen, setRailSheetOpen] = useState(false);
-  const { collapsed: railCollapsed, toggle: toggleRail, setCollapsed: setRailCollapsed } = useRailCollapsed();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<RegiekamerPhaseTab>("alle");
   const [showFiltersBar, setShowFiltersBar] = useState(false);
@@ -1436,38 +964,6 @@ export function SystemAwarenessPage({
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
-
-  const applyListFilterSnapshot = useCallback(
-    (snapshot: CoordinationListFilter) => {
-      setSearchQuery("");
-      setPriorityFilter((snapshot.priority === "all" ? "all" : snapshot.priority) as PriorityFilter);
-      setIssueFilter(snapshot.issue as IssueFilter);
-      setPhaseFilter(snapshot.phase as PhaseFilter);
-      setOwnershipFilter("all");
-      setCategoryFilter("all");
-      setSubcategoryFilter("all");
-    },
-    [],
-  );
-
-  const applyPhaseBoardFilter = useCallback(
-    (phase: CoordinationFlowPhase) => {
-      applyListFilterSnapshot({ issue: "all", phase, priority: "all" });
-      if (typeof window !== "undefined" && isCoordinationPath(window.location.pathname)) {
-        const next = buildCoordinationUrl({
-          searchQuery: "",
-          priorityFilter: "all",
-          issueFilter: "all",
-          phaseFilter: phase as PhaseFilter,
-          ownershipFilter: "all",
-          categoryFilter: "all",
-          subcategoryFilter: "all",
-        });
-        window.history.pushState(window.history.state, "", next);
-      }
-    },
-    [applyListFilterSnapshot],
-  );
 
   const visibleItems = useMemo(() => {
     const items = data?.items ?? [];
@@ -1540,15 +1036,6 @@ export function SystemAwarenessPage({
     return `Laatste update: ${datePart} ${timePart}`;
   }, [data?.generated_at]);
 
-  const avgDoorloopDays = useMemo(() => {
-    const items = data?.items ?? [];
-    if (items.length === 0) {
-      return 0;
-    }
-    const sumHours = items.reduce((acc, row) => acc + (row.age_hours ?? 0), 0);
-    return Math.max(1, Math.round(sumHours / items.length / 24));
-  }, [data?.items]);
-
   const slaRiskTotal = useMemo(() => {
     const t = data?.totals;
     if (!t) {
@@ -1556,8 +1043,6 @@ export function SystemAwarenessPage({
     }
     return Math.max(0, (t.provider_sla_breaches ?? 0) + (t.high_priority_alerts ?? 0));
   }, [data?.totals]);
-
-  const gemeenteDisplayName = me?.organization?.name?.trim() || "Gemeente";
 
   const applyCriticalDrillFilter = useCallback(() => {
     setPriorityFilter("critical");
@@ -1600,8 +1085,6 @@ export function SystemAwarenessPage({
     return base.slice(0, REGIEKAMER_COORDINATION_LIST_CAP);
   }, [visibleItems, filtersActive]);
 
-  const coordinationListCapped = !filtersActive && visibleItems.length > coordinationListItems.length;
-
   const currentUserDisplayName = me?.fullName?.trim() || me?.username || "Regisseur";
   const phaseTabCounts = useMemo<Record<RegiekamerPhaseTab, number>>(() => ({
     alle: coordinationListItems.length,
@@ -1638,12 +1121,10 @@ export function SystemAwarenessPage({
   const highPriorityAlerts = data?.totals.high_priority_alerts ?? 0;
   const providerSlaBreaches = data?.totals.provider_sla_breaches ?? 0;
   const intakeDelaysTotal = data?.totals.intake_delays ?? 0;
-  const urgencyApplicationsOpen = data?.totals.urgency_applications_open ?? 0;
 
   const allOverviewItems = data?.items ?? [];
   const directActieCount = useMemo(() => allOverviewItems.filter((i) => i.priority_score >= 100 || i.urgency === "critical").length, [allOverviewItems]);
   const blockedCount = useMemo(() => allOverviewItems.filter((i) => !!(i.top_blocker?.title || i.top_blocker?.message || i.top_alert?.message)).length, [allOverviewItems]);
-  const taxonomyCategoryOptions = useMemo(() => collectTaxonomyCategoryOptions(allOverviewItems), [allOverviewItems]);
   const taxonomySubcategoryOptions = useMemo(
     () => collectTaxonomySubcategoryOptions(allOverviewItems, categoryFilter),
     [allOverviewItems, categoryFilter],
@@ -1666,121 +1147,6 @@ export function SystemAwarenessPage({
       ).length,
     [allOverviewItems],
   );
-  const phaseBoardColumns = useMemo(() => derivePhaseBoard(allOverviewItems, 3), [allOverviewItems]);
-  const dominantPhaseColumn = useMemo(() => getDominantPhaseColumn(phaseBoardColumns), [phaseBoardColumns]);
-  const activeFlowIndex = useMemo(() => {
-    if (!dominantPhaseColumn) return 0;
-    const idx = phaseBoardColumns.findIndex((col) => col.phase === dominantPhaseColumn.phase);
-    return idx >= 0 ? idx : 0;
-  }, [dominantPhaseColumn, phaseBoardColumns]);
-
-  const governanceQueuesStrip = useMemo(() => {
-    if (loading || error || !hasActiveData || !data?.governance_queues) {
-      return null;
-    }
-    const q = data.governance_queues;
-    const segments: { key: string; label: string; help: string; ids: string[] }[] = [
-      {
-        key: "wijkteam",
-        label: "Wijkteam-intake",
-        help: "Aanvragen via wijkteam die nog intake of beoordeling nodig hebben.",
-        ids: q.wijkteam_intakes_needing_assessment,
-      },
-      {
-        key: "zorgvraag",
-        label: "Zorgvraagbeoordeling",
-        help: "Aanvragen in zorgvraagbeoordeling vóór matching.",
-        ids: q.zorgvraag_beoordeling_open,
-      },
-      {
-        key: "gemeente",
-        label: "Goedkeuring nodig",
-        help: "Aanvragen waarbij matching gereed is en de gemeente het arrangement, budget of de vervolgstap moet goedkeuren.",
-        ids: q.cases_waiting_gemeente_validation,
-      },
-      {
-        key: "budget",
-        label: "Budgetgoedkeuring",
-        help: "Plaatsingsaanvragen met open budgetcontrole door de gemeente.",
-        ids: q.budget_approvals_pending,
-      },
-      {
-        key: "transitie",
-        label: "Aanbieder-transitie",
-        help: "Open verzoeken tot overdracht of transitie tussen aanbieders.",
-        ids: q.provider_transition_requests_pending,
-      },
-      {
-        key: "eval_komend",
-        label: "Evaluaties gepland",
-        help: "Actieve plaatsingen met een geplande evaluatie.",
-        ids: q.evaluations_upcoming,
-      },
-      {
-        key: "eval_te_laat",
-        label: "Evaluaties te laat",
-        help: "Evaluaties waar de geplande datum is verstreken.",
-        ids: q.evaluations_overdue,
-      },
-      {
-        key: "intensiteit",
-        label: "Intensiteitswijziging",
-        help: "Actieve plaatsingen met gewijzigde of risicovolle zorgintensiteit.",
-        ids: q.active_placements_care_intensity_changed,
-      },
-    ];
-    const active = segments.filter((s) => s.ids.length > 0);
-    if (active.length === 0) {
-      return null;
-    }
-    return (
-      <div
-        data-testid="coordination-governance-queues"
-        className="flex max-h-16 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-muted/20 px-3 py-2 shadow-sm"
-      >
-        <span className="inline-flex shrink-0 items-center gap-1 care-text-eyebrow text-muted-foreground">
-          Wachtrijen
-          <CareInfoPopover
-            ariaLabel="Uitleg wachtrijen"
-            testId="coordination-governance-queues-info"
-            triggerClassName="h-5 w-5"
-          >
-            <p className="text-muted-foreground">
-              Operationele wachtrijen: waar aanvragen vastliggen binnen dezelfde doorstroom. Geen apart proces naast
-              Doorstroom — klik een wachtrij om de eerste casus te openen.
-            </p>
-          </CareInfoPopover>
-        </span>
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          {active.map((s) => {
-            const first = s.ids[0];
-            const count = s.ids.length;
-            return (
-              <button
-                key={s.key}
-                type="button"
-                className="inline-flex max-w-full items-center gap-0.5 rounded-full border border-transparent bg-muted/35 px-2.5 py-1 text-left text-[12px] font-medium text-foreground underline-offset-2 hover:border-border/60 hover:bg-muted/55 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={!first}
-                title={s.help}
-                aria-label={`Open eerste casus in wachtrij ${s.label} (${count})`}
-                onClick={() => {
-                  if (first) {
-                    onCaseClick(String(first));
-                  }
-                }}
-                data-testid={`coordination-governance-${s.key}`}
-              >
-                <span className="truncate">{s.label}</span>{" "}
-                <span className="shrink-0 tabular-nums text-muted-foreground">({count})</span>
-                <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }, [loading, error, hasActiveData, data?.governance_queues, onCaseClick]);
-
   const noMatchDrillItems = useMemo(
     () =>
       allOverviewItems.filter(
@@ -1835,136 +1201,6 @@ export function SystemAwarenessPage({
 
   const uiMode = coordinationNba.panel.uiMode;
 
-  const actionReminders = useCallback(() => {
-    setSearchQuery("");
-    setPriorityFilter("all");
-    setIssueFilter("SLA");
-    setPhaseFilter("aanbiederreactie");
-    setOwnershipFilter("all");
-  }, []);
-
-  const actionRematch = useCallback(() => {
-    setSearchQuery("");
-    setPriorityFilter("all");
-    setIssueFilter("alerts");
-    setPhaseFilter("matching");
-    setOwnershipFilter("all");
-  }, []);
-
-  const applyFiltersAll = useCallback(() => {
-    setSearchQuery("");
-    setPriorityFilter("all");
-    setIssueFilter("all");
-    setPhaseFilter("all");
-    setOwnershipFilter("all");
-  }, []);
-
-  const runNbaAction = useCallback(
-    (key: CoordinationNbaActionKey) => {
-      switch (key) {
-        case "FOCUS_BLOCKERS":
-          applyFiltersAll();
-          setIssueFilter("blockers");
-          setPhaseFilter("all");
-          break;
-        case "FOCUS_SLA":
-          applyFiltersAll();
-          setIssueFilter("SLA");
-          setPhaseFilter("all");
-          break;
-        case "FOCUS_MATCHING":
-          actionRematch();
-          break;
-        case "FOCUS_INTAKE":
-          applyFiltersAll();
-          setIssueFilter("intake");
-          setPhaseFilter("all");
-          break;
-        case "FOCUS_RISKS":
-          applyFiltersAll();
-          setIssueFilter("risks");
-          setPhaseFilter("all");
-          break;
-        case "OPEN_WORKQUEUE":
-          onAppNavigate?.("/casussen");
-          break;
-        case "FOCUS_PIPELINE":
-          if (dominantPhaseColumn) {
-            applyPhaseBoardFilter(dominantPhaseColumn.phase);
-          } else {
-            applyFiltersAll();
-          }
-          break;
-        case "REVIEW_STABLE":
-          onAppNavigate?.("/casussen");
-          break;
-        case "SLA_PROVIDER_REMINDERS":
-          actionReminders();
-          break;
-        default:
-          break;
-      }
-    },
-    [actionRematch, actionReminders, applyFiltersAll, applyPhaseBoardFilter, dominantPhaseColumn, onAppNavigate],
-  );
-
-  const runModePrimary = useCallback(() => {
-    emitCoordinationNbaEvent(
-      "nba_primary_clicked",
-      buildCoordinationNbaInstrumentationPayload({
-        actionKey: coordinationNba.primaryAction.actionKey,
-        uiMode,
-        reasonCount: coordinationNba.reasons.length,
-      }),
-    );
-    runNbaAction(coordinationNba.primaryAction.actionKey);
-  }, [coordinationNba, runNbaAction, uiMode]);
-
-  const runModeSecondary = useCallback(() => {
-    const secondary = coordinationNba.secondaryAction;
-    if (secondary) {
-      emitCoordinationNbaEvent(
-        "nba_secondary_clicked",
-        buildCoordinationNbaInstrumentationPayload({
-          actionKey: secondary.actionKey,
-          uiMode,
-          reasonCount: coordinationNba.reasons.length,
-        }),
-      );
-      runNbaAction(secondary.actionKey);
-    }
-  }, [coordinationNba, runNbaAction, uiMode]);
-
-  const applyModeCasesLink = useCallback(() => {
-    emitCoordinationNbaEvent(
-      "nba_cases_link_clicked",
-      buildCoordinationNbaInstrumentationPayload({
-        actionKey: coordinationNba.primaryAction.actionKey,
-        uiMode,
-        reasonCount: coordinationNba.reasons.length,
-      }),
-    );
-    // Honest navigation: link copy ("Bekijk kritieke casussen" / "Open werkvoorraad")
-    // promises a destination, not an in-page filter. Hand a one-shot focus hint to the
-    // worklist for crisis modes so the destination opens pre-filtered to critical cases.
-    if (uiMode === "crisis") {
-      setCasussenPreferredFocus("critical");
-    }
-    onAppNavigate?.("/casussen");
-  }, [coordinationNba, onAppNavigate, uiMode]);
-
-  const applyModeSignalenLink = useCallback(() => {
-    emitCoordinationNbaEvent(
-      "nba_secondary_clicked",
-      buildCoordinationNbaInstrumentationPayload({
-        actionKey: "FOCUS_SLA",
-        uiMode,
-        reasonCount: coordinationNba.reasons.length,
-      }),
-    );
-    onAppNavigate?.("/signalen");
-  }, [coordinationNba, onAppNavigate, uiMode]);
-
   useEffect(() => {
     if (!hasActiveData) {
       return;
@@ -1983,23 +1219,6 @@ export function SystemAwarenessPage({
     );
   }, [hasActiveData, coordinationNba, uiMode]);
 
-  const dominantPanelDescription = formatCoordinationDominantDescription(coordinationNba);
-  const showDominantHeroMetric =
-    uiMode === "crisis" && (coordinationNba.panel.linkCount > 0 || criticalBlockers > 0);
-  const dominantMetric = showDominantHeroMetric
-    ? Math.max(criticalBlockers, coordinationNba.panel.linkCount || criticalBlockers)
-    : 0;
-  const gemeenteActieLine =
-    dominantMetric === 1
-      ? "1 casus vraagt directe afstemming"
-      : `${dominantMetric} aanvragen vragen directe afstemming`;
-  const dominantAlertDescription =
-    uiMode === "crisis" ? "1 casus blokkeert de doorstroom" : dominantPanelDescription;
-  const dominantPrimaryLabel =
-    uiMode === "crisis" ? "Los kritieke blokkades op" : coordinationNba.primaryAction.label;
-  const dominantSecondaryLabel =
-    uiMode === "crisis" ? "SLA-signalen bekijken" : coordinationNba.secondaryAction?.label;
-
   const clearFilters = () => {
     setSearchQuery("");
     setPriorityFilter("all");
@@ -2009,13 +1228,6 @@ export function SystemAwarenessPage({
     setCategoryFilter("all");
     setSubcategoryFilter("all");
   };
-
-  const regiekamerFlowCounts = useMemo(() => buildRegiekamerFlowCounts(allOverviewItems), [allOverviewItems]);
-  const activeRegiekamerStepIndex = useMemo(() => {
-    const firstActive = REGIEKAMER_FLOW_STEPS.findIndex((step) => regiekamerFlowCounts[step.id] > 0);
-    return firstActive >= 0 ? firstActive : 0;
-  }, [regiekamerFlowCounts]);
-  const showCoordinationPhaseBoard = !loading && !error && hasActiveData && allOverviewItems.length > 0;
 
   return (
     <div className="flex min-h-0 flex-col" data-testid="regiekamer-page">
