@@ -430,9 +430,9 @@ function regiekamerFlowStepIcon(stepId: RegiekamerFlowStepId) {
 type RegiekamerPhaseTab = "alle" | RegiekamerFlowStepId | "hoog-urgent";
 
 function getPriorityDotClass(item: CoordinationDecisionOverviewItem): string {
-  if (item.priority_score >= 100 || item.urgency === "critical") return "bg-red-500";
-  if (item.priority_score >= 70 || item.urgency === "high") return "bg-orange-400";
-  if (item.priority_score >= 30) return "bg-yellow-300";
+  if (item.priority_score >= 100 || item.urgency === "critical") return "bg-care-urgent-solid";
+  if (item.priority_score >= 70 || item.urgency === "high") return "bg-care-warning-solid";
+  if (item.priority_score >= 30) return "bg-yellow-300"; // mid-level: categorical, no semantic token
   return "bg-muted-foreground/40";
 }
 
@@ -527,7 +527,7 @@ function getSlaCountdown(item: CoordinationDecisionOverviewItem): SlaCountdown {
       remainingHours: remaining,
       label: `${formatDurationShort(remaining)} te laat`,
       sublabel: `SLA ${target.hours}u`,
-      className: "font-semibold text-red-600 dark:text-red-400",
+      className: "font-semibold text-care-urgent-solid",
     };
   }
   if (remaining <= soonThreshold) {
@@ -537,7 +537,7 @@ function getSlaCountdown(item: CoordinationDecisionOverviewItem): SlaCountdown {
       remainingHours: remaining,
       label: `nog ${formatDurationShort(remaining)}`,
       sublabel: `SLA ${target.hours}u`,
-      className: "font-medium text-orange-500 dark:text-orange-400",
+      className: "font-medium text-care-warning-solid",
     };
   }
   return {
@@ -546,7 +546,7 @@ function getSlaCountdown(item: CoordinationDecisionOverviewItem): SlaCountdown {
     remainingHours: remaining,
     label: `nog ${formatDurationShort(remaining)}`,
     sublabel: `SLA ${target.hours}u`,
-    className: "text-emerald-600 dark:text-emerald-400",
+    className: "text-care-success-solid",
   };
 }
 
