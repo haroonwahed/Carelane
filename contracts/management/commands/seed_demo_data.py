@@ -117,6 +117,7 @@ class Command(BaseCommand):
         case_specs = self._case_specs(categories=categories, municipality_map=municipality_map, region_map=region_map)
         cases = [self._ensure_case(organization=organization, demo_user=demo_user, spec=spec, providers=providers) for spec in case_specs]
         self._ensure_provider_staff_users(organization=organization, providers=providers)
+        self._ensure_team_admin_users(organization=organization)
 
         self.stdout.write(self.style.SUCCESS('Demo data successfully seeded.'))
         if self._clock_locked:
@@ -1273,6 +1274,44 @@ class Command(BaseCommand):
             client = bundle['client']
             client.responsible_coordinator = user
             client.save(update_fields=['responsible_coordinator', 'updated_at'])
+
+    def _ensure_team_admin_users(self, *, organization):
+        team_admins = [
+            ('luuk@gemeente-demo.nl', 'Luuk', 'Admin'),
+            ('sina@gemeente-demo.nl', 'Sina', 'Admin'),
+        ]
+        for email, first_name, last_name in team_admins:
+            user, _ = User.objects.update_or_create(
+                username=email,
+                defaults={
+                    'email': email,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'is_staff': True,
+                    'is_superuser': True,
+                },
+            )
+            user.set_password(DEMO_PASSWORD)
+            user.save(update_fields=['password', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser'])
+
+            OrganizationMembership.objects.update_or_create(
+                organization=organization,
+                user=user,
+                defaults={
+                    'role': OrganizationMembership.Role.ADMIN,
+                    'is_active': True,
+                    'scim_external_id': '',
+                },
+            )
+            UserProfile.objects.update_or_create(
+                user=user,
+                defaults={
+                    'role': UserProfile.Role.ADMIN,
+                    'department': 'Platformbeheer',
+                    'is_active': True,
+                },
+            )
+            self.stdout.write(f'- Admin account: {email}')
 
     def _risk_for_urgency(self, urgency):
         mapping = {
