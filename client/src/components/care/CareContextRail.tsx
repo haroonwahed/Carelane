@@ -32,12 +32,18 @@ export interface CareContextRailProps {
   deadline?: string | null;
   /** Current step owner label */
   owner?: string | null;
+  /** Callback when owner is clicked */
+  onOwnerClick?: () => void;
   /** Priority label (e.g. "Normaal", "Hoog", "Spoed") */
   priority?: string | null;
+  /** Callback when priority is clicked */
+  onPriorityClick?: () => void;
   /** Priority dot colour — defaults to neutral */
   priorityTone?: "critical" | "warning" | "neutral";
   /** Time elapsed in current status (e.g. "47 uur") */
   elapsed?: string | null;
+  /** Callback when elapsed time is clicked (e.g. show SLA details) */
+  onElapsedClick?: () => void;
   /** Decision that must be made to unblock */
   requiredDecision?: string | null;
   /** Primary contact name or label */
@@ -48,6 +54,8 @@ export interface CareContextRailProps {
   linkedProviderHref?: string;
   /** Most recent audit event */
   recentAuditEvent?: CareContextRailAuditEvent | null;
+  /** Callback when recent audit event is clicked (e.g. show audit log) */
+  onAuditEventClick?: () => void;
   /** Additional arbitrary items */
   extraItems?: CareContextRailItem[];
   className?: string;
@@ -62,12 +70,16 @@ function RailSection({
   value,
   tone,
   href,
+  onClick,
+  isClickable,
 }: {
   icon: ReactNode;
   label: string;
   value: string;
   tone?: CareContextRailItem["tone"];
   href?: string;
+  onClick?: () => void;
+  isClickable?: boolean;
 }) {
   const valueClass = cn(
     "mt-0.5 break-words text-[13px] leading-snug",
@@ -75,6 +87,14 @@ function RailSection({
       : tone === "warning" ? "font-semibold text-care-warning-text"
         : tone === "neutral" ? "font-medium text-foreground"
           : "text-muted-foreground",
+    (href || onClick) && "cursor-pointer hover:text-primary",
+  );
+
+  const content = (
+    <>
+      {value}
+      {href && <ExternalLink size={10} className="ml-1 inline" aria-hidden />}
+    </>
   );
 
   return (
@@ -85,13 +105,20 @@ function RailSection({
         {href ? (
           <a
             href={href}
-            className={cn(valueClass, "hover:text-primary hover:underline")}
+            className={cn(valueClass, "hover:underline")}
             target="_blank"
             rel="noreferrer"
           >
-            {value}
-            <ExternalLink size={10} className="ml-1 inline" aria-hidden />
+            {content}
           </a>
+        ) : onClick ? (
+          <button
+            type="button"
+            onClick={onClick}
+            className={cn(valueClass, "text-left hover:underline")}
+          >
+            {content}
+          </button>
         ) : (
           <p className={valueClass}>{value}</p>
         )}
@@ -104,14 +131,18 @@ export function CareContextRail({
   blocker,
   deadline,
   owner,
+  onOwnerClick,
   priority,
+  onPriorityClick,
   priorityTone = "neutral",
   elapsed,
+  onElapsedClick,
   requiredDecision,
   contact,
   linkedProvider,
   linkedProviderHref,
   recentAuditEvent,
+  onAuditEventClick,
   extraItems,
   className,
   heading = "Casuscontext",
@@ -161,11 +192,20 @@ export function CareContextRail({
             label="Eigenaar"
             value={owner}
             tone="neutral"
+            onClick={onOwnerClick}
           />
         )}
 
         {priority && (
-          <div className="flex min-w-0 gap-2.5">
+          <button
+            type="button"
+            onClick={onPriorityClick}
+            className={cn(
+              "flex min-w-0 gap-2.5 w-full text-left transition-colors",
+              onPriorityClick && "hover:opacity-80"
+            )}
+            aria-label={`Prioriteit: ${priority}${onPriorityClick ? ", klik voor details" : ""}`}
+          >
             <span className="mt-0.5 shrink-0 text-muted-foreground/60" aria-hidden><Flag size={14} /></span>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-medium leading-none tracking-wide text-muted-foreground/60">Prioriteit</p>
@@ -174,7 +214,7 @@ export function CareContextRail({
                 <p className="text-[13px] font-medium leading-snug text-foreground">{priority}</p>
               </div>
             </div>
-          </div>
+          </button>
         )}
 
         {elapsed && (
@@ -183,6 +223,7 @@ export function CareContextRail({
             label="Tijd in huidige status"
             value={elapsed}
             tone="neutral"
+            onClick={onElapsedClick}
           />
         )}
 
@@ -239,6 +280,7 @@ export function CareContextRail({
             label="Laatste activiteit"
             value={recentAuditEvent.label}
             tone="neutral"
+            onClick={onAuditEventClick}
           />
         )}
 

@@ -1354,10 +1354,24 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, backLabel
   const contextRailNode = (
     <CareContextRail
       owner={actionHolderLabel || stepOwner || undefined}
+      onOwnerClick={() => {
+        toast.info("Eigenaar wijzigen: functie volgt in volgende iteratie");
+      }}
+      priority={spaCase.placementPressureLabel ?? spaCase.urgency}
+      onPriorityClick={() => {
+        toast.info(`Prioriteit: ${spaCase.placementPressureBand || spaCase.urgency || "normaal"}`);
+      }}
+      priorityTone={spaCase.placementPressureBand === "critical" ? "critical" : spaCase.placementPressureBand === "high" ? "warning" : "neutral"}
       elapsed={elapsedForRail ?? undefined}
+      onElapsedClick={() => {
+        toast.info(`Tijd in status: ${elapsedForRail || "onbekend"}`);
+      }}
       deadline={spaCase.arrangementEndDate || undefined}
       linkedProvider={spaCase.arrangementProvider || undefined}
       recentAuditEvent={recentAuditForRail}
+      onAuditEventClick={() => {
+        setDetailTab("activiteit");
+      }}
       heading="Casuscontext"
     />
   );
