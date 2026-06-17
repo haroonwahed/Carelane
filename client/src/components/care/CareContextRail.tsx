@@ -170,127 +170,127 @@ export function CareContextRail({
     : priorityTone === "warning" ? "bg-care-warning-solid"
     : "bg-muted-foreground/40";
 
+  const cardClass = "rounded-[22px] border border-border/60 bg-card/45 p-4 shadow-sm";
+  const headingClass = "care-text-subheading text-foreground";
+
+  // Eén compacte context-kaart: aanvullende context op een rij (eigenaar, tijd in
+  // huidige status, laatste activiteit, eventueel deadline/aanbieder), met de
+  // blokkade onderaan. Geen losse mini-kaarten per regel — rustig en consistent.
   return (
-    <aside
+    <div
       data-testid={testId ?? "care-context-rail"}
-      className={cn(
-        "rounded-xl border border-border/50 bg-card/30 p-4",
-        className,
-      )}
-      aria-label="Casuscontext"
+      className={cn(className)}
+      aria-label={typeof heading === "string" ? heading : "Casuscontext"}
     >
-      {heading && (
-        <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-          {heading}
-        </h2>
-      )}
+      <div className={cardClass}>
+        <h3 className={headingClass}>{heading}</h3>
+        <div className="mt-3 space-y-3">
+          {owner && (
+            <RailSection
+              icon={<User size={14} />}
+              label="Eigenaar"
+              value={owner}
+              tone="neutral"
+              onClick={onOwnerClick}
+            />
+          )}
 
-      <div className="space-y-4">
-        {owner && (
-          <RailSection
-            icon={<User size={14} />}
-            label="Eigenaar"
-            value={owner}
-            tone="neutral"
-            onClick={onOwnerClick}
-          />
-        )}
-
-        {priority && (
-          <button
-            type="button"
-            onClick={onPriorityClick}
-            className={cn(
-              "flex min-w-0 gap-2.5 w-full text-left transition-colors",
-              onPriorityClick && "hover:opacity-80"
-            )}
-            aria-label={`Prioriteit: ${priority}${onPriorityClick ? ", klik voor details" : ""}`}
-          >
-            <span className="mt-0.5 shrink-0 text-muted-foreground/60" aria-hidden><Flag size={14} /></span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-medium leading-none tracking-wide text-muted-foreground/60">Prioriteit</p>
-              <div className="mt-0.5 flex items-center gap-1.5">
-                <span className={cn("h-2 w-2 shrink-0 rounded-full", priorityDotClass)} aria-hidden />
-                <p className="text-[13px] font-medium leading-snug text-foreground">{priority}</p>
+          {priority && (
+            <button
+              type="button"
+              onClick={onPriorityClick}
+              className={cn(
+                "flex min-w-0 gap-2.5 w-full text-left transition-colors",
+                onPriorityClick && "hover:opacity-80"
+              )}
+              aria-label={`Prioriteit: ${priority}${onPriorityClick ? ", klik voor details" : ""}`}
+            >
+              <span className="mt-0.5 shrink-0 text-muted-foreground/60" aria-hidden><Flag size={14} /></span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-medium leading-none tracking-wide text-muted-foreground/60">Prioriteit</p>
+                <div className="mt-0.5 flex items-center gap-1.5">
+                  <span className={cn("h-2 w-2 shrink-0 rounded-full", priorityDotClass)} aria-hidden />
+                  <p className="text-[13px] font-medium leading-snug text-foreground">{priority}</p>
+                </div>
               </div>
-            </div>
-          </button>
-        )}
+            </button>
+          )}
 
-        {elapsed && (
-          <RailSection
-            icon={<Clock size={14} />}
-            label="Tijd in huidige status"
-            value={elapsed}
-            tone="neutral"
-            onClick={onElapsedClick}
-          />
-        )}
+          {elapsed && (
+            <RailSection
+              icon={<Clock size={14} />}
+              label="Tijd in huidige status"
+              value={elapsed}
+              tone="neutral"
+              onClick={onElapsedClick}
+            />
+          )}
 
-        {deadline && (
-          <RailSection
-            icon={<Calendar size={14} />}
-            label="Deadline"
-            value={deadline}
-            tone="neutral"
-          />
-        )}
+          {recentAuditEvent && (
+            <RailSection
+              icon={<Calendar size={14} />}
+              label="Laatste activiteit"
+              value={recentAuditEvent.label}
+              tone="neutral"
+              onClick={onAuditEventClick}
+            />
+          )}
 
-        {contact && (
-          <RailSection
-            icon={<User size={14} />}
-            label="Contact"
-            value={contact}
-          />
-        )}
+          {deadline && (
+            <RailSection
+              icon={<Calendar size={14} />}
+              label="Deadline"
+              value={deadline}
+              tone="neutral"
+            />
+          )}
 
-        {linkedProvider && (
-          <RailSection
-            icon={<ExternalLink size={14} />}
-            label="Gekoppelde aanbieder"
-            value={linkedProvider}
-            href={linkedProviderHref}
-            tone="neutral"
-          />
-        )}
+          {requiredDecision && (
+            <RailSection
+              icon={<FileText size={14} />}
+              label="Vereiste beslissing"
+              value={requiredDecision}
+              tone="warning"
+            />
+          )}
 
-        {requiredDecision && (
-          <RailSection
-            icon={<FileText size={14} />}
-            label="Vereiste beslissing"
-            value={requiredDecision}
-            tone="warning"
-          />
-        )}
+          {contact && (
+            <RailSection
+              icon={<User size={14} />}
+              label="Contact"
+              value={contact}
+            />
+          )}
 
-        {extraItems?.map((item) => (
-          <RailSection
-            key={item.label}
-            icon={<FileText size={14} />}
-            label={item.label}
-            value={item.value}
-            tone={item.tone}
-            href={item.href}
-          />
-        ))}
+          {linkedProvider && (
+            <RailSection
+              icon={<ExternalLink size={14} />}
+              label="Gekoppelde aanbieder"
+              value={linkedProvider}
+              href={linkedProviderHref}
+              tone="neutral"
+            />
+          )}
 
-        {recentAuditEvent && (
-          <RailSection
-            icon={<Calendar size={14} />}
-            label="Laatste activiteit"
-            value={recentAuditEvent.label}
-            tone="neutral"
-            onClick={onAuditEventClick}
-          />
-        )}
+          {extraItems?.map((item) => (
+            <RailSection
+              key={item.label}
+              icon={<FileText size={14} />}
+              label={item.label}
+              value={item.value}
+              tone={item.tone}
+              href={item.href}
+            />
+          ))}
+        </div>
 
         {blocker && (
-          <div className="mt-2 flex items-center gap-2 rounded-lg border border-care-warning-border bg-care-warning-bg px-3 py-2">
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-care-warning-border bg-care-warning-bg px-3 py-2">
             <AlertTriangle size={13} className="shrink-0 text-care-warning-text" aria-hidden />
             <p className="text-[12px] font-medium text-care-warning-text">{blocker}</p>
           </div>
         )}
       </div>
-    </aside>
+    </div>
   );
 }

@@ -120,3 +120,18 @@ export async function fetchCaseDecisionEvaluation(caseId: string | number): Prom
 export async function fetchCaseArrangementAlignment(caseId: string | number): Promise<ArrangementAlignmentSuggestion> {
   return apiClient.get<ArrangementAlignmentSuggestion>(`/care/api/cases/${caseId}/arrangement-alignment/`);
 }
+
+export interface SaveCaseSummaryResult {
+  ok: boolean;
+  summaryLength: number;
+  minLength: number;
+  matchingSummaryReady: boolean;
+}
+
+/** Sla een casusomschrijving op zodat het casusoverzicht kan worden opgebouwd. */
+export async function saveCaseSummary(
+  caseId: string | number,
+  summary: string,
+): Promise<SaveCaseSummaryResult> {
+  return apiClient.post<SaveCaseSummaryResult>(`/care/api/cases/${caseId}/summary/`, { summary });
+}

@@ -2,12 +2,11 @@
  * MatchingPageWithMap - explainable recommendation workspace
  */
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   AlertCircle,
   AlertTriangle,
-  ArrowLeft,
   ArrowRight,
   Building2,
   Calendar,
@@ -33,6 +32,7 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import { CareDetailHeader, CareWorkflowStrip } from "./CareDetailPageTemplate";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,7 +54,7 @@ import { useProviders, type SpaProvider } from "../../hooks/useProviders";
 import { useMatchingCandidates, type MatchingCandidateRow } from "../../hooks/useMatchingCandidates";
 import { toLegacyCase, toLegacyProvider } from "../../lib/careLegacyAdapters";
 import { apiClient } from "../../lib/apiClient";
-import { toCareCaseDetail } from "../../lib/routes";
+import { CARE_PATHS, toCareCaseDetail, toCareCaseEdit } from "../../lib/routes";
 import { ProviderMapSurface } from "./ProviderMapSurface";
 import { tokens } from "../../design/tokens";
 import { cn } from "../ui/utils";
@@ -186,8 +186,8 @@ export function MatchingPageWithMap({
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   const [waitlistModalError, setWaitlistModalError] = useState<string | null>(null);
   const [pinPulseProviderId, setPinPulseProviderId] = useState<string | null>(null);
-  const [listTab, setListTab] = useState<"recommended" | "all">("recommended");
   const [detailTab, setDetailTab] = useState<"overzicht" | "aanmelding" | "documenten" | "activiteit">("overzicht");
+  const [matchingHelpOpen, setMatchingHelpOpen] = useState(false);
   const waitlistPreparePrimaryRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -548,24 +548,14 @@ export function MatchingPageWithMap({
         }
       `}</style>
       {/* ── Header ── */}
-      <header className="border-b border-border/50 px-6 py-4">
+      <header className="px-6 py-4">
         <div className="mx-auto flex max-w-[1536px] flex-col gap-4">
-          {/* Back link */}
-          <Button
-            variant="link"
-            type="button"
-            className="h-auto w-fit gap-2 p-0 text-[13px] font-semibold text-primary"
-            onClick={onBack}
-          >
-            <ArrowLeft size={16} aria-hidden />
-            Terug naar matchingsoverzicht
-          </Button>
-
-          {/* Title row — identity left, meta + actions right */}
-          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-            <div className="min-w-0 space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="care-text-title">Matching voor casus #{caseId}</h1>
+          <CareDetailHeader
+            onBack={onBack}
+            backLabel="Terug naar matchingsoverzicht"
+            title={`Matching voor casus #${caseId}`}
+            badges={
+              <>
                 <span className="rounded-full bg-violet-500/15 px-3 py-1 text-[11px] font-semibold text-violet-300">
                   Matching
                 </span>
@@ -582,45 +572,26 @@ export function MatchingPageWithMap({
                 <span className="rounded-full border border-border/60 px-3 py-1 text-[11px] font-medium text-muted-foreground">
                   Advies
                 </span>
-              </div>
-
-              {/* Client context — icon left of every item, separated by dots */}
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5">
-                  <UserRound className="size-3.5 shrink-0" aria-hidden />
-                  Cliëntgegevens afgeschermd
-                </span>
-                <span className="text-border/60" aria-hidden>·</span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Calendar className="size-3.5 shrink-0" aria-hidden />
-                  {caseData.clientAge} jaar
-                </span>
-                <span className="text-border/60" aria-hidden>·</span>
-                <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="size-3.5 shrink-0" aria-hidden />
-                  {caseData.region}
-                </span>
-                <span className="text-border/60" aria-hidden>·</span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Flag className="size-3.5 shrink-0" aria-hidden />
-                  Urgentie: <span className={cn("font-medium", urgencyHighlight && "text-care-urgent-text")}>{urgencyNl}</span>
-                </span>
-              </div>
-            </div>
-
-            {/* Meta + case actions */}
-            <div className="flex shrink-0 items-center gap-3">
-              <span className="hidden items-center gap-1.5 text-[12px] text-muted-foreground md:inline-flex">
-                Bijgewerkt {caseData.lastActivity}
-                <button
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
-                  aria-label="Vernieuw casusgegevens"
-                >
-                  <RefreshCw className="size-3.5" aria-hidden />
-                </button>
-              </span>
+              </>
+            }
+            contextItems={[
+              { icon: <UserRound className="size-3.5" />, node: "Cliëntgegevens afgeschermd" },
+              { icon: <Calendar className="size-3.5" />, node: `${caseData.clientAge} jaar` },
+              { icon: <MapPin className="size-3.5" />, node: caseData.region },
+              {
+                icon: <Flag className="size-3.5" />,
+                node: (
+                  <>
+                    Urgentie:{" "}
+                    <span className={cn("font-medium", urgencyHighlight && "text-care-urgent-text")}>{urgencyNl}</span>
+                  </>
+                ),
+              },
+            ]}
+            updatedAtLabel={caseData.lastActivity}
+            onRefresh={() => window.location.reload()}
+            refreshLabel="Vernieuw casusgegevens"
+            actions={
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -640,8 +611,8 @@ export function MatchingPageWithMap({
                   <DropdownMenuItem onClick={onBack}>Terug naar overzicht</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          </div>
+            }
+          />
 
           {incompleteCode === "SUMMARY_INCOMPLETE" ? (
             <p
@@ -653,45 +624,9 @@ export function MatchingPageWithMap({
           ) : null}
 
           {/* Compact workflow stepper */}
-          <div className="rounded-xl border border-border/60 bg-card/30 px-5 py-3 overflow-x-auto">
-            <div className="flex min-w-[640px] items-center">
-              {(
-                [
-                  { num: 1, label: "Aanmelding", state: "done" as const },
-                  { num: 2, label: "Matching", state: "current" as const },
-                  { num: 3, label: "Aanbiederreactie", state: "idle" as const },
-                  { num: 4, label: "Plaatsing", state: "idle" as const },
-                  { num: 5, label: "Intake", state: "idle" as const },
-                ] as const
-              ).map((step, idx, arr) => (
-                <Fragment key={step.label}>
-                  <div className="flex shrink-0 items-center gap-2.5">
-                    <div
-                      className={cn(
-                        "flex size-7 items-center justify-center rounded-full border text-[12px] font-semibold tabular-nums",
-                        step.state === "current" || step.state === "done"
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border/60 bg-transparent text-muted-foreground",
-                      )}
-                    >
-                      {step.state === "done" ? <Check className="size-3.5" aria-hidden /> : step.num}
-                    </div>
-                    <span
-                      className={cn(
-                        "whitespace-nowrap text-[13px] font-medium",
-                        step.state === "current" ? "text-foreground" : "text-muted-foreground",
-                      )}
-                    >
-                      {step.label}
-                    </span>
-                  </div>
-                  {idx < arr.length - 1 ? (
-                    <div className="mx-3 h-px flex-1 bg-border/50" aria-hidden />
-                  ) : null}
-                </Fragment>
-              ))}
-            </div>
-          </div>
+          <section className="rounded-xl border border-border/60 bg-card/30 px-5 py-3 overflow-x-auto">
+            <CareWorkflowStrip activeIndex={1} />
+          </section>
         </div>
       </header>
 
@@ -950,7 +885,6 @@ export function MatchingPageWithMap({
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-[17px] font-semibold leading-snug text-foreground">Geen passende aanbieders gevonden</h2>
-                    <p className="mt-1 text-[13px] text-muted-foreground">Geen aanbieder voldoet momenteel aan alle ingestelde criteria.</p>
                   </div>
                 </div>
 
@@ -982,6 +916,7 @@ export function MatchingPageWithMap({
                   <Button
                     type="button"
                     className="gap-2 rounded-xl bg-primary font-medium text-primary-foreground hover:bg-primary/90"
+                    onClick={() => window.location.assign(toCareCaseEdit(caseId, "casus"))}
                   >
                     Pas criteria aan
                     <ArrowRight className="size-4" aria-hidden />
@@ -990,7 +925,7 @@ export function MatchingPageWithMap({
                     type="button"
                     variant="outline"
                     className="gap-2 rounded-xl border-border/60 bg-background/40"
-                    onClick={() => setListTab("all")}
+                    onClick={() => window.location.assign(CARE_PATHS.ZORGAANBIEDERS)}
                   >
                     <Users className="size-4" aria-hidden />
                     Bekijk alle aanbieders
@@ -1004,7 +939,11 @@ export function MatchingPageWithMap({
                   <Info className="size-4 shrink-0" aria-hidden />
                   Matching is adviserend. Gebruik de suggesties als ondersteuning voor beoordeling.
                 </span>
-                <button type="button" className="shrink-0 text-[13px] font-medium text-primary hover:underline">
+                <button
+                  type="button"
+                  className="shrink-0 text-[13px] font-medium text-primary hover:underline"
+                  onClick={() => setMatchingHelpOpen(true)}
+                >
                   Meer over matching
                 </button>
               </div>
@@ -1041,7 +980,11 @@ export function MatchingPageWithMap({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="text-[13px] font-semibold text-foreground">Huidige criteria</h3>
-                        <button type="button" className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground"
+                          onClick={() => window.location.assign(toCareCaseEdit(caseId, "casus"))}
+                        >
                           <PenLine className="size-3.5" aria-hidden />
                           Criteria aanpassen
                         </button>
@@ -1109,7 +1052,11 @@ export function MatchingPageWithMap({
                     </li>
                   ))}
                 </ul>
-                <button type="button" className="mt-3.5 text-[13px] font-semibold text-primary hover:underline">
+                <button
+                  type="button"
+                  className="mt-3.5 text-[13px] font-semibold text-primary hover:underline"
+                  onClick={() => window.location.assign(CARE_PATHS.ZORGAANBIEDERS)}
+                >
                   Bekijk uitgesloten aanbieders →
                 </button>
               </div>
@@ -1130,7 +1077,11 @@ export function MatchingPageWithMap({
                     </div>
                   ))}
                 </dl>
-                <button type="button" className="mt-3.5 text-[13px] font-semibold text-primary hover:underline">
+                <button
+                  type="button"
+                  className="mt-3.5 text-[13px] font-semibold text-primary hover:underline"
+                  onClick={() => window.location.assign(toCareCaseEdit(caseId, "casus"))}
+                >
                   Alle criteria bekijken →
                 </button>
               </div>
@@ -1151,7 +1102,11 @@ export function MatchingPageWithMap({
                     <dd className="mt-1 text-[13px] font-medium text-foreground">Criteria aanpassen of wachtlijst opnemen</dd>
                   </div>
                 </dl>
-                <button type="button" className="mt-3.5 text-[13px] font-semibold text-primary hover:underline">
+                <button
+                  type="button"
+                  className="mt-3.5 text-[13px] font-semibold text-primary hover:underline"
+                  onClick={() => window.location.assign(toCareCaseDetail(caseId))}
+                >
                   Bekijk activiteit →
                 </button>
               </div>
@@ -1221,8 +1176,38 @@ export function MatchingPageWithMap({
         </aside>
       </div>
 
-      {/* ── Dialogs (unchanged) ── */}
+      {/* ── Dialogs ── */}
       <>
+        <Dialog open={matchingHelpOpen} onOpenChange={setMatchingHelpOpen}>
+          <DialogContent style={{ maxWidth: tokens.layout.dialogNarrowMaxWidth }}>
+            <DialogHeader>
+              <DialogTitle>Over matching</DialogTitle>
+              <DialogDescription>
+                Matching is adviserend. De keten-engine rangschikt aanbieders op basis van de
+                ingestelde criteria; de uiteindelijke beoordeling en doorleiding blijven een
+                handmatige beslissing.
+              </DialogDescription>
+            </DialogHeader>
+            <ul className="space-y-2 text-[13px] text-muted-foreground">
+              <li className="flex items-start gap-2.5">
+                <SlidersHorizontal className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                Pas de criteria aan om de zoekruimte te verbreden of te versmallen.
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Users className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                Bekijk alle aanbieders om buiten de huidige criteria te zoeken.
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                Uitgesloten aanbieders blijven zichtbaar met de reden van uitsluiting.
+              </li>
+            </ul>
+            <DialogFooter>
+              <Button type="button" onClick={() => setMatchingHelpOpen(false)}>Sluiten</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <Dialog
           open={selectionConfirmMatch !== null}
           onOpenChange={(open) => {

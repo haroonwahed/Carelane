@@ -34,7 +34,7 @@ class SeedRedesignDataCommandTests(TestCase):
             PILOT_CASE_TITLES[1]: {
                 'current_state': 'DRAFT_CASE',
                 'blocker_code': 'MISSING_SUMMARY',
-                'alert_code': 'MISSING_SUMMARY',
+                'alert_code': 'SUMMARY_PROCESSING',
                 'next_action': 'GENERATE_SUMMARY',
             },
             PILOT_CASE_TITLES[2]: {
@@ -94,14 +94,17 @@ class SeedRedesignDataCommandTests(TestCase):
         self.assertEqual(overview_response.status_code, 200)
         overview_payload = json.loads(overview_response.content)
 
+        # Het casusoverzicht-in-verwerking (titel [1]) is een zachte poort, geen
+        # kritieke blokkade meer; het zakt daardoor onder de echte urgenties
+        # (SLA-overschrijding, crisis, afwijzing) naar onderaan de regiekamer.
         self.assertEqual(
             [item['title'] for item in overview_payload['items']],
             [
-                PILOT_CASE_TITLES[1],
                 PILOT_CASE_TITLES[4],
                 PILOT_CASE_TITLES[0],
                 PILOT_CASE_TITLES[3],
                 PILOT_CASE_TITLES[5],
                 PILOT_CASE_TITLES[2],
+                PILOT_CASE_TITLES[1],
             ],
         )

@@ -1,13 +1,7 @@
 import { Fragment, type ReactNode } from "react";
-import { ArrowRight, CheckCircle2, ChevronRight, Circle, FileWarning, Loader2, UserRound, Lock } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronRight, Circle, FileWarning, Loader2, UserRound } from "lucide-react";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
 import { cn } from "../ui/utils";
 import { getShortReasonLabel } from "../../lib/uxCopy";
 
@@ -33,25 +27,25 @@ export function CaseOperationalStepper({
           <Fragment key={step.id}>
             <div
               aria-current={isCurrent ? "step" : undefined}
-              className="flex shrink-0 items-center gap-2 px-2"
+              className="flex shrink-0 items-center gap-2.5 px-2"
             >
               <span className={cn(
-                "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[12px] font-semibold leading-none",
-                isCurrent && "border-primary/40 bg-primary text-primary-foreground",
-                isCompleted && "border-emerald-500/30 bg-emerald-500/15 text-emerald-500",
-                !isCurrent && !isCompleted && "border-border/50 bg-background/30 text-muted-foreground",
+                "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[12px] font-semibold leading-none tabular-nums",
+                (isCurrent || isCompleted)
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border/60 bg-transparent text-muted-foreground",
               )}>
-                {isCompleted ? <CheckCircle2 size={13} aria-hidden /> : index + 1}
+                {isCompleted ? <CheckCircle2 size={14} aria-hidden /> : index + 1}
               </span>
               <span className={cn(
-                "whitespace-nowrap text-[12px] font-medium leading-tight",
-                isCurrent ? "text-foreground" : "text-muted-foreground/70",
+                "whitespace-nowrap text-[13px] font-medium leading-tight",
+                isCurrent ? "text-foreground" : "text-muted-foreground",
               )}>
                 {step.label}
               </span>
             </div>
             {index < arr.length - 1 && (
-              <div className="mx-1 h-0 min-w-[16px] flex-1 border-t border-dotted border-muted-foreground/25" aria-hidden />
+              <div className="mx-3 h-px min-w-[16px] flex-1 bg-border/50" aria-hidden />
             )}
           </Fragment>
         );
@@ -224,6 +218,56 @@ export function CaseKeyFactsCard({ facts }: { facts: CaseFactRow[] }) {
   );
 }
 
+export type CaseOverviewGroup = {
+  title: string;
+  rows: CaseFactRow[];
+};
+
+/**
+ * Casusoverzicht-tab: gegroepeerde, operationeel nuttige context
+ * (kerngegevens, classificatie, betrokkenen) plus de volgende stap.
+ * Geen technische velden ("Matchresultaat niet beschikbaar", "Status gewijzigd").
+ */
+export function CaseOverviewPanel({
+  groups,
+  nextStep,
+}: {
+  groups: CaseOverviewGroup[];
+  nextStep?: { heading: string; description?: string | null } | null;
+}) {
+  return (
+    <div className="space-y-4">
+      {groups.map((group) => (
+        <div key={group.title} aria-label={group.title}>
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">{group.title}</h3>
+          <div className="mt-2 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            {group.rows.map((row) => (
+              <div key={row.label} className="rounded-[14px] border border-border/50 bg-background/40 p-3">
+                <p className="text-[11px] text-muted-foreground">{row.label}</p>
+                <p
+                  className="truncate text-[13px] font-semibold text-foreground"
+                  title={row.title ?? row.value}
+                >
+                  {row.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {nextStep ? (
+        <div className="rounded-[16px] border border-primary/25 bg-primary/[0.06] px-4 py-3" aria-label="Volgende stap">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.05em] text-primary">Volgende stap</p>
+          <p className="mt-1 text-[13px] font-medium text-foreground">{nextStep.heading}</p>
+          {nextStep.description ? (
+            <p className="mt-0.5 text-[12px] text-muted-foreground">{nextStep.description}</p>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function CaseActionWorkCard({
   missingFields,
   onPrimaryAction,
@@ -365,51 +409,22 @@ export function CaseExecutionDetailTabs({
   /** Content for the Aanmelding tab (only shown when caseIncomplete) */
   aanmelding?: ReactNode;
 }) {
-  const lockedTriggerClass = "text-[12px] cursor-not-allowed opacity-35 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-muted-foreground";
-
   if (caseIncomplete) {
+    // Vóór de matchingfase tonen we alleen relevante tabs. Arrangement, Matching
+    // en Toetsing zijn nog niet van toepassing en worden verborgen (niet gelocked).
     return (
-      <TooltipProvider>
-        <Tabs value={activeTab} onValueChange={onTabChange} className="w-full gap-3">
-          <TabsList className="h-auto max-w-full flex-wrap justify-start gap-1 bg-muted/30 p-1">
-            <TabsTrigger value="overzicht" className="text-[12px]">Overzicht</TabsTrigger>
-            <TabsTrigger value="aanmelding" className="text-[12px]">Aanmelding</TabsTrigger>
-            <TabsTrigger value="documenten" className="text-[12px]">Documenten</TabsTrigger>
-            <TabsTrigger value="activiteit" className="text-[12px]">Activiteit</TabsTrigger>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger value="arrangement" disabled className={lockedTriggerClass}>
-                  <Lock size={12} className="mr-1" aria-hidden />
-                  Arrangement
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Beschikbaar zodra de aanmelding compleet is</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger value="matching" disabled className={lockedTriggerClass}>
-                  <Lock size={12} className="mr-1" aria-hidden />
-                  Matching
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Beschikbaar zodra de aanmelding compleet is</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger value="toetsing" disabled className={lockedTriggerClass}>
-                  <Lock size={12} className="mr-1" aria-hidden />
-                  Toetsing
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Beschikbaar zodra de aanmelding compleet is</TooltipContent>
-            </Tooltip>
-          </TabsList>
-          <TabsContent value="overzicht" className="mt-0 space-y-3">{overzicht}</TabsContent>
-          <TabsContent value="aanmelding" className="mt-0 space-y-3">{aanmelding ?? validatie}</TabsContent>
-          <TabsContent value="documenten" className="mt-0 space-y-3">{documenten}</TabsContent>
-          <TabsContent value="activiteit" className="mt-0 space-y-3">{historie}</TabsContent>
-        </Tabs>
-      </TooltipProvider>
+      <Tabs value={activeTab} onValueChange={onTabChange} className="w-full gap-3">
+        <TabsList className="h-auto max-w-full flex-wrap justify-start gap-1 bg-muted/30 p-1">
+          <TabsTrigger value="overzicht" className="text-[12px]">Overzicht</TabsTrigger>
+          <TabsTrigger value="aanmelding" className="text-[12px]">Aanmelding</TabsTrigger>
+          <TabsTrigger value="documenten" className="text-[12px]">Documenten</TabsTrigger>
+          <TabsTrigger value="activiteit" className="text-[12px]">Activiteit</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overzicht" className="mt-0 space-y-3">{overzicht}</TabsContent>
+        <TabsContent value="aanmelding" className="mt-0 space-y-3">{aanmelding ?? validatie}</TabsContent>
+        <TabsContent value="documenten" className="mt-0 space-y-3">{documenten}</TabsContent>
+        <TabsContent value="activiteit" className="mt-0 space-y-3">{historie}</TabsContent>
+      </Tabs>
     );
   }
 

@@ -162,6 +162,85 @@ class DecisionEngineTests(TestCase):
             any(blocker["code"] in {"MISSING_SUMMARY", "MISSING_REQUIRED_CASE_DATA"} for blocker in result["blockers"])
         )
 
+    def test_summary_pending_is_soft_processing_gate_not_hard_block(self):
+        # Verplichte gegevens compleet, maar het casusoverzicht is nog niet
+        # afleidbaar (geen bootstrap-tekst). Dit hoort een zachte verwerkingspoort
+        # te zijn (geen kritieke blokkade) met een processing-signaal.
+        intake, case_record, _, _ = self._create_case()
+
+        result = evaluate_case(case_record, actor=self.gemeente_user)
+
+        self.assertTrue(result["decision_context"]["required_data_complete"])
+        self.assertFalse(result["decision_context"]["matching_summary_ready"])
+        missing_summary = next(
+            (b for b in result["blockers"] if b["code"] == "MISSING_SUMMARY"), None
+        )
+        self.assertIsNotNone(missing_summary)
+        self.assertNotEqual(missing_summary["severity"], "critical")
+        self.assertTrue(any(a["code"] == "SUMMARY_PROCESSING" for a in result["alerts"]))
+
+    def test_matching_ready_summary_does_not_emit_missing_summary(self):
+        # Zodra de matchinggate gereed is (workflow_summary compleet) mag er geen
+        # MISSING_SUMMARY-blokkade meer staan en is START_MATCHING de volgende stap.
+        _, case_record, _, _ = self._create_case(
+            assessment_status=CaseAssessment.AssessmentStatus.UNDER_REVIEW,
+            workflow_summary={
+                "context": "Voldoende gestructureerde context om matching veilig te starten vanuit casusdetail.",
+                "urgency": CaseIntakeProcess.Urgency.MEDIUM,
+                "risks": [],
+                "missing_information": "",
+                "risks_none_ack": True,
+            },
+        )
+
+        result = evaluate_case(case_record, actor=self.gemeente_user)
+
+        self.assertTrue(result["decision_context"]["matching_summary_ready"])
+        self.assertFalse(any(b["code"] == "MISSING_SUMMARY" for b in result["blockers"]))
+        self.assertEqual(result["next_best_action"]["action"], "START_MATCHING")
+
+    def test_case_summary_api_builds_overview_and_enables_matching(self):
+        from django.test import Client as DjangoTestClient
+
+        _, case_record, _, _ = self._create_case()
+        before = evaluate_case(case_record, actor=self.gemeente_user)
+        self.assertFalse(before["decision_context"]["matching_summary_ready"])
+        self.assertTrue(any(b["code"] == "MISSING_SUMMARY" for b in before["blockers"]))
+
+        http = DjangoTestClient()
+        http.force_login(self.gemeente_user)
+        resp = http.post(
+            reverse("careon:case_summary_api", kwargs={"case_id": case_record.pk}),
+            data=json.dumps({
+                "summary": "Jongere met ambulante begeleiding; stabiele thuissituatie en duidelijke hulpvraag.",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+        self.assertTrue(body["ok"])
+        self.assertTrue(body["matchingSummaryReady"])
+
+        # Verse query: case_record cachet de reverse one-to-one naar de intake.
+        fresh_case = CareCase.objects.get(pk=case_record.pk)
+        after = evaluate_case(fresh_case, actor=self.gemeente_user)
+        self.assertTrue(after["decision_context"]["matching_summary_ready"])
+        self.assertFalse(any(b["code"] == "MISSING_SUMMARY" for b in after["blockers"]))
+        self.assertEqual(after["next_best_action"]["action"], "START_MATCHING")
+
+    def test_case_summary_api_rejects_empty_summary(self):
+        from django.test import Client as DjangoTestClient
+
+        _, case_record, _, _ = self._create_case()
+        http = DjangoTestClient()
+        http.force_login(self.gemeente_user)
+        resp = http.post(
+            reverse("careon:case_summary_api", kwargs={"case_id": case_record.pk}),
+            data=json.dumps({"summary": "   "}),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+
     def test_draft_case_with_intake_summary_returns_start_matching(self):
         intake, case_record, _, _ = self._create_case()
         intake.assessment_summary = (

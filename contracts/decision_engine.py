@@ -1646,23 +1646,30 @@ def _build_blockers_and_alerts(
         )
         return blockers, risks, alerts, {"provider_pending_sla_breached": False}
 
-    if not has_summary and current_state in {WorkflowState.DRAFT_CASE, WorkflowState.SUMMARY_READY}:
+    # Casusoverzicht-gate. We poorten op `matching_summary_ready` (de echte
+    # matchinggate, workflow_summary_can_bootstrap) i.p.v. op de losse vrije-tekst
+    # `has_summary`. Zo wordt een casus waarvan het overzicht automatisch kan
+    # worden afgeleid niet onterecht als "samenvatting ontbreekt / matching
+    # geblokkeerd" gemarkeerd. De verplichte casusgegevens zijn op dit punt al
+    # compleet (zie de early return hierboven), dus dit is geen harde blokkade
+    # maar een zachte poort: het overzicht wordt opgebouwd.
+    if not matching_summary_ready and current_state in {WorkflowState.DRAFT_CASE, WorkflowState.SUMMARY_READY}:
         blockers.append(
             _serialize_blocker(
                 "MISSING_SUMMARY",
-                "critical",
-                "Samenvatting ontbreekt. Matching kan nog niet starten.",
+                "high",
+                "Casusoverzicht wordt nog opgebouwd. Matching kan starten zodra dit gereed is.",
                 ["START_MATCHING", "SEND_TO_PROVIDER"],
             )
         )
         add_alert(
             _serialize_alert(
-                "MISSING_SUMMARY",
-                "high",
-                "Samenvatting ontbreekt",
-                "Maak eerst de samenvatting compleet voordat matching kan worden doorgezet.",
+                "SUMMARY_PROCESSING",
+                "info",
+                "Casusoverzicht wordt verwerkt",
+                "Het casusoverzicht wordt automatisch opgebouwd uit de casusgegevens; daarna kan matching starten.",
                 "GENERATE_SUMMARY",
-                {"has_summary": False},
+                {"has_summary": has_summary, "matching_summary_ready": False},
             )
         )
         return blockers, risks, alerts, {"provider_pending_sla_breached": False}
@@ -1901,19 +1908,18 @@ def _next_best_action(
         action = "COMPLETE_CASE_DATA"
         priority = "medium"
         reason = "Verplichte casusgegevens ontbreken."
-    elif not has_summary and current_state in {WorkflowState.DRAFT_CASE, WorkflowState.SUMMARY_READY}:
+    elif not matching_summary_ready and current_state in {WorkflowState.DRAFT_CASE, WorkflowState.SUMMARY_READY}:
+        # Casusoverzicht wordt automatisch opgebouwd uit de casusgegevens; dit is
+        # systeemverwerking, geen handmatige stap. De UI toont hier een
+        # "verwerking"-status met uitgeschakelde actie.
         action = "GENERATE_SUMMARY"
         priority = "medium"
-        reason = "Samenvatting ontbreekt."
+        reason = "Casusoverzicht wordt opgebouwd; matching kan starten zodra dit gereed is."
     elif current_state in {WorkflowState.DRAFT_CASE, WorkflowState.SUMMARY_READY}:
-        if not matching_summary_ready:
-            action = "GENERATE_SUMMARY"
-            priority = "high"
-            reason = "Voltooi de gestructureerde samenvatting vóór matching."
-        elif not has_matching_result:
+        if not has_matching_result:
             action = "START_MATCHING"
             priority = "high"
-            reason = "Samenvatting is gereed; matchadvies wordt opgebouwd."
+            reason = "Casusoverzicht is gereed; matchadvies wordt opgebouwd."
     elif current_state == WorkflowState.MATCHING_READY:
         action = "VALIDATE_MATCHING"
         priority = "high"

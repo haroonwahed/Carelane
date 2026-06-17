@@ -15,6 +15,22 @@ It is used by guardrail tests and doc references that still point at the root in
 | `CasusControlCenter` legacy layout and related historic shell fragments | `QUARANTINED_LEGACY` | Kept only for reference and guardrail context. |
 | `ProviderIntakeDashboard` historical provider mock and similar seeded mock-only surfaces | `DEMO_ONLY` | Not linked from the active route map. |
 
+### Current redesign wave (2026-Q2)
+
+The active engineering focus is a UI redesign and consolidation pass over the `ACTIVE_PRODUCT` surfaces above — not net-new product scope (consistent with the Infrastructure Maturity Phase in `DECISIONS.md`). Shipped or in progress in this wave:
+
+| Workstream | State | Notes |
+|---|---|---|
+| `--care-*` semantic design tokens replacing raw color utilities across care pages | `IN_PROGRESS` | Migrating away from hardcoded colors / raw CSS-variable utilities; enforced by design-law guardrails. |
+| Shared `CareSlaCountdown` SLA primitive adopted across Intake / Placement / Aanbiederreactie / Regiekamer | `SHIPPED` | SLA breaches now actionable across list pages and Regiekamer. |
+| Matching detail page restructured into a fixed-slot grid | `SHIPPED` | `MatchingPageWithMap` consumes real `/care/api/cases/<id>/matching-candidates/` payloads. |
+| Interactive Casus-detail (owner, priority, elapsed, activity; guided completion flow) | `SHIPPED` | Tab disable logic + backend validation + success feedback. |
+| Regiekamer redesigned as action-list with SLA countdown + elevation/token migration | `SHIPPED` | Dead legacy-layout code stripped; exempted from obsolete operational design-law guards. |
+
+### Backend structural health (tracked separately)
+
+`contracts/views.py` is a recognized god-module (~8.2k lines). Its planned decomposition into a `contracts/views/` package (mirroring the already-modular `contracts/api/`) is specified in [`docs/adr/ADR-CONTRACTS-VIEWS-DECOMPOSITION.md`](docs/adr/ADR-CONTRACTS-VIEWS-DECOMPOSITION.md). This is maintainability work inside the feature freeze, not product scope.
+
 ## Uitstroom
 
 Traject exit is expressed in the platform as completion plus archive semantics.

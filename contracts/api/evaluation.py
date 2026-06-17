@@ -46,6 +46,7 @@ from contracts.workflow_state_machine import (
     resolve_actor_role,
 )
 from contracts.care_lifecycle_v12 import serialize_evaluation
+from contracts.workflow_summary_gate import MIN_SUMMARY_CONTEXT_LEN
 from django.db import transaction
 from contracts.zorgbehoefte_taxonomy import format_taxonomy_explainability
 
@@ -770,3 +771,41 @@ def case_early_lifecycle_api(request, case_id):
         else:
             return JsonResponse({'ok': False, 'error': 'Ongeldige actie.'}, status=400)
     return JsonResponse({'ok': True, 'caseId': str(intake.pk), 'workflowState': intake.workflow_state})
+
+
+@login_required
+@require_http_methods(["POST"])
+def case_summary_api(request, case_id):
+    """POST /api/cases/<id>/summary/ — sla een casusomschrijving op.
+
+    Het casusoverzicht wordt afgeleid uit deze omschrijving; zodra die voldoende
+    context bevat is de matchinggate vervuld. Gemeente/regie/admin only.
+    """
+    organization = get_user_organization(request.user)
+    actor_role, role_error = _require_workflow_role(
+        user=request.user,
+        organization=organization,
+        allowed_roles={WorkflowRole.GEMEENTE, WorkflowRole.ADMIN},
+    )
+    if role_error is not None:
+        return role_error
+    try:
+        payload = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'Ongeldige JSON payload.'}, status=400)
+    summary = str(payload.get('summary') or '').strip()
+    if not summary:
+        return JsonResponse({'ok': False, 'error': 'Casusomschrijving mag niet leeg zijn.'}, status=400)
+    with transaction.atomic():
+        intake = _get_intake_for_case_api_id(case_id, organization, lock=True, user=request.user)
+        if intake.status == CaseIntakeProcess.ProcessStatus.ARCHIVED:
+            return JsonResponse({'ok': False, 'error': 'Casus is gearchiveerd.'}, status=400)
+        intake.assessment_summary = summary[:4000]
+        intake.save(update_fields=['assessment_summary', 'updated_at'])
+    return JsonResponse({
+        'ok': True,
+        'caseId': str(intake.pk),
+        'summaryLength': len(summary),
+        'minLength': MIN_SUMMARY_CONTEXT_LEN,
+        'matchingSummaryReady': len(summary) >= MIN_SUMMARY_CONTEXT_LEN,
+    })
