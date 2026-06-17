@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
+  ChevronDown,
   ChevronRight,
   ExternalLink,
   Link2,
@@ -51,6 +52,9 @@ import {
 } from "../guidance";
 import { CasusWorkspaceLayout } from "./CasusWorkspaceLayout";
 import { CareContextRail } from "./CareContextRail";
+import { InteractiveCaseCompletionCard, type MissingItem } from "./InteractiveCaseCompletionCard";
+import { GuidedFieldWrapper } from "./GuidedFieldWrapper";
+import { useGuidedCaseCompletion } from "../../hooks/useGuidedCaseCompletion";
 import {
   CaseAttentionPointsCard,
   CaseDetailEvidenceList,
@@ -96,13 +100,62 @@ import {
 import type { DecisionEvaluationContext } from "../../lib/decisionEvaluation";
 import { CARE_TERMS } from "../../lib/terminology";
 import { toCareCaseEdit } from "../../lib/routes";
+import { auditActionLabel } from "../../lib/auditActionLabels";
+import { CaseMissingDataPanel, buildGuidedFieldUrl } from "./CaseMissingDataPanel";
 
 interface CaseExecutionPageProps {
   caseId: string;
   role?: CaseDecisionRole;
   onBack: () => void;
+  backLabel?: string;
   /** In-app navigation (e.g. matching with openCase) without full page reload. */
   onAppNavigate?: (path: string) => void;
+}
+
+const ZORGTYPE_LABELS: Record<string, string> = {
+  OTHER: "Anders (overig)",
+  AMBULANT: "Ambulante begeleiding",
+  DAGBEHANDELING: "Dagbehandeling",
+  VERBLIJF: "Verblijf",
+  PLEEGZORG: "Pleegzorg",
+  GEZINSHUIS: "Gezinshuis",
+  SPECIALISTISCHE_GGZ: "Specialistische GGZ",
+};
+
+function zorgtypeLabel(raw: string | null | undefined): string {
+  if (!raw) return "—";
+  return ZORGTYPE_LABELS[raw.toUpperCase()] ?? raw;
+}
+
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  create_case: "Casus aangemaakt",
+  complete_wijkteam_intake: "Wijkteam intake voltooid",
+  complete_zorgvraag_assessment: "Zorgvraag beoordeeld",
+  complete_summary: "Samenvatting voltooid",
+  generate_summary: "Samenvatting gegenereerd",
+  start_matching: "Matching gestart",
+  validate_matching: "Voorstel gevalideerd",
+  send_to_provider: "Verstuurd naar aanbieder",
+  provider_accept: "Aanbieder geaccepteerd",
+  provider_reject: "Aanbieder afgewezen",
+  provider_request_info: "Aanbieder vraagt informatie",
+  budget_approve: "Budget goedgekeurd",
+  budget_reject: "Budget afgewezen",
+  budget_defer: "Budget uitgesteld",
+  confirm_placement: "Plaatsing bevestigd",
+  start_intake: "Intake gestart",
+  intake_create_api: "Intake aangemaakt",
+  activate_placement_monitoring: "Monitoring geactiveerd",
+  archive_case: "Casus gearchiveerd",
+  rematch: "Hermatching gestart",
+  submit_transition_request: "Transitieverzoek ingediend",
+  resolve_transition_financial: "Financiële transitie afgerond",
+  STATE_TRANSITION: "Status gewijzigd",
+};
+
+function eventTypeLabel(raw: string | null | undefined): string {
+  if (!raw) return "—";
+  return EVENT_TYPE_LABELS[raw] ?? raw;
 }
 
 function attentionIcon(severity: DecisionPriority): string {
@@ -247,6 +300,31 @@ function waitingOnForWorkflowState(
   return "Wacht op doorstroming";
 }
 
+const BLOCKER_CODE_HEADLINES: Record<string, string> = {
+  MISSING_SUMMARY: "Verplichte casusgegevens ontbreken",
+  MATCHING_NOT_READY: "Matching kan nog niet starten",
+  GEO_MISSING: "Locatiegegevens ontbreken",
+  PROVIDER_REJECTION: "Aanbieder heeft afgewezen",
+  BUDGET_BLOCKED: "Budget vereist goedkeuring",
+};
+
+function blockerHeadline(code: string, fallbackMessage: string): string {
+  if (BLOCKER_CODE_HEADLINES[code]) return BLOCKER_CODE_HEADLINES[code];
+  const lower = fallbackMessage.toLowerCase();
+  if (lower.includes("samenvatting") || lower.includes("aanmelding")) return "Verplichte casusgegevens ontbreken";
+  return "Aandachtspunt";
+}
+
+
+function formatElapsedLabel(hoursInState: number | null | undefined): string | null {
+  if (hoursInState == null || Number.isNaN(hoursInState)) return null;
+  if (hoursInState < 48) {
+    return `${Math.max(1, Math.round(hoursInState))} uur`;
+  }
+  const days = Math.max(1, Math.round(hoursInState / 24));
+  return `${days} dag${days === 1 ? "" : "en"}`;
+}
+
 function buildAttentionRollup(evaluation: DecisionEvaluation | null): Array<{
   key: string;
   icon: string;
@@ -267,7 +345,7 @@ function buildAttentionRollup(evaluation: DecisionEvaluation | null): Array<{
     rows.push({ key, icon: attentionIcon(severity), headline, body: body.trim() });
   };
   for (const blocker of evaluation.blockers) {
-    push(`blocker-${blocker.code}`, "Blokkade", blocker.message, blocker.severity);
+    push(`blocker-${blocker.code}`, blockerHeadline(blocker.code, blocker.message), blocker.message, blocker.severity);
   }
   for (const risk of evaluation.risks.slice(0, 4)) {
     push(`risk-${risk.code}`, "Risico", risk.message, risk.severity);
@@ -347,11 +425,11 @@ function ProviderDecisionDialog({
         <div className="space-y-2">
           {mode === "reject" ? (
             <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Reden</span>
+              <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Reden</span>
               <select
                 value={reason}
                 onChange={(event) => setReason(event.target.value as RejectionReasonCode)}
-                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary/50"
+                className="w-full rounded-[10px] border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary/50"
               >
                 <option value="">Kies een reden...</option>
                 {Object.entries(REJECTION_REASON_LABELS).map(([code, label]) => (
@@ -361,11 +439,11 @@ function ProviderDecisionDialog({
             </label>
           ) : (
             <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Informatietype</span>
+              <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Informatietype</span>
               <select
                 value={infoType}
                 onChange={(event) => setInfoType(event.target.value as InfoRequestType)}
-                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary/50"
+                className="w-full rounded-[10px] border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary/50"
               >
                 <option value="">Kies een type...</option>
                 {Object.entries(INFO_REQUEST_TYPE_LABELS).map(([code, label]) => (
@@ -376,7 +454,7 @@ function ProviderDecisionDialog({
           )}
 
           <label className="block space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Toelichting</span>
+            <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Toelichting</span>
             <Textarea
               value={comment}
               onChange={(event) => setComment(event.target.value)}
@@ -405,7 +483,7 @@ function ProviderDecisionDialog({
   );
 }
 
-export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavigate }: CaseExecutionPageProps) {
+export function CaseExecutionPage({ caseId, role = "gemeente", onBack, backLabel, onAppNavigate }: CaseExecutionPageProps) {
   const { cases, loading, error, refetch } = useCases({ q: "" });
   const { me } = useCurrentUser();
   const spaCase = cases.find((item) => item.id === caseId);
@@ -418,8 +496,13 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   const [contextFlowOpen, setContextFlowOpen] = useState(false);
   const [refreshingHeader, setRefreshingHeader] = useState(false);
   const [detailTab, setDetailTab] = useState("overzicht");
+  const guidedFlow = useGuidedCaseCompletion([
+    { id: "required_data", label: "Verplichte casusgegevens", fieldId: "guided-required-data", completed: false },
+    { id: "summary", label: "Casusoverzicht", fieldId: "guided-summary", completed: false },
+  ]);
+  const wasHiddenRef = useRef(false);
 
-  const loadDecisionEvaluation = async () => {
+  const loadDecisionEvaluation = useCallback(async () => {
     setDecisionLoading(true);
     setDecisionError(null);
     try {
@@ -438,12 +521,24 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     } finally {
       setDecisionLoading(false);
     }
-  };
+  }, [caseId]);
 
   useEffect(() => {
     void loadDecisionEvaluation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseId]);
+  }, [loadDecisionEvaluation]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        wasHiddenRef.current = true;
+      } else if (document.visibilityState === "visible" && wasHiddenRef.current) {
+        wasHiddenRef.current = false;
+        void loadDecisionEvaluation();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [loadDecisionEvaluation]);
 
   const handleHeaderRefresh = async () => {
     setRefreshingHeader(true);
@@ -504,12 +599,16 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     if (!nextBestAction) {
       return;
     }
-    if (nextBestAction.action === "GENERATE_SUMMARY") {
-      await handleAction("GENERATE_SUMMARY");
-      return;
-    }
-    if (nextBestAction.action === "COMPLETE_CASE_DATA") {
-      await handleAction("COMPLETE_CASE_DATA");
+    if (
+      nextBestAction.action === "GENERATE_SUMMARY"
+      || nextBestAction.action === "COMPLETE_CASE_DATA"
+    ) {
+      const missingFields = decisionEvaluation?.missing_required_fields ?? [];
+      if (missingFields.length > 0) {
+        window.location.assign(buildGuidedFieldUrl(caseId, missingFields[0], 1, missingFields.length));
+        return;
+      }
+      window.location.assign(toCareCaseEdit(caseId, "casus"));
       return;
     }
     await handleAction(nextBestAction.action as CaseDecisionActionCode);
@@ -520,6 +619,20 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   );
 
   const decisionTimelineSteps = useMemo(() => DECISION_WORKSPACE_FLOW_STEPS.map((step) => ({ ...step })), []);
+
+  const summaryNeedsCaseCompletion =
+    decisionEvaluation?.blockers?.[0]?.code === "MISSING_SUMMARY" ||
+    nextBestAction?.action === "GENERATE_SUMMARY";
+
+  const missingRequiredFields = decisionEvaluation?.missing_required_fields ?? [];
+
+  useEffect(() => {
+    const incompleteTabs = new Set(["overzicht", "aanmelding", "documenten", "activiteit"]);
+    if (summaryNeedsCaseCompletion && !incompleteTabs.has(detailTab)) {
+      setDetailTab("overzicht");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [summaryNeedsCaseCompletion, detailTab]);
 
   if (loading) {
     return <div className="text-muted-foreground">Casus laden…</div>;
@@ -533,7 +646,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
           Terug naar casussen
         </Button>
         <div className="space-y-2 border-b border-border/70 pb-5 text-left">
-          <p className="text-lg font-semibold text-foreground">Casus niet beschikbaar</p>
+          <p className="text-lg font-medium text-foreground">Casus niet beschikbaar</p>
           <p className="text-sm text-muted-foreground">{error ?? "Deze casus kon niet geladen worden."}</p>
         </div>
       </div>
@@ -557,17 +670,13 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     : organizationMunicipalityLabel;
   const dominantBlocker = decisionEvaluation?.blockers?.[0] ?? null;
   const blockerIsMissingSummary = dominantBlocker?.code === "MISSING_SUMMARY";
-  const summaryNeedsCaseCompletion = blockerIsMissingSummary || nextBestAction?.action === "GENERATE_SUMMARY";
+
   const primaryButtonLabel = nextBestAction
     ? summaryNeedsCaseCompletion
-      ? "Controleer casusstatus"
+      ? "Maak casus compleet"
       : (
         nextBestAction.action === "MONITOR_CASE"
-          ? (
-            !decisionEvaluation?.decision_context.required_data_complete || !decisionEvaluation?.decision_context.has_summary
-              ? "Controleer casusstatus"
-              : "Controleer casusstatus"
-          )
+          ? "Controleer casusstatus"
           : (imperativeLabelForActionCode(nextBestAction.action, nextBestAction.label)
               ?? getShortActionLabel(nextBestAction.label))
       )
@@ -575,19 +684,22 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   const nextActionReason = getShortReasonLabel(nextBestAction?.reason ?? "Deze actie is nodig om de workflow veilig te laten doorgaan.", 170);
   const impossibleActions = decisionEvaluation?.blocked_actions?.length
     ? decisionEvaluation.blocked_actions
-    : [
-      { action: "START_MATCHING", label: "Matching starten", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
-      { action: "SEND_TO_PROVIDER", label: "Casus versturen naar aanbieder", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
-      { action: "CONFIRM_PLACEMENT", label: "Plaatsing bevestigen", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
-      { action: "START_INTAKE", label: "Intake starten", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
-      { action: "BUDGET_APPROVE", label: "Budget akkoord", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
-      { action: "BUDGET_REJECT", label: "Budget afwijzen", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
-      { action: "BUDGET_REQUEST_INFO", label: "Budget: meer info", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
-      { action: "BUDGET_DEFER", label: "Budget uitstellen", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
-      { action: "COMPLETE_WIJKTEAM_INTAKE", label: "Wijkteam intake afronden", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
-      { action: "COMPLETE_ZORGVRAAG_ASSESSMENT", label: "Zorgvraagbeoordeling afronden", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
-      { action: "ACTIVATE_PLACEMENT_MONITORING", label: "Actieve plaatsing activeren", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
-    ];
+    : role === "zorgaanbieder"
+      ? [
+          { action: "PROVIDER_ACCEPT" as CaseDecisionActionCode, label: "Aanvraag accepteren", reason: "Wacht op een plaatsingsvoorstel van de gemeente.", allowed: false },
+          { action: "PROVIDER_REJECT" as CaseDecisionActionCode, label: "Aanvraag weigeren", reason: "Wacht op een plaatsingsvoorstel van de gemeente.", allowed: false },
+        ]
+      : [
+          { action: "START_MATCHING" as CaseDecisionActionCode, label: "Matching starten", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
+          { action: "SEND_TO_PROVIDER" as CaseDecisionActionCode, label: "Casus versturen naar aanbieder", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
+          { action: "CONFIRM_PLACEMENT" as CaseDecisionActionCode, label: "Plaatsing bevestigen", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
+          { action: "START_INTAKE" as CaseDecisionActionCode, label: "Intake starten", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
+          { action: "BUDGET_APPROVE" as CaseDecisionActionCode, label: "Budget akkoord", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
+          { action: "BUDGET_REJECT" as CaseDecisionActionCode, label: "Budget afwijzen", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
+          { action: "BUDGET_DEFER" as CaseDecisionActionCode, label: "Budget uitstellen", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
+          { action: "COMPLETE_WIJKTEAM_INTAKE" as CaseDecisionActionCode, label: "Wijkteam intake afronden", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
+          { action: "ACTIVATE_PLACEMENT_MONITORING" as CaseDecisionActionCode, label: "Actieve plaatsing activeren", reason: "Nog niet toegestaan vanuit de huidige fase.", allowed: false },
+        ];
   const missingGeo = (decisionEvaluation?.coverage_basis ?? "unknown") === "unknown";
   const actionButtonDisabled = decisionLoading
     || Boolean(pendingAction)
@@ -662,7 +774,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     ...(providerResponseEvidenceRow ? [providerResponseEvidenceRow] : []),
     {
       label: "Laatste gebeurtenis",
-      value: decisionEvaluation?.timeline_signals.latest_event_type ?? "Niet beschikbaar",
+      value: eventTypeLabel(decisionEvaluation?.timeline_signals.latest_event_type) ?? "Niet beschikbaar",
       impact: decisionEvaluation?.timeline_signals.latest_event_at ?? "Geen timestamp beschikbaar.",
       tone: "neutral",
     },
@@ -702,13 +814,16 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     ];
   const summaryMatchInputs = [
     `Regio: ${spaCase.regio}`,
-    `Zorgvraag: ${spaCase.zorgtype}`,
+    `Zorgvraag: ${zorgtypeLabel(spaCase.zorgtype)}`,
     `Plaatsingsdruk: ${(spaCase.placementPressureLabel ?? spaCase.urgency)}`,
     missingGeo ? "Locatie: onbekend (aanvullen aanbevolen)" : "Locatie: beschikbaar",
   ];
   const updatedAtLabel = formatUpdatedAtLabel(decisionEvaluation?.timeline_signals.latest_event_at);
   const attentionRollup = buildAttentionRollup(decisionEvaluation);
-  const workspaceStatusVariant = decisionLoading ? "progress" : dominantBlocker ? "blocked" : "active";
+  const workspaceStatusVariant = decisionLoading ? "progress"
+    : blockerIsMissingSummary ? "onvolledig"
+    : dominantBlocker ? "blocked"
+    : "active";
   const workspaceStatusHint = blockerIsMissingSummary
     ? "Aanmelding onvolledig"
     : dominantBlocker
@@ -725,8 +840,8 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
         ? "Casus aangemaakt en gereed voor matching."
         : `${activeStepLabel} is actief.`;
   const statusDotTone = summaryNeedsCaseCompletion || dominantBlocker
-    ? "bg-amber-400"
-    : "bg-emerald-400";
+    ? "bg-care-warning-solid"
+    : "bg-care-success-solid";
   const phasePresentation = resolveCaseExecutionPhasePresentation({
     evaluationPhase: decisionEvaluation?.phase,
     currentState: resolvedState,
@@ -805,14 +920,19 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     zorgvorm: spaCase.zorgtype,
     regio: spaCase.regio,
     aanmelder: spaCase.owner,
-    zorgintensiteit:
-      spaCase.placementPressureBand === "critical" || spaCase.urgency === "critical"
-        ? "Spoed / hoog"
+    zorgintensiteit: (() => {
+      const CARE_INTENSITY_LABELS: Record<string, string> = {
+        LICHT: "Licht", REGULIER: "Regulier", INTENSIEF: "Intensief",
+      };
+      const raw = (spaCase as unknown as Record<string, unknown>).care_intensity as string | undefined;
+      if (raw && CARE_INTENSITY_LABELS[raw]) return CARE_INTENSITY_LABELS[raw];
+      // Fallback op plaatsingsdruk voor cases zonder care_intensity
+      return spaCase.placementPressureBand === "critical" || spaCase.urgency === "critical"
+        ? "Intensief"
         : spaCase.placementPressureBand === "high" || spaCase.urgency === "warning"
-          ? "Verhoogd"
-          : spaCase.placementPressureBand === "normal" || spaCase.urgency === "normal"
-            ? "Standaard"
-            : "Laag / stabiel",
+          ? "Regulier"
+          : "Licht";
+    })(),
     startperiode: (() => {
       if (!spaCase.intakeStartDate) {
         return "—";
@@ -826,7 +946,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   };
   const careSituationSummaryLines = [
     `Situatie: ${situationInsight}`,
-    `Zorgvraag: ${spaCase.zorgtype}`,
+    `Zorgvraag: ${zorgtypeLabel(spaCase.zorgtype)}`,
     `Regio: ${spaCase.regio}`,
     `Plaatsingsdruk: ${(spaCase.placementPressureLabel ?? spaCase.urgency)}`,
     missingGeo ? "Locatiebasis onvolledig voor volledige matching." : "Locatiebasis beschikbaar voor matching.",
@@ -839,7 +959,56 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     : (gateItems[0] ?? "Volgende actie");
 
   const trajectoryExited = resolvedState === "ARCHIVED";
-  const showArrangementAlignment = role === "gemeente" || role === "admin";
+  const showArrangementAlignment = (role === "gemeente" || role === "admin") && !summaryNeedsCaseCompletion;
+
+  // Build missing items for completion card
+  const missingItems: MissingItem[] = useMemo(() => {
+    if (!summaryNeedsCaseCompletion) return [];
+
+    const items: MissingItem[] = [];
+
+    if (!decisionEvaluation?.decision_context.required_data_complete) {
+      items.push({
+        key: "required_data",
+        label: "Verplichte casus gegevens",
+        reason: "Nog niet ingevuld",
+        actionLabel: "Aanvullen",
+      });
+    }
+
+    if (!decisionEvaluation?.decision_context.has_summary) {
+      items.push({
+        key: "summary",
+        label: "Casusoverzicht",
+        reason: "Wordt automatisch gegenereerd",
+        actionLabel: "Bekijk",
+      });
+    }
+
+    // Add attention items that are blockers
+    attentionRollup
+      .filter(row => row.key.startsWith("blocker"))
+      .slice(0, 3)
+      .forEach(row => {
+        items.push({
+          key: row.key,
+          label: row.headline,
+          reason: row.body.substring(0, 60) + (row.body.length > 60 ? "..." : ""),
+          actionLabel: "Oplossen",
+        });
+      });
+
+    return items;
+  }, [summaryNeedsCaseCompletion, decisionEvaluation, attentionRollup]);
+
+  const completedCount = useMemo(() => {
+    let count = 0;
+    if (decisionEvaluation?.decision_context.required_data_complete) count++;
+    if (decisionEvaluation?.decision_context.has_summary) count++;
+    return count;
+  }, [decisionEvaluation]);
+
+  const totalRequired = 2; // required_data + summary
 
   const attentionItems = attentionRollup.map((row) => {
     const severity = row.key.startsWith("blocker") ? "critical" : row.key.startsWith("risk") ? "warning" : "info";
@@ -851,7 +1020,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   });
 
   const caseFacts = [
-    { label: "Zorgvraag", value: spaCase.zorgtype || "—", title: spaCase.zorgtype },
+    { label: "Zorgvraag", value: zorgtypeLabel(spaCase.zorgtype), title: spaCase.zorgtype },
     { label: "Regio", value: spaCase.regio || "—" },
     { label: "Zorgintensiteit", value: arrangementCareContext.zorgintensiteit },
     { label: "Startperiode", value: arrangementCareContext.startperiode },
@@ -866,7 +1035,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   const primaryCtaLabel = nextBestAction
     ? (
       summaryNeedsCaseCompletion
-        ? (primaryButtonLabel ?? "Controleer casusstatus")
+        ? "Maak casus compleet"
         : (
           imperativeLabelForActionCode(nextBestAction.action, nextBestAction.label)
           ?? primaryButtonLabel
@@ -877,7 +1046,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
 
   const historyEvents = (decisionEvaluation?.timeline_signals.recent_events ?? []).slice(0, 12).map((event) => ({
     timestamp: formatUpdatedAtLabel(event.timestamp) ?? event.timestamp,
-    label: event.user_action || event.event_type,
+    label: (event.user_action ? auditActionLabel(event.user_action) : null) || eventTypeLabel(event.event_type),
     source: event.action_source,
   }));
 
@@ -887,7 +1056,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
   }));
 
   const flowProgress = (
-    <ProcessTimeline className="surface-context rounded-xl px-4 py-3 md:px-4 md:py-3.5">
+    <ProcessTimeline className="surface-context rounded-[16px] px-4 py-3 md:px-4 md:py-3.5">
       <CaseOperationalStepper
         steps={decisionTimelineSteps.map((step, index) => ({
           ...step,
@@ -905,15 +1074,15 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
         <div
           data-testid="case-uitstroom-banner"
           role="status"
-          className="rounded-lg bg-emerald-500/8 px-3 py-2 text-sm text-foreground"
+          className="rounded-[10px] bg-care-success-bg px-3 py-2 text-sm text-foreground"
         >
-          <p className="font-semibold">Traject afgesloten — uitstroom</p>
+          <p className="font-medium">Traject afgesloten — uitstroom</p>
         </div>
       ) : null}
       <CasePrimaryActionPanel
         statusLabel={statusLine}
-        statusTitle={null}
-        statusDescription={blockedHeroDescription}
+        statusTitle={summaryNeedsCaseCompletion ? "Casus is nog niet compleet" : null}
+        statusDescription={summaryNeedsCaseCompletion ? "Matching kan starten zodra de verplichte gegevens zijn aangevuld." : blockedHeroDescription}
         statusTone="default"
         actionHolderLabel={actionHolderLabel}
         waitingOnLabel={waitingOnLabel}
@@ -925,7 +1094,15 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
         primaryPending={Boolean(pendingAction)}
         disabledReason={primaryDisabledHint}
         errorMessage={decisionError}
+        secondaryActionLabel={summaryNeedsCaseCompletion ? "Vraag gegevens op" : null}
+        onSecondaryAction={summaryNeedsCaseCompletion ? () => setProviderDialog("info") : undefined}
       />
+      {summaryNeedsCaseCompletion && (
+        <CaseMissingDataPanel
+          missingFields={missingRequiredFields}
+          caseId={caseId}
+        />
+      )}
     </div>
   );
 
@@ -982,25 +1159,86 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
           </div>
         </>
       ) : null}
-      <CaseAttentionPointsCard
-        items={attentionItems}
-        onShowAll={attentionItems.length > 3 ? () => setDetailTab("overzicht") : undefined}
-      />
+      {summaryNeedsCaseCompletion ? (
+        <InteractiveCaseCompletionCard
+          isIncomplete={summaryNeedsCaseCompletion}
+          missingItems={missingItems}
+          completedCount={completedCount}
+          totalRequired={totalRequired}
+          onStartCompletion={() => {
+            setDetailTab("aanmelding");
+            guidedFlow.start();
+          }}
+          onRequestData={() => setProviderDialog("info")}
+          onMissingItemClick={(key) => {
+            if (key === "required_data" || key === "summary") {
+              setDetailTab("aanmelding");
+              guidedFlow.start();
+            } else {
+              setDetailTab("overzicht");
+            }
+          }}
+        />
+      ) : (
+        <CaseAttentionPointsCard
+          items={attentionItems}
+          onShowAll={attentionItems.length > 3 ? () => setDetailTab("overzicht") : undefined}
+        />
+      )}
       <CaseExecutionDetailTabs
         activeTab={detailTab}
         onTabChange={setDetailTab}
+        caseIncomplete={summaryNeedsCaseCompletion}
+        aanmelding={(
+          <div className="space-y-3">
+            {guidedFlow.isActive && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-[12px] text-primary">
+                Volg de stappen om je casus compleet te maken. {guidedFlow.completedCount} van {guidedFlow.totalSteps} onderdelen voltooid.
+              </div>
+            )}
+            <GuidedFieldWrapper
+              fieldId="guided-required-data"
+              stepNumber={guidedFlow.isActive ? 1 : 0}
+              totalSteps={guidedFlow.totalSteps}
+              isActive={guidedFlow.isActive && guidedFlow.currentStep?.id === "required_data"}
+              isComplete={decisionEvaluation?.decision_context.required_data_complete ?? false}
+              label="Verplichte casusgegevens"
+              onMarkComplete={() => guidedFlow.markStepComplete("required_data")}
+            >
+              <CaseMissingDataPanel
+                missingFields={missingRequiredFields}
+                caseId={caseId}
+              />
+            </GuidedFieldWrapper>
+            <GuidedFieldWrapper
+              fieldId="guided-summary"
+              stepNumber={guidedFlow.isActive ? 2 : 0}
+              totalSteps={guidedFlow.totalSteps}
+              isActive={guidedFlow.isActive && guidedFlow.currentStep?.id === "summary"}
+              isComplete={decisionEvaluation?.decision_context.has_summary ?? false}
+              label="Casusoverzicht"
+              onMarkComplete={() => {
+                guidedFlow.markStepComplete("summary");
+              }}
+            >
+              <CaseDetailEvidenceList
+                rows={[
+                  { label: "Casusoverzicht", value: decisionEvaluation?.decision_context.has_summary ? "Beschikbaar" : "Wordt automatisch gegenereerd na aanvulling" },
+                ]}
+              />
+            </GuidedFieldWrapper>
+            {!guidedFlow.isActive && (
+              <Button type="button" variant="outline" size="sm" className="rounded-full" asChild>
+                <a href={toCareCaseEdit(caseId, "casus")}>Casus bewerken (external)</a>
+              </Button>
+            )}
+          </div>
+        )}
         overzicht={(
           <div className="space-y-3">
             <CaseDetailEvidenceList rows={overviewEvidence} />
-            {verificationSteps.length > 0 ? (
-              <ul className="surface-section rounded-xl px-4 py-3 text-[13px] text-muted-foreground md:px-5">
-                {verificationSteps.map((step) => (
-                  <li key={step} className="py-1">{step}</li>
-                ))}
-              </ul>
-            ) : null}
             {attentionRollup.length > 3 ? (
-              <ul className="surface-section rounded-xl px-4 py-3 md:px-5">
+              <ul className="rounded-[16px] border border-border/55 bg-card/35 px-4 py-3 md:px-5">
                 {attentionRollup.map((row) => (
                   <li key={row.key} className="border-b border-border/30 py-2 text-[13px] last:border-0">
                     <span className="font-medium text-foreground">{row.headline}: </span>
@@ -1014,7 +1252,10 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
         arrangement={showArrangementAlignment ? (
           <ArrangementAlignmentPanel caseId={caseId} careContext={arrangementCareContext} variant="full" />
         ) : (
-          <p className="text-sm text-muted-foreground">Geen arrangement-advies voor uw rol.</p>
+          <div className="rounded-2xl border border-border/55 bg-card/35 px-4 py-6 text-center md:px-5">
+            <p className="text-[13px] font-medium text-foreground">Arrangementadvies nog niet beschikbaar</p>
+            <p className="mt-1 text-[12px] text-muted-foreground">Maak eerst de verplichte casusgegevens compleet.</p>
+          </div>
         )}
         matching={(
           <CaseDetailEvidenceList
@@ -1039,13 +1280,13 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
             rows={[
               { label: "Toetsing route", value: resolvedState === "MATCHING_READY" ? "Vereist" : "Niet actief" },
               { label: "Verplichte gegevens", value: decisionEvaluation?.decision_context.required_data_complete ? "Compleet" : "Onvolledig" },
-              { label: "Aanmelding", value: decisionEvaluation?.decision_context.has_summary ? "Beschikbaar" : "Ontbreekt" },
+              { label: "Casusoverzicht", value: decisionEvaluation?.decision_context.has_summary ? "Beschikbaar" : "Wordt automatisch aangevuld" },
             ]}
           />
         )}
         historie={<CaseTimelineHistoryList events={historyEvents} />}
         documenten={(
-          <div className="surface-section rounded-xl px-4 py-3.5 text-[13px] md:px-5">
+          <div className="rounded-[16px] border border-border/55 bg-card/35 px-4 py-3.5 text-[13px] md:px-5">
             <p className="text-muted-foreground">Documenten en bijlagen beheer je in de casusbewerking.</p>
             <Button type="button" variant="outline" size="sm" className="mt-3 rounded-full" asChild>
                 <a href={toCareCaseEdit(caseId, "casus")}>Open casus bewerken</a>
@@ -1060,11 +1301,11 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     ? { label: historyEvents[0].label, source: historyEvents[0].source ?? undefined, timestamp: historyEvents[0].timestamp }
     : undefined;
 
+  const elapsedForRail = formatElapsedLabel(decisionEvaluation?.decision_context.hours_in_current_state);
   const contextRailNode = (
     <CareContextRail
-      blocker={dominantBlocker ? dominantBlocker.message : undefined}
       owner={actionHolderLabel || stepOwner || undefined}
-      requiredDecision={primaryCtaLabel ?? undefined}
+      elapsed={elapsedForRail ?? undefined}
       deadline={spaCase.arrangementEndDate || undefined}
       linkedProvider={spaCase.arrangementProvider || undefined}
       recentAuditEvent={recentAuditForRail}
@@ -1076,8 +1317,10 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
     <>
       <CasusWorkspaceLayout
         onBack={onBack}
+        backLabel={backLabel ?? (role === "zorgaanbieder" ? "Terug naar mijn aanvragen" : "Terug naar aanmeldingen")}
         flowProgress={flowProgress}
-        title={`CASUS #${spaCase.id.replace(/\D/g, "") || spaCase.id} — ${spaCase.title}`}
+        title={`Casus #${spaCase.id.replace(/\D/g, "") || spaCase.id}`}
+        titleSubline={spaCase.title ? spaCase.title.replace(/\s*[-–—]\s*/g, " · ") : undefined}
         phaseLabel={currentPhaseLabel}
         contextRail={contextRailNode}
         phaseId={phasePresentation.decisionUiPhaseId}
@@ -1089,24 +1332,29 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
               <Button
                 variant="outline"
                 type="button"
-                className="h-10 gap-2 rounded-full border-border/70 bg-background/70 px-4 text-[13px] font-medium text-foreground hover:bg-muted/40"
+                className="h-8 gap-1.5 rounded-full border-border/50 bg-background/60 px-3 text-[12px] font-medium text-muted-foreground hover:bg-muted/40 hover:text-foreground"
               >
-                <MoreVertical size={16} />
+                <MoreVertical size={14} aria-hidden />
                 Casusacties
+                <ChevronDown size={12} aria-hidden />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={() => setContextFlowOpen(true)}>Casuscontext</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setArchiveOpen(true)}>Casus archiveren</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <a href={toCareCaseEdit(caseId, "casus")}>Casus bewerken</a>
-              </DropdownMenuItem>
-              {missingGeo ? (
-                <DropdownMenuItem asChild>
-                  <a href={toCareCaseEdit(caseId, "locatie")}>Locatie aanvullen</a>
-                </DropdownMenuItem>
-              ) : null}
+              {role !== "zorgaanbieder" && (
+                <>
+                  <DropdownMenuItem onClick={() => setArchiveOpen(true)}>Casus archiveren</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <a href={toCareCaseEdit(caseId, "casus")}>Casus bewerken</a>
+                  </DropdownMenuItem>
+                  {missingGeo ? (
+                    <DropdownMenuItem asChild>
+                      <a href={toCareCaseEdit(caseId, "locatie")}>Locatie aanvullen</a>
+                    </DropdownMenuItem>
+                  ) : null}
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -1124,6 +1372,13 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
             : spaCase.placementPressureBand === "high" || spaCase.urgency === "warning"
               ? "warning"
               : "neutral"
+        }
+        priorityBadgeTone={
+          spaCase.placementPressureBand === "critical" || spaCase.urgency === "critical"
+            ? "spoed"
+            : spaCase.placementPressureBand === "high" || spaCase.urgency === "warning"
+              ? "hoog"
+              : "normaal"
         }
         ownerLabel={actionHolderLabel || stepOwner || undefined}
         elapsedLabel={waitingSignal ?? undefined}
@@ -1194,7 +1449,7 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, onAppNavi
             <div className="space-y-3">
               <div className="border border-border/70 p-3 text-sm">
                 <p><strong>Regio:</strong> {spaCase.regio}</p>
-                <p><strong>Zorgvraag:</strong> {spaCase.zorgtype}</p>
+                <p><strong>Zorgvraag:</strong> {zorgtypeLabel(spaCase.zorgtype)}</p>
                 <p><strong>Plaatsingsdruk:</strong> {spaCase.placementPressureLabel ?? spaCase.urgency}</p>
                 <p><strong>Eigenaar:</strong> {stepOwner}</p>
               </div>
