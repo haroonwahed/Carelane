@@ -4,6 +4,7 @@ coordination overview, bulk update.
 """
 import logging
 
+from django.core.cache import cache
 from django.db.models import Prefetch, Q
 from django.http import Http404, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -11,6 +12,8 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 import json
+
+_COORDINATION_OVERVIEW_CACHE_TTL = 60  # seconds
 
 from contracts.domain.contracts import ListParams
 from contracts.models import (
@@ -323,11 +326,15 @@ def coordination_decision_overview_api(request):
             )
             cases = CareCase.objects.none()
 
-        payload = build_coordination_decision_overview(
-            cases,
-            actor=request.user,
-            organization=organization,
-        )
+        cache_key = f"coord_overview_org_{organization.pk}_user_{request.user.pk}"
+        payload = cache.get(cache_key)
+        if payload is None:
+            payload = build_coordination_decision_overview(
+                cases,
+                actor=request.user,
+                organization=organization,
+            )
+            cache.set(cache_key, payload, _COORDINATION_OVERVIEW_CACHE_TTL)
         totals = payload.get('totals') or {}
         try:
             critical_blockers = int(totals.get('critical_blockers') or 0)

@@ -11,7 +11,7 @@ export interface UseCoordinationDecisionOverviewResult {
   refetch: () => void;
 }
 
-const POLL_INTERVAL_MS = 30_000;
+const POLL_INTERVAL_MS = 60_000;
 
 export function useCoordinationDecisionOverview(): UseCoordinationDecisionOverviewResult {
   const [data, setData] = useState<CoordinationDecisionOverview | null>(null);
