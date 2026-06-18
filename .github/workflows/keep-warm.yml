@@ -1,0 +1,55 @@
+# Keep the free-tier Render service warm.
+#
+# Render Free spins the web service down after ~15 min of inactivity; the next
+# request then takes 30–60s to wake it. This job pings the public health
+# endpoint on a schedule so the service (and its DB connection) stays warm —
+# zero cost, no external service.
+#
+# Caveats / tuning:
+#   - GitHub-scheduled workflows are BEST EFFORT and can be delayed several
+#     minutes under load, so an occasional cold start is still possible. For
+#     sub-5-minute reliability, point an external pinger (UptimeRobot /
+#     cron-job.org, both free) at the same URL instead — it's purpose-built.
+#   - After a Frankfurt recreate the hostname may change: set repo variable
+#     KEEP_WARM_URL (Settings → Secrets and variables → Actions → Variables)
+#     to the new `https://<host>/_health/`. Falls back to the current host.
+#   - GitHub disables scheduled workflows after 60 days of repo inactivity.
+name: Keep warm
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "*/10 * * * *" # every ~10 minutes (best effort)
+
+# Never stack runs — if one is still waking a cold instance, let it finish.
+concurrency:
+  group: keep-warm
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping health endpoint (wakes the service if asleep)
+        env:
+          KEEP_WARM_URL: ${{ vars.KEEP_WARM_URL }}
+        run: |
+          set -euo pipefail
+          URL="${KEEP_WARM_URL:-https://careon-web.onrender.com/_health/}"
+          echo "Pinging ${URL}"
+          # A cold Free instance takes 30–60s to wake, so allow a long timeout
+          # and retry transient 5xx/connection errors from Render's edge.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' \
+            --max-time 90 --retry 4 --retry-delay 15 --retry-all-errors \
+            "${URL}" || echo "000")
+          echo "HTTP ${code}"
+          # Any HTTP response means the service is awake (even a 503 from a DB
+          # blip). Only a total no-response (after retries) is a real failure.
+          if [ "${code}" = "000" ]; then
+            echo "::warning::No HTTP response from ${URL} after retries (service may be down or still waking)."
+            exit 1
+          fi
