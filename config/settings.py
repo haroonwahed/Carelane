@@ -151,6 +151,16 @@ if '*' not in ALLOWED_HOSTS:
     _LOCAL_ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
     ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, *_LOCAL_ALLOWED_HOSTS]))
 
+# Render injects RENDER_EXTERNAL_HOSTNAME / RENDER_EXTERNAL_URL for every service
+# (e.g. "careon-web-630u.onrender.com"). Auto-trust them so recreating the service
+# — which changes the hostname — never 400s on a stale ALLOWED_HOSTS / CSRF list,
+# and so SPA_ORIGIN / OIDC redirect resolve to the live host without manual env
+# edits. No effect locally or in tests (the vars are unset).
+_RENDER_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME', '').strip()
+_RENDER_URL = os.getenv('RENDER_EXTERNAL_URL', '').strip().rstrip('/')
+if _RENDER_HOSTNAME and '*' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, _RENDER_HOSTNAME]))
+
 _LOCAL_CSRF_ORIGINS = [
     'http://localhost:3000',
     'https://localhost:3000',
@@ -178,6 +188,9 @@ _csrf_from_env = _csv_env('CSRF_TRUSTED_ORIGINS', default=_LOCAL_CSRF_ORIGINS)
 # Always keep local Vite/Django origins for developer workflows; production
 # settings remove loopback entries explicitly after importing this module.
 CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(_csrf_from_env + _LOCAL_CSRF_ORIGINS))
+if _RENDER_HOSTNAME:
+    _render_origin = _RENDER_URL or f'https://{_RENDER_HOSTNAME}'
+    CSRF_TRUSTED_ORIGINS = list(dict.fromkeys([*CSRF_TRUSTED_ORIGINS, _render_origin]))
 
 
 # Application definition
@@ -329,7 +342,7 @@ CAREON_MAX_DOCUMENT_UPLOAD_MB = int(os.getenv('CAREON_MAX_DOCUMENT_UPLOAD_MB', '
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
-SPA_ORIGIN = os.getenv('SPA_ORIGIN', 'http://127.0.0.1:3000').rstrip('/')
+SPA_ORIGIN = os.getenv('SPA_ORIGIN', _RENDER_URL or 'http://127.0.0.1:3000').rstrip('/')
 
 
 def _resolve_oidc_public_base_url() -> str:
@@ -337,6 +350,11 @@ def _resolve_oidc_public_base_url() -> str:
     explicit = os.getenv('OIDC_PUBLIC_BASE_URL', '').strip().rstrip('/')
     if explicit:
         return explicit
+    # Prefer Render's own external URL so the OAuth redirect always targets the
+    # live service host after a recreate — no manual env edit needed. (You still
+    # must add this origin to Google's authorized redirect URIs.)
+    if _RENDER_URL:
+        return _RENDER_URL
     for origin in CSRF_TRUSTED_ORIGINS:
         candidate = (origin or '').strip().rstrip('/')
         if not candidate.startswith('https://'):
