@@ -1105,7 +1105,7 @@ class CareTaskIsolationTest(CrossTenantFixtureMixin, TestCase):
 
     def test_update_cross_org_returns_404(self):
         self.client.login(username='user_b', password='passB1234!')
-        url = reverse('careon:task_update', kwargs={'pk': self.legal_task_a.pk})
+        url = reverse('careon:care_task_update', kwargs={'pk': self.legal_task_a.pk})
         self.assertEqual(self.client.get(url).status_code, 404)
 
 
