@@ -50,6 +50,7 @@ import { useProviderEvaluations } from "../../hooks/useProviderEvaluations";
 import { useAssessments } from "../../hooks/useAssessments";
 import { useRegions } from "../../hooks/useRegions";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
+import { useDashboard } from "../../hooks/useDashboard";
 import { countOpenCareTasks } from "../../lib/actiesTaskSemantics";
 import { buildWorkflowCases } from "../../lib/workflowUi";
 import { countActionSignals } from "../../lib/buildActionSignals";
@@ -222,6 +223,10 @@ function getInitialNavigation(pathname: string): { page: Page; caseId: string | 
   if (path.startsWith(`${CARE_PATHS.CASUSSEN_BASE}/new`)) {
     return { page: "nieuwe-casus", caseId: null };
   }
+  const caseEditMatch = path.match(/^\/care\/casussen\/(\d+)\/edit\//);
+  if (caseEditMatch) {
+    return { page: "casussen", caseId: caseEditMatch[1] };
+  }
   if (path.startsWith(CARE_PATHS.CASUSSEN_BASE)) {
     return { page: "casussen", caseId: null };
   }
@@ -334,6 +339,7 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
   const { evaluations: providerEvaluations } = useProviderEvaluations();
   const { assessments } = useAssessments({ q: "" });
   const { regions } = useRegions({ q: "" });
+  const { summary: dashboardSummary } = useDashboard();
   /** Sidebar badges must match the same datasets as the pages they point to (e.g. Acties = CareTask list). */
   const queueCounts = useMemo(() => {
     const wf = buildWorkflowCases(cases, providers);
@@ -348,6 +354,16 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
       signalen,
     };
   }, [cases, providers, careTasks, providerEvaluations, assessments, regions]);
+
+  /** Server-side aggregates load faster (single API call) — use them until per-page data catches up. */
+  const badgeCounts = useMemo(() => ({
+    casussen: queueCounts.casussen || dashboardSummary.activeCases,
+    beoordelingen: queueCounts.beoordelingen,
+    matching: queueCounts.matching,
+    plaatsingen: queueCounts.plaatsingen,
+    acties: queueCounts.acties || dashboardSummary.pendingTasks,
+    signalen: queueCounts.signalen || dashboardSummary.openSignals,
+  }), [queueCounts, dashboardSummary]);
 
   const sessionProfile = useMemo(() => {
     if (!me) {
@@ -628,9 +644,9 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
         onNavigate={handleNavigate}
         badgeOverrides={
           screenshotContext.type === "zorgaanbieder"
-            ? { beoordelingen: queueCounts.beoordelingen }
+            ? { beoordelingen: badgeCounts.beoordelingen }
             : screenshotContext.type === "gemeente" || screenshotContext.type === "admin"
-              ? queueCounts
+              ? badgeCounts
               : undefined
         }
         profileDisplayName={screenshotProfile.displayName}
@@ -770,6 +786,9 @@ export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) 
                     }}
                     onNavigateToCaseDetail={(id) => {
                       handleCaseClick(id);
+                    }}
+                    onNavigateToZorgaanbieders={() => {
+                      goToPage("zorgaanbieders");
                     }}
                   />
                 )}

@@ -19,13 +19,15 @@ export function useCoordinationDecisionOverview(): UseCoordinationDecisionOvervi
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
   const hasLoadedRef = useRef(false);
+  const isLoadingRef = useRef(true);
 
   const refetch = useCallback(() => {
-    setTick((value) => value + 1);
+    if (!isLoadingRef.current) setTick((value) => value + 1);
   }, []);
 
   useEffect(() => {
     let cancelled = false;
+    isLoadingRef.current = true;
     if (!hasLoadedRef.current) setLoading(true);
     setError(null);
 
@@ -43,6 +45,7 @@ export function useCoordinationDecisionOverview(): UseCoordinationDecisionOvervi
       })
       .finally(() => {
         if (!cancelled) {
+          isLoadingRef.current = false;
           setLoading(false);
         }
       });
@@ -54,7 +57,7 @@ export function useCoordinationDecisionOverview(): UseCoordinationDecisionOvervi
 
   useEffect(() => {
     const id = setInterval(() => {
-      setTick((value) => value + 1);
+      if (!isLoadingRef.current) setTick((value) => value + 1);
     }, POLL_INTERVAL_MS);
     return () => clearInterval(id);
   }, []);

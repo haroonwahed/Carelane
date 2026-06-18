@@ -1,7 +1,7 @@
 /**
  * useProviders — fetches live ProviderProfile/Client records from the Django API.
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient } from '../lib/apiClient';
 
 export interface SpaProvider {
@@ -69,11 +69,15 @@ export function useProviders(options: UseProvidersOptions = {}): UseProvidersRes
   const [networkSummary, setNetworkSummary] = useState<NetworkSummary | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
   const [tick, setTick] = useState(0);
+  const isLoadingRef = useRef(true);
 
-  const refetch = useCallback(() => setTick(t => t + 1), []);
+  const refetch = useCallback(() => {
+    if (!isLoadingRef.current) setTick(t => t + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
+    isLoadingRef.current = true;
     setLoading(true);
     setError(null);
     const params: Record<string, string> = { page_size: '100' };
@@ -125,11 +129,13 @@ export function useProviders(options: UseProvidersOptions = {}): UseProvidersRes
           allRegionLabels: p.allRegionLabels ?? (p.regionLabel ? [p.regionLabel] : []),
         })));
         setLastUpdatedAt(Date.now());
+        isLoadingRef.current = false;
         setLoading(false);
       })
       .catch((err: Error) => {
         if (cancelled) return;
         setError(err.message ?? 'Kon aanbieders niet laden');
+        isLoadingRef.current = false;
         setLoading(false);
       });
 

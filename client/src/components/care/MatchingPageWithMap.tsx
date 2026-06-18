@@ -144,6 +144,8 @@ interface MatchingPageWithMapProps {
   onConfirmMatch: (providerId: string) => Promise<void> | void;
   /** After a persisted waitlist proposal, open canonical case detail (SPA or full navigation). */
   onNavigateToCase?: (caseId: string) => void;
+  /** Navigate to provider list (SPA-native, avoids hard reload). */
+  onNavigateToZorgaanbieders?: () => void;
   isSubmittingMatch?: boolean;
   submitError?: string | null;
 }
@@ -153,6 +155,7 @@ export function MatchingPageWithMap({
   onBack,
   onConfirmMatch,
   onNavigateToCase,
+  onNavigateToZorgaanbieders,
   isSubmittingMatch = false,
   submitError = null,
 }: MatchingPageWithMapProps) {
@@ -925,7 +928,7 @@ export function MatchingPageWithMap({
                     type="button"
                     variant="outline"
                     className="gap-2 rounded-xl border-border/60 bg-background/40"
-                    onClick={() => window.location.assign(CARE_PATHS.ZORGAANBIEDERS)}
+                    onClick={() => onNavigateToZorgaanbieders?.() ?? window.location.assign(CARE_PATHS.ZORGAANBIEDERS)}
                   >
                     <Users className="size-4" aria-hidden />
                     Bekijk alle aanbieders
@@ -1055,7 +1058,7 @@ export function MatchingPageWithMap({
                 <button
                   type="button"
                   className="mt-3.5 text-[13px] font-semibold text-primary hover:underline"
-                  onClick={() => window.location.assign(CARE_PATHS.ZORGAANBIEDERS)}
+                  onClick={() => onNavigateToZorgaanbieders?.() ?? window.location.assign(CARE_PATHS.ZORGAANBIEDERS)}
                 >
                   Bekijk uitgesloten aanbieders →
                 </button>

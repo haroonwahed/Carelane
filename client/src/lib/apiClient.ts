@@ -58,15 +58,29 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const isMutating = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
   const isFormData = typeof FormData !== 'undefined' && rest.body instanceof FormData;
 
-  const response = await fetch(url.toString(), {
-    credentials: 'same-origin',
-    headers: {
-      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(isMutating ? { 'X-CSRFToken': getCsrfToken() } : {}),
-      ...headers,
-    },
-    ...rest,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20_000);
+
+  let response: Response;
+  try {
+    response = await fetch(url.toString(), {
+      credentials: 'same-origin',
+      headers: {
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+        ...(isMutating ? { 'X-CSRFToken': getCsrfToken() } : {}),
+        ...headers,
+      },
+      signal: options.signal ?? controller.signal,
+      ...rest,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('Verzoek duurde te lang. Controleer uw verbinding en probeer het opnieuw.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const responseUrl = new URL(response.url, window.location.origin);
   const redirectedToLogin = response.redirected && responseUrl.pathname === LOGIN_URL;

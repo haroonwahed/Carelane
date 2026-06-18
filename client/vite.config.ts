@@ -85,7 +85,7 @@ function manualVendorChunks(id: string) {
     build: {
       target: 'esnext',
       outDir: '../theme/static/spa',
-      emptyOutDir: false,
+      emptyOutDir: true,
       chunkSizeWarningLimit: 1300,
       rollupOptions: {
         output: {
