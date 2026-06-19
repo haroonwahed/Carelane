@@ -1,7 +1,7 @@
 {% extends 'base_fullscreen.html' %}
 {% load static %}
 
-{% block title %}Er ging iets mis — Carelane{% endblock %}
+{% block title %}Ongeldige aanvraag — Carelane{% endblock %}
 
 {% block body %}
 <script>document.documentElement.setAttribute('data-theme','dark');</script>
@@ -48,20 +48,20 @@ body {
 .err-icon {
   width: 56px; height: 56px;
   border-radius: 16px;
-  background: rgba(239,68,68,0.08);
-  border: 1px solid rgba(239,68,68,0.2);
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.2);
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 24px;
 }
-.err-icon svg { width: 26px; height: 26px; color: #f87171; }
+.err-icon svg { width: 26px; height: 26px; color: #fbbf24; }
 .err-code {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #f87171;
-  background: rgba(239,68,68,0.08);
-  border: 1px solid rgba(239,68,68,0.18);
+  color: #fbbf24;
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.18);
   border-radius: 6px;
   padding: 3px 8px;
   margin-bottom: 16px;
@@ -135,13 +135,13 @@ body {
     </svg>
   </div>
 
-  <span class="err-code">500 — Serverfout</span>
-  <h1 class="err-title">{{ error_title|default:"Er ging iets mis" }}</h1>
-  <p class="err-message">{{ error_message|default:"Probeer het opnieuw of ga terug naar het overzicht." }}</p>
+  <span class="err-code">400 — Ongeldige aanvraag</span>
+  <h1 class="err-title">Sessie verlopen</h1>
+  <p class="err-message">De inlogsessie is verlopen of is niet meer geldig. Probeer opnieuw in te loggen.</p>
 
   <div class="err-actions">
-    <a href="/dashboard/" class="err-btn-primary">Naar dashboard</a>
-    <a href="/login/" class="err-btn-secondary">Opnieuw inloggen</a>
+    <a href="/login/" class="err-btn-primary">Opnieuw inloggen</a>
+    <a href="/" class="err-btn-secondary">Naar startpagina</a>
   </div>
 </div>
 {% endblock %}

@@ -4009,6 +4009,10 @@ def case_flow_update_redirect(request, pk):
     return redirect('carelane:case_update', pk=pk)
 
 
+def handler400(request, exception=None):  # noqa: ARG001
+    return render_safe_error_page(request, 400, '400.html')
+
+
 def handler403(request, exception=None):  # noqa: ARG001
     accept = request.META.get('HTTP_ACCEPT', '')
     if 'text/html' in accept and not request.path.startswith('/care/api/'):

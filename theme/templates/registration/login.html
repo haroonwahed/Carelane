@@ -517,63 +517,6 @@ body {
         <div class="sa-eyebrow">Zorgcoördinatie</div>
         <h1 class="sa-headline">Operationele regie<br>voor gemeenten en<br><em>zorgaanbieders</em></h1>
         <p class="sa-subline">Eén platform voor casussen, matching en plaatsingen — met rolzuivere toegang voor elke partij.</p>
-
-        <div class="sa-features">
-          <div class="sa-feature">
-            <div class="sa-feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 5-3.5 9.7-7 10-3.5-.3-7-5-7-10V6l7-3z"/>
-              </svg>
-            </div>
-            <div class="sa-feature-body">
-              <p class="sa-feature-title">Rolgebaseerde toegang</p>
-              <p class="sa-feature-copy">Iedere gebruiker ziet alleen wat nodig is voor de eigen taak.</p>
-            </div>
-          </div>
-          <div class="sa-feature">
-            <div class="sa-feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-              </svg>
-            </div>
-            <div class="sa-feature-body">
-              <p class="sa-feature-title">Auditbare acties</p>
-              <p class="sa-feature-copy">Besluiten en overdrachten blijven volledig herleidbaar.</p>
-            </div>
-          </div>
-          <div class="sa-feature">
-            <div class="sa-feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-              </svg>
-            </div>
-            <div class="sa-feature-body">
-              <p class="sa-feature-title">Directe doorstroom</p>
-              <p class="sa-feature-copy">Minder handovers, minder wachttijd, minder losse afstemming.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="sa-trust">
-        <div class="sa-trust-avatars">
-          <div class="sa-trust-avatar">GR</div>
-          <div class="sa-trust-avatar">ZA</div>
-          <div class="sa-trust-avatar">GM</div>
-        </div>
-        <span class="sa-trust-text">Gebruikt door <strong>gemeenten en zorginstellingen</strong></span>
-      </div>
-
-      <div class="sa-flow">
-        <span class="sa-flow-step sa-flow-step--active">Aanmelding</span>
-        <span class="sa-flow-div"></span>
-        <span class="sa-flow-step sa-flow-step--active">Matching</span>
-        <span class="sa-flow-div"></span>
-        <span class="sa-flow-step">Aanbiederreactie</span>
-        <span class="sa-flow-div"></span>
-        <span class="sa-flow-step">Plaatsing</span>
-        <span class="sa-flow-div"></span>
-        <span class="sa-flow-step">Intake</span>
       </div>
 
     </div>
@@ -619,7 +562,11 @@ body {
         <div class="sa-divider">of</div>
         {% endif %}
 
-        {% if form.errors %}
+        {% if request.GET.sso_error %}
+        <div class="sa-alert" role="alert" aria-live="polite">
+          Inloggen via organisatieaccount is mislukt. Probeer het opnieuw of gebruik gebruikersnaam en wachtwoord.
+        </div>
+        {% elif form.errors %}
         <div class="sa-alert" role="alert" aria-live="polite">
           {% if form.non_field_errors %}
             {% for error in form.non_field_errors %}{{ error }}{% endfor %}

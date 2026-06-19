@@ -64,9 +64,6 @@ export function LoginPage() {
             <h1 style={{ margin: 0, fontSize: 'clamp(24px, 2.4vw, 36px)', fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.03em', color: '#f1f5f9' }}>
               Operationele regie<br />voor gemeenten en<br /><span style={{ color: '#a5b4fc' }}>zorgaanbieders</span>
             </h1>
-            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: '#94a3b8', maxWidth: 420 }}>
-              Eén platform voor casussen, matching en plaatsingen — met rolzuivere toegang voor elke partij.
-            </p>
           </div>
         </div>
       </aside>

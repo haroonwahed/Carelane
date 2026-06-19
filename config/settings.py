@@ -341,6 +341,7 @@ CARELANE_MAX_DOCUMENT_UPLOAD_MB = int(os.getenv('CARELANE_MAX_DOCUMENT_UPLOAD_MB
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_REDIRECT_URL_FAILURE = '/login/?sso_error=1'
 LOGOUT_REDIRECT_URL = '/'
 # Treat an empty SPA_ORIGIN (e.g. a blank Render env var) the same as unset, so
 # it falls back to the live Render URL instead of an empty/broken origin.
@@ -394,6 +395,7 @@ AUTHENTICATION_BACKENDS = [
 
 if SSO_ENABLED:
     AUTHENTICATION_BACKENDS.insert(0, 'contracts.auth_backends.CarelaneOIDCAuthenticationBackend')
+    OIDC_CALLBACK_CLASS = 'contracts.auth_backends.CarelaneOIDCCallbackView'
 
 OIDC_RP_CLIENT_ID = os.getenv('OIDC_RP_CLIENT_ID', '')
 OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET', '')

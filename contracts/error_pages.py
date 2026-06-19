@@ -6,6 +6,14 @@ from django.utils.cache import patch_cache_control
 
 
 _SAFE_ERROR_COPY = {
+    400: {
+        'title': 'Sessie verlopen',
+        'message': 'De inlogsessie is verlopen of is niet meer geldig. Probeer opnieuw in te loggen.',
+        'primary_label': 'Opnieuw inloggen',
+        'primary_href_name': 'login',
+        'secondary_label': 'Naar startpagina',
+        'secondary_href_name': 'dashboard',
+    },
     403: {
         'title': 'Geen toegang',
         'message': 'Deze pagina hoort niet bij jouw rol of je mist de juiste toegang.',

@@ -1,12 +1,31 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
+from django.http import HttpResponseRedirect
 from django.utils.text import slugify
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
+from mozilla_django_oidc.views import OIDCAuthenticationCallbackView
 
 from contracts.oidc_utils import oidc_callback_redirect_uri
 from contracts.user_profile_provisioning import ensure_user_profile_exists
+
+logger = logging.getLogger(__name__)
+
+_FAILURE_URL = '/login/?sso_error=1'
+
+
+class CarelaneOIDCCallbackView(OIDCAuthenticationCallbackView):
+    """Redirect to the login page with an error message on any OIDC failure."""
+
+    def get(self, request):
+        try:
+            return super().get(request)
+        except Exception as exc:
+            logger.warning("OIDC callback error: %s", exc)
+            return HttpResponseRedirect(_FAILURE_URL)
 
 
 class CarelaneOIDCAuthenticationBackend(OIDCAuthenticationBackend):

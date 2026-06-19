@@ -72,3 +72,4 @@ db_rehearsal.sqlite3
 client/test-results/
 client/playwright-report/
 .claude/worktrees/
+.env.local

@@ -42,7 +42,9 @@ urlpatterns = [
     path('settings/', carelane_views.settings_hub, name='settings_hub'),
     path('settings/design-mode/', carelane_views.design_mode_settings, name='design_mode_settings'),
     path('register/', carelane_views.SignUpView.as_view(), name='register'),
+    path('login', RedirectView.as_view(url='/login/', permanent=True)),
     path('login/', auth_views.LoginView.as_view(redirect_authenticated_user=True), name='login'),
+    path('logout', RedirectView.as_view(url='/logout/', permanent=True)),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('password-reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
     path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
@@ -70,6 +72,7 @@ if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+handler400 = 'contracts.views.handler400'
 handler403 = 'contracts.views.handler403'
 handler404 = 'contracts.views.handler404'
 handler500 = 'contracts.views.handler500'
