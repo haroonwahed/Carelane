@@ -35,7 +35,7 @@ from contracts.workflow_summary_gate import workflow_summary_complete
 from contracts.legacy_backend.provider_matching_service import MatchContext
 from contracts.provider_matching_service import MatchEngine
 from contracts.zorgbehoefte_taxonomy import format_taxonomy_explainability
-from contracts.views import _assign_provider_to_intake, _prepare_waitlist_proposal_for_intake
+from contracts.views.matching import _assign_provider_to_intake, _prepare_waitlist_proposal_for_intake
 from contracts.case_timeline import record_gemeente_validation_to_provider_review_boundary
 from contracts.governance import log_case_decision_event
 
