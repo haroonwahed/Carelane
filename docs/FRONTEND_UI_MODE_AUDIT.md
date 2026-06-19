@@ -27,6 +27,6 @@ Live provider pages (no `ProviderIntakeDashboard`): **`intake`** → `IntakeList
 ## Next actions (engineering)
 
 1. Before adding screens: grep for `CareKPICard`, `NextBestAction`, `ProcessTimeline` and assert route matches table above.
-2. Prefer **one dominant CTA** per region (`Careon_Operational_Constitution_v2.md` §9.2).
+2. Prefer **one dominant CTA** per region (`Carelane_Operational_Constitution_v2.md` §9.2).
 3. **Import boundary:** `tests/test_product_architecture_guardrails.py` fails if design `NextBestAction` / `ProcessTimeline` are imported outside `CaseExecutionPage.tsx`.
 4. Structural `regiekamer` rename remains deferred; see [`docs/STRUCTURAL_RENAME_DEFERRED.md`](./STRUCTURAL_RENAME_DEFERRED.md).

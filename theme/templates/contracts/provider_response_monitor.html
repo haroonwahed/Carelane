@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Providerreactie monitor - Careon{% endblock %}
+{% block title %}Providerreactie monitor - Carelane{% endblock %}
 {% block content %}
 <div class="page-wrap">
     <header class="ds-list-header">
@@ -9,7 +9,7 @@
         </div>
         <div class="ds-list-actions">
             <a href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/" class="btn btn-secondary">Terug naar regiekamer</a>
-            <a href="{% url 'careon:matching_dashboard' %}" class="btn btn-primary">Naar matching</a>
+            <a href="{% url 'carelane:matching_dashboard' %}" class="btn btn-primary">Naar matching</a>
         </div>
     </header>
 
@@ -88,13 +88,13 @@
             </div>
             <button type="submit" class="btn btn-secondary ds-btn-compact">Filter</button>
             {% if monitor_has_active_filters %}
-            <a href="{% url 'careon:provider_response_monitor' %}" class="btn btn-ghost ds-btn-compact">Filters wissen</a>
+            <a href="{% url 'carelane:provider_response_monitor' %}" class="btn btn-ghost ds-btn-compact">Filters wissen</a>
             {% endif %}
         </div>
         <div class="mt-2 flex flex-wrap gap-2">
-            <a href="{% url 'careon:provider_response_monitor' %}?priority_mode=1&sort=urgency" class="btn btn-ghost ds-btn-compact">Urgent</a>
-            <a href="{% url 'careon:provider_response_monitor' %}?priority_mode=1&sort=default" class="btn btn-ghost ds-btn-compact">SLA</a>
-            <a href="{% url 'careon:provider_response_monitor' %}?priority_mode=1&overdue_only=1&sort=urgency" class="btn btn-ghost ds-btn-compact">Nu actie</a>
+            <a href="{% url 'carelane:provider_response_monitor' %}?priority_mode=1&sort=urgency" class="btn btn-ghost ds-btn-compact">Urgent</a>
+            <a href="{% url 'carelane:provider_response_monitor' %}?priority_mode=1&sort=default" class="btn btn-ghost ds-btn-compact">SLA</a>
+            <a href="{% url 'carelane:provider_response_monitor' %}?priority_mode=1&overdue_only=1&sort=urgency" class="btn btn-ghost ds-btn-compact">Nu actie</a>
         </div>
     </form>
 
@@ -121,7 +121,7 @@
                 <div class="queue-head">
                     <div class="min-w-0">
                         {% if row.provider_id %}
-                        <a href="{% url 'careon:client_detail' row.provider_id %}" class="queue-title">{{ row.provider_name }}</a>
+                        <a href="{% url 'carelane:client_detail' row.provider_id %}" class="queue-title">{{ row.provider_name }}</a>
                         {% else %}
                         <span class="queue-title">{{ row.provider_name }}</span>
                         {% endif %}

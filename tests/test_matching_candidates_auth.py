@@ -97,7 +97,7 @@ class MatchingCandidatesAuthTests(TestCase):
         self.case_id = self.intake.contract_id
 
     def _url(self):
-        return reverse('careon:matching_candidates_api', kwargs={'case_id': self.case_id})
+        return reverse('carelane:matching_candidates_api', kwargs={'case_id': self.case_id})
 
     def test_admin_role_can_read_matching_candidates(self):
         self.client.login(username='auth_owner', password='pass')

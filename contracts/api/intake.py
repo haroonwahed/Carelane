@@ -257,7 +257,7 @@ def intake_create_api(request):
 
     if uploaded_files is not None:
         from django.conf import settings
-        max_mb = getattr(settings, 'CAREON_MAX_DOCUMENT_UPLOAD_MB', 20)
+        max_mb = getattr(settings, 'CARELANE_MAX_DOCUMENT_UPLOAD_MB', 20)
         max_bytes = max_mb * 1024 * 1024
         for field_name, f in uploaded_files.items():
             if f.size > max_bytes:

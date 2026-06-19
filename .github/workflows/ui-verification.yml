@@ -38,7 +38,7 @@ jobs:
       - name: Pyright type check (Python)
         run: python -m pyright contracts config
 
-      - name: Terminology guard (CareOn blueprint)
+      - name: Terminology guard (Carelane blueprint)
         run: python scripts/terminology_guard.py
 
       - name: Install Node dependencies

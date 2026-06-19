@@ -33,7 +33,7 @@ class Event:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Summarize new pilot warning events from a Careon log file.'
+        description='Summarize new pilot warning events from a Carelane log file.'
     )
     parser.add_argument(
         'log_path',

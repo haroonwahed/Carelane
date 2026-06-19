@@ -9,7 +9,7 @@ from contracts.oidc_utils import oidc_callback_redirect_uri
 from contracts.user_profile_provisioning import ensure_user_profile_exists
 
 
-class CareonOIDCAuthenticationBackend(OIDCAuthenticationBackend):
+class CarelaneOIDCAuthenticationBackend(OIDCAuthenticationBackend):
     """Authenticate users via OIDC and map identities by email."""
 
     def authenticate(self, request, **kwargs):

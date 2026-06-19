@@ -1,9 +1,9 @@
 # FOUNDATION LOCK
 
-**Primary references (CareOn Operational Constitution v2 — canonical doctrine):**
+**Primary references (Carelane Operational Constitution v2 — canonical doctrine):**
 
-- `docs/Careon_Operational_Constitution_v2.docx` — authoritative formatted master  
-- `docs/Careon_Operational_Constitution_v2.md` — plain-text export (search, diffs, agent tooling)  
+- `docs/Carelane_Operational_Constitution_v2.docx` — authoritative formatted master  
+- `docs/Carelane_Operational_Constitution_v2.md` — plain-text export (search, diffs, agent tooling)  
 - `docs/ZORG_OS_FOUNDATION_APPROACH.md` — system-first build strategy (aligned to constitution v2)
 
 **Implementation lock (code — not superseded by constitution prose):** from this section’s **Technical implementation mapping** onward, plus `contracts/workflow_state_machine.py`.
@@ -145,7 +145,7 @@ Operational surfaces must follow:
 - **Next-best-action** — primary focal band; no competing hero CTAs.  
 - **Design tokens** — no ad-hoc hex; extend theme tokens instead of magic numbers.
 
-UI work must comply with `docs/Careon_Operational_Constitution_v2.md` (UX + visual language) **and** this section.
+UI work must comply with `docs/Carelane_Operational_Constitution_v2.md` (UX + visual language) **and** this section.
 
 ---
 
@@ -291,7 +291,7 @@ These capabilities are **named product commitments** in v1.3. Technical delivery
 ### Arrangement intelligence
 
 - **AI-assisted arrangement alignment** suggests semantic equivalence and tariff alignment **with explicit uncertainty**; humans remain accountable.  
-- Contract: `client/src/lib/arrangementAlignmentContract.ts` and `docs/Careon_Operational_Constitution_v2.md` section 4 (arrangementen) + staging notes in this document.  
+- Contract: `client/src/lib/arrangementAlignmentContract.ts` and `docs/Carelane_Operational_Constitution_v2.md` section 4 (arrangementen) + staging notes in this document.  
 - Do **not** ship implied guarantees of financial correctness.
 
 **Staging (technical, former Technical Foundation v1.3):**

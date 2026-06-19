@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Organisatieactiviteit - Careon{% endblock %}
+{% block title %}Organisatieactiviteit - Carelane{% endblock %}
 {% block content %}
 <div class="ds-list-shell">
 
@@ -7,7 +7,7 @@
     <div class="">
         <h1 class="page-title">Organisatieactiviteit</h1>
         </div>
-    <a href="{% url 'careon:organization_team' %}" class="btn btn-secondary">Terug naar team</a>
+    <a href="{% url 'carelane:organization_team' %}" class="btn btn-secondary">Terug naar team</a>
 </div>
 
 <form method="get" class="ds-list-filters">
@@ -33,7 +33,7 @@
     <input type="date" name="start_date" value="{{ request.GET.start_date }}">
     <input type="date" name="end_date" value="{{ request.GET.end_date }}">
     <button type="submit" class="btn btn-primary">Toepassen</button>
-    <a href="{% url 'careon:organization_activity_export' %}{% if query_string %}?{{ query_string }}{% endif %}" class="btn btn-secondary">CSV exporteren</a>
+    <a href="{% url 'carelane:organization_activity_export' %}{% if query_string %}?{{ query_string }}{% endif %}" class="btn btn-secondary">CSV exporteren</a>
     </div>
     </div>
 </form>

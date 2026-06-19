@@ -27,7 +27,7 @@ DEFAULT_ZIP_URL = (
 
 
 def _fetch_zip(url: str, dest: Path) -> None:
-    req = urllib.request.Request(url, headers={"User-Agent": "Careon-build-script/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Carelane-build-script/1.0"})
     with urllib.request.urlopen(req, timeout=300) as resp:  # noqa: S310
         dest.write_bytes(resp.read())
 

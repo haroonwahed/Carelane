@@ -10,27 +10,27 @@ const insightConfig = {
   info: {
     icon: Info,
     color: "text-blue-base",
-    alertClass: "careon-alert-info"
+    alertClass: "carelane-alert-info"
   },
   warning: {
     icon: AlertTriangle,
     color: "text-yellow-base",
-    alertClass: "careon-alert-warning"
+    alertClass: "carelane-alert-warning"
   },
   success: {
     icon: CheckCircle2,
     color: "text-green-base",
-    alertClass: "careon-alert-success"
+    alertClass: "carelane-alert-success"
   },
   blocked: {
     icon: XCircle,
     color: "text-red-base",
-    alertClass: "careon-alert-error"
+    alertClass: "carelane-alert-error"
   },
   suggestion: {
     icon: Lightbulb,
     color: "text-primary",
-    alertClass: "careon-alert-primary"
+    alertClass: "carelane-alert-primary"
   }
 };
 

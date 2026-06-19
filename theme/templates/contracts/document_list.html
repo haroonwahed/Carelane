@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Documenten - Careon{% endblock %}
+{% block title %}Documenten - Carelane{% endblock %}
 {% block content %}
 <div class="ds-list-shell">
     <div class="ds-list-header">
@@ -8,7 +8,7 @@
             <p class="ds-note-text">Cross-case archief en zoeken. Voor uitvoering en uploads werk je vanuit de casuswerkruimte.</p>
         </div>
         <div class="page-actions">
-            <a href="{% url 'careon:case_list' %}" class="btn btn-primary">Open casussen</a>
+            <a href="{% url 'carelane:case_list' %}" class="btn btn-primary">Open casussen</a>
         </div>
     </div>
 
@@ -52,7 +52,7 @@
                     {% for row in document_rows %}
                     <tr>
                         <td>
-                            <a href="{% url 'careon:document_detail' row.document.pk %}">{{ row.document.title|truncatechars:40 }}</a>
+                            <a href="{% url 'carelane:document_detail' row.document.pk %}">{{ row.document.title|truncatechars:40 }}</a>
                             {% if row.document.is_privileged %}<span class="ds-badge badge-high">Beperkte inzage</span>{% endif %}
                             {% if row.document.is_confidential %}<span class="ds-badge badge-critical">Vertrouwelijk</span>{% endif %}
                         </td>
@@ -60,7 +60,7 @@
                         <td><span class="ds-badge {% if row.document.status == 'FINAL' %}badge-low{% elif row.document.status == 'REVIEW' %}badge-high{% else %}badge-medium{% endif %}">{{ row.document.get_status_display }}</span></td>
                         <td>
                             {% if row.document.contract and row.document.contract.due_diligence_process %}
-                            <a href="{% url 'careon:case_detail' row.document.contract.due_diligence_process.pk %}?tab=documenten">{{ row.document.contract.due_diligence_process.title|default:row.document.contract.title }}</a>
+                            <a href="{% url 'carelane:case_detail' row.document.contract.due_diligence_process.pk %}?tab=documenten">{{ row.document.contract.due_diligence_process.title|default:row.document.contract.title }}</a>
                             {% elif row.document.contract %}
                             {{ row.document.contract.title }}
                             {% else %}
@@ -73,7 +73,7 @@
                             {% if row.case_href %}
                             <a href="{{ row.case_href }}" class="btn btn-ghost">Open casus</a>
                             {% endif %}
-                            <a href="{% url 'careon:document_detail' row.document.pk %}" class="btn btn-ghost">Openen</a>
+                            <a href="{% url 'carelane:document_detail' row.document.pk %}" class="btn btn-ghost">Openen</a>
                             {% if not row.case_href and not row.can_edit %}
                             <span class="btn btn-ghost">Alleen-lezen</span>
                             {% elif not row.case_href %}
@@ -89,7 +89,7 @@
                         <td colspan="7" class="ds-list-empty">
                             <svg class="ds-list-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                             Geen documenten gevonden. Open een casus om daar documenten toe te voegen.
-                            <div class=""><a href="{% url 'careon:case_list' %}" class="btn btn-primary">Open casussen</a></div>
+                            <div class=""><a href="{% url 'carelane:case_list' %}" class="btn btn-primary">Open casussen</a></div>
                         </td>
                     </tr>
                     {% endfor %}

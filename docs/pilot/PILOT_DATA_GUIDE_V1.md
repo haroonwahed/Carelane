@@ -1,4 +1,4 @@
-# CareOn Pilot Data Guide v1
+# Carelane Pilot Data Guide v1
 
 **Purpose:** describe the controlled seed/demo data used for the first closed-pilot session.
 **Rule:** do not use real client data in the pilot.

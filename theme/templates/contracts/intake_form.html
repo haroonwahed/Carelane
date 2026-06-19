@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% if is_edit %}Casus bewerken{% else %}Nieuwe casus{% endif %} - Careon{% endblock %}
+{% block title %}{% if is_edit %}Casus bewerken{% else %}Nieuwe casus{% endif %} - Carelane{% endblock %}
 {% block content %}
 <div class="ds-detail-shell">
     <div class="ds-detail-header">
@@ -269,7 +269,7 @@
         </details>
 
         <div class="ds-card feed-card form-actions ds-list-actions">
-            <a href="{% url 'careon:case_list' %}" class="btn btn-secondary">Annuleren</a>
+            <a href="{% url 'carelane:case_list' %}" class="btn btn-secondary">Annuleren</a>
             <button type="submit" name="save_mode" value="concept" class="btn btn-secondary">Concept bewaren</button>
             <button type="submit" class="btn btn-primary">Opslaan en naar samenvatting</button>
         </div>

@@ -210,7 +210,7 @@ class DecisionEngineTests(TestCase):
         http = DjangoTestClient()
         http.force_login(self.gemeente_user)
         resp = http.post(
-            reverse("careon:case_summary_api", kwargs={"case_id": case_record.pk}),
+            reverse("carelane:case_summary_api", kwargs={"case_id": case_record.pk}),
             data=json.dumps({
                 "summary": "Jongere met ambulante begeleiding; stabiele thuissituatie en duidelijke hulpvraag.",
             }),
@@ -235,7 +235,7 @@ class DecisionEngineTests(TestCase):
         http = DjangoTestClient()
         http.force_login(self.gemeente_user)
         resp = http.post(
-            reverse("careon:case_summary_api", kwargs={"case_id": case_record.pk}),
+            reverse("carelane:case_summary_api", kwargs={"case_id": case_record.pk}),
             data=json.dumps({"summary": "   "}),
             content_type="application/json",
         )
@@ -840,7 +840,7 @@ class DecisionEngineTests(TestCase):
         before_count = CaseDecisionLog.objects.count()
 
         response = self.client.get(
-            reverse("careon:case_decision_evaluation_api", kwargs={"case_id": case_record.pk}),
+            reverse("carelane:case_decision_evaluation_api", kwargs={"case_id": case_record.pk}),
         )
 
         self.assertEqual(response.status_code, 200)
@@ -857,7 +857,7 @@ class DecisionEngineTests(TestCase):
         self.client.login(username="gemeente", password="testpass123")
         before = CaseDecisionLog.objects.count()
         response = self.client.get(
-            reverse("careon:case_arrangement_alignment_api", kwargs={"case_id": case_record.pk}),
+            reverse("carelane:case_arrangement_alignment_api", kwargs={"case_id": case_record.pk}),
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(CaseDecisionLog.objects.count(), before)
@@ -882,7 +882,7 @@ class DecisionEngineTests(TestCase):
         intake.save(update_fields=["arrangement_type_code"])
         self.client.login(username="gemeente", password="testpass123")
         response = self.client.get(
-            reverse("careon:case_arrangement_alignment_api", kwargs={"case_id": case_record.pk}),
+            reverse("carelane:case_arrangement_alignment_api", kwargs={"case_id": case_record.pk}),
         )
         self.assertEqual(response.status_code, 200)
         hint = response.json()["equivalence_hints"][0]
@@ -898,7 +898,7 @@ class DecisionEngineTests(TestCase):
         intake.save(update_fields=["arrangement_type_code"])
         self.client.login(username="gemeente", password="testpass123")
         response = self.client.get(
-            reverse("careon:case_arrangement_alignment_api", kwargs={"case_id": case_record.pk}),
+            reverse("carelane:case_arrangement_alignment_api", kwargs={"case_id": case_record.pk}),
         )
         self.assertEqual(response.status_code, 200)
         hint = response.json()["equivalence_hints"][0]
@@ -914,7 +914,7 @@ class DecisionEngineTests(TestCase):
         intake.save(update_fields=["arrangement_type_code"])
         self.client.login(username="gemeente", password="testpass123")
         response = self.client.get(
-            reverse("careon:case_arrangement_alignment_api", kwargs={"case_id": case_record.pk}),
+            reverse("carelane:case_arrangement_alignment_api", kwargs={"case_id": case_record.pk}),
         )
         self.assertEqual(response.status_code, 200)
         hint = response.json()["equivalence_hints"][0]

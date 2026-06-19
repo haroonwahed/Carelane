@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% if form.instance.pk %}Aanbieder bewerken{% else %}Nieuwe aanbieder{% endif %} - Careon{% endblock %}
+{% block title %}{% if form.instance.pk %}Aanbieder bewerken{% else %}Nieuwe aanbieder{% endif %} - Carelane{% endblock %}
 {% block content %}
 <div class="ds-detail-shell">
     <nav class=""><a class="" href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/">Regiekamer</a><span class="ds-muted-label"> / </span><span class="">Formulier</span></nav>
@@ -30,7 +30,7 @@
         </div>
         <div class="ds-list-actions">
             <button type="submit" class="btn btn-primary">{% if form.instance.pk %}Bijwerken{% else %}Aanmaken{% endif %} aanbieder</button>
-            <a href="{% url 'careon:client_list' %}" class="btn btn-secondary">Annuleren</a>
+            <a href="{% url 'carelane:client_list' %}" class="btn btn-secondary">Annuleren</a>
         </div>
     </form>
 </div>

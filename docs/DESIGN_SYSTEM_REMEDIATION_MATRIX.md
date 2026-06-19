@@ -5,7 +5,7 @@
 Converge the UI onto one runtime design system:
 
 1. `theme/static/css/zorgregie-design-system.css` as the canonical semantic layer
-2. `theme/static/css/careon-premium-theme.css` as the theme override layer
+2. `theme/static/css/carelane-premium-theme.css` as the theme override layer
 3. semantic `ds-*` classes in templates as the preferred authoring model
 
 ## Current Decisions
@@ -14,7 +14,7 @@ Converge the UI onto one runtime design system:
 
 - Keep `base.html` as the primary shell.
 - Keep `zorgregie-design-system.css` as the source of truth for shared primitives.
-- Keep `careon-premium-theme.css` as the premium token and override layer.
+- Keep `carelane-premium-theme.css` as the premium token and override layer.
 - Prefer semantic classes over raw page-local utility bundles for repeated patterns.
 
 ### Transitional
@@ -25,7 +25,7 @@ Converge the UI onto one runtime design system:
 
 ### Deprecated
 
-- `theme/static/css/theme-careon.css`
+- `theme/static/css/theme-carelane.css`
 - `theme/templates/base_redesign.html`
 - inline `style="..."` attributes in templates
 - repeated page-local `<style>` blocks for cards, filters, list rows, and detail shells
@@ -68,7 +68,7 @@ Converge the UI onto one runtime design system:
 | `theme/templates/contracts/matching_dashboard.html` | mixed systems, important flow | high | align with same detail primitives as intake and client pages |
 | `theme/templates/contracts/client_detail.html` | close to target, semantic classes missing runtime definitions until now | medium | keep as reference page and validate after shared CSS changes |
 | `theme/templates/base_redesign.html` | dormant alternate shell | medium | confirm no active use, then remove |
-| `theme/static/css/theme-careon.css` | legacy theme layer, likely unused | medium | verify zero runtime references, then delete |
+| `theme/static/css/theme-carelane.css` | legacy theme layer, likely unused | medium | verify zero runtime references, then delete |
 | `theme/static/css/dist/styles.css` | empty artifact | medium | either generate it in CI/dev or stop loading it |
 
 ## Acceptance Criteria

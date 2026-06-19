@@ -7,9 +7,9 @@ import {
 /** URL query: `?section=workflow-coordinatie`. */
 export const SETTINGS_SECTION_QUERY_PARAM = "section";
 
-export const SETTINGS_SECTION_STORAGE_KEY = "careon-settings-active-section";
+export const SETTINGS_SECTION_STORAGE_KEY = "carelane-settings-active-section";
 
-export const SETTINGS_PREFERENCES_STORAGE_KEY = "careon-settings-preferences-v1";
+export const SETTINGS_PREFERENCES_STORAGE_KEY = "carelane-settings-preferences-v1";
 
 export type SettingsPreferencesSnapshot = {
   organizationName: string;

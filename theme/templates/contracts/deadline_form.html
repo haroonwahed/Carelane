@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% if form.instance.pk %}Bewerk{% else %}Nieuwe{% endif %} opvolgtaak - Careon{% endblock %}
+{% block title %}{% if form.instance.pk %}Bewerk{% else %}Nieuwe{% endif %} opvolgtaak - Carelane{% endblock %}
 {% block content %}
 <div class="ds-detail-shell">
     <nav class=""><a class="" href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/">Regiekamer</a><span class="ds-muted-label"> / </span><span class="">Formulier</span></nav>
@@ -30,7 +30,7 @@
         </div>
         <div class="ds-list-actions">
             <button type="submit" class="btn btn-primary">{% if form.instance.pk %}Bijwerken{% else %}Opslaan{% endif %}</button>
-            <a href="{% url 'careon:task_list' %}" class="btn btn-secondary">Annuleren</a>
+            <a href="{% url 'carelane:task_list' %}" class="btn btn-secondary">Annuleren</a>
         </div>
     </form>
 </div>

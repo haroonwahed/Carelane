@@ -4,7 +4,7 @@
     "source_repo": "https://github.com/iStandaarden/iWlz-codelijsten-APiWlz",
     "generated_at": "2026-05-11T08:26:13Z",
     "tables": 7,
-    "note": "Alleen voor read-only arrangement hints in CareOn. Raadpleeg de actuele iWlz-documentatie voor implementatiekeuzes."
+    "note": "Alleen voor read-only arrangement hints in Carelane. Raadpleeg de actuele iWlz-documentatie voor implementatiekeuzes."
   },
   "tables": [
     {

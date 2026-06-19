@@ -1,8 +1,8 @@
 """
 Deployment truth payload for operator-facing /build-info (staff-only).
 
-Deploy platforms should set CAREON_GIT_SHA, CAREON_DEPLOY_TIMESTAMP, CAREON_ENVIRONMENT,
-and CAREON_SEED_VERSION where possible. Values fall back to sane defaults for local dev.
+Deploy platforms should set CARELANE_GIT_SHA, CARELANE_DEPLOY_TIMESTAMP, CARELANE_ENVIRONMENT,
+and CARELANE_SEED_VERSION where possible. Values fall back to sane defaults for local dev.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ def _read_revision_file() -> str:
 
 def _commit_sha() -> str:
     sha = _first_env(
-        "CAREON_GIT_SHA",
+        "CARELANE_GIT_SHA",
         "RENDER_GIT_COMMIT",
         "GIT_COMMIT",
         "GITHUB_SHA",
@@ -50,12 +50,12 @@ def _commit_sha() -> str:
 
 
 def _deploy_timestamp() -> str:
-    return _first_env("CAREON_DEPLOY_TIMESTAMP", "DEPLOY_TIMESTAMP", "BUILD_TIMESTAMP")
+    return _first_env("CARELANE_DEPLOY_TIMESTAMP", "DEPLOY_TIMESTAMP", "BUILD_TIMESTAMP")
 
 
 def _environment_name() -> str:
     name = _first_env(
-        "CAREON_ENVIRONMENT",
+        "CARELANE_ENVIRONMENT",
         "SENTRY_ENVIRONMENT",
         "RENDER_ENVIRONMENT",
         "ENVIRONMENT",
@@ -73,7 +73,7 @@ def _environment_name() -> str:
 
 
 def _seed_version() -> str:
-    env = _first_env("CAREON_SEED_VERSION", "SEED_VERSION")
+    env = _first_env("CARELANE_SEED_VERSION", "SEED_VERSION")
     if env:
         return env
     try:

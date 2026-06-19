@@ -16,7 +16,7 @@ from contracts.workflow_state_machine import WorkflowState
 
 
 def _release_and_build_ids() -> tuple[str, str]:
-    release_id = (os.environ.get('CAREON_RELEASE_ID') or '').strip()[:120]
+    release_id = (os.environ.get('CARELANE_RELEASE_ID') or '').strip()[:120]
     try:
         sha = (gather_build_info().get('commit_sha') or '')[:64]
     except Exception:  # noqa: BLE001 — deployment truth must never block timeline append

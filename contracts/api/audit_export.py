@@ -119,7 +119,7 @@ def build_audit_log_export(*, request, organization, actor_role: str, provider_f
             ],
             'rowCount': len(entries),
         })
-    return _write_audit_csv(entries, filename_prefix='careon-audit-log')
+    return _write_audit_csv(entries, filename_prefix='carelane-audit-log')
 
 
 def build_case_dispute_export(*, request, organization, case: CareCase, intake: CaseIntakeProcess | None):
@@ -179,7 +179,7 @@ def build_case_dispute_export(*, request, organization, case: CareCase, intake: 
             writer.writerow(['audit', *_audit_row(entry)])
         response = HttpResponse(buffer.getvalue(), content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = (
-            f'attachment; filename="careon-dispute-casus-{case.pk}-{date.today().isoformat()}.csv"'
+            f'attachment; filename="carelane-dispute-casus-{case.pk}-{date.today().isoformat()}.csv"'
         )
         return response
 

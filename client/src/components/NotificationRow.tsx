@@ -12,10 +12,10 @@ interface NotificationRowProps {
 }
 
 const kindStyles = {
-  sale: "careon-badge-purple",
-  message: "careon-badge-blue",
-  offer: "careon-badge-yellow",
-  system: "careon-badge-purple",
+  sale: "carelane-badge-purple",
+  message: "carelane-badge-blue",
+  offer: "carelane-badge-yellow",
+  system: "carelane-badge-purple",
 };
 
 const kindLabels = {

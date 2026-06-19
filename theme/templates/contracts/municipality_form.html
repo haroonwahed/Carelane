@@ -7,10 +7,10 @@
 <nav class="">
         <a class="" href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/">Regiekamer</a>
         <span> / </span>
-        <a class="" href="{% url 'careon:municipality_list' %}">Gemeenten</a>
+        <a class="" href="{% url 'carelane:municipality_list' %}">Gemeenten</a>
         {% if municipality %}
         <span> / </span>
-        <a class="" href="{% url 'careon:municipality_detail' municipality.pk %}">{{ municipality.municipality_name }}</a>
+        <a class="" href="{% url 'carelane:municipality_detail' municipality.pk %}">{{ municipality.municipality_name }}</a>
         <span> / </span>
         <span class="">Wijzigen</span>
         {% else %}
@@ -147,7 +147,7 @@
             <button type="submit" class="btn btn-primary">
                 {% if municipality %}Wijzigingen opslaan{% else %}Gemeente aanmaken{% endif %}
             </button>
-            <a href="{% url 'careon:municipality_list' %}" class="btn btn-secondary">Annuleren</a>
+            <a href="{% url 'carelane:municipality_list' %}" class="btn btn-secondary">Annuleren</a>
         </div>
     </form>
 </div>

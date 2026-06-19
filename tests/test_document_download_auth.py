@@ -141,11 +141,11 @@ class DocumentDownloadAuthTests(TestCase):
                 pass
 
     def _download_url(self):
-        return reverse('careon:serve_case_document_api', kwargs={'document_id': self.doc.pk})
+        return reverse('carelane:serve_case_document_api', kwargs={'document_id': self.doc.pk})
 
     def _scoped_download_url(self):
         return reverse(
-            'careon:serve_case_document_scoped_api',
+            'carelane:serve_case_document_scoped_api',
             kwargs={'case_id': self.case_record.pk, 'document_id': self.doc.pk},
         )
 
@@ -235,7 +235,7 @@ class DocumentDownloadAuthTests(TestCase):
             file_size=5,
             mime_type='text/plain',
         )
-        url = reverse('careon:serve_case_document_api', kwargs={'document_id': unlinked.pk})
+        url = reverse('carelane:serve_case_document_api', kwargs={'document_id': unlinked.pk})
         self.client.login(username='doc_provider', password='pass')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
@@ -253,7 +253,7 @@ class DocumentDownloadAuthTests(TestCase):
             file_size=0,
             mime_type='text/plain',
         )
-        url = reverse('careon:serve_case_document_api', kwargs={'document_id': no_file_doc.pk})
+        url = reverse('carelane:serve_case_document_api', kwargs={'document_id': no_file_doc.pk})
         self.client.login(username='doc_gemeente', password='pass')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)

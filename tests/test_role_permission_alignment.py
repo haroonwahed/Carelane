@@ -167,102 +167,102 @@ class RolePermissionAlignmentTests(TestCase):
     def test_member_sees_read_only_actions_on_case_flow_pages(self):
         self._login(self.member)
 
-        case_response = self.client.get(reverse('careon:case_detail', kwargs={'pk': self.intake.pk}))
+        case_response = self.client.get(reverse('carelane:case_detail', kwargs={'pk': self.intake.pk}))
         self.assertEqual(case_response.status_code, 200)
         self.assertNotContains(case_response, f'/care/casussen/{self.intake.pk}/taken/new/')
         self.assertNotContains(case_response, f'/care/casussen/{self.intake.pk}/signalen/new/')
-        self.assertNotContains(case_response, reverse('careon:case_update', kwargs={'pk': self.intake.pk}))
+        self.assertNotContains(case_response, reverse('carelane:case_update', kwargs={'pk': self.intake.pk}))
 
-        matching_response = self.client.get(reverse('careon:matching_dashboard'))
+        matching_response = self.client.get(reverse('carelane:matching_dashboard'))
         self.assertEqual(matching_response.status_code, 200)
-        self.assertNotContains(matching_response, reverse('careon:case_matching_action', kwargs={'pk': self.intake.pk}))
+        self.assertNotContains(matching_response, reverse('carelane:case_matching_action', kwargs={'pk': self.intake.pk}))
 
-        placement_list_response = self.client.get(reverse('careon:placement_list'))
+        placement_list_response = self.client.get(reverse('carelane:placement_list'))
         self.assertEqual(placement_list_response.status_code, 200)
-        self.assertContains(placement_list_response, reverse('careon:case_detail', kwargs={'pk': self.intake.pk}))
+        self.assertContains(placement_list_response, reverse('carelane:case_detail', kwargs={'pk': self.intake.pk}))
 
-        signal_list_response = self.client.get(reverse('careon:signal_list'))
+        signal_list_response = self.client.get(reverse('carelane:signal_list'))
         self.assertEqual(signal_list_response.status_code, 200)
-        self.assertNotContains(signal_list_response, reverse('careon:signal_create'))
+        self.assertNotContains(signal_list_response, reverse('carelane:signal_create'))
 
-        document_list_response = self.client.get(reverse('careon:document_list'))
+        document_list_response = self.client.get(reverse('carelane:document_list'))
         self.assertEqual(document_list_response.status_code, 200)
-        self.assertNotContains(document_list_response, reverse('careon:document_create'))
+        self.assertNotContains(document_list_response, reverse('carelane:document_create'))
 
-        deadline_list_response = self.client.get(reverse('careon:task_list') + '?show=all')
+        deadline_list_response = self.client.get(reverse('carelane:task_list') + '?show=all')
         self.assertEqual(deadline_list_response.status_code, 200)
-        self.assertNotContains(deadline_list_response, reverse('careon:task_create'))
+        self.assertNotContains(deadline_list_response, reverse('carelane:task_create'))
 
-        assessment_detail_response = self.client.get(reverse('careon:assessment_detail', kwargs={'pk': self.assessment.pk}))
+        assessment_detail_response = self.client.get(reverse('carelane:assessment_detail', kwargs={'pk': self.assessment.pk}))
         self.assertEqual(assessment_detail_response.status_code, 200)
-        self.assertNotContains(assessment_detail_response, reverse('careon:assessment_update', kwargs={'pk': self.assessment.pk}))
+        self.assertNotContains(assessment_detail_response, reverse('carelane:assessment_update', kwargs={'pk': self.assessment.pk}))
 
     def test_owner_and_admin_keep_edit_actions_visible(self):
         for user in (self.owner, self.admin):
             self._login(user)
 
-            case_response = self.client.get(reverse('careon:case_detail', kwargs={'pk': self.intake.pk}))
+            case_response = self.client.get(reverse('carelane:case_detail', kwargs={'pk': self.intake.pk}))
             self.assertEqual(case_response.status_code, 200)
             self.assertContains(case_response, f'/care/casussen/{self.intake.pk}/taken/new/')
             self.assertContains(case_response, f'/care/casussen/{self.intake.pk}/signalen/new/')
 
-            matching_response = self.client.get(reverse('careon:matching_dashboard'))
+            matching_response = self.client.get(reverse('carelane:matching_dashboard'))
             self.assertEqual(matching_response.status_code, 200)
 
             matching_action_response = self.client.post(
-                reverse('careon:case_matching_action', kwargs={'pk': self.intake.pk}),
+                reverse('carelane:case_matching_action', kwargs={'pk': self.intake.pk}),
                 {'action': 'reject', 'provider_id': str(self.provider.pk)},
                 follow=False,
             )
             self.assertNotEqual(matching_action_response.status_code, 403)
 
             placement_action_response = self.client.post(
-                reverse('careon:case_placement_action', kwargs={'pk': self.intake.pk}),
+                reverse('carelane:case_placement_action', kwargs={'pk': self.intake.pk}),
                 {'status': PlacementRequest.Status.APPROVED},
                 follow=False,
             )
             self.assertNotEqual(placement_action_response.status_code, 403)
 
-            assessment_detail_response = self.client.get(reverse('careon:assessment_detail', kwargs={'pk': self.assessment.pk}))
+            assessment_detail_response = self.client.get(reverse('carelane:assessment_detail', kwargs={'pk': self.assessment.pk}))
             self.assertEqual(assessment_detail_response.status_code, 200)
-            self.assertContains(assessment_detail_response, reverse('careon:assessment_update', kwargs={'pk': self.assessment.pk}))
+            self.assertContains(assessment_detail_response, reverse('carelane:assessment_update', kwargs={'pk': self.assessment.pk}))
 
     def test_member_direct_edit_routes_remain_forbidden(self):
         self._login(self.member)
 
         self.assertEqual(
-            self.client.get(reverse('careon:placement_update', kwargs={'pk': self.placement.pk})).status_code,
+            self.client.get(reverse('carelane:placement_update', kwargs={'pk': self.placement.pk})).status_code,
             403,
         )
         self.assertEqual(
-            self.client.get(reverse('careon:signal_update', kwargs={'pk': self.signal.pk})).status_code,
+            self.client.get(reverse('carelane:signal_update', kwargs={'pk': self.signal.pk})).status_code,
             403,
         )
         self.assertEqual(
-            self.client.get(reverse('careon:task_update', kwargs={'pk': self.deadline.pk})).status_code,
+            self.client.get(reverse('carelane:task_update', kwargs={'pk': self.deadline.pk})).status_code,
             403,
         )
         self.assertEqual(
-            self.client.get(reverse('careon:document_update', kwargs={'pk': self.document.pk})).status_code,
+            self.client.get(reverse('carelane:document_update', kwargs={'pk': self.document.pk})).status_code,
             403,
         )
         self.assertEqual(
             self.client.post(
-                reverse('careon:signal_status_update', kwargs={'pk': self.signal.pk}),
+                reverse('carelane:signal_status_update', kwargs={'pk': self.signal.pk}),
                 {'status': CareSignal.SignalStatus.IN_PROGRESS},
             ).status_code,
             403,
         )
         self.assertEqual(
             self.client.post(
-                reverse('careon:case_matching_action', kwargs={'pk': self.intake.pk}),
+                reverse('carelane:case_matching_action', kwargs={'pk': self.intake.pk}),
                 {'action': 'reject', 'provider_id': str(self.provider.pk)},
             ).status_code,
             403,
         )
         self.assertEqual(
             self.client.post(
-                reverse('careon:case_placement_action', kwargs={'pk': self.intake.pk}),
+                reverse('carelane:case_placement_action', kwargs={'pk': self.intake.pk}),
                 {'status': PlacementRequest.Status.APPROVED},
             ).status_code,
             403,
@@ -272,11 +272,11 @@ class RolePermissionAlignmentTests(TestCase):
         self._login(self.member)
 
         self.assertEqual(
-            self.client.get(reverse('careon:case_update', kwargs={'pk': self.intake.pk})).status_code,
+            self.client.get(reverse('carelane:case_update', kwargs={'pk': self.intake.pk})).status_code,
             403,
         )
         self.assertEqual(
-            self.client.get(reverse('careon:assessment_update', kwargs={'pk': self.assessment.pk})).status_code,
+            self.client.get(reverse('carelane:assessment_update', kwargs={'pk': self.assessment.pk})).status_code,
             403,
         )
 
@@ -284,7 +284,7 @@ class RolePermissionAlignmentTests(TestCase):
         self._login(self.member)
 
         task_response = self.client.post(
-            reverse('careon:case_task_create', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_task_create', kwargs={'pk': self.intake.pk}),
             {
                 'due_diligence_process': str(self.intake.pk),
                 'title': 'Member task should fail',
@@ -297,7 +297,7 @@ class RolePermissionAlignmentTests(TestCase):
         self.assertEqual(task_response.status_code, 403)
 
         assessment_response = self.client.post(
-            reverse('careon:assessment_create'),
+            reverse('carelane:assessment_create'),
             {
                 'due_diligence_process': str(self.unassessed_intake.pk),
                 'assessment_status': CaseAssessment.AssessmentStatus.DRAFT,

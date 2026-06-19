@@ -5,10 +5,10 @@
     <nav class="">
         <a class="" href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/">Regiekamer</a>
         <span class="ds-muted-label"> / </span>
-        <a class="" href="{% url 'careon:waittime_list' %}">Wachttijden</a>
+        <a class="" href="{% url 'carelane:waittime_list' %}">Wachttijden</a>
         {% if is_edit %}
         <span class="ds-muted-label"> / </span>
-        <a class="" href="{% url 'careon:waittime_detail' object.pk %}">{{ object.provider.name }}</a>
+        <a class="" href="{% url 'carelane:waittime_detail' object.pk %}">{{ object.provider.name }}</a>
         <span> / </span>
         <span class="">Wijzigen</span>
         {% else %}
@@ -53,7 +53,7 @@
             <button type="submit" class="btn btn-primary">
                 {% if is_edit %}Bijwerken{% else %}Registreren{% endif %}
             </button>
-            <a href="{% url 'careon:waittime_list' %}" class="btn btn-secondary">
+            <a href="{% url 'carelane:waittime_list' %}" class="btn btn-secondary">
                 Annuleren
             </a>
         </div>

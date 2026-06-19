@@ -1,6 +1,6 @@
 # Officiële arrangement- / productcodebronnen (NL)
 
-CareOn gebruikt deze bronnen **alleen** voor read-only arrangement hints (`GET .../arrangement-alignment/`). Geen automatische financiële of contractuele waarheid.
+Carelane gebruikt deze bronnen **alleen** voor read-only arrangement hints (`GET .../arrangement-alignment/`). Geen automatische financiële of contractuele waarheid.
 
 ## Volgorde in de API (deterministisch)
 
@@ -28,7 +28,7 @@ CareOn gebruikt deze bronnen **alleen** voor read-only arrangement hints (`GET .
 
 - **Bron:** [iStandaarden/iWlz-codelijsten-APiWlz](https://github.com/iStandaarden/iWlz-codelijsten-APiWlz) (JSON onder `codelijsten/`).  
 - **Repo-export:** `contracts/data/iwlz_official_codelijsten.json` (`scripts/build_iwlz_official_codelijsten_json.py`).  
-- **Let op:** in die repository staat een waarschuwing dat het een **ontwikkelcontext** kan zijn; de codewaarden zijn wel de gepubliceerde iWlz-codelijsten. Gebruik in CareOn uitsluitend als **hint**; normatieve ketenkeuzes blijven bij iStandaarden / CAK / zorgkantoor.  
+- **Let op:** in die repository staat een waarschuwing dat het een **ontwikkelcontext** kan zijn; de codewaarden zijn wel de gepubliceerde iWlz-codelijsten. Gebruik in Carelane uitsluitend als **hint**; normatieve ketenkeuzes blijven bij iStandaarden / CAK / zorgkantoor.  
 - **Aanvulling:** overige iWlz-tabellen en API’s: [Tabellen en codelijsten | iStandaarden](https://www.istandaarden.nl/iwlz/over-iwlz/tabellen-en-codelijsten).
 
 ## Alles herbouwen

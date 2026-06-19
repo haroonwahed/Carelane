@@ -1,5 +1,5 @@
 /**
- * Careon Phase Engine
+ * Carelane Phase Engine
  *
  * Single source of truth for:
  *  - Phase definitions and transitions

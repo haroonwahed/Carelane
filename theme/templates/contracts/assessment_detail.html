@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Beoordeling door aanbieder - {{ intake.title }} - Careon{% endblock %}
+{% block title %}Beoordeling door aanbieder - {{ intake.title }} - Carelane{% endblock %}
 {% block content %}
 <div class="page-wrap page-stack">
 
 <nav class="ds-breadcrumb">
     <a href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/" class="ds-breadcrumb-link">Regiekamer</a>
     <span class="mx-2">/</span>
-    <a href="{% url 'careon:case_list' %}" class="ds-breadcrumb-link">Casussen</a>
+    <a href="{% url 'carelane:case_list' %}" class="ds-breadcrumb-link">Casussen</a>
     <span class="mx-2">/</span>
-    <a href="{% url 'careon:case_detail' intake.pk %}" class="ds-breadcrumb-link">{{ intake.title }}</a>
+    <a href="{% url 'carelane:case_detail' intake.pk %}" class="ds-breadcrumb-link">{{ intake.title }}</a>
     <span class="mx-2">/</span>
     <span class="ds-breadcrumb-current">Beoordeling door aanbieder</span>
 </nav>
@@ -23,11 +23,11 @@
         </p>
     </div>
     <div class="flex gap-3">
-        <a href="{% url 'careon:case_detail' intake.pk %}" class="btn btn-secondary">
+        <a href="{% url 'carelane:case_detail' intake.pk %}" class="btn btn-secondary">
             Naar casus
         </a>
         {% if can_edit_assessment %}
-        <a href="{% url 'careon:assessment_update' assessment.pk %}" class="action-chip">
+        <a href="{% url 'carelane:assessment_update' assessment.pk %}" class="action-chip">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
             Wijzigen
         </a>
@@ -115,7 +115,7 @@
             <div class="panel-inner space-y-4">
                 <div>
                     <p class="text-xs font-medium uppercase tracking-wide mb-1 ds-text-muted">Casus</p>
-                    <a href="{% url 'careon:case_detail' intake.pk %}" class="text-sm ds-link">{{ intake.title }}</a>
+                    <a href="{% url 'carelane:case_detail' intake.pk %}" class="text-sm ds-link">{{ intake.title }}</a>
                 </div>
                 <div>
                     <p class="text-xs font-medium uppercase tracking-wide mb-1 ds-text-muted">Zorgvraag</p>
@@ -149,7 +149,7 @@
                 </a>
                 <p class="text-xs ds-text-muted">Nog niet gereed: {{ matching_missing|join:", " }}.</p>
                 {% if can_edit_assessment %}
-                <a href="{% url 'careon:assessment_update' assessment.pk %}" class="btn btn-ghost ds-btn-block">Beoordeling door aanbieder bijwerken</a>
+                <a href="{% url 'carelane:assessment_update' assessment.pk %}" class="btn btn-ghost ds-btn-block">Beoordeling door aanbieder bijwerken</a>
                 {% endif %}
                 {% endif %}
             </div>

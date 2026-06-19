@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "../ui/utils";
-import { CareOnHeroOrchestrationVisual } from "../landing/CareOnHeroOrchestrationVisual";
+import { CarelaneHeroOrchestrationVisual } from "../landing/CarelaneHeroOrchestrationVisual";
 import { LOGIN_URL, REGISTER_URL } from "../../lib/routes";
 
 interface PublicLandingPageProps {
@@ -19,7 +19,7 @@ interface PublicLandingPageProps {
 }
 
 const navLinks = [
-  { label: "Waarom CareOn", href: "#waarom" },
+  { label: "Waarom Carelane", href: "#waarom" },
   { label: "Werkstroom", href: "#oplossing" },
   { label: "Voor wie", href: "#voor-wie" },
   { label: "Over ons", href: "#over-ons" },
@@ -190,19 +190,19 @@ const partnerMarqueeBrands = [...partnerBrands, ...partnerBrands] as const;
 
 const faqItems = [
   {
-    question: "Voor wie is CareOn bedoeld?",
+    question: "Voor wie is Carelane bedoeld?",
     answer:
       "Voor gemeenten en zorgaanbieders die coördinatie, tempo en verantwoording in dezelfde werkstroom willen brengen.",
   },
   {
-    question: "Vervangt CareOn bestaande systemen?",
+    question: "Vervangt Carelane bestaande systemen?",
     answer:
-      "Nee. CareOn werkt als een operationele laag boven bestaande processen en bronnen.",
+      "Nee. Carelane werkt als een operationele laag boven bestaande processen en bronnen.",
   },
   {
     question: "Hoe werkt matching?",
     answer:
-      "CareOn vergelijkt inhoud, capaciteit, regio en urgentie. De uiteindelijke keuze blijft menselijk.",
+      "Carelane vergelijkt inhoud, capaciteit, regio en urgentie. De uiteindelijke keuze blijft menselijk.",
   },
   {
     question: "Welke gegevens ziet een aanbieder?",
@@ -210,7 +210,7 @@ const faqItems = [
       "Alleen context die nodig is na een gekoppelde aanvraag.",
   },
   {
-    question: "Is CareOn geschikt voor een pilot?",
+    question: "Is Carelane geschikt voor een pilot?",
     answer:
       "Ja. Begin klein met één gemeente, enkele aanbieders en een beperkte aanvraagset.",
   },
@@ -313,7 +313,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
               <ShieldCheck size={20} className="text-slate-200" />
             </div>
             <div>
-              <div className="text-base font-semibold tracking-tight text-white sm:text-lg">CareOn</div>
+              <div className="text-base font-semibold tracking-tight text-white sm:text-lg">Carelane</div>
               <div className="text-xs text-slate-400 sm:text-sm">Operationele coördinatie voor gemeenten en zorgaanbieders</div>
             </div>
           </a>
@@ -371,7 +371,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
                       <span className="text-violet-200">werkstroom</span>.
                     </h1>
                     <p className="max-w-lg text-[15px] leading-7 text-slate-300 sm:text-[17px]">
-                      CareOn helpt gemeenten en zorgaanbieders dezelfde stappen te volgen, met auditabele
+                      Carelane helpt gemeenten en zorgaanbieders dezelfde stappen te volgen, met auditabele
                       besluitvorming, duidelijke eigenaarschap en minder wachttijd.
                     </p>
                   </div>
@@ -409,7 +409,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
                 </div>
               </div>
 
-              <CareOnHeroOrchestrationVisual />
+              <CarelaneHeroOrchestrationVisual />
             </div>
           </div>
         </section>
@@ -555,7 +555,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
                 <div className="mt-5 flex flex-col items-center">
                   <div className="h-7 w-px bg-slate-700/70" aria-hidden="true" />
                   <div className="rounded-[22px] border border-slate-700/80 bg-slate-950/80 px-4 py-4 text-center shadow-[0_10px_30px_rgba(2,6,23,0.22)] sm:px-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-200/90">CareOn regielaag</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-200/90">Carelane regielaag</p>
                     <p className="mt-1 text-sm font-semibold text-white">Status · Eigenaarschap · Audit · Volgende actie</p>
                   </div>
                   <div className="h-7 w-px bg-slate-700/70" aria-hidden="true" />
@@ -599,7 +599,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
           <SectionHeading
             eyebrow="Hoe het werkt"
             title="Van aanvraag naar bevestigde overdracht"
-            copy="CareOn brengt gemeenten en zorgaanbieders samen in één gecontroleerde werkstroom, met duidelijke eigenaarschap, uitlegbare keuzes en minder overdrachtsruis."
+            copy="Carelane brengt gemeenten en zorgaanbieders samen in één gecontroleerde werkstroom, met duidelijke eigenaarschap, uitlegbare keuzes en minder overdrachtsruis."
           />
 
           <div className="mt-8 overflow-hidden rounded-[28px] border border-slate-800/80 bg-slate-950/55 shadow-[0_18px_50px_rgba(2,6,23,0.28)]">
@@ -668,7 +668,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
           <SectionHeading
             eyebrow="Voor wie"
             title="Rolzuivere samenwerking zonder losse werkvloeren."
-            copy="De gemeente bewaakt de financiering en arrangementen. De aanbieder ziet een begrensde aanvraag. CareOn houdt dat verschil helder."
+            copy="De gemeente bewaakt de financiering en arrangementen. De aanbieder ziet een begrensde aanvraag. Carelane houdt dat verschil helder."
           />
 
           <div className="mt-12 grid gap-4 lg:grid-cols-2">
@@ -696,7 +696,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Waarom dit landt</p>
               <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">Sneller duidelijkheid, minder herstelwerk, meer vertrouwen.</h3>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-                CareOn helpt teams sneller tot een gedeelde beslissing te komen, met minder afstemming achteraf en
+                Carelane helpt teams sneller tot een gedeelde beslissing te komen, met minder afstemming achteraf en
                 meer grip op waarom een route gekozen is.
               </p>
             </HoverPanel>
@@ -781,7 +781,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
           <SectionHeading
             eyebrow="Over ons"
             title="Een operationele laag voor veilige coördinatie."
-            copy="CareOn is gebouwd voor gemeenten en zorgaanbieders die een helder, auditbaar en rustig proces willen. We brengen de werkstroom boven de bestaande keten, zonder de menselijke beslissing over te nemen."
+            copy="Carelane is gebouwd voor gemeenten en zorgaanbieders die een helder, auditbaar en rustig proces willen. We brengen de werkstroom boven de bestaande keten, zonder de menselijke beslissing over te nemen."
           />
 
           <div className="mt-10 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
@@ -791,7 +791,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
                 Minder ruis, meer herleiding, duidelijke volgende stappen.
               </h3>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-                We ontwerpen CareOn om vraag, validatie, beoordeling en overdracht in één gecontroleerde omgeving te
+                We ontwerpen Carelane om vraag, validatie, beoordeling en overdracht in één gecontroleerde omgeving te
                 houden. Dat helpt teams sneller te handelen zonder de keten onduidelijker te maken.
               </p>
             </HoverPanel>
@@ -819,19 +819,19 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
                 <ShieldCheck size={18} className="text-slate-200" />
               </div>
               <div>
-                <div className="text-base font-semibold text-white">CareOn</div>
+                <div className="text-base font-semibold text-white">Carelane</div>
                 <div className="text-sm text-slate-400">Operationele coördinatie voor gemeenten en zorgaanbieders</div>
               </div>
             </a>
             <p className="max-w-2xl text-sm leading-7 text-slate-400">
-              CareOn helpt gemeenten en zorgaanbieders van aanvraag tot intake met meer grip, minder vertraging en
+              Carelane helpt gemeenten en zorgaanbieders van aanvraag tot intake met meer grip, minder vertraging en
               beter verklaarbare beslissingen.
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             {[
-              ["Waarom CareOn", "#waarom"],
+              ["Waarom Carelane", "#waarom"],
               ["Werkstroom", "#oplossing"],
               ["Voor gemeenten", "#voor-wie"],
               ["Voor aanbieders", "#voor-wie"],

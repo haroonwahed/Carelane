@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Aanbieders - Careon{% endblock %}
+{% block title %}Aanbieders - Carelane{% endblock %}
 {% block content %}
 <div class="ds-list-shell provider-workspace">
     {% if provider_workspace_summary.regional_capacity_summary %}
@@ -28,7 +28,7 @@
             </div>
         </div>
         <div class="page-actions">
-            <a href="{% url 'careon:client_create' %}" class="btn btn-primary">Nieuwe aanbieder</a>
+            <a href="{% url 'carelane:client_create' %}" class="btn btn-primary">Nieuwe aanbieder</a>
         </div>
     </div>
 
@@ -94,7 +94,7 @@
         <article class="queue-row">
             <div class="queue-head">
                 <div class="min-w-0">
-                    <a href="{% url 'careon:client_detail' row.client.pk %}" class="queue-title">{{ row.client.name }}</a>
+                    <a href="{% url 'carelane:client_detail' row.client.pk %}" class="queue-title">{{ row.client.name }}</a>
                     <div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-[color:var(--zr-text-secondary)]">
                         <span>{{ row.client.get_client_type_display }}</span>
                         {% if row.client.industry %}
@@ -133,8 +133,8 @@
                     {{ row.operational_signal.detail }}
                 </p>
                 <div class="ds-list-row-actions">
-                    <a href="{% url 'careon:client_detail' row.client.pk %}" class="ds-list-row-action-btn">Profiel</a>
-                    <a href="{% url 'careon:client_update' row.client.pk %}" class="ds-list-row-action-btn">Wijzigen</a>
+                    <a href="{% url 'carelane:client_detail' row.client.pk %}" class="ds-list-row-action-btn">Profiel</a>
+                    <a href="{% url 'carelane:client_update' row.client.pk %}" class="ds-list-row-action-btn">Wijzigen</a>
                 </div>
             </div>
         </article>
@@ -157,9 +157,9 @@
             </p>
             <div class="provider-workspace__empty-actions">
                 {% if has_active_filters %}
-                <a href="{% url 'careon:client_list' %}" class="btn btn-secondary">Filters wissen</a>
+                <a href="{% url 'carelane:client_list' %}" class="btn btn-secondary">Filters wissen</a>
                 {% endif %}
-                <a href="{% url 'careon:client_create' %}" class="btn btn-primary">Aanbieder toevoegen</a>
+                <a href="{% url 'carelane:client_create' %}" class="btn btn-primary">Aanbieder toevoegen</a>
             </div>
         </div>
         {% endfor %}

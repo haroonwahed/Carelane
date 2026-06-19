@@ -7,7 +7,7 @@
 #   DJANGO_SECRET_KEY          (non-insecure value)
 #   ALLOWED_HOSTS              comma-separated
 #   CSRF_TRUSTED_ORIGINS       comma-separated HTTPS origins
-#   DEFAULT_FROM_EMAIL         real sender, not noreply@careon.local
+#   DEFAULT_FROM_EMAIL         real sender, not noreply@carelane.local
 #   DATABASE_URL               postgresql://... (required by settings_production)
 #
 # Usage:

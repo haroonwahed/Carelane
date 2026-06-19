@@ -100,7 +100,7 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
             "recommended_action": {
                 "label": "Neem contact op met aanbieder",
                 "reason": "SLA risico door uitblijvende reactie",
-                "url": reverse("careon:placement_list"),
+                "url": reverse("carelane:placement_list"),
             },
             "impact_summary": {
                 "text": "Voorkomt verdere vertraging in plaatsing",
@@ -128,7 +128,7 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
         )
 
         with patch("contracts.views.build_operational_decision_for_intake", return_value=_FakeDecision(payload)) as decision_mock:
-            response = self.client.get(reverse("careon:placement_list"))
+            response = self.client.get(reverse("carelane:placement_list"))
 
         self.assertEqual(response.status_code, 200)
         decision_mock.assert_called_once_with(intake.pk)
@@ -151,7 +151,7 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
             recommended_action={
                 "label": "Stuur herinnering",
                 "reason": "Reactie nog uitstaand",
-                "url": reverse("careon:placement_list"),
+                "url": reverse("carelane:placement_list"),
             },
         )
         payload_waitlist = self._decision_payload(
@@ -159,7 +159,7 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
             recommended_action={
                 "label": "Start rematch",
                 "reason": "Aanbieder meldt wachtlijst",
-                "url": reverse("careon:matching_dashboard"),
+                "url": reverse("carelane:matching_dashboard"),
             },
         )
 
@@ -169,7 +169,7 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
             return _FakeDecision(payload_waitlist)
 
         with patch("contracts.views.build_operational_decision_for_intake", side_effect=fake_decision):
-            response = self.client.get(reverse("careon:placement_list"))
+            response = self.client.get(reverse("carelane:placement_list"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Stuur herinnering")
@@ -183,7 +183,7 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
             recommended_action={
                 "label": "Escaleren naar plaatsingsregisseur",
                 "reason": "Herhaalde vertraging",
-                "url": reverse("careon:placement_list"),
+                "url": reverse("carelane:placement_list"),
             },
             impact_summary={
                 "text": "Versnelt besluitvorming bij stagnerende plaatsing",
@@ -192,7 +192,7 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
         )
 
         with patch("contracts.views.build_operational_decision_for_intake", return_value=_FakeDecision(payload)):
-            response = self.client.get(reverse("careon:placement_list"))
+            response = self.client.get(reverse("carelane:placement_list"))
 
         self.assertEqual(response.status_code, 200)
         rows_by_title = {row["placement"].intake.title: row for row in response.context["placement_rows"]}
@@ -209,11 +209,11 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
         )
 
         response = self.client.post(
-            reverse("careon:case_placement_action", kwargs={"pk": intake.pk}),
+            reverse("carelane:case_placement_action", kwargs={"pk": intake.pk}),
             {
                 "status": PlacementRequest.Status.APPROVED,
                 "note": "Deze bevestiging mag nog niet slagen.",
-                "next": f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+                "next": f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -255,7 +255,7 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
         }
 
         with patch("contracts.views.build_operational_decision_for_intake", side_effect=lambda intake_id: _FakeDecision(payloads[intake_id])):
-            response = self.client.get(reverse("careon:placement_list"))
+            response = self.client.get(reverse("carelane:placement_list"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Pending: reactie uitstaand")
@@ -284,7 +284,7 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
             return _FakeDecision(payload_not_escalated)
 
         with patch("contracts.views.build_operational_decision_for_intake", side_effect=fake_decision):
-            response = self.client.get(reverse("careon:placement_list"))
+            response = self.client.get(reverse("carelane:placement_list"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Escalatie:")
@@ -305,7 +305,7 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
         )
 
         with patch("contracts.views.build_operational_decision_for_intake", return_value=_FakeDecision(payload)):
-            response = self.client.get(reverse("careon:placement_list"))
+            response = self.client.get(reverse("carelane:placement_list"))
 
         self.assertEqual(response.status_code, 200)
         html = response.content.decode("utf-8")
@@ -319,7 +319,7 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
         self.assertNotContains(response, "decision-command-center")
 
     def test_safe_fallbacks_for_empty_and_partial_data(self):
-        response_empty = self.client.get(reverse("careon:placement_list"))
+        response_empty = self.client.get(reverse("carelane:placement_list"))
         self.assertEqual(response_empty.status_code, 200)
         self.assertContains(response_empty, "Nog geen plaatsingen")
 
@@ -336,12 +336,12 @@ class PlaatsingenOperationalContractRegressionTests(TestCase):
 
         partial_payload = self._decision_payload(
             intake.pk,
-            recommended_action={"label": "Vraag ontbrekende info", "reason": "Onvolledige data", "url": reverse("careon:placement_list")},
+            recommended_action={"label": "Vraag ontbrekende info", "reason": "Onvolledige data", "url": reverse("carelane:placement_list")},
             impact_summary={"text": "Maakt vervolgstap mogelijk", "type": "positive"},
             blocker_label="Partial: informatie ontbreekt",
         )
         with patch("contracts.views.build_operational_decision_for_intake", return_value=_FakeDecision(partial_payload)):
-            response_partial = self.client.get(reverse("careon:placement_list"))
+            response_partial = self.client.get(reverse("carelane:placement_list"))
 
         self.assertEqual(response_partial.status_code, 200)
         self.assertContains(response_partial, "Partial Placement")

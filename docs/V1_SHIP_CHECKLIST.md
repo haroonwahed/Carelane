@@ -31,7 +31,7 @@ Scope context: **`docs/V1_SCOPE.md`**. Prioritized queue: **`docs/PRODUCT_ENGINE
 
 **Full sign-off (auth + SPA hash):** `./scripts/staging_pilot_signoff.sh` after Render serves the current `main` build (`./scripts/wait_staging_spa_deploy.sh` optional).
 
-**Staging Render (2026-05-16):** `https://careon-web.onrender.com` live (`581d2298`+); shell **8/8**; `./scripts/staging_pilot_signoff.sh` **GO**; provider Playwright **6/9 passed** (3 skipped — placement/accept/reject need active pending review row).
+**Staging Render (2026-05-16):** `https://carelane-web.onrender.com` live (`581d2298`+); shell **8/8**; `./scripts/staging_pilot_signoff.sh` **GO**; provider Playwright **6/9 passed** (3 skipped — placement/accept/reject need active pending review row).
 
 After deploy to **staging** (or the agreed rehearsal URL):
 

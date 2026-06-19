@@ -46,10 +46,10 @@ class SpaMiddlewarePkRoutingTests(TestCase):
             status=CareProvider.Status.ACTIVE,
             created_by=other_user,
         )
-        url = reverse("careon:client_detail", kwargs={"pk": foreign.pk})
+        url = reverse("carelane:client_detail", kwargs={"pk": foreign.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
-        self.assertNotEqual(response.get("X-Careon-Ui-Surface"), "spa")
+        self.assertNotEqual(response.get("X-Carelane-Ui-Surface"), "spa")
 
 
 @override_settings(MIDDLEWARE=middleware_without_spa_shell())
@@ -69,12 +69,12 @@ class SpaPilotDossierShellTests(TestCase):
         self.client.login(username="shell_u", password="pass12345!")
 
     def test_case_list_renders_django_when_middleware_disabled(self):
-        response = self.client.get(reverse("careon:case_list"))
+        response = self.client.get(reverse("carelane:case_list"))
         self.assertEqual(response.status_code, 200)
         body = response.content.decode("utf-8")
         # base.html may include a hidden #root for hybrid shells; assert real list chrome.
         self.assertIn("Werkvoorraad", body)
-        self.assertNotIn("SaaS Careon", body)
+        self.assertNotIn("SaaS Carelane", body)
 
 
 class CaseDetailApiTenancyTests(TestCase):
@@ -108,7 +108,7 @@ class CaseDetailApiTenancyTests(TestCase):
 
     def test_case_detail_api_returns_404_cross_org(self):
         self.client.login(username="ta_b", password="pass12345!")
-        url = reverse("careon:case_detail_api", kwargs={"case_id": self.case_a.pk})
+        url = reverse("carelane:case_detail_api", kwargs={"case_id": self.case_a.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json().get("error"), "Casus niet gevonden")

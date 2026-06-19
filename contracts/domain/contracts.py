@@ -51,7 +51,7 @@ class CareCaseData:
 @dataclass
 class ListResult:
     """Result of case listing operation."""
-    careon: List[CareCaseData]
+    carelane: List[CareCaseData]
     total_count: int
     page: int
     page_size: int

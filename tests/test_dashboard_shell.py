@@ -59,11 +59,11 @@ class DashboardShellTestCase(TestCase):
             created_by=self.user,
         )
 
-        response = self.client.get(reverse('careon:case_list'))
+        response = self.client.get(reverse('carelane:case_list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<div id="root"></div>', html=True)
         self.assertContains(response, '/static/spa/assets/index-')
-        self.assertNotContains(response, 'Careon Zorgregie')
+        self.assertNotContains(response, 'Carelane Zorgregie')
         self.assertNotContains(response, 'Regiekamer')
         self.assertNotContains(response, 'Globaal zoeken')
 

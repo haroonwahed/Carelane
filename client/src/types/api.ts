@@ -1,5 +1,5 @@
 /**
- * Canonical TypeScript types for all CareOn API responses.
+ * Canonical TypeScript types for all Carelane API responses.
  * Source of truth for hook return types and component props.
  * Derived from contracts/api/ domain modules — update here when backend response shapes change.
  */

@@ -1,7 +1,7 @@
 
 {% extends 'base.html' %}
 
-{% block title %}Budget & capaciteit - Careon{% endblock %}
+{% block title %}Budget & capaciteit - Carelane{% endblock %}
 
 {% block content %}
 <div class="ds-list-shell">
@@ -10,7 +10,7 @@
             <h1 class="page-title">Budgetten</h1>
             </div>
         <div class="page-actions">
-            <a href="{% url 'careon:budget_create' %}" class="btn btn-primary">Nieuw budget</a>
+            <a href="{% url 'carelane:budget_create' %}" class="btn btn-primary">Nieuw budget</a>
         </div>
     </div>
 
@@ -81,7 +81,7 @@
                     {% with budget=row.budget %}
                     <tr>
                         <td>
-                            <a href="{% url 'careon:budget_detail' budget.pk %}">{{ budget.get_scope_type_display }} {{ budget.scope_name }}</a>
+                            <a href="{% url 'carelane:budget_detail' budget.pk %}">{{ budget.get_scope_type_display }} {{ budget.scope_name }}</a>
                             {% if budget.department %}
                             <div class="c-secondary">{{ budget.department }}</div>
                             {% endif %}
@@ -102,7 +102,7 @@
                             <div class="" class="{% if budget.utilization_percentage >= 80 %}tone-critical{% else %}c-secondary{% endif %}">{{ budget.utilization_percentage|floatformat:0 }}% benut</div>
                         </td>
                         <td>{{ budget.linked_cases.count }} / {{ budget.linked_placements.count }}</td>
-                        <td class="td-right"><a href="{% url 'careon:budget_detail' budget.pk %}" class="btn btn-ghost">Openen</a></td>
+                        <td class="td-right"><a href="{% url 'carelane:budget_detail' budget.pk %}" class="btn btn-ghost">Openen</a></td>
                     </tr>
                     {% endwith %}
                     {% empty %}
@@ -111,9 +111,9 @@
                             Geen budgetten gevonden.
                             <div class="">
                                 {% if search_query or selected_year %}
-                                <a href="{% url 'careon:budget_list' %}" class="btn btn-secondary">Wis filters</a>
+                                <a href="{% url 'carelane:budget_list' %}" class="btn btn-secondary">Wis filters</a>
                                 {% else %}
-                                <a href="{% url 'careon:budget_create' %}" class="btn btn-primary">Maak eerste budget aan</a>
+                                <a href="{% url 'carelane:budget_create' %}" class="btn btn-primary">Maak eerste budget aan</a>
                                 {% endif %}
                             </div>
                         </td>

@@ -66,7 +66,7 @@ class Command(BaseCommand):
             for membership in admins:
                 recipients.add(membership.user)
 
-            case_link = reverse('careon:case_detail', kwargs={'pk': case_record.id})
+            case_link = reverse('carelane:case_detail', kwargs={'pk': case_record.id})
 
             for event_name, event_date, days_remaining in events:
                 for recipient in recipients:

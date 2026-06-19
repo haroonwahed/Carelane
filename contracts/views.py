@@ -140,7 +140,7 @@ PROVIDER_CARE_FORM_FILTER_CHOICES = [
     (CaseIntakeProcess.CareForm.CRISIS, 'Crisisopvang'),
 ]
 
-DESIGN_MODE_SESSION_KEY = 'careon_design_mode'
+DESIGN_MODE_SESSION_KEY = 'carelane_design_mode'
 DESIGN_MODE_SPA = 'spa'
 VALID_DESIGN_MODES = {DESIGN_MODE_SPA}
 
@@ -295,7 +295,7 @@ def _redirect_to_safe_next_or_default(request, fallback_url):
 
 
 def _case_detail_tab_href(intake_id, tab):
-    return f"{reverse('careon:case_detail', kwargs={'pk': intake_id})}?tab={tab}"
+    return f"{reverse('carelane:case_detail', kwargs={'pk': intake_id})}?tab={tab}"
 
 
 def _split_csv_tags(raw_tags):
@@ -1904,7 +1904,7 @@ def _render_spa_shell_response():
             '<head>'
             '<meta charset="UTF-8" />'
             '<meta name="viewport" content="width=device-width, initial-scale=1.0" />'
-            '<title>SaaS Careon</title>'
+            '<title>SaaS Carelane</title>'
             '<style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>'
             '</head>'
             '<body>'
@@ -2281,7 +2281,7 @@ class ClientDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView
         ctx['selected_intake'] = selected_intake
         ctx['case_fit_summary'] = case_fit_summary
         ctx['provider_track_record'] = track_record
-        ctx['provider_edit_url'] = reverse('careon:client_update', kwargs={'pk': self.object.pk})
+        ctx['provider_edit_url'] = reverse('carelane:client_update', kwargs={'pk': self.object.pk})
         ctx['provider_match_surface'] = _provider_profile_match_surface(profile)
         return ctx
 
@@ -2290,7 +2290,7 @@ class ClientCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = Client
     form_class = ClientForm
     template_name = 'contracts/client_form.html'
-    success_url = reverse_lazy('careon:client_list')
+    success_url = reverse_lazy('carelane:client_list')
 
     def form_valid(self, form):
         set_organization_on_instance(form.instance, get_user_organization(self.request.user))
@@ -2313,7 +2313,7 @@ class ClientUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView
     model = Client
     form_class = ClientForm
     template_name = 'contracts/client_form.html'
-    success_url = reverse_lazy('careon:client_list')
+    success_url = reverse_lazy('carelane:client_list')
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
@@ -2409,7 +2409,7 @@ class CareConfigurationUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin,
     template_name = 'contracts/configuration_form.html'
 
     def get_success_url(self):
-        return reverse('careon:configuration_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:configuration_detail', kwargs={'pk': self.object.pk})
 
     def get_queryset(self):
         org = self.get_organization()
@@ -2418,7 +2418,7 @@ class CareConfigurationUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin,
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(get_configuration_scope_content(self.object.scope))
-        ctx['cancel_url'] = reverse('careon:regional_list') if self.object.scope == CareConfiguration.Scope.REGIO else reverse('careon:municipality_list')
+        ctx['cancel_url'] = reverse('carelane:regional_list') if self.object.scope == CareConfiguration.Scope.REGIO else reverse('carelane:municipality_list')
         ctx['is_edit'] = True
         return ctx
 
@@ -2513,7 +2513,7 @@ class DocumentCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
     model = Document
     form_class = DocumentForm
     template_name = 'contracts/document_form.html'
-    success_url = reverse_lazy('careon:document_list')
+    success_url = reverse_lazy('carelane:document_list')
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -2528,7 +2528,7 @@ class DocumentCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
                 }
                 and not str(data.get('external_handoff_reference') or '').strip()
             ):
-                data['external_handoff_reference'] = f'careon://auto-generated/document-handoff/{uuid4().hex}'
+                data['external_handoff_reference'] = f'carelane://auto-generated/document-handoff/{uuid4().hex}'
                 kwargs['data'] = data
         return kwargs
 
@@ -2547,7 +2547,7 @@ class DocumentUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
     model = Document
     form_class = DocumentForm
     template_name = 'contracts/document_form.html'
-    success_url = reverse_lazy('careon:document_list')
+    success_url = reverse_lazy('carelane:document_list')
 
     def get_queryset(self):
         org = self.get_organization()
@@ -2651,7 +2651,7 @@ class DeadlineListView(LoginRequiredMixin, ListView):
                 case_title = deadline.intake.title
             elif deadline.case_record:
                 linked_case = deadline.case_record
-                open_href = reverse('careon:case_detail', kwargs={'pk': deadline.case_record.pk})
+                open_href = reverse('carelane:case_detail', kwargs={'pk': deadline.case_record.pk})
                 case_title = deadline.case_record.title
             else:
                 open_href = None
@@ -2684,7 +2684,7 @@ class DeadlineCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
     model = Deadline
     form_class = DeadlineForm
     template_name = 'contracts/deadline_form.html'
-    success_url = reverse_lazy('careon:deadline_list')
+    success_url = reverse_lazy('carelane:deadline_list')
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -2723,7 +2723,7 @@ class DeadlineUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
     model = Deadline
     form_class = DeadlineForm
     template_name = 'contracts/deadline_form.html'
-    success_url = reverse_lazy('careon:deadline_list')
+    success_url = reverse_lazy('carelane:deadline_list')
 
     def get_queryset(self):
         org = self.get_organization()
@@ -2774,7 +2774,7 @@ def deadline_complete(request, pk):
     deadline.save()
     log_action(request.user, 'UPDATE', 'OpvolgingTaak', deadline.id, str(deadline), request=request)
     messages.success(request, f'Taak "{deadline.title}" gemarkeerd als afgerond.')
-    return _redirect_to_safe_next_or_default(request, reverse('careon:deadline_list'))
+    return _redirect_to_safe_next_or_default(request, reverse('carelane:deadline_list'))
 
 
 @login_required
@@ -2799,9 +2799,9 @@ def signal_update_status(request, pk):
     }
     if status not in valid_statuses:
         messages.error(request, 'Ongeldige signaalstatus.')
-        fallback_url = reverse('careon:signal_detail', kwargs={'pk': signal.pk})
+        fallback_url = reverse('carelane:signal_detail', kwargs={'pk': signal.pk})
         if signal.due_diligence_process_id:
-            fallback_url = f"{reverse('careon:case_detail', kwargs={'pk': signal.due_diligence_process_id})}?tab=signalen"
+            fallback_url = f"{reverse('carelane:case_detail', kwargs={'pk': signal.due_diligence_process_id})}?tab=signalen"
         return _redirect_to_safe_next_or_default(request, fallback_url)
 
     if signal.status != status:
@@ -2820,9 +2820,9 @@ def signal_update_status(request, pk):
     else:
         messages.info(request, 'Signaalstatus was al up-to-date.')
 
-    fallback_url = reverse('careon:signal_detail', kwargs={'pk': signal.pk})
+    fallback_url = reverse('carelane:signal_detail', kwargs={'pk': signal.pk})
     if signal.due_diligence_process_id:
-        fallback_url = f"{reverse('careon:case_detail', kwargs={'pk': signal.due_diligence_process_id})}?tab=signalen"
+        fallback_url = f"{reverse('carelane:case_detail', kwargs={'pk': signal.due_diligence_process_id})}?tab=signalen"
     return _redirect_to_safe_next_or_default(request, fallback_url)
 
 
@@ -2866,14 +2866,14 @@ def mark_notification_read(request, pk):
     notification.save()
     if notification.link:
         return redirect(notification.link)
-    return redirect('careon:notification_list')
+    return redirect('carelane:notification_list')
 
 
 @login_required
 @require_POST
 def mark_all_notifications_read(request):
     Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
-    return redirect('careon:notification_list')
+    return redirect('carelane:notification_list')
 
 
 @login_required
@@ -2911,7 +2911,7 @@ def switch_organization(request):
 
 def _build_invite_url(request, invitation):
     return request.build_absolute_uri(
-        reverse('careon:accept_organization_invite', kwargs={'token': invitation.token})
+        reverse('carelane:accept_organization_invite', kwargs={'token': invitation.token})
     )
 
 
@@ -2955,7 +2955,7 @@ def organization_team(request):
             )
             if existing_member:
                 messages.warning(request, f'{email} is al een actief lid van deze organisatie.')
-                return redirect('careon:organization_team')
+                return redirect('carelane:organization_team')
 
             pending_invitation = (
                 OrganizationInvitation.objects
@@ -2970,7 +2970,7 @@ def organization_team(request):
             if pending_invitation and (not pending_invitation.expires_at or pending_invitation.expires_at > timezone.now()):
                 invite_url = _build_invite_url(request, pending_invitation)
                 messages.info(request, f'Er bestaat al een actieve uitnodiging voor {email}: {invite_url}')
-                return redirect('careon:organization_team')
+                return redirect('carelane:organization_team')
 
             invitation = OrganizationInvitation.objects.create(
                 organization=organization,
@@ -2999,7 +2999,7 @@ def organization_team(request):
                 messages.success(request, f'Uitnodiging aangemaakt en verzonden naar {email}. Link: {invite_url}')
             except Exception:
                 messages.warning(request, f'Uitnodiging aangemaakt voor {email}, maar e-mailbezorging mislukte. Deel deze link handmatig: {invite_url}')
-            return redirect('careon:organization_team')
+            return redirect('carelane:organization_team')
     else:
         form = OrganizationInvitationForm()
 
@@ -3063,7 +3063,7 @@ def revoke_organization_invite(request, invite_id):
         messages.success(request, f'Uitnodiging voor {invitation.email} is ingetrokken.')
     else:
         messages.info(request, 'Alleen openstaande uitnodigingen kunnen worden ingetrokken.')
-    return redirect('careon:organization_team')
+    return redirect('carelane:organization_team')
 
 
 @login_required
@@ -3076,7 +3076,7 @@ def resend_organization_invite(request, invite_id):
     invitation = get_object_or_404(OrganizationInvitation, id=invite_id, organization=organization)
     if invitation.status != OrganizationInvitation.Status.PENDING:
         messages.info(request, 'Alleen openstaande uitnodigingen kunnen opnieuw worden verzonden.')
-        return redirect('careon:organization_team')
+        return redirect('carelane:organization_team')
 
     invitation.status = OrganizationInvitation.Status.REVOKED
     invitation.save(update_fields=['status'])
@@ -3112,7 +3112,7 @@ def resend_organization_invite(request, invite_id):
         messages.success(request, f'Uitnodiging opnieuw verzonden naar {new_invitation.email}.')
     except Exception:
         messages.warning(request, f'Nieuwe uitnodiging aangemaakt, maar e-mailbezorging mislukte. Deel deze link handmatig: {invite_url}')
-    return redirect('careon:organization_team')
+    return redirect('carelane:organization_team')
 
 
 @login_required
@@ -3127,12 +3127,12 @@ def update_membership_role(request, membership_id):
     allowed_roles = {choice[0] for choice in OrganizationMembership.Role.choices}
     if requested_role not in allowed_roles:
         messages.error(request, 'Ongeldige rolselectie.')
-        return redirect('careon:organization_team')
+        return redirect('carelane:organization_team')
 
     actor_is_owner = is_organization_owner(request.user, organization)
     if requested_role == OrganizationMembership.Role.OWNER and not actor_is_owner:
         messages.error(request, 'Alleen organisatie-eigenaren kunnen de rol Eigenaar toekennen.')
-        return redirect('careon:organization_team')
+        return redirect('carelane:organization_team')
 
     if membership.user_id == request.user.id and membership.role == OrganizationMembership.Role.OWNER and requested_role != OrganizationMembership.Role.OWNER:
         owner_count = OrganizationMembership.objects.filter(
@@ -3142,7 +3142,7 @@ def update_membership_role(request, membership_id):
         ).count()
         if owner_count <= 1:
             messages.error(request, 'Er moet minimaal een actieve eigenaar in de organisatie overblijven.')
-            return redirect('careon:organization_team')
+            return redirect('carelane:organization_team')
 
     membership.role = requested_role
     membership.save(update_fields=['role'])
@@ -3156,7 +3156,7 @@ def update_membership_role(request, membership_id):
         request=request,
     )
     messages.success(request, f'Rol bijgewerkt voor {membership.user.email or membership.user.username}.')
-    return redirect('careon:organization_team')
+    return redirect('carelane:organization_team')
 
 
 @login_required
@@ -3169,7 +3169,7 @@ def deactivate_organization_member(request, membership_id):
     membership = get_object_or_404(OrganizationMembership, id=membership_id, organization=organization, is_active=True)
     if membership.user_id == request.user.id:
         messages.error(request, 'Je kunt je eigen lidmaatschap niet deactiveren.')
-        return redirect('careon:organization_team')
+        return redirect('carelane:organization_team')
 
     if membership.role == OrganizationMembership.Role.OWNER:
         owner_count = OrganizationMembership.objects.filter(
@@ -3179,7 +3179,7 @@ def deactivate_organization_member(request, membership_id):
         ).count()
         if owner_count <= 1:
             messages.error(request, 'Er moet minimaal een actieve eigenaar in de organisatie overblijven.')
-            return redirect('careon:organization_team')
+            return redirect('carelane:organization_team')
 
     membership.is_active = False
     membership.save(update_fields=['is_active'])
@@ -3193,7 +3193,7 @@ def deactivate_organization_member(request, membership_id):
         request=request,
     )
     messages.success(request, f'Lidmaatschap gedeactiveerd voor {membership.user.email or membership.user.username}.')
-    return redirect('careon:organization_team')
+    return redirect('carelane:organization_team')
 
 
 @login_required
@@ -3206,7 +3206,7 @@ def reactivate_organization_member(request, membership_id):
     membership = get_object_or_404(OrganizationMembership, id=membership_id, organization=organization)
     if membership.is_active:
         messages.info(request, 'Dit lidmaatschap is al actief.')
-        return redirect('careon:organization_team')
+        return redirect('carelane:organization_team')
 
     membership.is_active = True
     membership.save(update_fields=['is_active'])
@@ -3220,7 +3220,7 @@ def reactivate_organization_member(request, membership_id):
         request=request,
     )
     messages.success(request, f'Lidmaatschap opnieuw geactiveerd voor {membership.user.email or membership.user.username}.')
-    return redirect('careon:organization_team')
+    return redirect('carelane:organization_team')
 
 
 def _filter_organization_activity_logs(request, organization):
@@ -3474,7 +3474,7 @@ def reports_dashboard(request):
                 'kind_label': 'Casus zonder match',
                 'title': case.title,
                 'meta': f"{case.get_status_display()} · {case.get_urgency_display()} · doel {case.target_completion_date:%d-%m-%Y}",
-                'href': reverse('careon:intake_detail', kwargs={'pk': case.pk}),
+                'href': reverse('carelane:intake_detail', kwargs={'pk': case.pk}),
             })
     if attention_filter in ['all', 'stagnation']:
         for case in stagnated_cases_qs[:6]:
@@ -3484,7 +3484,7 @@ def reports_dashboard(request):
                 'kind_label': 'Stagnatie',
                 'title': case.title,
                 'meta': f"{days_open} dagen in traject · {case.get_status_display()}",
-                'href': reverse('careon:intake_detail', kwargs={'pk': case.pk}),
+                'href': reverse('carelane:intake_detail', kwargs={'pk': case.pk}),
             })
     if attention_filter in ['all', 'capacity']:
         for wt in no_capacity_qs[:6]:
@@ -3494,7 +3494,7 @@ def reports_dashboard(request):
                 'kind_label': 'Geen capaciteit',
                 'title': provider_name,
                 'meta': f"{wt.region} · wachtlijst {wt.waiting_list_size} · wachttijd {wt.wait_days} dagen",
-                'href': reverse('careon:waittime_detail', kwargs={'pk': wt.pk}),
+                'href': reverse('carelane:waittime_detail', kwargs={'pk': wt.pk}),
             })
     if attention_filter in ['all', 'escalation']:
         for signal in escalation_qs[:6]:
@@ -3504,7 +3504,7 @@ def reports_dashboard(request):
                 'kind_label': 'Escalatie',
                 'title': case_title,
                 'meta': f"{signal.get_signal_type_display()} · {signal.get_risk_level_display()} · {signal.get_status_display()}",
-                'href': reverse('careon:signal_update', kwargs={'pk': signal.pk}),
+                'href': reverse('carelane:signal_update', kwargs={'pk': signal.pk}),
             })
 
     # Doorstroomtrend op basis van het centrale zorgproces
@@ -3558,21 +3558,21 @@ def reports_dashboard(request):
         recommendations.append({
             'title': 'Herverdeel casussen zonder match naar matchingteam',
             'detail': f'{cases_without_match_count} casussen wachten op aanbiederkeuze.',
-            'href': reverse('careon:matching_dashboard'),
+            'href': reverse('carelane:matching_dashboard'),
             'action': 'Open matchingoverzicht',
         })
     if no_capacity_qs.count() > 0:
         recommendations.append({
             'title': 'Optimaliseer capaciteit bij aanbieders zonder vrije plekken',
             'detail': f'{no_capacity_qs.count()} aanbieders hebben geen open plekken.',
-            'href': reverse('careon:waittime_list'),
+            'href': reverse('carelane:waittime_list'),
             'action': 'Bekijk wachttijden',
         })
     if float(avg_wait_days) > 28:
         recommendations.append({
             'title': 'Wachttijdwaarschuwing: gemiddelde boven 28 dagen',
             'detail': f'Huidig gemiddelde is {avg_wait_days:.1f} dagen.',
-            'href': reverse('careon:client_list'),
+            'href': reverse('carelane:client_list'),
             'action': 'Open aanbieders',
         })
 
@@ -3661,14 +3661,14 @@ class CareTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView
 
 @login_required
 def task_board_redirect(request):
-    return redirect('careon:care_task_kanban')
+    return redirect('carelane:care_task_kanban')
 
 
 class CareTaskCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = CareTask
     form_class = CareTaskForm
     template_name = 'contracts/task_form.html'
-    success_url = reverse_lazy('careon:task_list')
+    success_url = reverse_lazy('carelane:task_list')
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -3694,7 +3694,7 @@ class CareTaskUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
     model = CareTask
     form_class = CareTaskForm
     template_name = 'contracts/task_form.html'
-    success_url = reverse_lazy('careon:task_list')
+    success_url = reverse_lazy('carelane:task_list')
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
@@ -3809,7 +3809,7 @@ class BudgetCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = Budget
     form_class = BudgetForm
     template_name = 'contracts/budget_form.html'
-    success_url = reverse_lazy('careon:budget_list')
+    success_url = reverse_lazy('carelane:budget_list')
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -3851,7 +3851,7 @@ class BudgetUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView
     model = Budget
     form_class = BudgetForm
     template_name = 'contracts/budget_form.html'
-    success_url = reverse_lazy('careon:budget_list')
+    success_url = reverse_lazy('carelane:budget_list')
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -3911,7 +3911,7 @@ class AddExpenseView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy('careon:budget_detail', kwargs={'pk': self.kwargs['budget_pk']})
+        return reverse_lazy('carelane:budget_detail', kwargs={'pk': self.kwargs['budget_pk']})
 
 
 # ==================== FUNCTION-BASED VIEWS ====================
@@ -3976,7 +3976,7 @@ def settings_hub(request):
 @login_required
 def case_flow_list_redirect(request, step=None):
     """Route legacy list entry points to the case-first workspace."""
-    target = reverse('careon:case_list')
+    target = reverse('carelane:case_list')
     if step:
         target = f'{target}?flow={step}'
     return redirect(target)
@@ -4000,13 +4000,13 @@ def redirect_case_intake_create_to_spa(request):
 @login_required
 def case_flow_detail_redirect(request, pk):
     """Route legacy intake detail URLs to the canonical case detail page."""
-    return redirect('careon:case_detail', pk=pk)
+    return redirect('carelane:case_detail', pk=pk)
 
 
 @login_required
 def case_flow_update_redirect(request, pk):
     """Route legacy intake edit URLs to the canonical case edit page."""
-    return redirect('careon:case_update', pk=pk)
+    return redirect('carelane:case_update', pk=pk)
 
 
 def handler403(request, exception=None):  # noqa: ARG001
@@ -4326,7 +4326,7 @@ def _provider_recommended_action_presentation(next_action):
 
 @require_POST
 def case_communication_action(request, pk):
-    if getattr(settings, 'CAREON_PILOT_SPA_ONLY', False):
+    if getattr(settings, 'CARELANE_PILOT_SPA_ONLY', False):
         from django.http import HttpResponseRedirect
         return HttpResponseRedirect('/care/casussen')
     if not request.user.is_authenticated:
@@ -4342,13 +4342,13 @@ def case_communication_action(request, pk):
     archived_redirect = _redirect_if_archived_intake(
         request,
         intake,
-        f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=communicatie",
+        f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=communicatie",
     )
     if archived_redirect:
         return archived_redirect
 
     normalized_action = (request.POST.get('action') or '').strip().lower()
-    next_fallback = f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=communicatie"
+    next_fallback = f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=communicatie"
 
     workflow_stage = (request.POST.get('workflow_stage') or _flow_stage_for_intake_status(intake.status)).strip()
     if workflow_stage not in {'aanvraag', 'matching', 'intake_aanbieder', 'plaatsing'}:
@@ -4592,7 +4592,7 @@ def _build_case_provider_response_context(*, intake, placement):
         sla_state=sla['sla_state'],
     )
 
-    action_href = reverse('careon:case_provider_response_action', kwargs={'pk': intake.pk})
+    action_href = reverse('carelane:case_provider_response_action', kwargs={'pk': intake.pk})
     return summary, actions, action_href
 
 
@@ -4704,7 +4704,7 @@ def build_provider_response_monitor(org, *, user=None, filters=None, next_url=No
             PlacementRequest.ProviderResponseStatus.WAITLIST,
         }:
             resend_action = {
-                'href': reverse('careon:case_provider_response_action', kwargs={'pk': intake.pk}),
+                'href': reverse('carelane:case_provider_response_action', kwargs={'pk': intake.pk}),
                 'action': 'resend_request',
                 'next': next_url or case_href,
                 'confirm_text': 'Weet je zeker dat je een herinnering wilt versturen naar deze aanbieder?',
@@ -5026,7 +5026,7 @@ def matching_dashboard(request):
             return HttpResponseForbidden('Je hebt geen rechten om matching voor deze casus bij te werken.')
 
         messages.info(request, 'Toewijzen verloopt vanuit de casuswerkruimte.')
-        return redirect(f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=matching")
+        return redirect(f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=matching")
 
     provider_profiles = list(
         ProviderProfile.objects.filter(client__organization=org, client__status='ACTIVE')
@@ -5079,7 +5079,7 @@ def matching_dashboard(request):
             action_defaults={
                 'label': 'Vraag aanvullende regio-opties op',
                 'reason': failure_reason,
-                'url': reverse('careon:assessment_detail', kwargs={'pk': assessment.pk}),
+                'url': reverse('carelane:assessment_detail', kwargs={'pk': assessment.pk}),
             },
             impact_defaults={
                 'text': 'Vergroot kans op match',
@@ -5347,7 +5347,7 @@ def matching_dashboard(request):
 @login_required
 @require_POST
 def case_matching_action(request, pk):
-    if getattr(settings, 'CAREON_PILOT_SPA_ONLY', False):
+    if getattr(settings, 'CARELANE_PILOT_SPA_ONLY', False):
         from django.http import HttpResponseRedirect
 
         return HttpResponseRedirect('/care/matching')
@@ -5362,7 +5362,7 @@ def case_matching_action(request, pk):
     archived_redirect = _redirect_if_archived_intake(
         request,
         intake,
-        f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
+        f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
     )
     if archived_redirect:
         return archived_redirect
@@ -5378,7 +5378,7 @@ def case_matching_action(request, pk):
 
     action = (request.POST.get('action') or '').strip()
     phase = (request.POST.get('phase') or '').strip()
-    next_fallback = f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=matching"
+    next_fallback = f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=matching"
     if phase:
         next_fallback += f'&phase={phase}'
 
@@ -5565,7 +5565,7 @@ def case_matching_action(request, pk):
                 source='case_matching_action_prepare_waitlist',
             )
 
-        case_detail_url = reverse('careon:case_detail', kwargs={'pk': intake.pk})
+        case_detail_url = reverse('carelane:case_detail', kwargs={'pk': intake.pk})
         messages.success(
             request,
             f'Wachtlijstvoorstel (concept) vastgelegd voor {provider.name}. Controleer de casus voordat u naar de aanbieder verzendt.',
@@ -5604,7 +5604,7 @@ def case_matching_action(request, pk):
 @login_required
 @require_POST
 def case_provider_response_action(request, pk):
-    if getattr(settings, 'CAREON_PILOT_SPA_ONLY', False):
+    if getattr(settings, 'CARELANE_PILOT_SPA_ONLY', False):
         from django.http import HttpResponseRedirect
         return HttpResponseRedirect('/care/casussen')
     org = get_user_organization(request.user)
@@ -5618,7 +5618,7 @@ def case_provider_response_action(request, pk):
     archived_redirect = _redirect_if_archived_intake(
         request,
         intake,
-        f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+        f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
     )
     if archived_redirect:
         return archived_redirect
@@ -5627,7 +5627,7 @@ def case_provider_response_action(request, pk):
         due_diligence_process=intake,
     ).select_related('selected_provider', 'proposed_provider').order_by('-updated_at').first()
 
-    next_fallback = f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing"
+    next_fallback = f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing"
 
     if not placement:
         messages.error(request, 'Nog geen plaatsing beschikbaar. Start eerst via matching.')
@@ -5893,7 +5893,7 @@ def case_provider_response_action(request, pk):
 @login_required
 @require_POST
 def case_outcome_action(request, pk):
-    if getattr(settings, 'CAREON_PILOT_SPA_ONLY', False):
+    if getattr(settings, 'CARELANE_PILOT_SPA_ONLY', False):
         from django.http import HttpResponseRedirect
         return HttpResponseRedirect('/care/casussen')
     org = get_user_organization(request.user)
@@ -5907,7 +5907,7 @@ def case_outcome_action(request, pk):
     archived_redirect = _redirect_if_archived_intake(
         request,
         intake,
-        f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+        f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
     )
     if archived_redirect:
         return archived_redirect
@@ -5916,7 +5916,7 @@ def case_outcome_action(request, pk):
         due_diligence_process=intake,
     ).select_related('selected_provider', 'proposed_provider').order_by('-updated_at').first()
 
-    next_fallback = f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing"
+    next_fallback = f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing"
     if not placement:
         messages.error(request, 'Nog geen plaatsing beschikbaar. Start eerst via matching.')
         return _redirect_to_safe_next_or_default(request, next_fallback)
@@ -6089,7 +6089,7 @@ def provider_response_monitor(request):
         return render(request, 'contracts/provider_response_monitor.html', base_context)
 
     query_string = request.GET.urlencode()
-    next_url = reverse('careon:provider_response_monitor')
+    next_url = reverse('carelane:provider_response_monitor')
     if query_string:
         next_url = f'{next_url}?{query_string}'
 
@@ -6124,7 +6124,7 @@ def provider_response_monitor(request):
 @login_required
 @require_POST
 def case_placement_action(request, pk):
-    if getattr(settings, 'CAREON_PILOT_SPA_ONLY', False):
+    if getattr(settings, 'CARELANE_PILOT_SPA_ONLY', False):
         from django.http import HttpResponseRedirect
         return HttpResponseRedirect('/care/casussen')
     org = get_user_organization(request.user)
@@ -6138,7 +6138,7 @@ def case_placement_action(request, pk):
     archived_redirect = _redirect_if_archived_intake(
         request,
         intake,
-        f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+        f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
     )
     if archived_redirect:
         return archived_redirect
@@ -6147,7 +6147,7 @@ def case_placement_action(request, pk):
         due_diligence_process=intake,
     ).select_related('selected_provider', 'proposed_provider').order_by('-updated_at').first()
 
-    next_fallback = f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing"
+    next_fallback = f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing"
 
     if not placement:
         messages.error(request, 'Nog geen plaatsing beschikbaar. Start eerst via matching.')
@@ -6295,7 +6295,7 @@ def case_placement_action(request, pk):
 @login_required
 @require_POST
 def case_archive_action(request, pk):
-    if getattr(settings, 'CAREON_PILOT_SPA_ONLY', False):
+    if getattr(settings, 'CARELANE_PILOT_SPA_ONLY', False):
         from django.http import HttpResponseRedirect
         return HttpResponseRedirect('/care/casussen')
     org = get_user_organization(request.user)
@@ -6309,7 +6309,7 @@ def case_archive_action(request, pk):
 
     actor_role = resolve_actor_role(user=request.user, organization=org)
 
-    next_fallback = f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}"
+    next_fallback = f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}"
     if _intake_is_archived(intake):
         messages.info(request, 'Deze casus is al gearchiveerd.')
         return _redirect_to_safe_next_or_default(request, next_fallback)
@@ -6492,7 +6492,7 @@ class MunicipalityConfigurationCreateView(TenantAssignCreateMixin, LoginRequired
     template_name = 'contracts/municipality_form.html'
 
     def get_success_url(self):
-        return reverse('careon:municipality_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:municipality_detail', kwargs={'pk': self.object.pk})
 
 
 class MunicipalityConfigurationUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
@@ -6505,7 +6505,7 @@ class MunicipalityConfigurationUpdateView(TenantScopedQuerysetMixin, LoginRequir
         return scope_queryset_for_organization(MunicipalityConfiguration.objects.all(), org)
 
     def get_success_url(self):
-        return reverse('careon:municipality_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:municipality_detail', kwargs={'pk': self.object.pk})
 
 
 # ============================================
@@ -6586,7 +6586,7 @@ class RegionalConfigurationCreateView(TenantAssignCreateMixin, LoginRequiredMixi
     template_name = 'contracts/regional_form.html'
 
     def get_success_url(self):
-        return reverse('careon:regional_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:regional_detail', kwargs={'pk': self.object.pk})
 
 
 class RegionalConfigurationUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
@@ -6599,7 +6599,7 @@ class RegionalConfigurationUpdateView(TenantScopedQuerysetMixin, LoginRequiredMi
         return scope_queryset_for_organization(RegionalConfiguration.objects.all(), org)
 
     def get_success_url(self):
-        return reverse('careon:regional_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:regional_detail', kwargs={'pk': self.object.pk})
 
 
 # ==================== CARE INTAKE VIEWS ====================
@@ -6737,7 +6737,7 @@ class CaseIntakeListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView
                 action_defaults={
                     'label': 'Monitor voortgang',
                     'reason': 'Case beweegt door flow',
-                    'url': reverse('careon:case_detail', kwargs={'pk': intake.pk}),
+                    'url': reverse('carelane:case_detail', kwargs={'pk': intake.pk}),
                 },
                 impact_defaults={
                     'text': 'Houdt zaak op koers',
@@ -6849,15 +6849,15 @@ class CaseIntakeDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Detail
         ).select_related('assigned_to').order_by('-updated_at')[:5]
         documents = Document.objects.filter(contract=case_record).order_by('-created_at')[:5] if case_record else Document.objects.none()
 
-        assessment_href = reverse('careon:assessment_detail', kwargs={'pk': assessment.pk}) if assessment else f"{reverse('careon:assessment_create')}?intake={intake.pk}"
+        assessment_href = reverse('carelane:assessment_detail', kwargs={'pk': assessment.pk}) if assessment else f"{reverse('carelane:assessment_create')}?intake={intake.pk}"
         assessment_action_label = 'Open beoordeling door aanbieder' if assessment else 'Beoordeling door aanbieder starten'
         assessment_status_label = assessment.get_assessment_status_display() if assessment else 'Nog niet gestart'
 
-        matching_href = f"{reverse('careon:matching_dashboard')}?intake={intake.pk}"
+        matching_href = f"{reverse('carelane:matching_dashboard')}?intake={intake.pk}"
         matching_allowed, matching_blocker = intake.can_enter_matching()
         matching_status_label = 'Klaar voor matching' if matching_allowed else f'Wacht op beoordeling: {matching_blocker}'
 
-        placement_href = reverse('careon:placement_detail', kwargs={'pk': placement.pk}) if placement else reverse('careon:matching_dashboard')
+        placement_href = reverse('carelane:placement_detail', kwargs={'pk': placement.pk}) if placement else reverse('carelane:matching_dashboard')
         placement_action_label = 'Open plaatsing' if placement else 'Start via matching'
         placement_status_label = placement.get_status_display() if placement else 'Nog niet gestart'
 
@@ -6875,13 +6875,13 @@ class CaseIntakeDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Detail
         if is_archived_case:
             next_action = {
                 'label': 'Gearchiveerde casus',
-                'href': reverse('careon:case_list'),
+                'href': reverse('carelane:case_list'),
                 'help': 'Deze casus blijft bewaard, maar is alleen-lezen en verdwijnt uit actieve overzichten.',
             }
         elif not can_edit_case:
             next_action = {
                 'label': 'Alleen-lezen toegang',
-                'href': reverse('careon:case_list'),
+                'href': reverse('carelane:case_list'),
                 'help': 'Je kunt deze casus bekijken, maar niet wijzigen. Neem contact op met een beheerder.',
             }
         elif not matching_allowed:
@@ -6971,7 +6971,7 @@ class CaseIntakeDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Detail
         elif placement and placement.proposed_provider:
             placement_selected_provider = placement.proposed_provider
 
-        placement_action_href = reverse('careon:case_placement_action', kwargs={'pk': intake.pk})
+        placement_action_href = reverse('carelane:case_placement_action', kwargs={'pk': intake.pk})
         placement_status_actions = []
         if placement and can_edit_case:
             action_specs = [
@@ -7057,8 +7057,8 @@ class CaseIntakeDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Detail
             row['decision_comparison_to_top'] = hint.get('comparison_to_top') or ''
             row['decision_trade_offs'] = hint.get('trade_offs') or []
 
-        matching_action_href = reverse('careon:case_matching_action', kwargs={'pk': intake.pk})
-        matching_archive_href = f"{reverse('careon:matching_dashboard')}?intake={intake.pk}"
+        matching_action_href = reverse('carelane:case_matching_action', kwargs={'pk': intake.pk})
+        matching_archive_href = f"{reverse('carelane:matching_dashboard')}?intake={intake.pk}"
 
         selected_tab = (self.request.GET.get('tab') or 'tijdlijn').lower()
         tab_options = {'tijdlijn', 'documenten', 'taken', 'signalen', 'communicatie', 'matching', 'plaatsing'}
@@ -7081,7 +7081,7 @@ class CaseIntakeDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Detail
             assessment_interpretation = 'Start de beoordeling om door te gaan naar matching.'
 
         can_create_case_document = bool(case_record) and can_edit_case
-        case_document_href = reverse('careon:case_document_create', kwargs={'pk': intake.pk}) if can_create_case_document else reverse('careon:case_update', kwargs={'pk': intake.pk})
+        case_document_href = reverse('carelane:case_document_create', kwargs={'pk': intake.pk}) if can_create_case_document else reverse('carelane:case_update', kwargs={'pk': intake.pk})
         if can_create_case_document:
             case_document_action_label = 'Document toevoegen'
         elif not case_record:
@@ -7152,15 +7152,15 @@ class CaseIntakeDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Detail
         if not can_edit_case:
             provider_response_actions = []
 
-        outcome_action_href = reverse('careon:case_outcome_action', kwargs={'pk': intake.pk})
-        communication_action_href = reverse('careon:case_communication_action', kwargs={'pk': intake.pk})
+        outcome_action_href = reverse('carelane:case_outcome_action', kwargs={'pk': intake.pk})
+        communication_action_href = reverse('carelane:case_communication_action', kwargs={'pk': intake.pk})
         outcome_sections = []
 
         overview_links = {
-            'documents': reverse('careon:document_list'),
-            'tasks': reverse('careon:task_list'),
-            'signals': reverse('careon:signal_list'),
-            'placements': reverse('careon:placement_list'),
+            'documents': reverse('carelane:document_list'),
+            'tasks': reverse('carelane:task_list'),
+            'signals': reverse('carelane:signal_list'),
+            'placements': reverse('carelane:placement_list'),
         }
 
         ctx.update({
@@ -7269,7 +7269,7 @@ class CaseIntakeUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, Update
 
     def render_to_response(self, context, **response_kwargs):
         response = super().render_to_response(context, **response_kwargs)
-        response['X-Careon-Template-Version'] = 'intake_form'
+        response['X-Carelane-Template-Version'] = 'intake_form'
         return _disable_response_caching(response)
 
     def get_queryset(self):
@@ -7326,7 +7326,7 @@ class CaseIntakeUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, Update
         return response
 
     def get_success_url(self):
-        return reverse('careon:case_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:case_detail', kwargs={'pk': self.object.pk})
 
 
 # ==================== CASE ASSESSMENT VIEWS ====================
@@ -7378,7 +7378,7 @@ class CaseAssessmentListView(TenantScopedQuerysetMixin, LoginRequiredMixin, List
                 action_defaults={
                     'label': 'Rond beoordeling af',
                     'reason': 'Nodig voordat matching kan starten',
-                    'url': reverse('careon:assessment_update', kwargs={'pk': assessment.pk}),
+                    'url': reverse('carelane:assessment_update', kwargs={'pk': assessment.pk}),
                 },
                 impact_defaults={
                     'text': 'Ontgrendelt vervolgstap',
@@ -7430,7 +7430,7 @@ class CaseAssessmentListView(TenantScopedQuerysetMixin, LoginRequiredMixin, List
                 'severity': 'warning',
                 'message': f'{urgent_blocked_count} urgente beoordelingen blokkeren doorstroom',
                 'cta_label': 'Werk beoordelingen af',
-                'cta_href': reverse('careon:assessment_list') + '?status=' + CaseAssessment.AssessmentStatus.DRAFT,
+                'cta_href': reverse('carelane:assessment_list') + '?status=' + CaseAssessment.AssessmentStatus.DRAFT,
             }
 
         ctx.update({
@@ -7478,7 +7478,7 @@ class CaseAssessmentDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, De
         assessment = self.object
         intake = assessment.intake
         can_edit_assessment = _can_edit_assessment(self.request.user, assessment)
-        matching_href = f"{reverse('careon:matching_dashboard')}?intake={intake.pk}"
+        matching_href = f"{reverse('carelane:matching_dashboard')}?intake={intake.pk}"
 
         matching_requirements = [
             {
@@ -7556,7 +7556,7 @@ class CaseAssessmentCreateView(TenantAssignCreateMixin, LoginRequiredMixin, Crea
         return response
 
     def get_success_url(self):
-        return reverse('careon:assessment_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:assessment_detail', kwargs={'pk': self.object.pk})
 
 
 class CaseAssessmentUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
@@ -7596,7 +7596,7 @@ class CaseAssessmentUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, Up
         return response
 
     def get_success_url(self):
-        return reverse('careon:assessment_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:assessment_detail', kwargs={'pk': self.object.pk})
 
 
 # ==================== WAIT TIME VIEWS (Wachttijden) ====================
@@ -7656,7 +7656,7 @@ class WaitTimeCreateView(TenantScopedQuerysetMixin, LoginRequiredMixin, CreateVi
         return response
 
     def get_success_url(self):
-        return reverse('careon:waittime_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:waittime_detail', kwargs={'pk': self.object.pk})
 
 
 class WaitTimeUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
@@ -7680,7 +7680,7 @@ class WaitTimeUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
         return response
 
     def get_success_url(self):
-        return reverse('careon:waittime_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:waittime_detail', kwargs={'pk': self.object.pk})
 
 
 # ==================== CARE SIGNAL VIEWS (Signalen) ====================
@@ -7807,7 +7807,7 @@ class CareSignalCreateView(TenantScopedQuerysetMixin, LoginRequiredMixin, Create
         return response
 
     def get_success_url(self):
-        return reverse('careon:signal_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:signal_detail', kwargs={'pk': self.object.pk})
 
 
 class CareSignalUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
@@ -7839,7 +7839,7 @@ class CareSignalUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, Update
         return response
 
     def get_success_url(self):
-        return reverse('careon:signal_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:signal_detail', kwargs={'pk': self.object.pk})
 
 
 # ==================== PLACEMENT REQUEST VIEWS (Plaatsingen) ====================
@@ -7928,7 +7928,7 @@ class PlacementRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Li
                 action_defaults={
                     'label': 'Stuur herinnering' if is_stalled else 'Monitor plaatsing',
                     'reason': stall_reason,
-                    'url': reverse('careon:placement_detail', kwargs={'pk': placement.pk}),
+                    'url': reverse('carelane:placement_detail', kwargs={'pk': placement.pk}),
                 },
                 impact_defaults={
                     'text': (
@@ -8080,7 +8080,7 @@ class PlacementRequestUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, 
         return response
 
     def get_success_url(self):
-        return reverse('careon:placement_detail', kwargs={'pk': self.object.pk})
+        return reverse('carelane:placement_detail', kwargs={'pk': self.object.pk})
 
 
 # ==================== CASE-SCOPED CREATE VIEWS ====================
@@ -8139,7 +8139,7 @@ class CaseScopedDeadlineCreateView(_CaseScopedIntakeMixin, DeadlineCreateView):
         return response
 
     def get_success_url(self):
-        return f"{reverse('careon:case_detail', kwargs={'pk': self._load_intake().pk})}?tab=taken"
+        return f"{reverse('carelane:case_detail', kwargs={'pk': self._load_intake().pk})}?tab=taken"
 
 
 class CaseScopedCareSignalCreateView(_CaseScopedIntakeMixin, CareSignalCreateView):
@@ -8172,7 +8172,7 @@ class CaseScopedCareSignalCreateView(_CaseScopedIntakeMixin, CareSignalCreateVie
         return response
 
     def get_success_url(self):
-        return f"{reverse('careon:case_detail', kwargs={'pk': self._load_intake().pk})}?tab=signalen"
+        return f"{reverse('carelane:case_detail', kwargs={'pk': self._load_intake().pk})}?tab=signalen"
 
 
 class CaseScopedDocumentCreateView(_CaseScopedIntakeMixin, DocumentCreateView):
@@ -8180,7 +8180,7 @@ class CaseScopedDocumentCreateView(_CaseScopedIntakeMixin, DocumentCreateView):
         intake = self._load_intake()
         if not intake.contract_id:
             messages.error(request, 'Koppel eerst een casusrecord voordat je documenten toevoegt.')
-            return redirect('careon:case_detail', pk=intake.pk)
+            return redirect('carelane:case_detail', pk=intake.pk)
         return super().dispatch(request, *args, **kwargs)
 
     def get_initial(self):
@@ -8209,7 +8209,7 @@ class CaseScopedDocumentCreateView(_CaseScopedIntakeMixin, DocumentCreateView):
         ctx['intake'] = intake
         ctx['document_context_phase'] = phase_label
         ctx['document_context_event'] = event
-        ctx['cancel_href'] = f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=documenten"
+        ctx['cancel_href'] = f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=documenten"
         return ctx
 
     def form_valid(self, form):
@@ -8227,7 +8227,7 @@ class CaseScopedDocumentCreateView(_CaseScopedIntakeMixin, DocumentCreateView):
         intake = self._load_intake()
         phase = (self.request.GET.get('phase') or '').strip()
         event = (self.request.GET.get('event') or '').strip()
-        url = f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=documenten"
+        url = f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=documenten"
         if phase:
             url += f'&phase={phase}'
         if event:

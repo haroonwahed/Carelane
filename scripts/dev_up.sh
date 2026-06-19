@@ -130,7 +130,7 @@ if '/care/casussen/new/?v=' in dashboard_html:
   raise SystemExit('Verification failed: dashboard contains version-query create href')
 if 'dash-grid' not in dashboard_html or 'Knelpuntfocus' not in dashboard_html:
   raise SystemExit('Verification failed: dashboard design shell is missing expected layout contracts')
-if 'careon-premium-theme.css' not in dashboard_html or 'title=\"Zoeken\"' not in dashboard_html:
+if 'carelane-premium-theme.css' not in dashboard_html or 'title=\"Zoeken\"' not in dashboard_html:
   raise SystemExit('Verification failed: dashboard base shell lost theme/search contracts')
 if 'data-theme-selector' not in dashboard_html or 'toggleTheme' not in dashboard_html:
   raise SystemExit('Verification failed: dashboard base shell lost theme controls')

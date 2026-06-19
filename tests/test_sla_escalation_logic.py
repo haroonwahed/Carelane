@@ -417,7 +417,7 @@ class SlaMonitorExposureTests(TestCase):
             hours_ago=130,
         )
 
-        response = self.client.get(reverse("careon:provider_response_monitor"))
+        response = self.client.get(reverse("carelane:provider_response_monitor"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "SLA FORCED_ACTION")
@@ -443,7 +443,7 @@ class SlaMonitorExposureTests(TestCase):
             hours_ago=100,
         )
 
-        response = self.client.get(reverse("careon:provider_response_monitor"))
+        response = self.client.get(reverse("carelane:provider_response_monitor"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Providerreactie monitor")
@@ -476,7 +476,7 @@ class SlaMonitorExposureTests(TestCase):
         )
 
         response = self.client.get(
-            reverse("careon:provider_response_monitor"),
+            reverse("carelane:provider_response_monitor"),
             {"provider_response_status": PlacementRequest.ProviderResponseStatus.NO_CAPACITY},
         )
 

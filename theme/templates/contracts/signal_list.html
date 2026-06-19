@@ -8,7 +8,7 @@
             <p class="ds-note-text">Cross-case monitor voor signalering. Behandeling en statusupdates verlopen vanuit de casuswerkruimte.</p>
         </div>
         <div class="page-actions">
-            <a href="{% url 'careon:case_list' %}" class="btn btn-primary">Open casussen</a>
+            <a href="{% url 'carelane:case_list' %}" class="btn btn-primary">Open casussen</a>
         </div>
     </div>
 
@@ -70,10 +70,10 @@
                 <tbody>
                     {% for row in signal_rows %}
                     <tr>
-                        <td><a href="{% url 'careon:signal_detail' row.signal.pk %}">{% if row.signal.title %}{{ row.signal.title }}{% else %}{{ row.signal.get_signal_type_display }}{% endif %}</a></td>
+                        <td><a href="{% url 'carelane:signal_detail' row.signal.pk %}">{% if row.signal.title %}{{ row.signal.title }}{% else %}{{ row.signal.get_signal_type_display }}{% endif %}</a></td>
                         <td>
                             {% if row.signal.intake %}
-                            <a href="{% url 'careon:case_detail' row.signal.intake.pk %}?tab=signalen">{{ row.signal.intake.title }}</a>
+                            <a href="{% url 'carelane:case_detail' row.signal.intake.pk %}?tab=signalen">{{ row.signal.intake.title }}</a>
                             {% else %}—{% endif %}
                         </td>
                         <td>{{ row.signal.get_signal_type_display }}</td>
@@ -105,7 +105,7 @@
                     <tr>
                         <td colspan="7" class="td-empty">
                             Geen signalen gevonden.
-                            <div class=""><a href="{% url 'careon:case_list' %}" class="btn btn-primary">Open casussen</a></div>
+                            <div class=""><a href="{% url 'carelane:case_list' %}" class="btn btn-primary">Open casussen</a></div>
                         </td>
                     </tr>
                     {% endfor %}

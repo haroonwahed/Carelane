@@ -120,7 +120,7 @@ async function apiFetch<T>(
   const typed = response as ApiResponse<T>;
   if (
     typeof typed.text === "string" &&
-    typed.text.includes("<title>Inloggen - Careon</title>")
+    typed.text.includes("<title>Inloggen - Carelane</title>")
   ) {
     return {
       ok: false,
@@ -244,7 +244,7 @@ test.describe.configure({ mode: "serial" });
 
 test("pilot demo part 1 creates case, summary, matching, rejection, and Coordination flag", async ({ page }) => {
   await page.goto(BASE_URL);
-  await expect(page).toHaveTitle(/SaaS Careon|CareOn - Zorgregieplatform/i);
+  await expect(page).toHaveTitle(/SaaS Carelane|Carelane - Zorgregieplatform/i);
 
   await loginAs(page, GEMEENTE_USERNAME, GEMEENTE_PASSWORD);
 

@@ -1,4 +1,4 @@
-# CareOn observability and alerting notes
+# Carelane observability and alerting notes
 
 Purpose: define the minimum operational signals to watch in production and where the evidence should live.
 

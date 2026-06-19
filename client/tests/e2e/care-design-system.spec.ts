@@ -1,5 +1,5 @@
 /**
- * Design-system contract tests for the authenticated Careon SPA (gemeente role).
+ * Design-system contract tests for the authenticated Carelane SPA (gemeente role).
  * Protects shell chrome, shared list/search primitives, decision surfaces, and light a11y/dark checks.
  *
  * @see DESIGN_SYSTEM_TESTING.md at repository root.
@@ -50,7 +50,7 @@ async function assertOperationalRowContract(page: Page) {
 test.describe("Care design system (SPA)", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      window.localStorage.setItem("careon-theme", "dark");
+      window.localStorage.setItem("carelane-theme", "dark");
     });
     await installCareApiStubs(page);
     await page.goto(SPA_BASE, { waitUntil: "domcontentloaded" });
@@ -171,7 +171,7 @@ test.describe("Care design system (SPA)", () => {
 
   test("dark theme: html.dark present; flag light-only Tailwind surfaces in main", async ({ page }) => {
     const hasDark = await page.evaluate(() => document.documentElement.classList.contains("dark"));
-    expect(hasDark, "localStorage careon-theme=dark should yield html.dark for portal-safe theming").toBe(true);
+    expect(hasDark, "localStorage carelane-theme=dark should yield html.dark for portal-safe theming").toBe(true);
 
     const legacySurfaces = await page.evaluate(() => {
       const root = document.querySelector('[data-testid="care-app-main"]');
@@ -279,7 +279,7 @@ const STABLE_COORDINATION_ITEMS = [
 test.describe("Coordination adaptive modes (SPA)", () => {
   async function darkTheme(page: Page) {
     await page.addInitScript(() => {
-      window.localStorage.setItem("careon-theme", "dark");
+      window.localStorage.setItem("carelane-theme", "dark");
     });
   }
 
@@ -397,7 +397,7 @@ test.describe("Coordination adaptive modes (SPA)", () => {
 test.describe("Matching openCase deep link (SPA)", () => {
   test("opens map workspace for the case in the query string", async ({ page }) => {
     await page.addInitScript(() => {
-      window.localStorage.setItem("careon-theme", "dark");
+      window.localStorage.setItem("carelane-theme", "dark");
     });
     await installCareApiStubs(page);
     await page.goto(

@@ -130,7 +130,7 @@ class MentionsAiAndReminderTests(TestCase):
         self.client.login(username='member', password='testpass123')
 
         response = self.client.get(
-            reverse('careon:configuration_update', kwargs={'pk': self.configuration.id}),
+            reverse('carelane:configuration_update', kwargs={'pk': self.configuration.id}),
         )
 
         self.assertEqual(response.status_code, 200)
@@ -139,7 +139,7 @@ class MentionsAiAndReminderTests(TestCase):
         self.client.login(username='adminuser', password='testpass123')
 
         response = self.client.get(
-            reverse('careon:configuration_update', kwargs={'pk': self.configuration.id}),
+            reverse('carelane:configuration_update', kwargs={'pk': self.configuration.id}),
         )
 
         self.assertEqual(response.status_code, 200)
@@ -148,7 +148,7 @@ class MentionsAiAndReminderTests(TestCase):
         self.client.login(username='member', password='testpass123')
 
         response = self.client.post(
-            reverse('careon:document_create'),
+            reverse('carelane:document_create'),
             {
                 'title': 'Unapproved upload',
                 'document_type': 'CONTRACT',
@@ -164,7 +164,7 @@ class MentionsAiAndReminderTests(TestCase):
         self.client.login(username='adminuser', password='testpass123')
 
         response = self.client.post(
-            reverse('careon:document_create'),
+            reverse('carelane:document_create'),
             {
                 'title': 'Approved upload',
                 'document_type': 'CONTRACT',
@@ -180,7 +180,7 @@ class MentionsAiAndReminderTests(TestCase):
         self.client.login(username='member', password='testpass123')
 
         response = self.client.get(
-            reverse('careon:deadline_update', kwargs={'pk': self.deadline.id}),
+            reverse('carelane:deadline_update', kwargs={'pk': self.deadline.id}),
         )
 
         self.assertEqual(response.status_code, 403)
@@ -189,7 +189,7 @@ class MentionsAiAndReminderTests(TestCase):
         self.client.login(username='member', password='testpass123')
 
         response = self.client.post(
-            reverse('careon:deadline_complete', kwargs={'pk': self.deadline.id}),
+            reverse('carelane:deadline_complete', kwargs={'pk': self.deadline.id}),
         )
 
         self.assertEqual(response.status_code, 403)
@@ -200,7 +200,7 @@ class MentionsAiAndReminderTests(TestCase):
         self.client.login(username='adminuser', password='testpass123')
 
         response = self.client.post(
-            reverse('careon:deadline_complete', kwargs={'pk': self.deadline.id}),
+            reverse('carelane:deadline_complete', kwargs={'pk': self.deadline.id}),
         )
 
         self.assertEqual(response.status_code, 302)
@@ -211,7 +211,7 @@ class MentionsAiAndReminderTests(TestCase):
         self.client.login(username='member', password='testpass123')
 
         response = self.client.post(
-            reverse('careon:care_task_create'),
+            reverse('carelane:care_task_create'),
             {
                 'title': 'Unauthorized task',
                 'description': 'Should fail for member.',
@@ -228,7 +228,7 @@ class MentionsAiAndReminderTests(TestCase):
         self.client.login(username='member', password='testpass123')
 
         response = self.client.get(
-            reverse('careon:care_task_update', kwargs={'pk': self.legal_task.id}),
+            reverse('carelane:care_task_update', kwargs={'pk': self.legal_task.id}),
         )
 
         self.assertEqual(response.status_code, 403)
@@ -237,7 +237,7 @@ class MentionsAiAndReminderTests(TestCase):
         self.client.login(username='adminuser', password='testpass123')
 
         response = self.client.get(
-            reverse('careon:care_task_update', kwargs={'pk': self.legal_task.id}),
+            reverse('carelane:care_task_update', kwargs={'pk': self.legal_task.id}),
         )
 
         self.assertEqual(response.status_code, 200)
@@ -246,7 +246,7 @@ class MentionsAiAndReminderTests(TestCase):
         self.client.login(username='adminuser', password='testpass123')
 
         response = self.client.get(
-            reverse('careon:configuration_update', kwargs={'pk': self.configuration.id}),
+            reverse('carelane:configuration_update', kwargs={'pk': self.configuration.id}),
         )
 
         self.assertEqual(response.status_code, 200)

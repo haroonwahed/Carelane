@@ -124,7 +124,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         intake = self._create_case('Casus Monitor Pagina')
         self._create_placement(intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=2)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'))
+        response = self.client.get(reverse('carelane:provider_response_monitor'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Providerreactie monitor')
@@ -132,7 +132,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self.assertContains(response, 'Wachtrij')
         self.assertContains(response, 'open reacties')
         self.assertContains(response, 'Open plaatsing')
-        self.assertContains(response, f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing")
+        self.assertContains(response, f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing")
 
     def test_monitor_summary_counts_mixed_scenarios(self):
         waiting_intake = self._create_case('Casus Wachtend')
@@ -174,7 +174,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
             deadline_days_after_request=4,
         )
 
-        response = self.client.get(reverse('careon:provider_response_monitor'))
+        response = self.client.get(reverse('carelane:provider_response_monitor'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Actie nu')
@@ -219,7 +219,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(on_track_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=1, deadline_days_after_request=4)
         self._create_placement(at_risk_intake, PlacementRequest.ProviderResponseStatus.WAITLIST, requested_days_ago=2, deadline_days_after_request=5)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'priority_mode': '1'})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'priority_mode': '1'})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Casus Priority Forced')
@@ -235,7 +235,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(on_track_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=1, deadline_days_after_request=4)
         self._create_placement(at_risk_intake, PlacementRequest.ProviderResponseStatus.WAITLIST, requested_days_ago=2, deadline_days_after_request=5)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'priority_mode': '1'})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'priority_mode': '1'})
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Casus Niet Urgent On Track')
@@ -248,12 +248,12 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(high_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=5, deadline_days_after_request=1)
         self._create_placement(crisis_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=5, deadline_days_after_request=1)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'priority_mode': '1'})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'priority_mode': '1'})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'value="1" selected')
         self.assertContains(response, 'value="urgency" selected')
-        self.assertContains(response, f"{reverse('careon:case_detail', kwargs={'pk': high_intake.pk})}?tab=plaatsing")
+        self.assertContains(response, f"{reverse('carelane:case_detail', kwargs={'pk': high_intake.pk})}?tab=plaatsing")
         self.assertEqual(self._queue_titles(response)[:2], ['Casus Priority Crisis', 'Casus Priority Hoog'])
 
     def test_priority_mode_resend_quick_action_visibility_rules_still_apply(self):
@@ -263,7 +263,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(eligible_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=5, deadline_days_after_request=1)
         self._create_placement(blocked_intake, PlacementRequest.ProviderResponseStatus.REJECTED, requested_days_ago=1, deadline_days_after_request=2)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'priority_mode': '1'})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'priority_mode': '1'})
 
         self.assertEqual(response.status_code, 200)
         rows_by_title = {row['case_title']: row for row in response.context['monitor_queue_rows']}
@@ -277,7 +277,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(forced_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=6, deadline_days_after_request=9)
         self._create_placement(escalated_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=4, deadline_days_after_request=3)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'priority_mode': '1'})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'priority_mode': '1'})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'prioriteit actief')
@@ -340,10 +340,10 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         intake = self._create_case('Casus Deep Link')
         self._create_placement(intake, PlacementRequest.ProviderResponseStatus.NEEDS_INFO, requested_days_ago=3)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'))
+        response = self.client.get(reverse('carelane:provider_response_monitor'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing")
+        self.assertContains(response, f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing")
 
     def test_monitor_filters_queue_by_urgency(self):
         crisis_intake = self._create_case('Casus Crisis', urgency=CaseIntakeProcess.Urgency.CRISIS)
@@ -351,7 +351,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(crisis_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=2)
         self._create_placement(medium_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=2)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'urgency': 'CRISIS'})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'urgency': 'CRISIS'})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Casus Crisis')
@@ -363,7 +363,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(pending_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=2)
         self._create_placement(waitlist_intake, PlacementRequest.ProviderResponseStatus.WAITLIST, requested_days_ago=2)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'provider_response_status': 'WAITLIST'})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'provider_response_status': 'WAITLIST'})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Casus Waitlist')
@@ -377,7 +377,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(north_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=2)
         self._create_placement(west_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=2)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'region': str(north_region.pk)})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'region': str(north_region.pk)})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Casus Noord')
@@ -389,7 +389,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(overdue_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=5, deadline_days_after_request=1)
         self._create_placement(fresh_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=1, deadline_days_after_request=4)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'overdue_only': '1'})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'overdue_only': '1'})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Casus Overdue Only')
@@ -401,7 +401,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(rematch_intake, PlacementRequest.ProviderResponseStatus.REJECTED, requested_days_ago=2)
         self._create_placement(waiting_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=2)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'rematch_recommended_only': '1'})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'rematch_recommended_only': '1'})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Casus Hermatch')
@@ -426,9 +426,9 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(searchable_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=2)
         self._create_placement(other_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=2, provider=other_provider)
 
-        provider_response = self.client.get(reverse('careon:provider_response_monitor'), {'q': 'Monitor Provider'})
-        client_response = self.client.get(reverse('careon:provider_response_monitor'), {'q': 'Client Zoeknaam'})
-        case_id_response = self.client.get(reverse('careon:provider_response_monitor'), {'q': str(searchable_intake.pk)})
+        provider_response = self.client.get(reverse('carelane:provider_response_monitor'), {'q': 'Monitor Provider'})
+        client_response = self.client.get(reverse('carelane:provider_response_monitor'), {'q': 'Client Zoeknaam'})
+        case_id_response = self.client.get(reverse('carelane:provider_response_monitor'), {'q': str(searchable_intake.pk)})
 
         for response in (provider_response, client_response, case_id_response):
             self.assertEqual(response.status_code, 200)
@@ -441,7 +441,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(intake, PlacementRequest.ProviderResponseStatus.WAITLIST, requested_days_ago=4)
 
         response = self.client.get(
-            reverse('careon:provider_response_monitor'),
+            reverse('carelane:provider_response_monitor'),
             {
                 'q': 'Casus Reset',
                 'urgency': 'HIGH',
@@ -467,7 +467,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(alias_intake, 'NO_RESPONSE', requested_days_ago=4, deadline_days_after_request=2)
         self._create_placement(waitlist_intake, PlacementRequest.ProviderResponseStatus.WAITLIST, requested_days_ago=2)
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'provider_response_status': 'NO_RESPONSE'})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'provider_response_status': 'NO_RESPONSE'})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Casus Alias Filter')
@@ -478,12 +478,12 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(intake, PlacementRequest.ProviderResponseStatus.REJECTED, requested_days_ago=2)
 
         response = self.client.get(
-            reverse('careon:provider_response_monitor'),
+            reverse('carelane:provider_response_monitor'),
             {'urgency': 'HIGH', 'rematch_recommended_only': '1'},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing")
+        self.assertContains(response, f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing")
 
     def test_monitor_shows_resend_quick_action_only_for_eligible_rows(self):
         resend_intake = self._create_case('Casus Herinnering Toegestaan')
@@ -499,7 +499,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
             requested_days_ago=2,
         )
 
-        response = self.client.get(reverse('careon:provider_response_monitor'))
+        response = self.client.get(reverse('carelane:provider_response_monitor'))
 
         self.assertEqual(response.status_code, 200)
         rows_by_title = {row['case_title']: row for row in response.context['monitor_queue_rows']}
@@ -517,7 +517,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
             requested_days_ago=3,
         )
 
-        response = self.client.get(reverse('careon:provider_response_monitor'))
+        response = self.client.get(reverse('carelane:provider_response_monitor'))
 
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.context['monitor_queue_rows'][0]['resend_action'])
@@ -532,12 +532,12 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
             deadline_days_after_request=1,
         )
         expected_next = (
-            f"{reverse('careon:provider_response_monitor')}?q=Casus+Monitor+Resend"
+            f"{reverse('carelane:provider_response_monitor')}?q=Casus+Monitor+Resend"
             '&urgency=HIGH&sort=urgency'
         )
 
         response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': intake.pk}),
             {
                 'action': 'resend_request',
                 'next': expected_next,
@@ -596,7 +596,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
             deadline_days_after_request=10,
         )
 
-        response = self.client.get(reverse('careon:provider_response_monitor'))
+        response = self.client.get(reverse('carelane:provider_response_monitor'))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -623,7 +623,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
             deadline_days_after_request=1,
         )
 
-        response = self.client.get(reverse('careon:provider_response_monitor'), {'sort': 'oldest_waiting'})
+        response = self.client.get(reverse('carelane:provider_response_monitor'), {'sort': 'oldest_waiting'})
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -645,7 +645,7 @@ class RegiekamerProviderResponseMonitorTests(TestCase):
         self._create_placement(medium_intake, PlacementRequest.ProviderResponseStatus.PENDING, requested_days_ago=4)
 
         response = self.client.get(
-            reverse('careon:provider_response_monitor'),
+            reverse('carelane:provider_response_monitor'),
             {
                 'provider_response_status': 'PENDING',
                 'sort': 'urgency',

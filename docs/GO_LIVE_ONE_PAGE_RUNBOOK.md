@@ -18,14 +18,14 @@ Set at least:
 | `DJANGO_SECRET_KEY` | Strong secret; not `django-insecure-*`. |
 | `ALLOWED_HOSTS` | Includes the public hostname. |
 | `CSRF_TRUSTED_ORIGINS` | Includes `https://…` origin(s). |
-| `DEFAULT_FROM_EMAIL` | Not `noreply@careon.local` (`config/settings_production.py`). |
+| `DEFAULT_FROM_EMAIL` | Not `noreply@carelane.local` (`config/settings_production.py`). |
 | `DJANGO_SETTINGS_MODULE` | `config.settings_production` for prod checks. |
 | `SENTRY_DSN` | Optional but strongly recommended for pilot (`docs/PILOT_E2E_STATUS.md`). |
 
 ## 2. Django preflight (from repo, with prod env loaded)
 
 ```bash
-cd /path/to/Careon
+cd /path/to/Carelane
 set -a && source /path/to/your-prod-or-staging.env && set +a
 ./scripts/go_live_django_preflight.sh
 ```
@@ -42,12 +42,12 @@ On the host (or your platform’s migrate step), after backup:
 
 ## 4. HTTP smoke (from any machine with `curl`)
 
-**Current pilot/staging web origin (public):** `https://careon-web.onrender.com`  
+**Current pilot/staging web origin (public):** `https://carelane-web.onrender.com`  
 Override anytime with `BASE_URL` if you add another host.
 
 ```bash
-cd /path/to/Careon
-BASE_URL=https://careon-web.onrender.com ./scripts/go_live_http_smoke.sh
+cd /path/to/Carelane
+BASE_URL=https://carelane-web.onrender.com ./scripts/go_live_http_smoke.sh
 ```
 
 The script checks `/`, `/care/`, and `/?view=dashboard` (not `/static/spa/?view=dashboard`, which may 404 under Whitenoise while the site is still fine).

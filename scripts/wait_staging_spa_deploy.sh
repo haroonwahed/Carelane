@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BASE_URL="${BASE_URL:-${STAGING_BASE_URL:-https://careon-web.onrender.com}}"
+BASE_URL="${BASE_URL:-${STAGING_BASE_URL:-https://carelane-web.onrender.com}}"
 MAX_WAIT_SEC="${MAX_WAIT_SEC:-900}"
 INTERVAL_SEC="${INTERVAL_SEC:-20}"
 

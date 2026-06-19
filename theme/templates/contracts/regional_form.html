@@ -7,10 +7,10 @@
 <nav class="">
         <a class="" href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/">Regiekamer</a>
         <span> / </span>
-        <a class="" href="{% url 'careon:regional_list' %}">Zorgregio's</a>
+        <a class="" href="{% url 'carelane:regional_list' %}">Zorgregio's</a>
         {% if region %}
         <span> / </span>
-        <a class="" href="{% url 'careon:regional_detail' region.pk %}">{{ region.region_name }}</a>
+        <a class="" href="{% url 'carelane:regional_detail' region.pk %}">{{ region.region_name }}</a>
         <span> / </span>
         <span class="">Wijzigen</span>
         {% else %}
@@ -170,7 +170,7 @@
             <button type="submit" class="btn btn-primary">
                 {% if region %}Wijzigingen opslaan{% else %}Zorgregio aanmaken{% endif %}
             </button>
-            <a href="{% url 'careon:regional_list' %}" class="btn btn-secondary">Annuleren</a>
+            <a href="{% url 'carelane:regional_list' %}" class="btn btn-secondary">Annuleren</a>
         </div>
     </form>
 </div>

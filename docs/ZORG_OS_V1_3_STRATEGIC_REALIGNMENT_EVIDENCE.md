@@ -1,10 +1,10 @@
 # Zorg OS v1.3 — strategic realignment evidence
 
-> **Historical / non-guidance.** Evidence snapshot for the v1.3 realignment wave. Current doctrine: `docs/Careon_Operational_Constitution_v2.md` and `docs/FOUNDATION_LOCK.md`.
+> **Historical / non-guidance.** Evidence snapshot for the v1.3 realignment wave. Current doctrine: `docs/Carelane_Operational_Constitution_v2.md` and `docs/FOUNDATION_LOCK.md`.
 
 **Date:** 2026-05-11  
 **Scope:** product philosophy, UX/navigation/copy, canonical documentation, guardrail tests.  
-**Note:** Source files from `~/Downloads/CareOn_ZorgOS_v1_3_Updated_Documentation/` were **not present** on the build machine; canonical markdown was authored **into the repo** at the paths below.
+**Note:** Source files from `~/Downloads/Carelane_ZorgOS_v1_3_Updated_Documentation/` were **not present** on the build machine; canonical markdown was authored **into the repo** at the paths below.
 
 ---
 
@@ -12,18 +12,18 @@
 
 | Path | Purpose |
 |------|---------|
-| `docs/Careon_Operational_Constitution_v2.docx` | Authoritative operational doctrine (Word master) |
-| `docs/Careon_Operational_Constitution_v2.md` | Plain-text export (search, diffs, agents) |
+| `docs/Carelane_Operational_Constitution_v2.docx` | Authoritative operational doctrine (Word master) |
+| `docs/Carelane_Operational_Constitution_v2.md` | Plain-text export (search, diffs, agents) |
 | `docs/FOUNDATION_LOCK.md` | Persisted workflow states, API phases, endpoints, decision engine, UI density guardrails |
-| `docs/CareOn_Business_OS_v1_3.md` | Positioning & commercial guardrails |
+| `docs/Carelane_Business_OS_v1_3.md` | Positioning & commercial guardrails |
 
-**Superseded markdown (content removed):** the former v1.3 trio at `docs/Zorg_OS_Product_System_Core_v1_3.md`, `docs/Zorg_OS_Technical_Foundation_v1_3.md`, and `docs/CareOn_Design_Constitution_v1_3.md` — **stub redirect pages** now live at those paths so external links keep working; canonical content is Constitution v2 + `FOUNDATION_LOCK.md`.
+**Superseded markdown (content removed):** the former v1.3 trio at `docs/Zorg_OS_Product_System_Core_v1_3.md`, `docs/Zorg_OS_Technical_Foundation_v1_3.md`, and `docs/Carelane_Design_Constitution_v1_3.md` — **stub redirect pages** now live at those paths so external links keep working; canonical content is Constitution v2 + `FOUNDATION_LOCK.md`.
 
 **Historical:** the table below recorded the v1.3 documentation pack (2026-05-11). It is retained for traceability only.
 
 | Path (historical) | Purpose |
 |------|---------|
-| `docs/CareOn_Design_Constitution_v1_3.md` | Visual/density/NBA/terminology law |
+| `docs/Carelane_Design_Constitution_v1_3.md` | Visual/density/NBA/terminology law |
 | `docs/Zorg_OS_Product_System_Core_v1_3.md` | Product boundaries, actors, flow |
 | `docs/Zorg_OS_Technical_Foundation_v1_3.md` | Backend truth, mapping, arrangement API staging |
 
@@ -73,7 +73,7 @@
 ## 4. Workflows & state machines
 
 - **No** change to `WorkflowState` enum values in this pass (avoids migration + client breakage).  
-- **Product flow** documented in `FOUNDATION_LOCK.md` + `docs/Careon_Operational_Constitution_v2.md`; implementation mapping table added.  
+- **Product flow** documented in `FOUNDATION_LOCK.md` + `docs/Carelane_Operational_Constitution_v2.md`; implementation mapping table added.  
 - **Uitstroom** expressed as product language tied to completion + archive semantics.
 
 ---

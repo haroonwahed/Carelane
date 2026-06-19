@@ -3,7 +3,7 @@
 **Audience:** product + engineering leads planning the next slices of work.  
 **Default lens:** **Provider-chain-first** (zorgaanbieder adoption: capacity, review UX, structured responses, **linked-case-only visibility**, auditability). If your next release is **pilot gemeente / rehearsal** or **internal rehearsal only**, use the **Alternate lenses** section to reorder the Should band.
 
-**Companion:** full debt catalog lives across `docs/PRODUCT_COMPLETENESS_ROADMAP.md`, `docs/GO_LIVE_MATRIX.md`, `docs/FOUNDATION_LOCK.md`, `docs/ZORG_OS_V1_3_STRATEGIC_REALIGNMENT_EVIDENCE.md`, `docs/ACTOR_PROFILES_ROADMAP.md`, `docs/FRONTEND_UI_MODE_AUDIT.md`, `docs/MATCHING_EXPLAINABILITY.md`, `docs/CAREON_STRUCTURAL_MIGRATION_PLAN.md`, `docs/CONTRACT_FRICTION_PLAN.md`.
+**Companion:** full debt catalog lives across `docs/PRODUCT_COMPLETENESS_ROADMAP.md`, `docs/GO_LIVE_MATRIX.md`, `docs/FOUNDATION_LOCK.md`, `docs/ZORG_OS_V1_3_STRATEGIC_REALIGNMENT_EVIDENCE.md`, `docs/ACTOR_PROFILES_ROADMAP.md`, `docs/FRONTEND_UI_MODE_AUDIT.md`, `docs/MATCHING_EXPLAINABILITY.md`, `docs/CARELANE_STRUCTURAL_MIGRATION_PLAN.md`, `docs/CONTRACT_FRICTION_PLAN.md`.
 
 ---
 
@@ -70,7 +70,7 @@
 ### Could (after provider path is stable)
 
 - Anonimisatie full service path (DPIA-gated).
-- CareOn structural terminology migration.
+- Carelane structural terminology migration.
 - Timeline export / hash-chains (`CASE_TIMELINE_V1.md` future).
 - Page-local `<style>` remediation; EN/NL comment cleanup; geo follow-up in `contracts/views.py` when schema lands.
 - **`regiekamer` / test id rename** — dedicated refactor (`ZORG_OS_V1_3_STRATEGIC_REALIGNMENT_EVIDENCE` §10).

@@ -9,7 +9,7 @@ This project supports Google SSO via OIDC using `mozilla-django-oidc`.
 3. Create OAuth 2.0 Client ID (Web application).
 4. Add **Authorized redirect URIs** (must match `OIDC_PUBLIC_BASE_URL` + `/oidc/callback/` exactly):
    - Local: `http://127.0.0.1:8000/oidc/callback/`
-   - Production: `https://<your-public-host>/oidc/callback/` (e.g. `https://careon-web.onrender.com/oidc/callback/`)
+   - Production: `https://<your-public-host>/oidc/callback/` (e.g. `https://carelane-web.onrender.com/oidc/callback/`)
    - Optional: `http://localhost:8000/oidc/callback/` if you use `localhost` instead of `127.0.0.1`
 
 ## 2. Configure environment
@@ -26,7 +26,7 @@ export OIDC_RP_SCOPES="openid email profile"
 # Canonical Django origin for Google redirect_uri (NOT the Vite :3000 port)
 export OIDC_PUBLIC_BASE_URL="http://127.0.0.1:8000"
 # Production example:
-# export OIDC_PUBLIC_BASE_URL="https://careon-web.onrender.com"
+# export OIDC_PUBLIC_BASE_URL="https://carelane-web.onrender.com"
 ```
 
 Optional restrictions:

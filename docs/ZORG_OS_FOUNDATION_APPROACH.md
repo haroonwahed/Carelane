@@ -1,6 +1,6 @@
 # Zorg OS - Foundation Approach
 
-System-First Build Strategy (aligned to **CareOn Operational Constitution v2** — see `docs/Careon_Operational_Constitution_v2.md`).
+System-First Build Strategy (aligned to **Carelane Operational Constitution v2** — see `docs/Carelane_Operational_Constitution_v2.md`).
 
 ## 1. Core Principle
 

@@ -1,5 +1,5 @@
 // @ts-nocheck
-// CareOn - Zorgcoördinatie Platform
+// Carelane - Zorgcoördinatie Platform
 // Mock data for healthcare cases
 
 export type CaseStatus = 

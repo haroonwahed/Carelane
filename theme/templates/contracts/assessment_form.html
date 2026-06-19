@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% if form.instance.pk %}Beoordeling door aanbieder bewerken{% else %}Nieuwe beoordeling door aanbieder{% endif %} - Careon{% endblock %}
+{% block title %}{% if form.instance.pk %}Beoordeling door aanbieder bewerken{% else %}Nieuwe beoordeling door aanbieder{% endif %} - Carelane{% endblock %}
 {% block content %}
 
 <div class="page-wrap page-stack">
@@ -13,12 +13,12 @@
         <a class="" href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/">Regiekamer</a>
         <span class="mx-2">/</span>
         {% if form.instance.pk and form.instance.intake %}
-        <a class="" href="{% url 'careon:case_detail' form.instance.intake.pk %}">{{ form.instance.intake.title }}</a>
+        <a class="" href="{% url 'carelane:case_detail' form.instance.intake.pk %}">{{ form.instance.intake.title }}</a>
         <span class="mx-2">/</span>
-        <a class="" href="{% url 'careon:assessment_detail' form.instance.pk %}">Beoordeling door aanbieder</a>
+        <a class="" href="{% url 'carelane:assessment_detail' form.instance.pk %}">Beoordeling door aanbieder</a>
         <span class="mx-2">/</span>
         {% else %}
-        <a class="" href="{% url 'careon:assessment_list' %}">Beoordeling door aanbieder</a>
+        <a class="" href="{% url 'carelane:assessment_list' %}">Beoordeling door aanbieder</a>
         <span class="mx-2">/</span>
         {% endif %}
         <span class="">{% if form.instance.pk %}Wijzigen{% else %}Nieuw{% endif %}</span>
@@ -95,7 +95,7 @@
         </section>
 
         <div class="ds-card action-card">
-            <a href="{% url 'careon:assessment_list' %}" class="btn btn-secondary">Annuleren</a>
+            <a href="{% url 'carelane:assessment_list' %}" class="btn btn-secondary">Annuleren</a>
             <button type="submit" class="btn btn-primary">
                 {% if form.instance.pk %}Wijzigingen opslaan{% else %}Beoordeling door aanbieder aanmaken{% endif %}
             </button>

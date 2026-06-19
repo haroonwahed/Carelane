@@ -22,7 +22,7 @@ Files:
 
 Tasks:
 - Gate the SPA shell migration middleware behind the redesign feature flag.
-- Keep the `X-Careon-Ui-Surface` marker for redesign mode.
+- Keep the `X-Carelane-Ui-Surface` marker for redesign mode.
 - Ensure default requests hit the underlying Django views again.
 - Re-run the shell, dashboard, and redesign tests.
 

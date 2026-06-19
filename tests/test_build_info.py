@@ -34,7 +34,7 @@ class BuildInfoTests(TestCase):
         response = self.client.get(reverse("build_info"))
         self.assertEqual(response.status_code, 403)
 
-    @patch.dict(os.environ, {"CAREON_GIT_SHA": "deadbeefcafe"}, clear=False)
+    @patch.dict(os.environ, {"CARELANE_GIT_SHA": "deadbeefcafe"}, clear=False)
     def test_staff_receives_json_payload(self):
         self.client.login(username="staff_buildinfo", password="pw-test-build-info")
         response = self.client.get(reverse("build_info"))

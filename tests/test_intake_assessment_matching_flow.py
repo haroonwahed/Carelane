@@ -110,23 +110,23 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
             workflow_summary=MINIMAL_WORKFLOW_SUMMARY,
         )
 
-        assessment_list_response = self.client.get(reverse('careon:assessment_list'))
+        assessment_list_response = self.client.get(reverse('carelane:assessment_list'))
         self.assertEqual(assessment_list_response.status_code, 200)
         self.assertContains(assessment_list_response, '<div id="root"></div>', html=True)
 
-        assessments_api_response = self.client.get(reverse('careon:assessments_api'))
+        assessments_api_response = self.client.get(reverse('carelane:assessments_api'))
         self.assertEqual(assessments_api_response.status_code, 200)
         api_payload = assessments_api_response.json()
         flow_rows = [row for row in api_payload['assessments'] if row['caseTitle'] == 'Flow Intake']
         self.assertEqual(len(flow_rows), 1)
         self.assertTrue(flow_rows[0]['matchingReady'])
 
-        matching_response = self.client.get(reverse('careon:matching_dashboard'))
+        matching_response = self.client.get(reverse('carelane:matching_dashboard'))
         self.assertEqual(matching_response.status_code, 200)
         self.assertContains(matching_response, '<div id="root"></div>', html=True)
 
         matching_candidates_response = self.client.get(
-            reverse('careon:matching_candidates_api', kwargs={'case_id': intake.contract_id})
+            reverse('carelane:matching_candidates_api', kwargs={'case_id': intake.contract_id})
         )
         self.assertEqual(matching_candidates_response.status_code, 200)
         candidates_payload = matching_candidates_response.json()
@@ -134,7 +134,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         self.assertIn('matches', candidates_payload)
 
         assign_response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps(
                 {
                     'action': 'assign',
@@ -180,7 +180,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps(
                 {
                     'action': 'assign',
@@ -212,7 +212,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
         region.served_municipalities.add(municipality)
 
-        bootstrap_response = self.client.get(reverse('careon:intake_form_options_api'))
+        bootstrap_response = self.client.get(reverse('carelane:intake_form_options_api'))
         self.assertEqual(bootstrap_response.status_code, 200)
         payload = bootstrap_response.json()['initial_values']
         payload.update({
@@ -234,7 +234,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         })
 
         response = self.client.post(
-            reverse('careon:intake_create_api'),
+            reverse('carelane:intake_create_api'),
             data=json.dumps(payload),
             content_type='application/json',
         )
@@ -261,7 +261,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         self.assertEqual(float(intake.latitude), 52.0907)
         self.assertEqual(float(intake.longitude), 5.1214)
 
-        cases_response = self.client.get(reverse('careon:cases_api'))
+        cases_response = self.client.get(reverse('carelane:cases_api'))
         self.assertEqual(cases_response.status_code, 200)
         case_titles = [item['title'] for item in cases_response.json()['contracts']]
         self.assertIn('API Intake Visible In Casussen', case_titles)
@@ -283,7 +283,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
         region.served_municipalities.add(municipality)
 
-        bootstrap_response = self.client.get(reverse('careon:intake_form_options_api'))
+        bootstrap_response = self.client.get(reverse('carelane:intake_form_options_api'))
         self.assertEqual(bootstrap_response.status_code, 200)
         payload = bootstrap_response.json()['initial_values']
         payload.update({
@@ -308,7 +308,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
 
         with _quiet_logs_for_expected_client_errors():
             response = self.client.post(
-                reverse('careon:intake_create_api'),
+                reverse('carelane:intake_create_api'),
                 data=json.dumps(payload),
                 content_type='application/json',
             )
@@ -342,7 +342,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
         region.served_municipalities.add(municipality)
 
-        bootstrap_response = self.client.get(reverse('careon:intake_form_options_api'))
+        bootstrap_response = self.client.get(reverse('carelane:intake_form_options_api'))
         self.assertEqual(bootstrap_response.status_code, 200)
         payload = bootstrap_response.json()['initial_values']
         payload.update({
@@ -367,7 +367,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
 
         with _quiet_logs_for_expected_client_errors():
             response = self.client.post(
-                reverse('careon:intake_create_api'),
+                reverse('carelane:intake_create_api'),
                 data=json.dumps(payload),
                 content_type='application/json',
             )
@@ -399,7 +399,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
         region.served_municipalities.add(municipality)
 
-        bootstrap_response = self.client.get(reverse('careon:intake_form_options_api'))
+        bootstrap_response = self.client.get(reverse('carelane:intake_form_options_api'))
         self.assertEqual(bootstrap_response.status_code, 200)
         payload = bootstrap_response.json()['initial_values']
         payload.update({
@@ -422,7 +422,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
 
         with _quiet_logs_for_expected_client_errors():
             response = self.client.post(
-                reverse('careon:intake_create_api'),
+                reverse('carelane:intake_create_api'),
                 data=json.dumps(payload),
                 content_type='application/json',
             )
@@ -458,7 +458,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         response = self.client.get(
-            reverse('careon:assessment_decision_api', kwargs={'case_id': case_record.pk})
+            reverse('carelane:assessment_decision_api', kwargs={'case_id': case_record.pk})
         )
 
         self.assertEqual(response.status_code, 200)
@@ -487,7 +487,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         case_record = intake.ensure_case_record(created_by=self.user)
 
         response = self.client.post(
-            reverse('careon:assessment_decision_api', kwargs={'case_id': case_record.pk}),
+            reverse('carelane:assessment_decision_api', kwargs={'case_id': case_record.pk}),
             data=json.dumps({
                 'decision': 'matching',
                 'zorgtype': CaseIntakeProcess.CareForm.DAY_TREATMENT,
@@ -548,7 +548,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
 
         with _quiet_logs_for_expected_client_errors():
             response = self.client.post(
-                reverse('careon:assessment_decision_api', kwargs={'case_id': case_record.pk}),
+                reverse('carelane:assessment_decision_api', kwargs={'case_id': case_record.pk}),
                 data=json.dumps({
                     'decision': 'matching',
                     'zorgtype': CaseIntakeProcess.CareForm.OUTPATIENT,
@@ -599,11 +599,11 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
             workflow_summary=MINIMAL_WORKFLOW_SUMMARY,
         )
 
-        response = self.client.get(reverse('careon:matching_dashboard'))
+        response = self.client.get(reverse('carelane:matching_dashboard'))
         self._assert_spa_shell(response)
 
         matching_candidates_response = self.client.get(
-            reverse('careon:matching_candidates_api', kwargs={'case_id': intake.contract_id})
+            reverse('carelane:matching_candidates_api', kwargs={'case_id': intake.contract_id})
         )
         self.assertEqual(matching_candidates_response.status_code, 200)
         payload = matching_candidates_response.json()
@@ -630,11 +630,11 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
             workflow_summary=MINIMAL_WORKFLOW_SUMMARY,
         )
 
-        response = self.client.get(reverse('careon:matching_dashboard'))
+        response = self.client.get(reverse('carelane:matching_dashboard'))
         self._assert_spa_shell(response)
 
         matching_candidates_response = self.client.get(
-            reverse('careon:matching_candidates_api', kwargs={'case_id': intake.contract_id})
+            reverse('carelane:matching_candidates_api', kwargs={'case_id': intake.contract_id})
         )
         self.assertEqual(matching_candidates_response.status_code, 200)
         payload = matching_candidates_response.json()
@@ -654,7 +654,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         response = self.client.get(
-            reverse('careon:intake_detail', kwargs={'pk': intake.pk}),
+            reverse('carelane:intake_detail', kwargs={'pk': intake.pk}),
             follow=True,
         )
 
@@ -685,7 +685,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         response = self.client.post(
-            reverse('careon:case_task_create', kwargs={'pk': locked_intake.pk}),
+            reverse('carelane:case_task_create', kwargs={'pk': locked_intake.pk}),
             {
                 'due_diligence_process': str(other_intake.pk),
                 'title': 'Server locked task',
@@ -724,7 +724,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         response = self.client.post(
-            reverse('careon:case_signal_create', kwargs={'pk': locked_intake.pk}),
+            reverse('carelane:case_signal_create', kwargs={'pk': locked_intake.pk}),
             {
                 'due_diligence_process': str(other_intake.pk),
                 'signal_type': CareSignal.SignalType.SAFETY,
@@ -768,7 +768,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         response = self.client.post(
-            reverse('careon:case_document_create', kwargs={'pk': locked_intake.pk}),
+            reverse('carelane:case_document_create', kwargs={'pk': locked_intake.pk}),
             {
                 'title': 'Case locked document',
                 'document_type': Document.DocType.OTHER,
@@ -826,11 +826,11 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         assign_response = self.client.post(
-            reverse('careon:case_matching_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_matching_action', kwargs={'pk': intake.pk}),
             {
                 'action': 'assign',
                 'provider_id': str(provider.pk),
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
             },
             follow=True,
         )
@@ -841,7 +841,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         placement.save(update_fields=['status'])
 
         task_response = self.client.post(
-            reverse('careon:case_task_create', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_task_create', kwargs={'pk': intake.pk}),
             {
                 'title': 'Golden task',
                 'task_type': Deadline.TaskType.CONTACT_PROVIDER,
@@ -855,7 +855,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         self.assertEqual(task_response.status_code, 200)
 
         signal_response = self.client.post(
-            reverse('careon:case_signal_create', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_signal_create', kwargs={'pk': intake.pk}),
             {
                 'signal_type': CareSignal.SignalType.CAPACITY_ISSUE,
                 'risk_level': CareSignal.RiskLevel.MEDIUM,
@@ -869,7 +869,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         self.assertEqual(signal_response.status_code, 200)
 
         document_response = self.client.post(
-            reverse('careon:case_document_create', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_document_create', kwargs={'pk': intake.pk}),
             {
                 'title': 'Golden document',
                 'document_type': Document.DocType.MEMO,
@@ -881,11 +881,11 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
         self.assertEqual(document_response.status_code, 200)
 
-        case_detail = self.client.get(reverse('careon:case_detail', kwargs={'pk': intake.pk}))
+        case_detail = self.client.get(reverse('carelane:case_detail', kwargs={'pk': intake.pk}))
         self._assert_spa_shell(case_detail)
 
         placement_payload = self.client.get(
-            reverse('careon:case_placement_detail_api', kwargs={'case_id': intake.contract_id})
+            reverse('carelane:case_placement_detail_api', kwargs={'case_id': intake.contract_id})
         ).json()
         self.assertEqual(placement_payload.get('placement', {}).get('status'), PlacementRequest.Status.APPROVED)
 
@@ -896,7 +896,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
             ).exists()
         )
 
-        signals_payload = self.client.get(reverse('careon:signals_api')).json()
+        signals_payload = self.client.get(reverse('carelane:signals_api')).json()
         self.assertTrue(any(signal.get('description') == 'Golden signal' for signal in signals_payload.get('signals', [])))
 
         self.assertTrue(
@@ -927,10 +927,10 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         response = self.client.post(
-            reverse('careon:signal_status_update', kwargs={'pk': signal.pk}),
+            reverse('carelane:signal_status_update', kwargs={'pk': signal.pk}),
             {
                 'status': CareSignal.SignalStatus.IN_PROGRESS,
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=signalen",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=signalen",
             },
             follow=True,
         )
@@ -959,7 +959,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
             contract=case_record,
         )
 
-        upload_url = reverse('careon:case_document_create', kwargs={'pk': intake.pk})
+        upload_url = reverse('carelane:case_document_create', kwargs={'pk': intake.pk})
         response = self.client.post(
             f'{upload_url}?phase=matching&event=provider_handoff',
             {
@@ -978,7 +978,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         self.assertIn('phase:matching', document.tags)
         self.assertIn('event:provider_handoff', document.tags)
 
-        case_detail = self.client.get(reverse('careon:case_detail', kwargs={'pk': intake.pk}) + '?tab=documenten')
+        case_detail = self.client.get(reverse('carelane:case_detail', kwargs={'pk': intake.pk}) + '?tab=documenten')
         self._assert_spa_shell(case_detail)
 
     def test_case_matching_tab_assigns_and_logs_history(self):
@@ -1015,12 +1015,12 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         action_response = self.client.post(
-            reverse('careon:case_matching_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_matching_action', kwargs={'pk': intake.pk}),
             {
                 'action': 'assign',
                 'provider_id': str(provider.pk),
                 'phase': 'matching',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
             },
             follow=True,
         )
@@ -1106,7 +1106,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
             recommendation_context={'source': 'test'},
         )
 
-        response = self.client.get(reverse('careon:case_detail', kwargs={'pk': intake.pk}) + '?tab=communicatie')
+        response = self.client.get(reverse('carelane:case_detail', kwargs={'pk': intake.pk}) + '?tab=communicatie')
 
         self._assert_spa_shell(response)
         self.assertTrue(
@@ -1129,12 +1129,12 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         create_response = self.client.post(
-            reverse('careon:case_communication_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_communication_action', kwargs={'pk': intake.pk}),
             {
                 'action': 'add_message',
                 'workflow_stage': 'matching',
                 'content': 'Vraag aan aanbieder over aanvullende intakegegevens.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=communicatie",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=communicatie",
             },
             follow=True,
         )
@@ -1148,12 +1148,12 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         self.assertIsNotNone(open_item)
 
         resolve_response = self.client.post(
-            reverse('careon:case_communication_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_communication_action', kwargs={'pk': intake.pk}),
             {
                 'action': 'mark_resolved',
                 'target_log_id': str(open_item.pk),
                 'workflow_stage': 'matching',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=communicatie&comm_filter=open",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=communicatie&comm_filter=open",
             },
             follow=True,
         )
@@ -1180,7 +1180,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
             case_coordinator=self.user,
         )
 
-        response = self.client.get(reverse('careon:case_detail', kwargs={'pk': intake.pk}) + '?tab=communicatie')
+        response = self.client.get(reverse('carelane:case_detail', kwargs={'pk': intake.pk}) + '?tab=communicatie')
 
         self._assert_spa_shell(response)
 
@@ -1212,7 +1212,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         self.client.login(username='flow_member_readonly', password='testpass123')
 
         response = self.client.post(
-            reverse('careon:case_communication_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_communication_action', kwargs={'pk': intake.pk}),
             {
                 'action': 'add_message',
                 'workflow_stage': 'matching',
@@ -1263,13 +1263,13 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         response = self.client.post(
-            reverse('careon:case_matching_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_matching_action', kwargs={'pk': intake.pk}),
             {
                 'action': 'reject',
                 'provider_id': str(provider.pk),
                 'reason': 'Niet passend voor deze casus.',
                 'phase': 'matching',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
             },
             follow=True,
         )
@@ -1312,11 +1312,11 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         response = self.client.post(
-            reverse('careon:case_placement_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_placement_action', kwargs={'pk': intake.pk}),
             {
                 'status': PlacementRequest.Status.APPROVED,
                 'note': 'Plaatsing bevestigd vanuit casusdetail.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -1360,16 +1360,16 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         self.assertEqual(placement.provider_response_status, PlacementRequest.ProviderResponseStatus.PENDING)
 
     def test_overview_pages_show_next_actions(self):
-        response_tasks = self.client.get(reverse('careon:task_list'))
+        response_tasks = self.client.get(reverse('carelane:task_list'))
         self._assert_spa_shell(response_tasks)
 
-        response_matching = self.client.get(reverse('careon:matching_dashboard'))
+        response_matching = self.client.get(reverse('carelane:matching_dashboard'))
         self._assert_spa_shell(response_matching)
 
-        response_signals = self.client.get(reverse('careon:signal_list'))
+        response_signals = self.client.get(reverse('carelane:signal_list'))
         self._assert_spa_shell(response_signals)
 
-        response_documents = self.client.get(reverse('careon:document_list'))
+        response_documents = self.client.get(reverse('carelane:document_list'))
         self._assert_spa_shell(response_documents)
 
     def test_assessment_detail_links_back_to_case_focused_matching(self):
@@ -1391,7 +1391,7 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
             workflow_summary=MINIMAL_WORKFLOW_SUMMARY,
         )
 
-        response = self.client.get(reverse('careon:assessment_detail', kwargs={'pk': assessment.pk}))
+        response = self.client.get(reverse('carelane:assessment_detail', kwargs={'pk': assessment.pk}))
 
         self._assert_spa_shell(response)
 
@@ -1429,20 +1429,20 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
         )
 
         self.client.post(
-            reverse('careon:case_matching_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_matching_action', kwargs={'pk': intake.pk}),
             {
                 'action': 'assign',
                 'provider_id': str(provider.pk),
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
             },
             follow=True,
         )
         placement = PlacementRequest.objects.get(due_diligence_process=intake)
 
-        detail_response = self.client.get(reverse('careon:placement_detail', kwargs={'pk': placement.pk}))
+        detail_response = self.client.get(reverse('carelane:placement_detail', kwargs={'pk': placement.pk}))
         self._assert_spa_shell(detail_response)
 
-        form_response = self.client.get(reverse('careon:placement_update', kwargs={'pk': placement.pk}))
+        form_response = self.client.get(reverse('carelane:placement_update', kwargs={'pk': placement.pk}))
         self.assertIn(form_response.status_code, (200, 403))
 
     def test_task_list_orphan_deadline_is_inspection_only(self):
@@ -1462,6 +1462,6 @@ class IntakeAssessmentMatchingFlowTests(TestCase):
             assigned_to=self.user,
         )
 
-        response = self.client.get(reverse('careon:task_list') + '?show=all')
+        response = self.client.get(reverse('carelane:task_list') + '?show=all')
 
         self._assert_spa_shell(response)

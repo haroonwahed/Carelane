@@ -81,20 +81,20 @@ class Command(BaseCommand):
 		self._ensure_budget(org=org, user=owner, intakes=intakes, municipalities=municipalities)
 
 		self.stdout.write(self.style.SUCCESS('Pilot data seeded successfully.'))
-		self.stdout.write('- Organisatie: pilot-careon')
+		self.stdout.write('- Organisatie: pilot-carelane')
 		self.stdout.write(f'- Casussen/intakes: {len(intakes)}')
 		self.stdout.write(f'- Aanbieders: {len(providers)}')
 		self.stdout.write(f'- Regio: {region.region_name}')
 
 	def _ensure_organization_with_users(self, *, reset=False):
-		org, _ = Organization.objects.get_or_create(name='Careon Pilot Team', defaults={'slug': 'pilot-careon'})
-		if org.slug != 'pilot-careon':
-			org.slug = 'pilot-careon'
+		org, _ = Organization.objects.get_or_create(name='Carelane Pilot Team', defaults={'slug': 'pilot-carelane'})
+		if org.slug != 'pilot-carelane':
+			org.slug = 'pilot-carelane'
 			org.save(update_fields=['slug'])
 
-		owner = self._ensure_user('pilot.owner', 'pilot.owner@careon.local', 'Pilot', 'Owner')
-		admin = self._ensure_user('pilot.admin', 'pilot.admin@careon.local', 'Pilot', 'Admin')
-		member = self._ensure_user('pilot.member', 'pilot.member@careon.local', 'Pilot', 'Member')
+		owner = self._ensure_user('pilot.owner', 'pilot.owner@carelane.local', 'Pilot', 'Owner')
+		admin = self._ensure_user('pilot.admin', 'pilot.admin@carelane.local', 'Pilot', 'Admin')
+		member = self._ensure_user('pilot.member', 'pilot.member@carelane.local', 'Pilot', 'Member')
 
 		OrganizationMembership.objects.update_or_create(
 			organization=org,

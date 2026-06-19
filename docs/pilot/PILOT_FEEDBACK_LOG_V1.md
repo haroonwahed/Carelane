@@ -1,4 +1,4 @@
-# CareOn Pilot Feedback Log v1
+# Carelane Pilot Feedback Log v1
 
 **Purpose:** record observations from the first controlled closed-pilot session and follow-up sessions.
 **Rule:** log facts only. Do not invent outcomes or fill in missing evidence.

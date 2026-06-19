@@ -1,5 +1,5 @@
 {
-  "name": "SaaS Careon",
+  "name": "SaaS Carelane",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -69,7 +69,7 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
-    "check:careon-design": "python3 ../scripts/check_careon_design_tokens.py",
+    "check:carelane-design": "python3 ../scripts/check_carelane_design_tokens.py",
     "test:e2e": "playwright test tests/e2e/pilot-smoke.spec.ts tests/e2e/instellingen-workspace.spec.ts tests/e2e/provider-review-smoke.spec.ts tests/e2e/staging-shell-smoke.spec.ts",
     "test:e2e:visual": "playwright test tests/e2e/care-visual-regression.spec.ts",
     "test:pilot-demo": "playwright test tests/e2e/pilot-demo.spec.ts",

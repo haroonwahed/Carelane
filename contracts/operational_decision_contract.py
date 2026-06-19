@@ -362,7 +362,7 @@ class OperationalDecisionBuilder:
                 label="Start matching",
                 reason="Kies een passende aanbieder via matching",
                 action_type="assign",
-                target_url=reverse('careon:matching_dashboard') + f"?intake={intake.pk}",
+                target_url=reverse('carelane:matching_dashboard') + f"?intake={intake.pk}",
             )
         
         # No match found
@@ -372,7 +372,7 @@ class OperationalDecisionBuilder:
                     label="Zoek aanbieder",
                     reason="Geen passende aanbieder gevonden",
                     action_type="assign",
-                    target_url=reverse('careon:matching_dashboard') + f"?intake={intake.pk}",
+                    target_url=reverse('carelane:matching_dashboard') + f"?intake={intake.pk}",
                 )
         
         # Placement stalled
@@ -385,7 +385,7 @@ class OperationalDecisionBuilder:
                 label="Herstart matching",
                 reason="Huidige aanbieder reageert niet of heeft geen capaciteit",
                 action_type="rematch",
-                target_url=reverse('careon:case_detail', args=[intake.pk]) + "?tab=plaatsing",
+                target_url=reverse('carelane:case_detail', args=[intake.pk]) + "?tab=plaatsing",
             )
         
         # Open escalation
@@ -400,7 +400,7 @@ class OperationalDecisionBuilder:
                 label="Escalatie aanbevolen",
                 reason="Open escalatiesignaal vereist aandacht",
                 action_type="escalate",
-                target_url=reverse('careon:signal_update', args=[escalation_signal.pk]),
+                target_url=reverse('carelane:signal_update', args=[escalation_signal.pk]),
             )
         
         # Default: monitor
@@ -408,7 +408,7 @@ class OperationalDecisionBuilder:
             label="Monitor voortgang",
             reason="Case beweegt door flow",
             action_type="monitor",
-            target_url=reverse('careon:case_detail', args=[intake.pk]),
+            target_url=reverse('carelane:case_detail', args=[intake.pk]),
         )
     
     @staticmethod

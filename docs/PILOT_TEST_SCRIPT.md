@@ -1,4 +1,4 @@
-# Pilot-testscript — Zorg OS (CareOn)
+# Pilot-testscript — Zorg OS (Carelane)
 
 **Voor wie:** testers die namens een **gemeente** of een **zorgaanbieder** werken.  
 **Doel:** in één sessie doorlopen of het systeem begrijpelijk is voor de dagelijkse keten (casus → samenvatting → matching → gemeente-validatie → aanbieder → plaatsing → intake).  

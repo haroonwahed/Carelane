@@ -6,7 +6,7 @@
     <nav class="ds-breadcrumb">
         <a class="ds-breadcrumb-link" href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/">Regiekamer</a>
         <span class="ds-breadcrumb-sep">/</span>
-        <a class="ds-breadcrumb-link" href="{% url 'careon:municipality_list' %}">Gemeenten</a>
+        <a class="ds-breadcrumb-link" href="{% url 'carelane:municipality_list' %}">Gemeenten</a>
         <span class="ds-breadcrumb-sep">/</span>
         <span class="ds-breadcrumb-current">{{ municipality.municipality_name }}</span>
     </nav>
@@ -42,8 +42,8 @@
                 </dl>
             </div>
             <div class="ds-detail-actions">
-                <a href="{% url 'careon:municipality_update' municipality.pk %}" class="btn btn-secondary">Bewerken</a>
-                <a href="{% url 'careon:municipality_list' %}" class="btn btn-ghost">Terug naar gemeenten</a>
+                <a href="{% url 'carelane:municipality_update' municipality.pk %}" class="btn btn-secondary">Bewerken</a>
+                <a href="{% url 'carelane:municipality_list' %}" class="btn btn-ghost">Terug naar gemeenten</a>
             </div>
         </div>
     </section>
@@ -133,7 +133,7 @@
                 <div class="ds-list-shell">
                     {% for provider in municipality.linked_providers.all %}
                     <div class="ds-list-row">
-                        <a href="{% url 'careon:client_detail' provider.pk %}" class="ds-link">{{ provider.name }}</a>
+                        <a href="{% url 'carelane:client_detail' provider.pk %}" class="ds-link">{{ provider.name }}</a>
                         <span class="badge-sm badge-blue">{{ provider.client_type }}</span>
                     </div>
                     {% endfor %}
@@ -188,7 +188,7 @@
                         <dd>{{ municipality.updated_at|date:"d-m-Y H:i" }}</dd>
                     </div>
                 </dl>
-                <a href="{% url 'careon:municipality_update' municipality.pk %}" class="btn btn-primary ds-btn-block">Gemeente bijwerken</a>
+                <a href="{% url 'carelane:municipality_update' municipality.pk %}" class="btn btn-primary ds-btn-block">Gemeente bijwerken</a>
             </section>
         </aside>
     </div>

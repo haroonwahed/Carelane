@@ -37,7 +37,7 @@ class MatchingRecommendationsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<div id="root"></div>', html=True)
         self.assertContains(response, '/static/spa/assets/index-')
-        self.assertNotContains(response, 'Careon Zorgregie')
+        self.assertNotContains(response, 'Carelane Zorgregie')
         self.assertNotContains(response, 'Globaal zoeken')
 
     def test_matching_panel_shows_score_wait_capacity_reason(self):
@@ -80,7 +80,7 @@ class MatchingRecommendationsTests(TestCase):
             },
         )
 
-        response = self.client.get(reverse('careon:matching_dashboard'))
+        response = self.client.get(reverse('carelane:matching_dashboard'))
         self._assert_spa_shell(response)
 
     def test_matching_panel_shows_region_match_badge(self):
@@ -134,7 +134,7 @@ class MatchingRecommendationsTests(TestCase):
             },
         )
 
-        response = self.client.get(reverse('careon:matching_dashboard'))
+        response = self.client.get(reverse('carelane:matching_dashboard'))
         self._assert_spa_shell(response)
 
     def test_matching_panel_filters_candidate_profiles_by_live_fields(self):
@@ -196,7 +196,7 @@ class MatchingRecommendationsTests(TestCase):
         )
 
         response = self.client.get(
-            reverse('careon:matching_dashboard'),
+            reverse('carelane:matching_dashboard'),
             {
                 'intake': intake.pk,
                 'provider_age_band': '12_18',
@@ -246,7 +246,7 @@ class MatchingRecommendationsTests(TestCase):
             },
         )
 
-        response = self.client.get(reverse('careon:matching_dashboard'))
+        response = self.client.get(reverse('carelane:matching_dashboard'))
         self._assert_spa_shell(response)
 
 

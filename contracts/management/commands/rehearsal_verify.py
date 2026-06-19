@@ -160,11 +160,11 @@ class Command(BaseCommand):
         def verify_routes() -> None:
             reverse("build_info")
             reverse("ops_system_state")
-            reverse("careon:cases_api")
+            reverse("carelane:cases_api")
             case = CareCase.objects.filter(organization__slug=PILOT_ORG_SLUG).first()
             if case is None:
                 raise ValueError("No CareCase to resolve case_detail_api")
-            reverse("careon:case_detail_api", kwargs={"case_id": case.pk})
+            reverse("carelane:case_detail_api", kwargs={"case_id": case.pk})
 
         def verify_api_smoke() -> None:
             client = DjangoTestClient()

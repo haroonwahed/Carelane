@@ -1,5 +1,5 @@
 /**
- * Careon API client — CSRF-aware fetch wrapper for Django session auth.
+ * Carelane API client — CSRF-aware fetch wrapper for Django session auth.
  *
  * Django sets a `csrftoken` cookie on the first page load. All mutating
  * requests must include it as a header. GET requests don't need it.

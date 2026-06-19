@@ -35,7 +35,7 @@ jobs:
       - name: Python compile smoke
         run: python -m compileall config contracts
 
-      - name: Terminology guard (CareOn blueprint)
+      - name: Terminology guard (Carelane blueprint)
         run: python scripts/terminology_guard.py
 
       - name: Tenant integrity audit
@@ -50,11 +50,11 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: careon_ci_deploy
+          POSTGRES_DB: carelane_ci_deploy
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres -d careon_ci_deploy"
+          --health-cmd "pg_isready -U postgres -d carelane_ci_deploy"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 12
@@ -92,7 +92,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: config.settings_production
           DJANGO_DEBUG: '0'
           SSO_ENABLED: '0'
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/careon_ci_deploy?sslmode=disable
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/carelane_ci_deploy?sslmode=disable
           DJANGO_SECRET_KEY: ci-deploy-check-not-for-production-abcdefghijklmnopqrstuvwxyz0123456789
           ALLOWED_HOSTS: localhost,127.0.0.1
           CSRF_TRUSTED_ORIGINS: https://localhost,http://127.0.0.1:8000

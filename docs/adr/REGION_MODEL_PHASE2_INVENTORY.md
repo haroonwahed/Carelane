@@ -39,11 +39,11 @@ Deze notitie beschrijft de niet-destructieve inventarisatie en veilige backfill-
 
 ## Provenance
 
-De CareOn-referentiesnapshot bestaat uit vier duidelijk gescheiden lagen:
+De Carelane-referentiesnapshot bestaat uit vier duidelijk gescheiden lagen:
 
 1. **Externe bron**: de oorspronkelijke gezaghebbende bron van de gemeentelijke basisgegevens.
 2. **Geïmporteerde bronkopie**: de checked-in CSV-bestanden `regios_jeugdregio.csv`, `gemeenten_jeugdregio_full.csv` en eventuele MVP-fallbacks.
-3. **Genormaliseerde CareOn-referentiesnapshot**: het machineleesbare manifest `contracts/management/seed_data/jeugdregio_reference_manifest.json` met canonieke gemeentenaam-normalisatie, checksum en peildatum.
+3. **Genormaliseerde Carelane-referentiesnapshot**: het machineleesbare manifest `contracts/management/seed_data/jeugdregio_reference_manifest.json` met canonieke gemeentenaam-normalisatie, checksum en peildatum.
 4. **Tenant-specifieke records**: `Organization`-gebonden configuraties zoals `gemeente-demo`, die apart gevalideerd worden en niet als bron van waarheid voor de landelijke snapshot gelden.
 
 Voor de snapshot geldt als basis:
@@ -52,7 +52,7 @@ Voor de snapshot geldt als basis:
 - dataset: `Bestuurlijke Gebieden - Gemeentegebied`
 - consultatiedatum / peildatum snapshot: `2026-06-14`
 - originele bronreferentie: PDOK WFS endpoint zoals vastgelegd in het manifest
-- genormaliseerde CareOn-checksum: vastgelegd in het manifest
+- genormaliseerde Carelane-checksum: vastgelegd in het manifest
 
 ## Verklaring 345 versus 7
 

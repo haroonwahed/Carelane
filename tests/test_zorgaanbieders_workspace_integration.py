@@ -114,7 +114,7 @@ class ZorgaanbiedersWorkspaceIntegrationTests(TestCase):
         )
         self._create_wait_entry(available_provider, wait_days=5, open_slots=3, waiting_list_size=1)
 
-        response = self.client.get(reverse("careon:client_list"))
+        response = self.client.get(reverse("carelane:client_list"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Capaciteit op")
@@ -143,7 +143,7 @@ class ZorgaanbiedersWorkspaceIntegrationTests(TestCase):
             attach_region=False,
         )
 
-        response = self.client.get(reverse("careon:client_list"))
+        response = self.client.get(reverse("carelane:client_list"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Profiel aanvullen")
@@ -151,7 +151,7 @@ class ZorgaanbiedersWorkspaceIntegrationTests(TestCase):
         self.assertContains(response, "Regio, zorgvormen en capaciteit ontbreken nog")
 
     def test_empty_state_is_safe_and_calm(self):
-        response = self.client.get(reverse("careon:client_list"))
+        response = self.client.get(reverse("carelane:client_list"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Nog geen zorgaanbieders ingericht")
@@ -175,7 +175,7 @@ class ZorgaanbiedersWorkspaceIntegrationTests(TestCase):
             profile.served_regions.set([self.region])
 
         response_page1 = self.client.get(
-            reverse("careon:client_list"),
+            reverse("carelane:client_list"),
             {
                 "q": "Filter Provider",
                 "status": "ACTIVE",
@@ -186,7 +186,7 @@ class ZorgaanbiedersWorkspaceIntegrationTests(TestCase):
             },
         )
         response_page2 = self.client.get(
-            reverse("careon:client_list"),
+            reverse("carelane:client_list"),
             {
                 "q": "Filter Provider",
                 "status": "ACTIVE",
@@ -230,7 +230,7 @@ class ZorgaanbiedersWorkspaceIntegrationTests(TestCase):
         profile.target_age_12_18 = True
         profile.save(update_fields=["target_age_12_18"])
 
-        response = self.client.get(reverse("careon:client_detail", kwargs={"pk": provider.pk}))
+        response = self.client.get(reverse("carelane:client_detail", kwargs={"pk": provider.pk}))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, f'href="/care/clients/{provider.pk}/edit/"', html=False)

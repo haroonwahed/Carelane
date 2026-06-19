@@ -10,7 +10,7 @@ This contract must remain aligned with the system-first workflow and backend sou
 
 ### Overview
 
-The **Operational Decision Contract** is a centralized service that computes all operational decisions consistently across all pages in Careon.
+The **Operational Decision Contract** is a centralized service that computes all operational decisions consistently across all pages in Carelane.
 
 **Problem Solved**: Previously, decision logic was scattered across:
 - `views.py` (embedded in view functions)

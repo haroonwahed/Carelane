@@ -40,7 +40,7 @@ def _render_spa_shell_response():
     if spa_index_path.exists():
         html = spa_index_path.read_text(encoding='utf-8')
         response = HttpResponse(html, content_type='text/html')
-        response['X-Careon-Ui-Surface'] = 'spa'
+        response['X-Carelane-Ui-Surface'] = 'spa'
         return _disable_response_caching(response)
 
     response = HttpResponse(
@@ -50,7 +50,7 @@ def _render_spa_shell_response():
             '<head>'
             '<meta charset="UTF-8" />'
             '<meta name="viewport" content="width=device-width, initial-scale=1.0" />'
-            '<title>SaaS Careon</title>'
+            '<title>SaaS Carelane</title>'
             '<style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>'
             '</head>'
             '<body>'
@@ -60,7 +60,7 @@ def _render_spa_shell_response():
         ),
         content_type='text/html',
     )
-    response['X-Careon-Ui-Surface'] = 'spa'
+    response['X-Carelane-Ui-Surface'] = 'spa'
     return _disable_response_caching(response)
 
 

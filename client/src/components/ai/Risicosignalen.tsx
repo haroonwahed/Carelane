@@ -14,17 +14,17 @@ const severityConfig = {
   critical: {
     icon: AlertOctagon,
     color: "text-red-base",
-    bg: "careon-alert-error"
+    bg: "carelane-alert-error"
   },
   warning: {
     icon: AlertTriangle,
     color: "text-yellow-base",
-    bg: "careon-alert-warning"
+    bg: "carelane-alert-warning"
   },
   info: {
     icon: Info,
     color: "text-blue-base",
-    bg: "careon-alert-info"
+    bg: "carelane-alert-info"
   }
 };
 
@@ -36,7 +36,7 @@ export function Risicosignalen({ signals, compact = false }: RisicosignalenProps
   return (
     <div 
       className={`premium-card p-4 border ${
-        hasCritical ? "careon-alert-error" : "careon-alert-warning"
+        hasCritical ? "carelane-alert-error" : "carelane-alert-warning"
       }`}
     >
       {/* Header */}

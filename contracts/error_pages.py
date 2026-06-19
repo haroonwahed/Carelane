@@ -12,7 +12,7 @@ _SAFE_ERROR_COPY = {
         'primary_label': 'Naar dashboard',
         'primary_href_name': 'dashboard',
         'secondary_label': 'Naar casussen',
-        'secondary_href_name': 'careon:case_list',
+        'secondary_href_name': 'carelane:case_list',
     },
     404: {
         'title': 'Pagina niet gevonden',
@@ -20,7 +20,7 @@ _SAFE_ERROR_COPY = {
         'primary_label': 'Naar dashboard',
         'primary_href_name': 'dashboard',
         'secondary_label': 'Naar casussen',
-        'secondary_href_name': 'careon:case_list',
+        'secondary_href_name': 'carelane:case_list',
     },
     500: {
         'title': 'Er ging iets mis',
@@ -28,7 +28,7 @@ _SAFE_ERROR_COPY = {
         'primary_label': 'Naar dashboard',
         'primary_href_name': 'dashboard',
         'secondary_label': 'Naar casussen',
-        'secondary_href_name': 'careon:case_list',
+        'secondary_href_name': 'carelane:case_list',
     },
 }
 

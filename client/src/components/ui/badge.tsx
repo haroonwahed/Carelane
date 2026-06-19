@@ -14,15 +14,15 @@ const badgeVariants = cva(
         secondary:
           "border border-border bg-bg-subtle text-foreground [a&]:hover:bg-bg-subtle/80",
         destructive:
-          "careon-badge-red",
+          "carelane-badge-red",
         red:
-          "careon-badge-red",
+          "carelane-badge-red",
         yellow:
-          "careon-badge-yellow",
+          "carelane-badge-yellow",
         blue:
-          "careon-badge-blue",
+          "carelane-badge-blue",
         purple:
-          "careon-badge-purple",
+          "carelane-badge-purple",
         outline:
           "text-foreground border-border bg-transparent [a&]:hover:bg-bg-subtle [a&]:hover:text-foreground",
       },

@@ -1,4 +1,4 @@
-# CareOn release execution sheet — 2026-05-30
+# Carelane release execution sheet — 2026-05-30
 
 Working draft for the next rollout. Fill this during the actual staging-to-production handoff and keep the evidence in sync with `docs/RELEASE_ROLLOUT_CHECKLIST.md`.
 

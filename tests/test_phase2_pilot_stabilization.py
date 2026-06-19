@@ -95,7 +95,7 @@ class Phase2PilotStabilizationTests(TestCase):
 
     def _create_intake_via_api(self, *, title, status=CaseIntakeProcess.ProcessStatus.INTAKE):
         self._login(self.owner)
-        bootstrap = self.client.get(reverse('careon:intake_form_options_api'))
+        bootstrap = self.client.get(reverse('carelane:intake_form_options_api'))
         self.assertEqual(bootstrap.status_code, 200)
         payload = bootstrap.json()['initial_values']
         payload.update({
@@ -110,7 +110,7 @@ class Phase2PilotStabilizationTests(TestCase):
             'case_coordinator': str(self.owner.pk),
         })
         response = self.client.post(
-            reverse('careon:intake_create_api'),
+            reverse('carelane:intake_create_api'),
             data=json.dumps(payload),
             content_type='application/json',
         )
@@ -161,17 +161,17 @@ class Phase2PilotStabilizationTests(TestCase):
         self.assertEqual(dashboard_response.status_code, 200)
         self.assertContains(dashboard_response, '<div id="root"></div>', html=True)
 
-        case_list_response = self.client.get(reverse('careon:case_list'))
+        case_list_response = self.client.get(reverse('carelane:case_list'))
         self.assertEqual(case_list_response.status_code, 200)
         self.assertContains(case_list_response, 'Pilot Accept Casus')
 
-        summary_response = self.client.get(reverse('careon:assessment_decision_api', kwargs={'case_id': intake.contract_id or intake.pk}))
+        summary_response = self.client.get(reverse('carelane:assessment_decision_api', kwargs={'case_id': intake.contract_id or intake.pk}))
         self.assertEqual(summary_response.status_code, 200)
         summary_payload = summary_response.json()
         self.assertTrue(summary_payload['summary']['matchingReady'])
 
         matching_response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps({'action': 'assign', 'provider_id': provider.pk}),
             content_type='application/json',
         )
@@ -180,11 +180,11 @@ class Phase2PilotStabilizationTests(TestCase):
         self.assertEqual(placement.status, PlacementRequest.Status.IN_REVIEW)
 
         placement_blocked_response = self.client.post(
-            reverse('careon:case_placement_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_placement_action', kwargs={'pk': intake.pk}),
             {
                 'status': PlacementRequest.Status.APPROVED,
                 'note': 'Voorbarige bevestiging',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -197,13 +197,13 @@ class Phase2PilotStabilizationTests(TestCase):
         self._grant_provider_actor_case_edit(intake)
         self._login(self.provider_actor)
         accept_response = self.client.post(
-            reverse('careon:case_outcome_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_outcome_action', kwargs={'pk': intake.pk}),
             {
                 'outcome_type': 'provider_response',
                 'status': PlacementRequest.ProviderResponseStatus.ACCEPTED,
                 'reason_code': OutcomeReasonCode.NONE,
                 'notes': 'Aanbieder accepteert de casus.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -213,21 +213,21 @@ class Phase2PilotStabilizationTests(TestCase):
 
         self._login(self.owner)
         approved_response = self.client.post(
-            reverse('careon:case_placement_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_placement_action', kwargs={'pk': intake.pk}),
             {
                 'status': PlacementRequest.Status.APPROVED,
                 'note': 'Plaatsing bevestigd na acceptatie.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
         self.assertEqual(approved_response.status_code, 200)
         self.assertContains(approved_response, 'Plaatsing bijgewerkt vanuit de casuswerkruimte.')
 
-        intake_handoff_response = self.client.get(reverse('careon:intake_handoff_list'))
+        intake_handoff_response = self.client.get(reverse('carelane:intake_handoff_list'))
         self.assertEqual(intake_handoff_response.status_code, 200)
 
-        detail_response = self.client.get(f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing")
+        detail_response = self.client.get(f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing")
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, 'Overdracht')
 
@@ -237,7 +237,7 @@ class Phase2PilotStabilizationTests(TestCase):
 
         self._login(self.owner)
         self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps({'action': 'assign', 'provider_id': provider.pk}),
             content_type='application/json',
         )
@@ -245,13 +245,13 @@ class Phase2PilotStabilizationTests(TestCase):
         self._grant_provider_actor_case_edit(intake)
         self._login(self.provider_actor)
         missing_reason_response = self.client.post(
-            reverse('careon:case_outcome_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_outcome_action', kwargs={'pk': intake.pk}),
             {
                 'outcome_type': 'provider_response',
                 'status': PlacementRequest.ProviderResponseStatus.REJECTED,
                 'reason_code': OutcomeReasonCode.NONE,
                 'notes': 'Afwijzing zonder reden.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -259,13 +259,13 @@ class Phase2PilotStabilizationTests(TestCase):
         self.assertContains(missing_reason_response, 'Afwijzing vereist een reden.')
 
         reject_response = self.client.post(
-            reverse('careon:case_outcome_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_outcome_action', kwargs={'pk': intake.pk}),
             {
                 'outcome_type': 'provider_response',
                 'status': PlacementRequest.ProviderResponseStatus.REJECTED,
                 'reason_code': OutcomeReasonCode.PROVIDER_DECLINED,
                 'notes': 'Aanbieder wijst inhoudelijk af.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -276,10 +276,10 @@ class Phase2PilotStabilizationTests(TestCase):
 
         self._login(self.owner)
         rematch_response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': intake.pk}),
             {
                 'action': 'trigger_rematch',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=matching",
             },
             follow=True,
         )
@@ -294,43 +294,43 @@ class Phase2PilotStabilizationTests(TestCase):
 
         self._login(self.admin)
         self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps({'action': 'assign', 'provider_id': provider.pk}),
             content_type='application/json',
         )
         self._grant_provider_actor_case_edit(intake)
         self._login(self.provider_actor)
         self.client.post(
-            reverse('careon:case_outcome_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_outcome_action', kwargs={'pk': intake.pk}),
             {
                 'outcome_type': 'provider_response',
                 'status': PlacementRequest.ProviderResponseStatus.ACCEPTED,
                 'reason_code': OutcomeReasonCode.NONE,
                 'notes': 'Akkoord voor archieftest.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
         self._login(self.admin)
         self.client.post(
-            reverse('careon:case_placement_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_placement_action', kwargs={'pk': intake.pk}),
             {
                 'status': PlacementRequest.Status.APPROVED,
                 'note': 'Plaatsing bevestigd voor archieftest.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
         self._login(self.provider_actor)
         self.client.post(
-            reverse('careon:intake_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:intake_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps({}),
             content_type='application/json',
         )
         self._login(self.admin)
         archive_response = self.client.post(
-            reverse('careon:case_archive_action', kwargs={'pk': intake.pk}),
-            {'next': reverse('careon:case_detail', kwargs={'pk': intake.pk})},
+            reverse('carelane:case_archive_action', kwargs={'pk': intake.pk}),
+            {'next': reverse('carelane:case_detail', kwargs={'pk': intake.pk})},
             follow=True,
         )
         self.assertEqual(archive_response.status_code, 200)
@@ -340,16 +340,16 @@ class Phase2PilotStabilizationTests(TestCase):
         self.assertEqual(intake.status, CaseIntakeProcess.ProcessStatus.ARCHIVED)
         self.assertEqual(intake.contract.lifecycle_stage, 'ARCHIVED')
 
-        active_list_response = self.client.get(reverse('careon:case_list'))
+        active_list_response = self.client.get(reverse('carelane:case_list'))
         self.assertEqual(active_list_response.status_code, 200)
         self.assertNotContains(active_list_response, 'Pilot Archive Casus')
 
-        archived_list_response = self.client.get(f"{reverse('careon:case_list')}?show_archived=1")
+        archived_list_response = self.client.get(f"{reverse('carelane:case_list')}?show_archived=1")
         self.assertEqual(archived_list_response.status_code, 200)
         self.assertContains(archived_list_response, 'Pilot Archive Casus')
 
         matching_response = self.client.post(
-            reverse('careon:case_matching_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_matching_action', kwargs={'pk': intake.pk}),
             {'action': 'reject', 'provider_id': '1'},
             follow=False,
         )
@@ -363,8 +363,8 @@ class Phase2PilotStabilizationTests(TestCase):
 
         self._login(self.member)
         response = self.client.post(
-            reverse('careon:case_archive_action', kwargs={'pk': intake.pk}),
-            {'next': reverse('careon:case_detail', kwargs={'pk': intake.pk})},
+            reverse('carelane:case_archive_action', kwargs={'pk': intake.pk}),
+            {'next': reverse('carelane:case_detail', kwargs={'pk': intake.pk})},
             follow=False,
         )
         self.assertEqual(response.status_code, 403)

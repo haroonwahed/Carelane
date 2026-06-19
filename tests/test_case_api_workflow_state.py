@@ -67,7 +67,7 @@ class CaseApiWorkflowStateTests(TestCase):
     def test_cases_list_includes_workflow_state(self):
         case_id = self._create_case_with_state(workflow_state=WorkflowState.MATCHING_READY)
 
-        response = self.client.get(reverse("careon:cases_api"))
+        response = self.client.get(reverse("carelane:cases_api"))
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
@@ -78,7 +78,7 @@ class CaseApiWorkflowStateTests(TestCase):
     def test_case_detail_includes_workflow_state(self):
         case_id = self._create_case_with_state(workflow_state=WorkflowState.GEMEENTE_VALIDATED)
 
-        response = self.client.get(reverse("careon:case_detail_api", kwargs={"case_id": case_id}))
+        response = self.client.get(reverse("carelane:case_detail_api", kwargs={"case_id": case_id}))
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
@@ -88,8 +88,8 @@ class CaseApiWorkflowStateTests(TestCase):
     def test_same_case_workflow_state_is_consistent_between_list_and_detail(self):
         case_id = self._create_case_with_state(workflow_state=WorkflowState.PROVIDER_REVIEW_PENDING)
 
-        list_response = self.client.get(reverse("careon:cases_api"))
-        detail_response = self.client.get(reverse("careon:case_detail_api", kwargs={"case_id": case_id}))
+        list_response = self.client.get(reverse("carelane:cases_api"))
+        detail_response = self.client.get(reverse("carelane:case_detail_api", kwargs={"case_id": case_id}))
 
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(detail_response.status_code, 200)
@@ -119,8 +119,8 @@ class CaseApiWorkflowStateTests(TestCase):
         )
         case_id = intake.ensure_case_record(created_by=self.user).pk
 
-        list_response = self.client.get(reverse("careon:cases_api"))
-        detail_response = self.client.get(reverse("careon:case_detail_api", kwargs={"case_id": case_id}))
+        list_response = self.client.get(reverse("carelane:cases_api"))
+        detail_response = self.client.get(reverse("carelane:case_detail_api", kwargs={"case_id": case_id}))
 
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(detail_response.status_code, 200)
@@ -137,7 +137,7 @@ class CaseApiWorkflowStateTests(TestCase):
         intake.workflow_state = WorkflowState.PLACEMENT_CONFIRMED
         intake.save(update_fields=["workflow_state"])
 
-        placement_response = self.client.get(reverse("careon:case_detail_api", kwargs={"case_id": case_id}))
+        placement_response = self.client.get(reverse("carelane:case_detail_api", kwargs={"case_id": case_id}))
         self.assertEqual(placement_response.status_code, 200)
         placement_payload = placement_response.json()
         self.assertIn("case_geo", placement_payload)
@@ -148,8 +148,8 @@ class CaseApiWorkflowStateTests(TestCase):
     def test_cases_list_and_detail_include_placement_snapshot_fields(self):
         case_id = self._create_case_with_state(workflow_state=WorkflowState.MATCHING_READY)
 
-        list_response = self.client.get(reverse("careon:cases_api"))
-        detail_response = self.client.get(reverse("careon:case_detail_api", kwargs={"case_id": case_id}))
+        list_response = self.client.get(reverse("carelane:cases_api"))
+        detail_response = self.client.get(reverse("carelane:case_detail_api", kwargs={"case_id": case_id}))
 
         list_case = next(item for item in list_response.json()["contracts"] if item["id"] == str(case_id))
         detail_payload = detail_response.json()
@@ -196,8 +196,8 @@ class CaseApiWorkflowStateTests(TestCase):
             provider_response_status=PlacementRequest.ProviderResponseStatus.ACCEPTED,
         )
 
-        list_response = self.client.get(reverse("careon:cases_api"))
-        detail_response = self.client.get(reverse("careon:case_detail_api", kwargs={"case_id": case_id}))
+        list_response = self.client.get(reverse("carelane:cases_api"))
+        detail_response = self.client.get(reverse("carelane:case_detail_api", kwargs={"case_id": case_id}))
 
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(detail_response.status_code, 200)

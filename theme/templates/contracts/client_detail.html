@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ client.name }} - Careon{% endblock %}
+{% block title %}{{ client.name }} - Carelane{% endblock %}
 {% block content %}
 <div class="ds-detail-shell">
     {% with active_tab=request.GET.tab|default:'documenten' %}
@@ -31,18 +31,18 @@
             </div>
             <div class="provider-identity-actions">
                 {% if selected_intake %}
-                <a href="{% url 'careon:matching_dashboard' %}?intake={{ selected_intake.pk }}" class="btn btn-secondary">Wijs toe</a>
+                <a href="{% url 'carelane:matching_dashboard' %}?intake={{ selected_intake.pk }}" class="btn btn-secondary">Wijs toe</a>
                 {% else %}
-                <a href="{% url 'careon:matching_dashboard' %}" class="btn btn-secondary">Wijs toe</a>
+                <a href="{% url 'carelane:matching_dashboard' %}" class="btn btn-secondary">Wijs toe</a>
                 {% endif %}
-                <a href="{% url 'careon:client_update' client.pk %}" class="btn btn-ghost">Bewerk profiel</a>
+                <a href="{% url 'carelane:client_update' client.pk %}" class="btn btn-ghost">Bewerk profiel</a>
 
                 {% if client.email %}
                 <a href="mailto:{{ client.email }}" class="btn btn-ghost">Neem contact op</a>
                 {% elif client.phone %}
                 <a href="tel:{{ client.phone }}" class="btn btn-ghost">Neem contact op</a>
                 {% else %}
-                <a href="{% url 'careon:client_update' client.pk %}" class="btn btn-ghost">Neem contact op</a>
+                <a href="{% url 'carelane:client_update' client.pk %}" class="btn btn-ghost">Neem contact op</a>
                 {% endif %}
             </div>
         </div>
@@ -158,9 +158,9 @@
                 <h3 class="ds-sidebar-title">Beslisactie</h3>
                 <p class="ds-note-text">Systeem adviseert, regie beslist.</p>
                 {% if selected_intake %}
-                <a href="{% url 'careon:matching_dashboard' %}?intake={{ selected_intake.pk }}" class="btn btn-primary">Wijs toe</a>
+                <a href="{% url 'carelane:matching_dashboard' %}?intake={{ selected_intake.pk }}" class="btn btn-primary">Wijs toe</a>
                 {% else %}
-                <a href="{% url 'careon:matching_dashboard' %}" class="btn btn-primary">Wijs toe</a>
+                <a href="{% url 'carelane:matching_dashboard' %}" class="btn btn-primary">Wijs toe</a>
                 {% endif %}
             </section>
 
@@ -203,7 +203,7 @@
                 <h3 class="ds-sidebar-title">Document preview</h3>
                 <div class="ds-mini-docs">
                     {% for document in documents|slice:":2" %}
-                    <a href="{% url 'careon:document_detail' document.pk %}" class="ds-mini-doc-link">{{ document.title }}</a>
+                    <a href="{% url 'carelane:document_detail' document.pk %}" class="ds-mini-doc-link">{{ document.title }}</a>
                     {% empty %}
                     <span class="text-muted">Nog geen documenten</span>
                     {% endfor %}
@@ -223,7 +223,7 @@
         {% if active_tab == 'documenten' %}
         <div class="ds-list-container">
             {% for document in documents %}
-            <a href="{% url 'careon:document_detail' document.pk %}" class="ds-list-row ds-list-row--compact">
+            <a href="{% url 'carelane:document_detail' document.pk %}" class="ds-list-row ds-list-row--compact">
                 <div>
                     <div class="ds-row-title">{{ document.title }}</div>
                     <div class="ds-row-meta">{{ document.get_status_display }} · {{ document.created_at|date:"d-m-Y" }}</div>
@@ -237,7 +237,7 @@
         {% elif active_tab == 'plaatsingen' %}
         <div class="ds-list-container">
             {% for case_record in case_records %}
-            <a href="{% url 'careon:case_detail' case_record.pk %}" class="ds-list-row ds-list-row--compact">
+            <a href="{% url 'carelane:case_detail' case_record.pk %}" class="ds-list-row ds-list-row--compact">
                 <div>
                     <div class="ds-row-title">{{ case_record.title }}</div>
                     <div class="ds-row-meta">Status: {{ case_record.get_status_display }}</div>

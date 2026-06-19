@@ -1,11 +1,11 @@
-# CareOn Pilot Session Plan v1
+# Carelane Pilot Session Plan v1
 
 **Purpose:** execution plan for the first controlled closed-pilot session.
 **Decision posture:** demo-ready and closed-pilot-ready are GO; production-ready remains NO-GO until operational evidence exists.
 
 ## Pilot objective
 
-Validate that the current CareOn release can support a supervised, low-risk closed-pilot session using the canonical workflow and role boundaries already verified in smoke and E2E coverage.
+Validate that the current Carelane release can support a supervised, low-risk closed-pilot session using the canonical workflow and role boundaries already verified in smoke and E2E coverage.
 
 ## Scope
 

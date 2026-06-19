@@ -107,7 +107,7 @@ class CaseTimelineV1Tests(TestCase):
 
         self.client.login(username='gemeente_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps({'action': 'assign', 'provider_id': self.provider.pk}),
             content_type='application/json',
         )
@@ -127,7 +127,7 @@ class CaseTimelineV1Tests(TestCase):
         intake = self._create_matching_ready_case()
         self.client.login(username='gemeente_user', password='testpass123')
         self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps({'action': 'assign', 'provider_id': self.provider.pk}),
             content_type='application/json',
             HTTP_X_REQUEST_ID='tid-req-abc123',
@@ -140,14 +140,14 @@ class CaseTimelineV1Tests(TestCase):
         intake = self._create_matching_ready_case()
         self.client.login(username='gemeente_user', password='testpass123')
         self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps({'action': 'assign', 'provider_id': self.provider.pk}),
             content_type='application/json',
         )
         self.client.logout()
         self.client.login(username='provider_user', password='testpass123')
         r = self.client.get(
-            reverse('careon:case_timeline_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:case_timeline_api', kwargs={'case_id': intake.contract_id}),
         )
         self.assertEqual(r.status_code, 200)
         payload = r.json()
@@ -157,21 +157,21 @@ class CaseTimelineV1Tests(TestCase):
         intake = self._create_matching_ready_case()
         self.client.login(username='gemeente_user', password='testpass123')
         self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps({'action': 'assign', 'provider_id': self.provider.pk}),
             content_type='application/json',
         )
         self.client.logout()
         self.client.login(username='outsider', password='testpass123')
         r = self.client.get(
-            reverse('careon:case_timeline_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:case_timeline_api', kwargs={'case_id': intake.contract_id}),
         )
         self.assertEqual(r.status_code, 404)
 
     def test_anonymous_cannot_read_timeline(self):
         intake = self._create_matching_ready_case()
         r = self.client.get(
-            reverse('careon:case_timeline_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:case_timeline_api', kwargs={'case_id': intake.contract_id}),
         )
         self.assertEqual(r.status_code, 302)
 
@@ -179,20 +179,20 @@ class CaseTimelineV1Tests(TestCase):
         intake = self._create_matching_ready_case()
         self.client.login(username='gemeente_user', password='testpass123')
         self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps({'action': 'assign', 'provider_id': self.provider.pk}),
             content_type='application/json',
         )
         n = CaseTimelineEvent.objects.filter(care_case=intake.case_record).count()
-        self.client.get(reverse('careon:case_timeline_api', kwargs={'case_id': intake.contract_id}))
-        self.client.get(reverse('careon:case_timeline_api', kwargs={'case_id': intake.contract_id}))
+        self.client.get(reverse('carelane:case_timeline_api', kwargs={'case_id': intake.contract_id}))
+        self.client.get(reverse('carelane:case_timeline_api', kwargs={'case_id': intake.contract_id}))
         self.assertEqual(CaseTimelineEvent.objects.filter(care_case=intake.case_record).count(), n)
 
     def test_metadata_has_only_safe_operational_keys(self):
         intake = self._create_matching_ready_case()
         self.client.login(username='gemeente_user', password='testpass123')
         self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps({'action': 'assign', 'provider_id': self.provider.pk}),
             content_type='application/json',
         )

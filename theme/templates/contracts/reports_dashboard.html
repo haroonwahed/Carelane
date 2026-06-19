@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Rapportages & Regie - Careon{% endblock %}
+{% block title %}Rapportages & Regie - Carelane{% endblock %}
 {% block content %}
 <div class="page-wrap">
 <div class="ds-analytics-shell dash-grid">
@@ -8,7 +8,7 @@
         <p class="text-sm text-amber-900">Deze rapportagepagina is bedoeld voor interne sturing en pilotbewaking, niet als klantgerichte eindgebruikersdashboard.</p>
     </div>
 
-    {% url 'careon:provider_response_monitor' as provider_response_monitor_href %}
+    {% url 'carelane:provider_response_monitor' as provider_response_monitor_href %}
 
     <div class="ds-analytics-hero">
         <div>
@@ -19,7 +19,7 @@
             <a href="{{ provider_response_monitor_href }}" class="btn btn-secondary">Provider Response Monitor</a>
             {% endif %}
             <a href="?attention=capacity" class="btn btn-secondary">Capaciteitsdruk</a>
-            <a href="{% url 'careon:matching_dashboard' %}" class="btn btn-primary">Stuur op matching</a>
+            <a href="{% url 'carelane:matching_dashboard' %}" class="btn btn-primary">Stuur op matching</a>
         </div>
     </div>
 
@@ -197,7 +197,7 @@
                     <div class="dot dot-blue"></div>
                     <span class="panel-title">Casusflow analyse</span>
                 </div>
-                <a href="{% url 'careon:case_list' %}" class="btn btn-ghost">
+                <a href="{% url 'carelane:case_list' %}" class="btn btn-ghost">
                     Open casussen
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
@@ -229,7 +229,7 @@
                     <div class="dot dot-green"></div>
                     <span class="panel-title">Capaciteit versus vraag</span>
                 </div>
-                <a href="{% url 'careon:waittime_list' %}" class="btn btn-ghost">
+                <a href="{% url 'carelane:waittime_list' %}" class="btn btn-ghost">
                     Bekijk alle
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>

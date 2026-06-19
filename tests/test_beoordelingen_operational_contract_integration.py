@@ -85,7 +85,7 @@ class BeoordelingenOperationalContractIntegrationTests(TestCase):
             "recommended_action": {
                 "label": "Rond beoordeling af",
                 "reason": "Nodig voor doorstroom naar matching",
-                "url": reverse("careon:assessment_list"),
+                "url": reverse("carelane:assessment_list"),
             },
             "impact_summary": {
                 "text": "Ontgrendelt matching voor deze casus",
@@ -117,7 +117,7 @@ class BeoordelingenOperationalContractIntegrationTests(TestCase):
             "recommended_action": {
                 "label": "Vraag ontbrekende info op",
                 "reason": "Contract detecteert ontbrekend intake-onderdeel",
-                "url": reverse("careon:assessment_update", kwargs={"pk": assessment.pk}),
+                "url": reverse("carelane:assessment_update", kwargs={"pk": assessment.pk}),
             },
             "impact_summary": {
                 "text": "Ontgrendelt beoordeling en matching",
@@ -132,10 +132,10 @@ class BeoordelingenOperationalContractIntegrationTests(TestCase):
         }
 
         with patch("contracts.views.build_operational_decision_for_intake", return_value=_FakeDecision(payload)):
-            response = self.client.get(reverse("careon:assessment_list"))
+            response = self.client.get(reverse("carelane:assessment_list"))
 
         self._assert_spa_shell(response)
-        api_response = self.client.get(reverse("careon:assessments_api"))
+        api_response = self.client.get(reverse("carelane:assessments_api"))
         self.assertEqual(api_response.status_code, 200)
         api_payload = api_response.json()
         self.assertTrue(any(row.get('caseTitle') == 'Assessment Contract Driven' for row in api_payload.get('assessments', [])))
@@ -165,10 +165,10 @@ class BeoordelingenOperationalContractIntegrationTests(TestCase):
             return _FakeDecision(payload_b)
 
         with patch("contracts.views.build_operational_decision_for_intake", side_effect=fake_decision):
-            response = self.client.get(reverse("careon:assessment_list"))
+            response = self.client.get(reverse("carelane:assessment_list"))
 
         self._assert_spa_shell(response)
-        api_payload = self.client.get(reverse("careon:assessments_api")).json()
+        api_payload = self.client.get(reverse("carelane:assessments_api")).json()
         titles = {row.get('caseTitle') for row in api_payload.get('assessments', [])}
         self.assertIn('Assessment Density A', titles)
         self.assertIn('Assessment Density B', titles)
@@ -186,10 +186,10 @@ class BeoordelingenOperationalContractIntegrationTests(TestCase):
         }
 
         with patch("contracts.views.build_operational_decision_for_intake", return_value=_FakeDecision(payload)):
-            response = self.client.get(reverse("careon:assessment_list"))
+            response = self.client.get(reverse("carelane:assessment_list"))
 
         self._assert_spa_shell(response)
-        api_payload = self.client.get(reverse("careon:assessments_api")).json()
+        api_payload = self.client.get(reverse("carelane:assessments_api")).json()
         self.assertTrue(any(row.get('caseTitle') == 'Assessment Partial Payload' for row in api_payload.get('assessments', [])))
 
     def test_filter_and_pagination_keep_query_state(self):
@@ -201,10 +201,10 @@ class BeoordelingenOperationalContractIntegrationTests(TestCase):
             side_effect=lambda intake_id: _FakeDecision(self._decision_payload(intake_id=intake_id)),
         ):
             response_page1 = self.client.get(
-                reverse("careon:assessment_list") + "?status=DRAFT&q=Assessment+Filter"
+                reverse("carelane:assessment_list") + "?status=DRAFT&q=Assessment+Filter"
             )
             response_page2 = self.client.get(
-                reverse("careon:assessment_list") + "?status=DRAFT&q=Assessment+Filter&page=2"
+                reverse("carelane:assessment_list") + "?status=DRAFT&q=Assessment+Filter&page=2"
             )
 
         self.assertEqual(response_page1.status_code, 200)
@@ -213,8 +213,8 @@ class BeoordelingenOperationalContractIntegrationTests(TestCase):
         self.assertEqual(response_page2.status_code, 200)
         self.assertContains(response_page2, '<div id="root"></div>', html=True)
 
-        api_page1 = self.client.get(reverse("careon:assessments_api") + "?q=Assessment+Filter&page=1&page_size=25")
-        api_page2 = self.client.get(reverse("careon:assessments_api") + "?q=Assessment+Filter&page=2&page_size=25")
+        api_page1 = self.client.get(reverse("carelane:assessments_api") + "?q=Assessment+Filter&page=1&page_size=25")
+        api_page2 = self.client.get(reverse("carelane:assessments_api") + "?q=Assessment+Filter&page=2&page_size=25")
         self.assertEqual(api_page1.status_code, 200)
         self.assertEqual(api_page2.status_code, 200)
         self.assertEqual(api_page1.json().get('total_count'), 26)
@@ -222,8 +222,8 @@ class BeoordelingenOperationalContractIntegrationTests(TestCase):
         self.assertGreater(len(api_page2.json().get('assessments', [])), 0)
 
     def test_empty_state_stays_safe(self):
-        response = self.client.get(reverse("careon:assessment_list"))
+        response = self.client.get(reverse("carelane:assessment_list"))
         self._assert_spa_shell(response)
-        api_payload = self.client.get(reverse("careon:assessments_api")).json()
+        api_payload = self.client.get(reverse("carelane:assessments_api")).json()
         self.assertEqual(api_payload.get('total_count'), 0)
         self.assertEqual(api_payload.get('assessments', []), [])

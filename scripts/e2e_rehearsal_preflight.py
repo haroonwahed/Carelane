@@ -52,10 +52,10 @@ def _resolve_demo_password() -> str:
 def _print_pilot_flags() -> None:
     from django.conf import settings
 
-    pilot_ui = bool(getattr(settings, "CAREON_PILOT_UI", False))
+    pilot_ui = bool(getattr(settings, "CARELANE_PILOT_UI", False))
     allow_switch = not pilot_ui
     print(
-        f"[e2e_rehearsal_preflight] CAREON_PILOT_UI={pilot_ui!r} "
+        f"[e2e_rehearsal_preflight] CARELANE_PILOT_UI={pilot_ui!r} "
         f"=> permissions.allowRoleSwitch on /care/api/me/ => {allow_switch!r} "
         f"(False locks SPA shell to session; True allows demo TopBar switching)",
     )
@@ -152,7 +152,7 @@ def _http_session_me(base_url: str, username: str, password: str) -> dict:
         return json.loads(body)
     except json.JSONDecodeError:
         hint = ""
-        if "Inloggen - Careon" in body or "csrfmiddlewaretoken" in body:
+        if "Inloggen - Carelane" in body or "csrfmiddlewaretoken" in body:
             hint = (
                 " Likely causes: (1) Django at E2E_BASE_URL uses a different database than "
                 "`db_rehearsal.sqlite3` / wrong DJANGO_SETTINGS_MODULE; "

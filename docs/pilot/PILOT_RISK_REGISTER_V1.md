@@ -1,4 +1,4 @@
-# CareOn Pilot Risk Register v1
+# Carelane Pilot Risk Register v1
 
 **Purpose:** track operational risks for the first controlled closed-pilot session.
 **Rule:** keep the register current with the pilot session plan and feedback log.

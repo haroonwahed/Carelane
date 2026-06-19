@@ -71,3 +71,4 @@ db_rehearsal.sqlite3
 # Playwright run artefacts (videos, traces, screenshots, run state)
 client/test-results/
 client/playwright-report/
+.claude/worktrees/

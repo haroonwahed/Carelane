@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# HTTP smoke for a deployed Careon / Zorg OS instance (staging or production).
+# HTTP smoke for a deployed Carelane / Zorg OS instance (staging or production).
 #
 # Usage:
 #   BASE_URL=https://your-host.example.com ./scripts/go_live_http_smoke.sh

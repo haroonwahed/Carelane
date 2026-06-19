@@ -45,7 +45,7 @@ class StartMatchingFlowTests(TestCase):
         case_record = intake.ensure_case_record(created_by=self.user)
 
         response = self.client.post(
-            reverse("careon:assessment_decision_api", kwargs={"case_id": case_record.pk}),
+            reverse("carelane:assessment_decision_api", kwargs={"case_id": case_record.pk}),
             data=json.dumps(
                 {
                     "decision": "matching",

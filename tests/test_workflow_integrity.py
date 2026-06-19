@@ -204,5 +204,5 @@ class WorkflowResolveActorTests(TestCase):
 class UnauthorizedApiReadsTests(TestCase):
     def test_cases_api_401_when_anonymous(self):
         client = Client()
-        response = client.get(reverse("careon:cases_api"))
+        response = client.get(reverse("carelane:cases_api"))
         self.assertIn(response.status_code, (401, 302))

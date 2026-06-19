@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { cn } from "../ui/utils";
 
 /**
- * CareDetailPageTemplate — the single, canonical layout for every CareOn detail page
+ * CareDetailPageTemplate — the single, canonical layout for every Carelane detail page
  * (casus, matching, aanbiederreactie, plaatsing, intake, aanbieder, organisatie).
  *
  * The template owns: layout, spacing, grid, header, workflow strip, action zone,
@@ -35,7 +35,7 @@ export interface CareDetailPageTemplateProps {
   /**
    * Operational action zone — typically <CareActionZone />.
    * Default: rendered as the lead card *inside* the main column, so the context
-   * column stays top-aligned beside it (the canonical CareOn detail look).
+   * column stays top-aligned beside it (the canonical Carelane detail look).
    * With variant="review" it spans full width above the grid instead.
    */
   actionZone?: ReactNode;
@@ -212,7 +212,7 @@ export interface CareWorkflowStep {
   label: string;
 }
 
-/** The canonical CareOn workflow. Use these five everywhere a workflow page renders. */
+/** The canonical Carelane workflow. Use these five everywhere a workflow page renders. */
 export const CARE_WORKFLOW_STEPS: readonly CareWorkflowStep[] = [
   { label: "Aanmelding" },
   { label: "Matching" },

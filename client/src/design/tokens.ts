@@ -1,5 +1,5 @@
 /**
- * CareOn Design System V1 — JavaScript token layer
+ * Carelane Design System V1 — JavaScript token layer
  *
  * This file re-exports semantic values from the CSS custom property layer.
  * It does NOT define a parallel color palette. One source of truth lives in
@@ -10,7 +10,7 @@
  * Both have been replaced by `tokens.visual`, which maps 1:1 to --care-* tokens.
  */
 
-/** Canonical CareOn accent — Zorg OS primary purple. */
+/** Canonical Carelane accent — Zorg OS primary purple. */
 const ACCENT_PRIMARY = "#7C4DFF" as const;
 
 export const tokens = {
@@ -142,7 +142,7 @@ export const tokens = {
    * Typography scale — closed set, two weights only (400/500).
    * Mirrors --care-text-* in globals.css. Prefer the .care-text-* CSS classes
    * in markup; use these constants only where JS access is required.
-   * See docs/design/CAREON_DESIGN_LANGUAGE.md §3.
+   * See docs/design/CARELANE_DESIGN_LANGUAGE.md §3.
    */
   typography: {
     display: { size: "1.625rem", weight: 500, lineHeight: 1.25 },
@@ -158,7 +158,7 @@ export const tokens = {
   /**
    * Semantic colour intents — meaning, not chroma. Reference the CSS custom
    * properties (which peer light/dark automatically). Write `urgent`, never
-   * `red`. See docs/design/CAREON_DESIGN_LANGUAGE.md §4.
+   * `red`. See docs/design/CARELANE_DESIGN_LANGUAGE.md §4.
    */
   semantic: {
     urgent: { bg: "var(--care-semantic-urgent-bg)", text: "var(--care-semantic-urgent-text)", border: "var(--care-semantic-urgent-border)", solid: "var(--care-semantic-urgent-solid)" },
@@ -171,7 +171,7 @@ export const tokens = {
 
   /**
    * SLA countdown thresholds — drive the colour intent of the countdown chip/ring.
-   * See docs/design/CAREON_DESIGN_LANGUAGE.md §6b.
+   * See docs/design/CARELANE_DESIGN_LANGUAGE.md §6b.
    */
   sla: {
     /** < this many hours remaining → `urgent` intent */

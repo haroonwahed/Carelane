@@ -2,7 +2,7 @@
 # V1 staging shell smoke — HTTP 200 checks for routes in docs/V1_SHIP_CHECKLIST.md §3.
 #
 # Usage:
-#   BASE_URL=https://careon-web.onrender.com ./scripts/staging_v1_shell_smoke.sh
+#   BASE_URL=https://carelane-web.onrender.com ./scripts/staging_v1_shell_smoke.sh
 #
 # Does not authenticate; confirms SPA shell / Django routes respond. For full role
 # flows use Playwright after deploy with rehearsal or pilot demo users.
@@ -13,7 +13,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$ROOT_DIR/scripts/lib/http_probe.sh"
 
 if [[ -z "${BASE_URL:-}" ]]; then
-  echo "ERROR: set BASE_URL (e.g. https://careon-web.onrender.com)" >&2
+  echo "ERROR: set BASE_URL (e.g. https://carelane-web.onrender.com)" >&2
   exit 1
 fi
 

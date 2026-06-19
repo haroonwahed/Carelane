@@ -26,7 +26,7 @@ class RedesignComponentsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<div id="root"></div>', html=True)
         self.assertContains(response, '/static/spa/assets/index-')
-        self.assertNotContains(response, 'Careon Zorgregie')
+        self.assertNotContains(response, 'Carelane Zorgregie')
         self.assertNotContains(response, 'Globaal zoeken')
         self.assertNotContains(response, 'CASUSMANAGEMENT')
 
@@ -37,7 +37,7 @@ class RedesignComponentsTestCase(TestCase):
     def test_root_path_renders_public_landing_for_authenticated_users(self):
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'CareOn')
+        self.assertContains(response, 'Carelane')
         self.assertContains(response, 'Regieplatform voor gemeenten en zorgaanbieders')
         self.assertContains(response, 'public-shell')
 
@@ -55,7 +55,7 @@ class RedesignComponentsTestCase(TestCase):
             created_by=self.user,
         )
 
-        response = self.client.get(reverse('careon:case_list'))
+        response = self.client.get(reverse('carelane:case_list'))
         self._assert_spa_shell(response)
 
     def test_navigation_structure(self):
@@ -77,7 +77,7 @@ class RedesignComponentsTestCase(TestCase):
             created_by=self.user,
         )
 
-        response = self.client.get(reverse('careon:budget_list'))
+        response = self.client.get(reverse('carelane:budget_list'))
         self._assert_spa_shell(response)
 
     def test_placement_list_alias_uses_configuration_view(self):
@@ -94,7 +94,7 @@ class RedesignComponentsTestCase(TestCase):
             created_by=self.user,
         )
         PlacementRequest.objects.create(
-            mark_text='CAREON MARK',
+            mark_text='CARELANE MARK',
             description='Primary placement request for the platform.',
             goods_services='Care coordination services',
             filing_basis='Use in commerce',
@@ -103,9 +103,9 @@ class RedesignComponentsTestCase(TestCase):
             matter=configuration,
         )
 
-        response = self.client.get(reverse('careon:placement_list'))
+        response = self.client.get(reverse('carelane:placement_list'))
         self._assert_spa_shell(response)
 
     def test_municipality_list_uses_current_authenticated_shell(self):
-        response = self.client.get(reverse('careon:municipality_list'))
+        response = self.client.get(reverse('carelane:municipality_list'))
         self._assert_spa_shell(response)

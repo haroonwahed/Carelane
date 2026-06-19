@@ -1,6 +1,6 @@
-# CareOn Terminology
+# Carelane Terminology
 
-This document is the product glossary for visible CareOn language (**aligned to Operational Constitution v2** — see `docs/Careon_Operational_Constitution_v2.md`).
+This document is the product glossary for visible Carelane language (**aligned to Operational Constitution v2** — see `docs/Carelane_Operational_Constitution_v2.md`).
 
 ## Canonical workflow terms (product)
 

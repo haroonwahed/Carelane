@@ -7,13 +7,13 @@ alwaysApply: true
 
 ## Project Identity
 
-This repository implements **Zorg OS / CareOn** — a **neutral orchestration layer for anonymous youth-care matching and throughflow coordination under capacity scarcity**. It is **not** an ECD, municipal ERP, or permanent dossier platform.
+This repository implements **Zorg OS / Carelane** — a **neutral orchestration layer for anonymous youth-care matching and throughflow coordination under capacity scarcity**. It is **not** an ECD, municipal ERP, or permanent dossier platform.
 
 ### Operating phase (temporary): infrastructure maturity
 
 Ship **stability, observability, deterministic pilot/rehearsal, deploy truth, tests, and workflow integrity** first.
 
-**Strategic constitution (active):** product philosophy, UX, visual law, and technical doctrine align with `docs/Careon_Operational_Constitution_v2.md` (master: `docs/Careon_Operational_Constitution_v2.docx`). Net-new **autonomous** AI features remain out of scope; **advisory** arrangement alignment is explicitly productized (see constitution section 4 + `client/src/lib/arrangementAlignmentContract.ts`).
+**Strategic constitution (active):** product philosophy, UX, visual law, and technical doctrine align with `docs/Carelane_Operational_Constitution_v2.md` (master: `docs/Carelane_Operational_Constitution_v2.docx`). Net-new **autonomous** AI features remain out of scope; **advisory** arrangement alignment is explicitly productized (see constitution section 4 + `client/src/lib/arrangementAlignmentContract.ts`).
 
 Operational rehearsal artifacts and GO/NO-GO interpretation for **`./scripts/run_full_pilot_rehearsal.sh`** → **`docs/PILOT_PROOF_PACKAGE.md`** (not product marketing; evidence chain for humans/agents). **Cadence:** see the same doc §0 and GitHub Actions workflow **Pilot rehearsal (release evidence)**.
 
@@ -32,7 +32,7 @@ The system must always guide the correct actor to the **next best action**.
 
 ## Canonical Flow (Source of Truth — Constitution v2 + implementation)
 
-**Casus → Samenvatting → Matching → Gemeente Validatie → Aanbieder Beoordeling → Plaatsing → Intake** (operational doctrine: `docs/Careon_Operational_Constitution_v2.md`)
+**Casus → Samenvatting → Matching → Gemeente Validatie → Aanbieder Beoordeling → Plaatsing → Intake** (operational doctrine: `docs/Carelane_Operational_Constitution_v2.md`)
 
 **Exit principle:** after successful placement and financing/arrangement validation, the trajectory **exits** the platform; ownership continues in external systems (**uitstroom** — see `docs/FOUNDATION_LOCK.md`).
 
@@ -142,12 +142,12 @@ Avoid:
 
 ---
 
-## CareOn UI Rules for Codex
+## Carelane UI Rules for Codex
 
 Before changing any UI page:
 
-1. Read `docs/design/CAREON_UI_CONTRACT.md`
-2. Read `docs/design/CAREON_PAGE_PATTERNS.md` if it exists
+1. Read `docs/design/CARELANE_UI_CONTRACT.md`
+2. Read `docs/design/CARELANE_PAGE_PATTERNS.md` if it exists
 3. Do not invent new card styles, badge styles, spacing, or CTA hierarchy
 4. Use existing primitives only:
    - `CarePageScaffold`
@@ -414,7 +414,7 @@ A task is complete only when:
 
 If anything conflicts:
 
-→ CareOn Operational Constitution v2 wins for doctrine and UX law; technical state names, API phases, and enforcement follow `docs/FOUNDATION_LOCK.md` and `contracts/workflow_state_machine.py`.
+→ Carelane Operational Constitution v2 wins for doctrine and UX law; technical state names, API phases, and enforcement follow `docs/FOUNDATION_LOCK.md` and `contracts/workflow_state_machine.py`.
 
 ---
 

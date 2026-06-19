@@ -1,5 +1,5 @@
 /**
- * CareOn page archetypes — one per route, controls layout contract (consolidation phase).
+ * Carelane page archetypes — one per route, controls layout contract (consolidation phase).
  * @see .cursor/rules/operational-design-laws.mdc
  */
 

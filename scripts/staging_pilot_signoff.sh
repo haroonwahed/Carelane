@@ -2,13 +2,13 @@
 # Staging pilot sign-off: shell smoke, SPA bundle check, optional remote seed, Playwright.
 #
 # Usage (from repo root):
-#   BASE_URL=https://careon-web.onrender.com ./scripts/staging_pilot_signoff.sh
+#   BASE_URL=https://carelane-web.onrender.com ./scripts/staging_pilot_signoff.sh
 #
 # Remote seed (staging Postgres — requires network + credentials):
 #   STAGING_DATABASE_URL='postgresql://...' \
-#   DJANGO_SECRET_KEY='...' ALLOWED_HOSTS='careon-web.onrender.com' \
-#   CSRF_TRUSTED_ORIGINS='https://careon-web.onrender.com' \
-#   DEFAULT_FROM_EMAIL='noreply@careon.nl' \
+#   DJANGO_SECRET_KEY='...' ALLOWED_HOSTS='carelane-web.onrender.com' \
+#   CSRF_TRUSTED_ORIGINS='https://carelane-web.onrender.com' \
+#   DEFAULT_FROM_EMAIL='noreply@carelane.nl' \
 #   ./scripts/staging_pilot_signoff.sh --seed
 #
 # @see docs/V1_SHIP_CHECKLIST.md §3, docs/NORTH_STAR_V1_STATUS.md
@@ -17,7 +17,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-BASE_URL="${BASE_URL:-${STAGING_BASE_URL:-https://careon-web.onrender.com}}"
+BASE_URL="${BASE_URL:-${STAGING_BASE_URL:-https://carelane-web.onrender.com}}"
 export BASE_URL
 export E2E_BASE_URL="${E2E_BASE_URL:-$BASE_URL}"
 export E2E_DEMO_PASSWORD="${E2E_DEMO_PASSWORD:-pilot_demo_pass_123}"
@@ -60,8 +60,8 @@ if [[ "$RUN_SEED" -eq 1 ]]; then
   export DATABASE_URL="$STAGING_DATABASE_URL"
   export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.settings_production}"
   : "${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY for production settings}"
-  : "${ALLOWED_HOSTS:?Set ALLOWED_HOSTS (e.g. careon-web.onrender.com)}"
-  : "${CSRF_TRUSTED_ORIGINS:?Set CSRF_TRUSTED_ORIGINS (e.g. https://careon-web.onrender.com)}"
+  : "${ALLOWED_HOSTS:?Set ALLOWED_HOSTS (e.g. carelane-web.onrender.com)}"
+  : "${CSRF_TRUSTED_ORIGINS:?Set CSRF_TRUSTED_ORIGINS (e.g. https://carelane-web.onrender.com)}"
   : "${DEFAULT_FROM_EMAIL:?Set DEFAULT_FROM_EMAIL}"
   echo "[staging_pilot_signoff] migrate + bootstrap_staging_pilot (remote) …"
   "$PYTHON_BIN" manage.py migrate --noinput

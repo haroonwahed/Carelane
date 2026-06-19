@@ -154,7 +154,7 @@ Roll back when any of the following is observed in production within 24h of cuto
 5. **Re-verify the canonical flow** on the rolled-back build:
    ```bash
    .venv/bin/pytest --tb=line -q
-   (cd client && npx vitest run --no-cache && npm run check:careon-design && npm run build)
+   (cd client && npx vitest run --no-cache && npm run check:carelane-design && npm run build)
    ```
    Expected: 763 backend + 167 frontend tests green; design guardrail PASS; SPA build succeeds.
 6. **Notify the pilot gemeente** with the cause, scope of impact, and the safe set of actions still available.
@@ -173,7 +173,7 @@ Roll back when any of the following is observed in production within 24h of cuto
 |-------|---------|--------|
 | Backend unit/integration | `.venv/bin/pytest --tb=line -q` | 810 / 810 passed |
 | Frontend unit/component | `(cd client && npx vitest run --no-cache)` | 168 / 168 passed |
-| Design-token guardrail | `(cd client && npm run check:careon-design)` | PASS |
+| Design-token guardrail | `(cd client && npm run check:carelane-design)` | PASS |
 | Production SPA build | `(cd client && npm run build)` | PASS |
 | Migrations applied + clean | `.venv/bin/python manage.py migrate --plan` | "No planned migration operations." |
 | Demo surface audit | grep + import-trace of `client/src/components/examples/*` | Only `MultiTenantDemo` is wired; rest tree-shaken |

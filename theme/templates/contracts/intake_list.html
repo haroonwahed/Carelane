@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Casussen - Careon{% endblock %}
+{% block title %}Casussen - Carelane{% endblock %}
 {% block content %}
 {% load static %}
 <div class="page-wrap page-wrap-command" data-layout="max-width: 1440px">
@@ -20,7 +20,7 @@
                 {% if show_archived %}Gearchiveerde casussen verbergen{% else %}Gearchiveerde casussen tonen{% endif %}
             </a>
             {% endif %}
-            <a href="{% url 'careon:case_create' %}" class="btn btn-primary">Nieuwe casus</a>
+            <a href="{% url 'carelane:case_create' %}" class="btn btn-primary">Nieuwe casus</a>
         </div>
     </header>
 
@@ -101,7 +101,7 @@
             <article class="queue-row">
                 <div class="queue-head">
                     <div class="min-w-0">
-                        <a href="{% url 'careon:case_detail' row.obj.pk %}" class="queue-title">{{ row.title }}</a>
+                        <a href="{% url 'carelane:case_detail' row.obj.pk %}" class="queue-title">{{ row.title }}</a>
                         <div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-[color:var(--zr-text-secondary)]">
                             <span>{{ row.lead }}</span>
                             <span>·</span>
@@ -130,8 +130,8 @@
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <p class="text-sm text-[color:var(--zr-text-secondary)]">{{ row.recommended_action.reason }}</p>
                     <div class="ds-list-row-actions">
-                        <a href="{% url 'careon:case_detail' row.obj.pk %}" class="ds-list-row-action-btn">Openen</a>
-                        <a href="{% url 'careon:case_update' row.obj.pk %}" class="ds-list-row-action-btn">Wijzigen</a>
+                        <a href="{% url 'carelane:case_detail' row.obj.pk %}" class="ds-list-row-action-btn">Openen</a>
+                        <a href="{% url 'carelane:case_update' row.obj.pk %}" class="ds-list-row-action-btn">Wijzigen</a>
                     </div>
                 </div>
             </article>
@@ -159,7 +159,7 @@
             <h3 class="ds-list-empty-title">Nog geen casussen</h3>
             <p class="ds-list-empty-copy">Maak je eerste casus aan.</p>
             <p class="mt-3">
-                <a href="{% url 'careon:case_create' %}" class="btn btn-primary">Nieuwe casus</a>
+                <a href="{% url 'carelane:case_create' %}" class="btn btn-primary">Nieuwe casus</a>
             </p>
             {% if can_show_archived and not show_archived and archived_intakes %}
             <p class="mt-3 text-xs ds-text-secondary">Er zijn ook gearchiveerde casussen. Gebruik de knop bovenaan om ze zichtbaar te maken.</p>

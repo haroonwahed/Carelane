@@ -4,7 +4,7 @@ This is a short presenter script for a demo or pilot walkthrough. Keep the pace 
 
 ## Opening
 
-“I’m going to walk through the current CareOn pilot baseline. The product is a decision system, not a dashboard. I’ll show the main care flow from casus creation through intake, and I’ll point out where the system is guiding the next best action.”
+“I’m going to walk through the current Carelane pilot baseline. The product is a decision system, not a dashboard. I’ll show the main care flow from casus creation through intake, and I’ll point out where the system is guiding the next best action.”
 
 ## Set the frame
 

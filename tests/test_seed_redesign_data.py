@@ -14,7 +14,7 @@ class SeedRedesignDataCommandTests(TestCase):
     def test_seed_redesign_data_creates_realistic_case_mix(self):
         call_command('seed_redesign_data', reset=True, verbosity=0)
 
-        org = Organization.objects.get(slug='pilot-careon')
+        org = Organization.objects.get(slug='pilot-carelane')
         self.assertEqual(CaseIntakeProcess.objects.filter(organization=org).count(), 7)
         self.assertEqual(CareCase.objects.filter(organization=org).count(), 7)
         self.assertEqual(MatchResultaat.objects.filter(casus__organization=org).count(), 1)
@@ -90,7 +90,7 @@ class SeedRedesignDataCommandTests(TestCase):
         client = Client()
         admin_user = OrganizationMembership.objects.get(organization=org, role=OrganizationMembership.Role.ADMIN).user
         client.force_login(admin_user)
-        overview_response = client.get(reverse('careon:regiekamer_decision_overview_api'))
+        overview_response = client.get(reverse('carelane:regiekamer_decision_overview_api'))
         self.assertEqual(overview_response.status_code, 200)
         overview_payload = json.loads(overview_response.content)
 

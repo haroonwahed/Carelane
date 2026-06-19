@@ -39,7 +39,7 @@ Dit document helpt testers en begeleiders om **geen verkeerde verwachting** te k
 ## Overige bekende punten (repo-inzicht)
 
 - **Beriechten / MessageComposer:** een knop kan nog een generieke “binnenkort”-melding tonen (niet onderdeel van de care-werkstromen-test).
-- **Careon vs CareOn** in koppen: cosmetische merknaamverschillen tussen schermen/templates kunnen voorkomen; geen invloed op rechten of data.
+- **Carelane vs Carelane** in koppen: cosmetische merknaamverschillen tussen schermen/templates kunnen voorkomen; geen invloed op rechten of data.
 - **Technische waarschuwingen** in serverlogs (bijv. volgorde van lijsten bij paginering) zijn voor ontwikkelaars; geen instructie voor testers om daar naar te kijken.
 
 ---

@@ -123,10 +123,10 @@ class ProviderResponseOrchestrationTests(TestCase):
 
     def _post_action(self, action, follow=True):
         return self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': action,
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
             follow=follow,
         )
@@ -161,10 +161,10 @@ class ProviderResponseOrchestrationTests(TestCase):
     def test_resend_accepts_safe_monitor_next_redirect(self):
         self._login_owner()
         response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': 'resend_request',
-                'next': f"{reverse('careon:provider_response_monitor')}?q=Provider+Orchestration+Intake&sort=urgency",
+                'next': f"{reverse('carelane:provider_response_monitor')}?q=Provider+Orchestration+Intake&sort=urgency",
             },
             follow=False,
         )
@@ -172,7 +172,7 @@ class ProviderResponseOrchestrationTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             response['Location'],
-            f"{reverse('careon:provider_response_monitor')}?q=Provider+Orchestration+Intake&sort=urgency",
+            f"{reverse('carelane:provider_response_monitor')}?q=Provider+Orchestration+Intake&sort=urgency",
         )
 
     def test_resend_blocked_when_provider_response_accepted(self):
@@ -347,13 +347,13 @@ class ProviderResponseOrchestrationTests(TestCase):
         before = PlacementRequest.objects.get(pk=self.placement.pk)
 
         missing_reason_response = self.client.post(
-            reverse('careon:case_outcome_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_outcome_action', kwargs={'pk': self.intake.pk}),
             {
                 'outcome_type': 'provider_response',
                 'status': PlacementRequest.ProviderResponseStatus.REJECTED,
                 'reason_code': OutcomeReasonCode.NONE,
                 'notes': 'Aanbieder heeft afgewezen zonder reden.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -364,13 +364,13 @@ class ProviderResponseOrchestrationTests(TestCase):
         self._assert_no_provider_response_mutation(before, after_missing_reason)
 
         valid_response = self.client.post(
-            reverse('careon:case_outcome_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_outcome_action', kwargs={'pk': self.intake.pk}),
             {
                 'outcome_type': 'provider_response',
                 'status': PlacementRequest.ProviderResponseStatus.REJECTED,
                 'reason_code': OutcomeReasonCode.PROVIDER_DECLINED,
                 'notes': 'Aanbieder geeft inhoudelijke afwijzing terug.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -393,14 +393,14 @@ class ProviderResponseOrchestrationTests(TestCase):
 
     def test_anonymous_or_unauthorized_users_cannot_trigger_actions(self):
         anonymous_response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {'action': 'resend_request'},
         )
         self.assertEqual(anonymous_response.status_code, 302)
 
         self.client.login(username='provider_member', password='testpass123')
         unauthorized_response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {'action': 'resend_request'},
         )
         self.assertEqual(unauthorized_response.status_code, 403)
@@ -412,7 +412,7 @@ class ProviderResponseOrchestrationTests(TestCase):
         )
 
         response = self.client.get(
-            f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+            f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             follow=True,
         )
 
@@ -430,7 +430,7 @@ class ProviderResponseOrchestrationTests(TestCase):
         )
 
         response = self.client.get(
-            f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+            f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             follow=True,
         )
 
@@ -451,7 +451,7 @@ class ProviderResponseOrchestrationTests(TestCase):
         )
 
         response = self.client.get(
-            f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+            f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             follow=True,
         )
 
@@ -495,10 +495,10 @@ class ProviderResponseOrchestrationTests(TestCase):
         )
 
         no_confirm_response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': 'continue_waiting',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -513,12 +513,12 @@ class ProviderResponseOrchestrationTests(TestCase):
         )
 
         confirmed_response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': 'continue_waiting',
                 'confirm_forced_wait': '1',
                 'forced_wait_reason': 'Aanbieder bevestigde telefonisch terugkoppeling vandaag.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -542,11 +542,11 @@ class ProviderResponseOrchestrationTests(TestCase):
         )
 
         response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': 'continue_waiting',
                 'confirm_forced_wait': '1',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -623,7 +623,7 @@ class ProviderResponseOrchestrationTests(TestCase):
         )
 
         delayed_response = self.client.get(
-            f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+            f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             follow=True,
         )
         self.assertEqual(delayed_response.status_code, 200)
@@ -648,10 +648,10 @@ class ProviderResponseOrchestrationTests(TestCase):
         )
 
         provide_info_response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': 'provide_info',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )

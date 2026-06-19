@@ -72,7 +72,7 @@ def _documents_upload_api(request, organization):
     if not uploaded_file:
         return JsonResponse({'error': 'Geen bestand ontvangen. Stuur het bestand als "file" veld.'}, status=400)
 
-    max_mb = getattr(settings, 'CAREON_MAX_DOCUMENT_UPLOAD_MB', 20)
+    max_mb = getattr(settings, 'CARELANE_MAX_DOCUMENT_UPLOAD_MB', 20)
     if uploaded_file.size > max_mb * 1024 * 1024:
         return JsonResponse(
             {'error': f'Bestand "{uploaded_file.name}" is te groot (max {max_mb} MB).'},

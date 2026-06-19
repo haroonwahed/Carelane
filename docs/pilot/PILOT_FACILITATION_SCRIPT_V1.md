@@ -1,4 +1,4 @@
-# CareOn Pilot Facilitation Script v1
+# Carelane Pilot Facilitation Script v1
 
 **Purpose:** concise facilitation script for the first controlled closed-pilot session.
 **Rule:** this is a controlled pilot, not production.
@@ -7,9 +7,9 @@
 
 **Facilitator says**
 
-- “We are here to observe how CareOn supports a controlled closed pilot.”
-- “CareOn is a workflow and coordination layer for anonymous or pseudonymous youth-care matching and throughflow.”
-- “CareOn is not an ECD, not a municipal ERP, and not a permanent dossier platform.”
+- “We are here to observe how Carelane supports a controlled closed pilot.”
+- “Carelane is a workflow and coordination layer for anonymous or pseudonymous youth-care matching and throughflow.”
+- “Carelane is not an ECD, not a municipal ERP, and not a permanent dossier platform.”
 - “This is not production.”
 - “We expect the session to take about 30 to 45 minutes, depending on questions.”
 - “I will capture feedback in the pilot feedback log, and we will separate blockers from observations.”

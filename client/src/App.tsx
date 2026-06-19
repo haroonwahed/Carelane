@@ -39,7 +39,7 @@ export default function App() {
       return "light";
     }
 
-    const storedTheme = window.localStorage.getItem("careon-theme");
+    const storedTheme = window.localStorage.getItem("carelane-theme");
     if (storedTheme === "light" || storedTheme === "dark") {
       if (storedTheme === "dark") document.documentElement.classList.add("dark");
       return storedTheme;
@@ -59,7 +59,7 @@ export default function App() {
   const effectiveTheme: "light" | "dark" = theme;
 
   useLayoutEffect(() => {
-    window.localStorage.setItem("careon-theme", theme);
+    window.localStorage.setItem("carelane-theme", theme);
     if (effectiveTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {

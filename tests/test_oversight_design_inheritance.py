@@ -262,44 +262,44 @@ class OversightDesignInheritanceTests(TestCase):
     # ------------------------------------------------------------------
 
     def test_municipality_list_view_returns_200(self):
-        url = reverse("careon:municipality_list")
+        url = reverse("carelane:municipality_list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_municipality_list_view_has_list_summary_context(self):
-        url = reverse("careon:municipality_list")
+        url = reverse("carelane:municipality_list")
         response = self.client.get(url)
         self.assertIn("list_summary", response.context)
 
     def test_municipality_detail_view_returns_200(self):
-        url = reverse("careon:municipality_detail", kwargs={"pk": self.municipality_a.pk})
+        url = reverse("carelane:municipality_detail", kwargs={"pk": self.municipality_a.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Regiekamer")
 
     def test_municipality_detail_view_has_oversight_summary_context(self):
-        url = reverse("careon:municipality_detail", kwargs={"pk": self.municipality_a.pk})
+        url = reverse("carelane:municipality_detail", kwargs={"pk": self.municipality_a.pk})
         response = self.client.get(url)
         self.assertIn("oversight_summary", response.context)
 
     def test_regional_list_view_returns_200(self):
-        url = reverse("careon:regional_list")
+        url = reverse("carelane:regional_list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_regional_list_view_has_regional_list_summary_context(self):
-        url = reverse("careon:regional_list")
+        url = reverse("carelane:regional_list")
         response = self.client.get(url)
         self.assertIn("regional_list_summary", response.context)
 
     def test_regional_detail_view_returns_200(self):
-        url = reverse("careon:regional_detail", kwargs={"pk": self.region.pk})
+        url = reverse("carelane:regional_detail", kwargs={"pk": self.region.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Regiekamer")
 
     def test_regional_detail_view_has_oversight_summary_context(self):
-        url = reverse("careon:regional_detail", kwargs={"pk": self.region.pk})
+        url = reverse("carelane:regional_detail", kwargs={"pk": self.region.pk})
         response = self.client.get(url)
         self.assertIn("oversight_summary", response.context)
 

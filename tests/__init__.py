@@ -1,4 +1,4 @@
 
 """
-Tests package for the CareOn case-flow system.
+Tests package for the Carelane case-flow system.
 """

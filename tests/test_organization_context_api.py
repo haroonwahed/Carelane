@@ -35,7 +35,7 @@ class OrganizationContextApiTests(TestCase):
 
     def test_me_returns_resolved_organization_payload(self):
         self.client.login(username='ctx_demo_member', password='passCtx123!')
-        response = self.client.get(reverse('careon:current_user_api'))
+        response = self.client.get(reverse('carelane:current_user_api'))
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertIsNotNone(payload.get('organization'))
@@ -44,7 +44,7 @@ class OrganizationContextApiTests(TestCase):
     def test_session_active_organization_sets_session_json_slug(self):
         self.client.login(username='ctx_demo_member', password='passCtx123!')
         response = self.client.post(
-            reverse('careon:session_active_organization_api'),
+            reverse('carelane:session_active_organization_api'),
             data=json.dumps({'organization_slug': 'gemeente-demo'}),
             content_type='application/json',
         )
@@ -56,7 +56,7 @@ class OrganizationContextApiTests(TestCase):
     def test_session_active_organization_denied_without_membership(self):
         self.client.login(username='ctx_other_member', password='passCtx123!')
         response = self.client.post(
-            reverse('careon:session_active_organization_api'),
+            reverse('carelane:session_active_organization_api'),
             data=json.dumps({'organization_slug': 'gemeente-demo'}),
             content_type='application/json',
         )
@@ -65,7 +65,7 @@ class OrganizationContextApiTests(TestCase):
 
     def test_regiekamer_returns_200_when_membership_exists_without_prior_session_post(self):
         self.client.login(username='ctx_demo_member', password='passCtx123!')
-        response = self.client.get(reverse('careon:regiekamer_decision_overview_api'))
+        response = self.client.get(reverse('carelane:regiekamer_decision_overview_api'))
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertIn('items', payload)

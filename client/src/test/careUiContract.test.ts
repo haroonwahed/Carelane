@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { tokens } from "../design/tokens";
 
 /**
- * CareOn Design System V1 — contract test
+ * Carelane Design System V1 — contract test
  *
- * Pins the canonical visual values from CAREON_DESIGN_SYSTEM_V1.md.
+ * Pins the canonical visual values from CARELANE_DESIGN_SYSTEM_V1.md.
  * Updated 2026-06-15: migrated from tokens.visualContract (deprecated) to tokens.visual.
  * Shell geometry corrected: sidebar 256px, topbar 64px, padding 24/32px, 4 radius values.
  */
-describe("CareOn Design System V1 — token contract", () => {
-  it("shell geometry matches CAREON_DESIGN_SYSTEM_V1.md spec", () => {
+describe("Carelane Design System V1 — token contract", () => {
+  it("shell geometry matches CARELANE_DESIGN_SYSTEM_V1.md spec", () => {
     expect(tokens.visual.sidebarWidthExpanded).toBe("256px");
     expect(tokens.visual.sidebarWidthCollapsed).toBe("72px");
     expect(tokens.visual.topbarHeight).toBe("64px");

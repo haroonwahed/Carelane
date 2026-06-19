@@ -15,7 +15,7 @@ from contracts.models import MunicipalityConfiguration, Organization, RegionalCo
 
 
 class Command(BaseCommand):
-    help = "Validate tenant-specific JEUGDREGIO alignment against the normalized CareOn snapshot."
+    help = "Validate tenant-specific JEUGDREGIO alignment against the normalized Carelane snapshot."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -112,7 +112,7 @@ class Command(BaseCommand):
 
                 if expected and code_matches and active_region_match:
                     status = "READY"
-                    reason = "Gemeente, code en actieve JEUGDREGIO sluiten aan op de CareOn-snapshot."
+                    reason = "Gemeente, code en actieve JEUGDREGIO sluiten aan op de Carelane-snapshot."
                 elif expected and active_region_match:
                     status = "PARTIALLY_MAPPED"
                     reason = "Gemeente en actieve JEUGDREGIO sluiten aan, maar de tenant-code wijkt af van de snapshotcode."
@@ -121,7 +121,7 @@ class Command(BaseCommand):
                     reason = "Gemeente kan niet eenduidig aan een actieve JEUGDREGIO worden gekoppeld."
                 else:
                     status = "BLOCKED"
-                    reason = "Gemeente staat niet in de CareOn-referentiesnapshot."
+                    reason = "Gemeente staat niet in de Carelane-referentiesnapshot."
 
                 if not active_regions:
                     org_summary["municipalities_without_active_region"] += 1

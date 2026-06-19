@@ -1,10 +1,10 @@
-# Careon – Copilot Instructions (Compact)
+# Carelane – Copilot Instructions (Compact)
 
 ## Project Essentials
 
 - Stack: Django 5.2.5, Python 3.15, Tailwind; SQLite (dev), PostgreSQL (prod)
 - Core app: `contracts/`
-- URL namespace: `careon:` (mounted at `/care/`)
+- URL namespace: `carelane:` (mounted at `/care/`)
 - Templates: `theme/templates/`; CSS source: `theme/static_src/src/`
 - Dev run: `bash scripts/dev_up.sh`
 - Tests: `python manage.py test tests/`
@@ -37,7 +37,7 @@ Views/forms/urls/templates must reinforce this linear flow and always offer navi
 - Preserve existing UI system (dark shell, sidebar, cards, hierarchy).
 - Use care-native terminology only in user-facing text.
 - Never route case UX to config models.
-- In templates, always use `careon:` namespace.
+- In templates, always use `carelane:` namespace.
 - After Python/template edits, run `python scripts/terminology_guard.py`.
 
 ## Vocabulary Rules

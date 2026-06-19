@@ -1,5 +1,5 @@
 """
-Pytest defaults for the Careon Django suite.
+Pytest defaults for the Carelane Django suite.
 
 Many tests inherit from ``unittest.TestCase`` (not ``django.test.TestCase``).
 Under ``pytest-django``, those tests do not get DB access unless marked.

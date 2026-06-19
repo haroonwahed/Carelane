@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ document.title }} - Careon{% endblock %}
+{% block title %}{{ document.title }} - Carelane{% endblock %}
 {% block content %}
 <div class="ds-detail-shell">
 
@@ -11,9 +11,9 @@
         {% if document.file %}<a href="{{ document.file.url }}" class="btn btn-primary" download>Downloaden</a>{% endif %}
         {% if can_edit_document %}
         {% if document.contract and document.contract.due_diligence_process %}
-        <a href="{% url 'careon:case_detail' document.contract.due_diligence_process.pk %}?tab=documenten" class="btn btn-secondary">Open casus voor bewerking</a>
+        <a href="{% url 'carelane:case_detail' document.contract.due_diligence_process.pk %}?tab=documenten" class="btn btn-secondary">Open casus voor bewerking</a>
         {% else %}
-        <a href="{% url 'careon:document_update' document.pk %}" class="btn btn-secondary">Wijzigen</a>
+        <a href="{% url 'carelane:document_update' document.pk %}" class="btn btn-secondary">Wijzigen</a>
         {% endif %}
         {% else %}
         <span class="btn btn-secondary">Alleen-lezen</span>

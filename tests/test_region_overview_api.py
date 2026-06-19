@@ -19,7 +19,7 @@ class RegionOverviewApiTests(TestCase):
 
     def test_regions_api_can_scope_to_youth_regions_only(self):
         response = self.client.get(
-            reverse("careon:regions_api"),
+            reverse("carelane:regions_api"),
             {"region_type": "JEUGDREGIO", "page_size": 500},
         )
 

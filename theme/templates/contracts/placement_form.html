@@ -6,10 +6,10 @@
 <nav class="mb-4">
     <a class="" href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/">Regiekamer</a>
     <span class="mx-2 ds-muted-label">/</span>
-    <a class="" href="{% url 'careon:placement_list' %}">Plaatsingen</a>
+    <a class="" href="{% url 'carelane:placement_list' %}">Plaatsingen</a>
     {% if is_edit %}
     <span class="mx-2 ds-muted-label">/</span>
-    <a class="" href="{% url 'careon:placement_detail' object.pk %}">
+    <a class="" href="{% url 'carelane:placement_detail' object.pk %}">
         {% if object.intake %}{{ object.intake.title }}{% else %}Plaatsing #{{ object.pk }}{% endif %}
     </a>
     {% endif %}
@@ -56,9 +56,9 @@
             <div class="ds-list-actions">
                 <button type="submit" class="btn btn-primary">{% if is_edit %}Wijzigingen opslaan{% else %}Aanmaken{% endif %}</button>
                 {% if intake %}
-                <a href="{% url 'careon:case_detail' intake.pk %}?tab=plaatsing" class="btn btn-secondary">Annuleren</a>
+                <a href="{% url 'carelane:case_detail' intake.pk %}?tab=plaatsing" class="btn btn-secondary">Annuleren</a>
                 {% else %}
-                <a href="{% url 'careon:placement_list' %}" class="btn btn-secondary">Annuleren</a>
+                <a href="{% url 'carelane:placement_list' %}" class="btn btn-secondary">Annuleren</a>
                 {% endif %}
             </div>
         </form>

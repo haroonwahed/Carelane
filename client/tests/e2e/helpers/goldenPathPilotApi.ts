@@ -70,7 +70,7 @@ export async function apiFetch<T>(
   }, { path, options, csrf });
 
   const typed = response as ApiResponse<T>;
-  if (typeof typed.text === "string" && typed.text.includes("<title>Inloggen - Careon</title>")) {
+  if (typeof typed.text === "string" && typed.text.includes("<title>Inloggen - Carelane</title>")) {
     return {
       ok: false,
       status: 401,

@@ -1,4 +1,4 @@
-# CareOn Rollback Runbook
+# Carelane Rollback Runbook
 
 > **Purpose** — Authoritative step-by-step guide for reverting the application
 > to a known-good state. Use this when a deployment introduces a regression,
@@ -12,10 +12,10 @@
 | Prerequisite | Command |
 |---|---|
 | SSH onto the app server | `ssh deploy@<host>` |
-| Activate the virtualenv | `source /opt/careon/.venv/bin/activate` |
-| Confirm current HEAD | `git -C /opt/careon log -1 --oneline` |
+| Activate the virtualenv | `source /opt/carelane/.venv/bin/activate` |
+| Confirm current HEAD | `git -C /opt/carelane log -1 --oneline` |
 | Check migration state | `python manage.py showmigrations` |
-| Verify backup exists | `ls -lth /backups/careon/ \| head -5` |
+| Verify backup exists | `ls -lth /backups/carelane/ \| head -5` |
 
 > **Never roll back without a database backup confirmed within the last hour.**
 
@@ -38,10 +38,10 @@ Determine the rollback level needed before acting:
 
 ```bash
 # 1. Edit the env file
-nano /opt/careon/.env
+nano /opt/carelane/.env
 
 # 2. Restart the application server
-sudo systemctl restart gunicorn-careon
+sudo systemctl restart gunicorn-carelane
 
 # 3. Smoke-test
 curl -s -o /dev/null -w "%{http_code}" https://<host>/static/spa/?view=dashboard
@@ -52,7 +52,7 @@ curl -s -o /dev/null -w "%{http_code}" https://<host>/static/spa/?view=dashboard
 ## 3. L2 — Code-Only Rollback
 
 ```bash
-cd /opt/careon
+cd /opt/carelane
 
 # 1. Identify the last good commit
 git log --oneline -10
@@ -69,7 +69,7 @@ pip install -r requirements/runtime.txt
 python manage.py collectstatic --noinput
 
 # 5. Restart
-sudo systemctl restart gunicorn-careon
+sudo systemctl restart gunicorn-carelane
 
 # 6. Verify health
 curl -s -o /dev/null -w "%{http_code}" https://<host>/static/spa/?view=dashboard
@@ -91,12 +91,12 @@ curl -s -o /dev/null -w "%{http_code}" https://<host>/static/spa/?view=dashboard
 ### 4.2 Reverting a migration
 
 ```bash
-cd /opt/careon
+cd /opt/carelane
 
 # 1. Back up the database FIRST
-pg_dump -Fc careon > /backups/careon/pre-rollback-$(date +%Y%m%dT%H%M%S).dump
+pg_dump -Fc carelane > /backups/carelane/pre-rollback-$(date +%Y%m%dT%H%M%S).dump
 # SQLite equivalent:
-cp db.sqlite3 /backups/careon/db-pre-rollback-$(date +%Y%m%dT%H%M%S).sqlite3
+cp db.sqlite3 /backups/carelane/db-pre-rollback-$(date +%Y%m%dT%H%M%S).sqlite3
 
 # 2. Identify the migration to revert to
 python manage.py showmigrations contracts
@@ -112,7 +112,7 @@ git revert <migration-commit-sha> --no-edit
 pip install -r requirements/runtime.txt
 
 # 6. Restart
-sudo systemctl restart gunicorn-careon
+sudo systemctl restart gunicorn-carelane
 ```
 
 > **Data warning**: reversing a migration that adds columns is usually safe.
@@ -124,10 +124,10 @@ sudo systemctl restart gunicorn-careon
 Successful scratch-db rehearsal on a clean SQLite file:
 
 ```bash
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py migrate --noinput
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py migrate contracts 0006_approvalrequest_organization_and_more --noinput
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py audit_null_organizations
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py migrate --noinput
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py migrate contracts 0006_approvalrequest_organization_and_more --noinput
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py audit_null_organizations
 ```
 
 Observed result:
@@ -140,8 +140,8 @@ Observed result:
 Production-like caveat discovered on a populated copy:
 
 ```bash
-cp db.sqlite3 /tmp/careon-drill.sqlite3
-SQLITE_PATH=/tmp/careon-drill.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
+cp db.sqlite3 /tmp/carelane-drill.sqlite3
+SQLITE_PATH=/tmp/carelane-drill.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
 ```
 
 Observed failure:
@@ -170,25 +170,25 @@ python manage.py migrate contracts zero
 ```bash
 # --- PostgreSQL ---
 # 1. Stop the application
-sudo systemctl stop gunicorn-careon
+sudo systemctl stop gunicorn-carelane
 
 # 2. Drop and recreate the database
-psql -U postgres -c "DROP DATABASE careon;"
-psql -U postgres -c "CREATE DATABASE careon OWNER careon_user;"
+psql -U postgres -c "DROP DATABASE carelane;"
+psql -U postgres -c "CREATE DATABASE carelane OWNER carelane_user;"
 
 # 3. Restore from backup
-pg_restore -Fc -d careon /backups/careon/<backup-file>.dump
+pg_restore -Fc -d carelane /backups/carelane/<backup-file>.dump
 
 # 4. Re-run any migrations added after the backup was taken
 python manage.py migrate --run-syncdb
 
 # 5. Restart
-sudo systemctl restart gunicorn-careon
+sudo systemctl restart gunicorn-carelane
 
 # --- SQLite (development / small deployments) ---
-sudo systemctl stop gunicorn-careon
-cp /backups/careon/<backup>.sqlite3 db.sqlite3
-sudo systemctl start gunicorn-careon
+sudo systemctl stop gunicorn-carelane
+cp /backups/carelane/<backup>.sqlite3 db.sqlite3
+sudo systemctl start gunicorn-carelane
 ```
 
 ---
@@ -215,14 +215,14 @@ cd client && E2E_BASE_URL=https://<host> npx playwright test tests/e2e/
 ```
 
 For release and rollback verification, use the full two-org checklist in
-[`docs/MANUAL_SMOKE_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/CareOn/docs/MANUAL_SMOKE_CHECKLIST.md).
+[`docs/MANUAL_SMOKE_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/MANUAL_SMOKE_CHECKLIST.md).
 
 ---
 
 ## 7. Comms Template
 
 > **TO:** eng-alerts channel  
-> **SUBJECT:** [CareOn] Rollback executed — \<date\>  
+> **SUBJECT:** [Carelane] Rollback executed — \<date\>  
 >
 > **Incident summary:** \<one-line description\>  
 > **Rollback level:** L\<1-4\>  

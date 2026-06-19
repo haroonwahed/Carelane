@@ -1,5 +1,5 @@
 /**
- * Sidebar Navigation — CareOn v1.3 (aanmelder-first orchestration).
+ * Sidebar Navigation — Carelane v1.3 (aanmelder-first orchestration).
  *
  * Role-based navigation:
  * 🟣 Aanmelder-keten (often gemeente account) — doorstroom & validatie
@@ -469,7 +469,7 @@ export function Sidebar({
               <Shield size={20} strokeWidth={2.1} />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">CareOn</h1>
+              <h1 className="text-lg font-bold text-foreground">Carelane</h1>
               <p className="text-xs text-muted-foreground">Zorg OS</p>
             </div>
           </div>

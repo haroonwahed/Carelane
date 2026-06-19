@@ -55,7 +55,7 @@ logger = logging.getLogger(__name__)
 def contracts_api(request):
     """
     API endpoint for listing cases with filtering and pagination.
-    Used by the CareOn case workspace UI.
+    Used by the Carelane case workspace UI.
     """
     try:
         # Parse filters from request

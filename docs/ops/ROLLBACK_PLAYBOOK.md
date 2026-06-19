@@ -1,4 +1,4 @@
-# CareOn Rollback Playbook
+# Carelane Rollback Playbook
 
 **Purpose:** production-safe rollback instructions for release windows.
 **Rule:** prefer a clean rollback over a partial, uncertain rollout.
@@ -58,8 +58,8 @@ Rollback via configuration is preferred when the issue is isolated to:
 
 Examples:
 
-- disable `CAREON_PILOT_UI`
-- disable `CAREON_PILOT_SPA_ONLY`
+- disable `CARELANE_PILOT_UI`
+- disable `CARELANE_PILOT_SPA_ONLY`
 - disable `SSO_ENABLED`
 - remove a bad `RENDER_DEPLOY_HOOK_URL`
 

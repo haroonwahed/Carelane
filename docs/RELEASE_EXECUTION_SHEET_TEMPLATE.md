@@ -1,4 +1,4 @@
-# CareOn release execution sheet (template)
+# Carelane release execution sheet (template)
 
 Copy this file to `docs/RELEASE_EXECUTION_SHEET_<YYYY-MM-DD>.md` (or store outside the repo) and fill every field during the rollout. Cross-link the dated sheet from `docs/RELEASE_ROLLOUT_CHECKLIST.md` for that release.
 

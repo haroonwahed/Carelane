@@ -9,7 +9,7 @@
             <p class="provider-workspace__subtitle">Regionaal capaciteitsoverzicht — druk, spreiding en aanbiedersbelasting per regio.</p>
         </div>
         <div class="page-actions">
-            <a href="{% url 'careon:regional_create' %}" class="btn btn-primary">Nieuwe zorgregio</a>
+            <a href="{% url 'carelane:regional_create' %}" class="btn btn-primary">Nieuwe zorgregio</a>
         </div>
     </div>
 
@@ -92,7 +92,7 @@
                 <tbody>
                     {% for region in regions %}
                     <tr>
-                        <td><a href="{% url 'careon:regional_detail' region.pk %}">{{ region.region_name }}</a></td>
+                        <td><a href="{% url 'carelane:regional_detail' region.pk %}">{{ region.region_name }}</a></td>
                         <td>{{ region.get_region_type_display }}</td>
                         <td>{{ region.region_code|default:"—" }}</td>
                         <td>
@@ -116,13 +116,13 @@
                                 <span class="oversight-pressure-chip oversight-pressure-chip--neutral">Ingericht</span>
                             {% endif %}
                         </td>
-                        <td class="td-right"><a href="{% url 'careon:regional_update' region.pk %}" class="btn btn-ghost">Wijzigen</a></td>
+                        <td class="td-right"><a href="{% url 'carelane:regional_update' region.pk %}" class="btn btn-ghost">Wijzigen</a></td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="9" class="td-empty">
                             U hebt nog geen zorgregio's ingesteld.
-                            <div class=""><a href="{% url 'careon:regional_create' %}" class="btn btn-primary">Voeg eerste zorgregio toe</a></div>
+                            <div class=""><a href="{% url 'carelane:regional_create' %}" class="btn btn-primary">Voeg eerste zorgregio toe</a></div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -152,7 +152,7 @@
             <h1 class="page-title">Zorgregio's</h1>
             </div>
         <div class="page-actions">
-            <a href="{% url 'careon:regional_create' %}" class="btn btn-primary">Nieuwe zorgregio</a>
+            <a href="{% url 'carelane:regional_create' %}" class="btn btn-primary">Nieuwe zorgregio</a>
         </div>
     </div>
 
@@ -212,7 +212,7 @@
                 <tbody>
                     {% for region in regions %}
                     <tr>
-                        <td><a href="{% url 'careon:regional_detail' region.pk %}">{{ region.region_name }}</a></td>
+                        <td><a href="{% url 'carelane:regional_detail' region.pk %}">{{ region.region_name }}</a></td>
                         <td>{{ region.get_region_type_display }}</td>
                         <td>{{ region.region_code|default:"—" }}</td>
                         <td><span class="ds-badge badge-medium">{{ region.municipality_count }}</span></td>
@@ -224,13 +224,13 @@
                             </span>
                         </td>
                         <td>{{ region.responsible_coordinator.get_full_name|default:"—" }}</td>
-                        <td class="td-right"><a href="{% url 'careon:regional_update' region.pk %}" class="btn btn-ghost">Wijzigen</a></td>
+                        <td class="td-right"><a href="{% url 'carelane:regional_update' region.pk %}" class="btn btn-ghost">Wijzigen</a></td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="9" class="td-empty">
                             U hebt nog geen zorgregio's ingesteld.
-                            <div class=""><a href="{% url 'careon:regional_create' %}" class="btn btn-primary">Voeg eerste zorgregio toe</a></div>
+                            <div class=""><a href="{% url 'carelane:regional_create' %}" class="btn btn-primary">Voeg eerste zorgregio toe</a></div>
                         </td>
                     </tr>
                     {% endfor %}

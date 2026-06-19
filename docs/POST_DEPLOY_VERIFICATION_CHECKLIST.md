@@ -39,7 +39,7 @@ Run these checks in the browser or with `curl`.
 
 ### Required URLs
 
-Pilot/staging origin documented for smoke checks: **`https://careon-web.onrender.com`**. For production verification, substitute your production origin (same path checks).
+Pilot/staging origin documented for smoke checks: **`https://carelane-web.onrender.com`**. For production verification, substitute your production origin (same path checks).
 
 - `/`
 - `/care/`
@@ -129,6 +129,6 @@ Add the following to the drill log and rollout sheet:
 Related docs:
 
 - [`docs/GO_LIVE_ONE_PAGE_RUNBOOK.md`](GO_LIVE_ONE_PAGE_RUNBOOK.md) — short ordered steps + helper scripts
-- [`docs/RELEASE_ROLLOUT_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RELEASE_ROLLOUT_CHECKLIST.md)
-- [`docs/RELEASE_EXECUTION_SHEET_2026-05-30.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RELEASE_EXECUTION_SHEET_2026-05-30.md)
-- [`docs/DRILL_LOG.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/DRILL_LOG.md)
+- [`docs/RELEASE_ROLLOUT_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/RELEASE_ROLLOUT_CHECKLIST.md)
+- [`docs/RELEASE_EXECUTION_SHEET_2026-05-30.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/RELEASE_EXECUTION_SHEET_2026-05-30.md)
+- [`docs/DRILL_LOG.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/DRILL_LOG.md)

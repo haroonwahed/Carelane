@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2026-06-17
 **Deciders:** Founder / engineering owner (Haroon)
-**Related docs:** `docs/CAREON_STRUCTURAL_MIGRATION_PLAN.md`, `docs/FOUNDATION_LOCK.md`, `AGENTS.md`, `DECISIONS.md` (Infrastructure Maturity Phase)
+**Related docs:** `docs/CARELANE_STRUCTURAL_MIGRATION_PLAN.md`, `docs/FOUNDATION_LOCK.md`, `AGENTS.md`, `DECISIONS.md` (Infrastructure Maturity Phase)
 
 ---
 
@@ -15,7 +15,7 @@
 - **~320 top-level definitions** — **53 public views/functions** and **72 private helpers**, plus the class-based views (CBVs) for nearly every domain entity.
 - It mixes concerns that have nothing to do with each other: HTTP request handling, the **matching/scoring algorithm**, **geocoding** (a hand-rolled `_haversine_distance_km`), provider-behaviour scoring, **task/deadline auto-sync**, **case-flow state transitions**, **SPA-shell rendering**, ops/health endpoints, and per-resource CRUD.
 
-This matters because of three forces specific to CareOn:
+This matters because of three forces specific to Carelane:
 
 1. **Regulated workflow integrity.** The backend is the source of truth for state and permissions (`FOUNDATION_LOCK`, `AGENTS.md`). Workflow gates and tenant isolation live partly inside these view functions. A file this large makes it hard to see — and safely change — exactly where a gate is enforced, which is a regulatory and liability risk.
 2. **The redesign wave is active.** Recent commits (weeks 22–24) are almost entirely UI/redesign (`--care-*` tokens, shared SLA primitives, matching-grid restructure). Each of those touches view context-building code buried in this file. The monolith is now directly slowing the work you are actually doing.
@@ -28,7 +28,7 @@ This is **not** a request to add features. It fits squarely inside the declared 
 - **No behaviour change.** URLs, view names, template context keys, and tested user-facing markers stay identical (`DECISIONS.md` → "UI and Test Compatibility").
 - **Stay green.** 93 pytest modules + 13 Playwright e2e specs + Platform Guardrails CI must pass at every step.
 - **Tenant isolation preserved.** `test_cross_tenant_isolation` and `TenantScopedQuerysetMixin` semantics are untouched.
-- **No terminology/model renames** here — that is a separate, deferred track (`CAREON_STRUCTURAL_MIGRATION_PLAN.md`, `STRUCTURAL_RENAME_DEFERRED.md`). This ADR moves code, it does not rename symbols.
+- **No terminology/model renames** here — that is a separate, deferred track (`CARELANE_STRUCTURAL_MIGRATION_PLAN.md`, `STRUCTURAL_RENAME_DEFERRED.md`). This ADR moves code, it does not rename symbols.
 
 ---
 
@@ -146,7 +146,7 @@ The second trade-off is **move vs. rewrite**. We explicitly choose to *move* cod
 4. [ ] **Phase 3 — Carve out leaf view groups** with no cross-dependencies: `ops.py`, `shell.py`, `base.py` (mixins), then the simple CRUD CBVs (`clients`, `documents`, `deadlines`, `signals`, `tasks`, `budgets`, `configuration`).
 5. [ ] **Phase 4 — Move the workflow-critical surfaces** one module per PR, in this order (lowest blast radius first): `reports` → `organization` → `assessment` → `intake` → `placement` → `provider_response` → `matching_views` → `case_actions`. Re-verify tenant isolation + workflow gates after each.
 6. [ ] **Phase 5 — Shrink `__init__.py`** to only re-exports (no definitions left). Remove the temporary re-exports of domain logic from views once call sites import from `contracts.domain` directly.
-7. [ ] **Phase 6 — Close out.** Delete the line-ceiling exception, update `AGENTS.md` / `CAREON_STRUCTURAL_MIGRATION_PLAN.md` to point at the new layout, and open a follow-up ADR stub for `models.py`.
+7. [ ] **Phase 6 — Close out.** Delete the line-ceiling exception, update `AGENTS.md` / `CARELANE_STRUCTURAL_MIGRATION_PLAN.md` to point at the new layout, and open a follow-up ADR stub for `models.py`.
 
 ### Definition of done per PR
 - All pytest + Playwright + Platform Guardrails green.

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Meldingen - Careon{% endblock %}
+{% block title %}Meldingen - Carelane{% endblock %}
 {% block content %}
 <div class="ds-list-shell">
 
@@ -8,7 +8,7 @@
         <h1 class="page-title">Meldingen</h1>
         </div>
     {% if unread_count > 0 %}
-    <form method="post" action="{% url 'careon:mark_all_notifications_read' %}">
+    <form method="post" action="{% url 'carelane:mark_all_notifications_read' %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-secondary">Markeer alles als gelezen</button>
     </form>
@@ -46,7 +46,7 @@
             <div class="ds-muted-label">{{ notification.created_at|timesince }} geleden</div>
         </div>
         {% if not notification.is_read %}
-        <form method="post" action="{% url 'careon:mark_notification_read' notification.pk %}">
+        <form method="post" action="{% url 'carelane:mark_notification_read' notification.pk %}">
             {% csrf_token %}
             <button type="submit" class="btn btn-ghost">Gelezen</button>
         </form>

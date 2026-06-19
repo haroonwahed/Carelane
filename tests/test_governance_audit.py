@@ -133,7 +133,7 @@ class GovernanceAuditTests(TestCase):
     def test_matching_dashboard_creates_match_recommendation_log(self, mock_suggestions):
         mock_suggestions.return_value = self._matching_suggestions()
 
-        response = self.client.get(reverse('careon:matching_dashboard'))
+        response = self.client.get(reverse('carelane:matching_dashboard'))
 
         self.assertEqual(response.status_code, 200)
         log = CaseDecisionLog.objects.get(event_type=CaseDecisionLog.EventType.MATCH_RECOMMENDED)
@@ -152,7 +152,7 @@ class GovernanceAuditTests(TestCase):
         mock_suggestions.return_value = self._matching_suggestions()
 
         response = self.client.post(
-            reverse('careon:case_matching_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_matching_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': 'assign',
                 'provider_id': str(self.provider_b.pk),
@@ -174,10 +174,10 @@ class GovernanceAuditTests(TestCase):
 
     def test_resend_action_creates_case_decision_log(self):
         response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': 'resend_request',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -201,10 +201,10 @@ class GovernanceAuditTests(TestCase):
         )
 
         response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': 'provide_missing_info',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -226,12 +226,12 @@ class GovernanceAuditTests(TestCase):
         )
 
         response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': 'continue_waiting',
                 'confirm_forced_wait': '1',
                 'forced_wait_reason': 'Telefonische bevestiging ontvangen.',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -253,10 +253,10 @@ class GovernanceAuditTests(TestCase):
         )
 
         response = self.client.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': 'trigger_rematch',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
             follow=True,
         )
@@ -848,10 +848,10 @@ class SLATransitionGovernanceTests(TestCase):
         )
 
         self.http.post(
-            reverse('careon:case_provider_response_action', kwargs={'pk': self.intake.pk}),
+            reverse('carelane:case_provider_response_action', kwargs={'pk': self.intake.pk}),
             {
                 'action': 'resend_request',
-                'next': f"{reverse('careon:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
+                'next': f"{reverse('carelane:case_detail', kwargs={'pk': self.intake.pk})}?tab=plaatsing",
             },
         )
 

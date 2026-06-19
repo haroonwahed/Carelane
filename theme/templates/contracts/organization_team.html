@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Organisatieteam - Careon{% endblock %}
+{% block title %}Organisatieteam - Carelane{% endblock %}
 {% block content %}
 <div class="page-wrap page-stack">
 
@@ -8,7 +8,7 @@
         <h1 class="page-title">Organisatieteam</h1>
         <span class="page-subtitle">Beheer leden en nodig teamgenoten uit voor {{ organization.name }}.</span>
     </div>
-    <a href="{% url 'careon:organization_activity' %}" class="btn btn-secondary">Bekijk activiteit</a>
+    <a href="{% url 'carelane:organization_activity' %}" class="btn btn-secondary">Bekijk activiteit</a>
 </div>
 
 <div class="team-layout">
@@ -31,7 +31,7 @@
                         <td class="team-user-name">{{ membership.user.get_full_name|default:membership.user.username }}</td>
                         <td>{{ membership.user.email|default:"—" }}</td>
                         <td>
-                            <form method="post" action="{% url 'careon:update_membership_role' membership.id %}" class="team-role-form">
+                            <form method="post" action="{% url 'carelane:update_membership_role' membership.id %}" class="team-role-form">
                                 {% csrf_token %}
                                 <select name="role" {% if membership.role == 'OWNER' and not is_owner %}disabled{% endif %}>
                                     <option value="OWNER" {% if membership.role == 'OWNER' %}selected{% endif %}>Eigenaar</option>
@@ -44,7 +44,7 @@
                         <td>{{ membership.created_at|date:"d M Y" }}</td>
                         <td class="team-cell-right">
                             {% if membership.user_id != current_user_id %}
-                            <form method="post" action="{% url 'careon:deactivate_organization_member' membership.id %}" class="base-inline-form">
+                            <form method="post" action="{% url 'carelane:deactivate_organization_member' membership.id %}" class="base-inline-form">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-danger">Deactiveren</button>
                             </form>
@@ -87,10 +87,10 @@
                 <div class="team-invite-email">{{ invitation.email }}</div>
                 <div class="team-invite-meta">{{ invitation.get_role_display }} &middot; Verloopt {{ invitation.expires_at|date:"d M Y" }}</div>
                 <div class="team-invite-actions">
-                    <form method="post" action="{% url 'careon:resend_organization_invite' invitation.id %}">
+                    <form method="post" action="{% url 'carelane:resend_organization_invite' invitation.id %}">
                         {% csrf_token %}<button type="submit" class="btn btn-ghost">Opnieuw verzenden</button>
                     </form>
-                    <form method="post" action="{% url 'careon:revoke_organization_invite' invitation.id %}">
+                    <form method="post" action="{% url 'carelane:revoke_organization_invite' invitation.id %}">
                         {% csrf_token %}<button type="submit" class="btn btn-danger">Intrekken</button>
                     </form>
                 </div>
@@ -108,7 +108,7 @@
                     <div class="team-inactive-name">{{ membership.user.get_full_name|default:membership.user.username }}</div>
                     <div class="team-inactive-meta">{{ membership.user.email|default:"—" }} &middot; {{ membership.get_role_display }}</div>
                 </div>
-                <form method="post" action="{% url 'careon:reactivate_organization_member' membership.id %}">
+                <form method="post" action="{% url 'carelane:reactivate_organization_member' membership.id %}">
                     {% csrf_token %}<button type="submit" class="btn btn-ghost">Heractiveren</button>
                 </form>
             </div>

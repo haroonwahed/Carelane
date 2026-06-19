@@ -116,7 +116,7 @@ def main() -> None:
             "source_portal": "https://www.istandaarden.nl/ijw/over-ijw/productcodelijst-jeugdwet",
             "publisher": "Zorginstituut Nederland (iStandaarden — Jeugdwet / JZ21)",
             "note": (
-                "Machine-leesbare export voor CareOn arrangement hints. "
+                "Machine-leesbare export voor Carelane arrangement hints. "
                 "Gemeenten mogen afwijkende eigen codes gebruiken; zie iStandaarden-pagina."
             ),
             "product_rows": len(products),

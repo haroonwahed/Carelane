@@ -7,7 +7,7 @@
  *
  * Safe across SSR / privacy modes — sessionStorage access is guarded.
  */
-export const CASUSSEN_PREFERRED_FOCUS_STORAGE_KEY = "careon.casussen.preferredFocus";
+export const CASUSSEN_PREFERRED_FOCUS_STORAGE_KEY = "carelane.casussen.preferredFocus";
 
 /**
  * Supported focus hints:

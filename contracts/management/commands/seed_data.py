@@ -18,16 +18,16 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('Seed data already exists. Skipping.'))
             return
 
-        admin = User.objects.create_superuser('admin', 'admin@careon.local', 'admin123', first_name='Admin', last_name='User')
+        admin = User.objects.create_superuser('admin', 'admin@carelane.local', 'admin123', first_name='Admin', last_name='User')
         UserProfile.objects.get_or_create(user=admin, defaults={'role': 'ADMIN'})
 
-        coordinator1 = User.objects.create_user('jsmith', 'jsmith@careon.local', 'password123', first_name='John', last_name='Smith')
+        coordinator1 = User.objects.create_user('jsmith', 'jsmith@carelane.local', 'password123', first_name='John', last_name='Smith')
         UserProfile.objects.get_or_create(user=coordinator1, defaults={'role': 'PARTNER', 'bar_number': 'BAR-001', 'hourly_rate': Decimal('450')})
 
-        coordinator2 = User.objects.create_user('sjones', 'sjones@careon.local', 'password123', first_name='Sarah', last_name='Jones')
+        coordinator2 = User.objects.create_user('sjones', 'sjones@carelane.local', 'password123', first_name='Sarah', last_name='Jones')
         UserProfile.objects.get_or_create(user=coordinator2, defaults={'role': 'SENIOR_ASSOCIATE', 'bar_number': 'BAR-002', 'hourly_rate': Decimal('350')})
 
-        support_worker = User.objects.create_user('mwilson', 'mwilson@careon.local', 'password123', first_name='Mike', last_name='Wilson')
+        support_worker = User.objects.create_user('mwilson', 'mwilson@carelane.local', 'password123', first_name='Mike', last_name='Wilson')
         UserProfile.objects.get_or_create(user=support_worker, defaults={'role': 'PARALEGAL', 'hourly_rate': Decimal('150')})
 
         client1 = Client.objects.create(

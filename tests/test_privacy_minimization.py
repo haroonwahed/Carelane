@@ -280,7 +280,7 @@ class PrivacyMinimizationTests(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn("file", form.errors)
-        self.assertIn("Afbeeldingen en scan-PDF's worden niet in CareOn opgeslagen", form.errors["file"][0])
+        self.assertIn("Afbeeldingen en scan-PDF's worden niet in Carelane opgeslagen", form.errors["file"][0])
 
     def test_document_form_rejects_scan_pdfs(self):
         intake = CaseIntakeProcess.objects.create(
@@ -324,4 +324,4 @@ class PrivacyMinimizationTests(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn("file", form.errors)
-        self.assertIn("Afbeeldingen en scan-PDF's worden niet in CareOn opgeslagen", form.errors["file"][0])
+        self.assertIn("Afbeeldingen en scan-PDF's worden niet in Carelane opgeslagen", form.errors["file"][0])

@@ -16,7 +16,7 @@ import {
 /* ─── CareBadge ─── */
 
 const badgeMeta: Meta<typeof CareBadge> = {
-  title: "CareOn/Primitives/CareBadge",
+  title: "Carelane/Primitives/CareBadge",
   component: CareBadge,
   parameters: { layout: "centered" },
   tags: ["autodocs"],

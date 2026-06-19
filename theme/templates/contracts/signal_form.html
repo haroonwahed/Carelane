@@ -5,10 +5,10 @@
     <nav class="">
         <a class="" href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/">Regiekamer</a>
         <span class="ds-muted-label"> / </span>
-        <a class="" href="{% url 'careon:signal_list' %}">Signalen</a>
+        <a class="" href="{% url 'carelane:signal_list' %}">Signalen</a>
         {% if is_edit %}
         <span class="ds-muted-label"> / </span>
-        <a class="" href="{% url 'careon:signal_detail' object.pk %}">{{ object }}</a>
+        <a class="" href="{% url 'carelane:signal_detail' object.pk %}">{{ object }}</a>
         <span> / </span>
         <span class="">Wijzigen</span>
         {% else %}
@@ -53,7 +53,7 @@
             <button type="submit" class="btn btn-primary">
                 {% if is_edit %}Opslaan{% else %}Signaal aanmaken{% endif %}
             </button>
-            <a href="{% url 'careon:signal_list' %}" class="btn btn-secondary">
+            <a href="{% url 'carelane:signal_list' %}" class="btn btn-secondary">
                 Annuleren
             </a>
         </div>

@@ -326,7 +326,7 @@ describe("NieuweCasusPage", () => {
 
   it("ignores legacy municipal region drafts and falls back to youth regions", async () => {
     memoryStorage.setItem(
-      "careon:nieuwe-casus-draft:v2",
+      "carelane:nieuwe-casus-draft:v2",
       JSON.stringify({
         currentStep: 1,
         searchRadiusKm: 25,
@@ -386,7 +386,7 @@ describe("NieuweCasusPage", () => {
     const urgencyDocument = formData.get("urgency_document");
     expect(urgencyDocument).toBeInstanceOf(File);
     expect((urgencyDocument as File).name).toBe("urgentieverklaring.pdf");
-    expect(screen.getByText(/Let op: voeg deze CareOn referentiecode toe aan het dossier van uw client binnen uw ECD\./i)).toBeInTheDocument();
+    expect(screen.getByText(/Let op: voeg deze Carelane referentiecode toe aan het dossier van uw client binnen uw ECD\./i)).toBeInTheDocument();
   }, 10000);
 
   it("shows advice and municipality link when the client has no urgency declaration", async () => {

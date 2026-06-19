@@ -115,7 +115,7 @@ class GovernanceV12BudgetGateTests(TestCase):
         self.client.login(username='v12_provider', password='pw-v12')
         case = intake.case_record
         resp = self.client.post(
-            reverse('careon:provider_decision_api', kwargs={'case_id': case.pk}),
+            reverse('carelane:provider_decision_api', kwargs={'case_id': case.pk}),
             data=json.dumps({'status': 'ACCEPTED', 'provider_comment': 'Akkoord'}),
             content_type='application/json',
         )
@@ -138,7 +138,7 @@ class GovernanceV12BudgetGateTests(TestCase):
         self.client.login(username='v12_provider', password='pw-v12')
         case = intake.case_record
         resp = self.client.post(
-            reverse('careon:provider_decision_api', kwargs={'case_id': case.pk}),
+            reverse('carelane:provider_decision_api', kwargs={'case_id': case.pk}),
             data=json.dumps({'status': 'ACCEPTED'}),
             content_type='application/json',
         )
@@ -177,7 +177,7 @@ class GovernanceV12WijkteamTests(TestCase):
             'case_coordinator': self.user.pk,
         }
         resp = self.client.post(
-            reverse('careon:intake_create_api'),
+            reverse('carelane:intake_create_api'),
             data=json.dumps(payload),
             content_type='application/json',
         )
@@ -240,7 +240,7 @@ class GovernanceV12BudgetRejectRematchTests(TestCase):
         )
         self.client.login(username='v12_br_g', password='pw-v12')
         resp = self.client.post(
-            reverse('careon:placement_budget_decision_api', kwargs={'case_id': case.pk}),
+            reverse('carelane:placement_budget_decision_api', kwargs={'case_id': case.pk}),
             data=json.dumps({'decision': 'REJECTED', 'note': 'Onvoldoende onderbouwing'}),
             content_type='application/json',
         )
@@ -287,7 +287,7 @@ class GovernanceV12TransitionFinancialTests(TestCase):
         )
         self.client.login(username='v12_tr_g', password='pw-v12')
         url = reverse(
-            'careon:transition_request_financial_api',
+            'carelane:transition_request_financial_api',
             kwargs={'case_id': case.pk, 'transition_id': tr.pk},
         )
         resp = self.client.post(

@@ -26,7 +26,7 @@ test.describe("Instellingen workspace", () => {
   test.describe("via shell navigatie", () => {
     test.beforeEach(async ({ page, baseURL }) => {
       await page.addInitScript(() => {
-        window.localStorage.setItem("careon-theme", "dark");
+        window.localStorage.setItem("carelane-theme", "dark");
       });
       await stubDesignMode(page);
       await installCareApiStubs(page);
@@ -59,7 +59,7 @@ test.describe("Instellingen workspace", () => {
   test.describe("diepe link", () => {
     test("opens section from URL query on direct load", async ({ page }) => {
       await page.addInitScript(() => {
-        window.localStorage.setItem("careon-theme", "dark");
+        window.localStorage.setItem("carelane-theme", "dark");
       });
       await stubDesignMode(page);
       await installCareApiStubs(page);

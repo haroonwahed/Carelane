@@ -78,7 +78,7 @@ class CasussenOperationalContractIntegrationTests(TestCase):
             "recommended_action": {
                 "label": "Monitor voortgang",
                 "reason": "Case beweegt door flow",
-                "url": reverse("careon:case_detail", kwargs={"pk": intake_id}),
+                "url": reverse("carelane:case_detail", kwargs={"pk": intake_id}),
             },
             "impact_summary": {
                 "text": "Houdt zaak op koers",
@@ -109,7 +109,7 @@ class CasussenOperationalContractIntegrationTests(TestCase):
             "recommended_action": {
                 "label": "Heropen beoordeling vandaag",
                 "reason": "Nodig om matching-blokkade op te heffen",
-                "url": reverse("careon:case_detail", kwargs={"pk": intake.pk}),
+                "url": reverse("carelane:case_detail", kwargs={"pk": intake.pk}),
             },
             "impact_summary": {
                 "text": "Ontgrendelt vervolgstap direct",
@@ -123,7 +123,7 @@ class CasussenOperationalContractIntegrationTests(TestCase):
         }
 
         with patch("contracts.views.build_operational_decision_for_intake", return_value=_FakeDecision(payload)):
-            response = self.client.get(reverse("careon:case_list"))
+            response = self.client.get(reverse("carelane:case_list"))
 
         self._assert_spa_shell(response)
         self.assertTrue(CaseIntakeProcess.objects.filter(pk=intake.pk).exists())
@@ -135,7 +135,7 @@ class CasussenOperationalContractIntegrationTests(TestCase):
             "recommended_action": {
                 "label": "Escaleer casus",
                 "reason": "Combinatie van blokkade en urgentie",
-                "url": reverse("careon:case_detail", kwargs={"pk": intake.pk}),
+                "url": reverse("carelane:case_detail", kwargs={"pk": intake.pk}),
             },
             "impact_summary": {
                 "text": "Beschermt doorstroom",
@@ -149,7 +149,7 @@ class CasussenOperationalContractIntegrationTests(TestCase):
         }
 
         with patch("contracts.views.build_operational_decision_for_intake", return_value=_FakeDecision(payload)):
-            response = self.client.get(reverse("careon:case_list"))
+            response = self.client.get(reverse("carelane:case_list"))
 
         self._assert_spa_shell(response)
         self.assertTrue(CaseIntakeProcess.objects.filter(pk=intake.pk).exists())
@@ -175,7 +175,7 @@ class CasussenOperationalContractIntegrationTests(TestCase):
             return _FakeDecision(payload_b)
 
         with patch("contracts.views.build_operational_decision_for_intake", side_effect=fake_decision):
-            response = self.client.get(reverse("careon:case_list"))
+            response = self.client.get(reverse("carelane:case_list"))
 
         self._assert_spa_shell(response)
         self.assertTrue(CaseIntakeProcess.objects.filter(pk=intake_a.pk).exists())
@@ -188,7 +188,7 @@ class CasussenOperationalContractIntegrationTests(TestCase):
             "recommended_action": {
                 "label": "Plan opvolging",
                 "reason": "Minimale payload zonder impact",
-                "url": reverse("careon:case_detail", kwargs={"pk": intake.pk}),
+                "url": reverse("carelane:case_detail", kwargs={"pk": intake.pk}),
             },
             "attention_band": "monitor",
             "priority_band": "monitor",
@@ -198,15 +198,15 @@ class CasussenOperationalContractIntegrationTests(TestCase):
         }
 
         with patch("contracts.views.build_operational_decision_for_intake", return_value=_FakeDecision(payload)):
-            response = self.client.get(reverse("careon:case_list"))
+            response = self.client.get(reverse("carelane:case_list"))
 
         self._assert_spa_shell(response)
         self.assertTrue(CaseIntakeProcess.objects.filter(pk=intake.pk).exists())
 
     def test_zero_data_state_renders_safely(self):
-        response = self.client.get(reverse("careon:case_list"))
+        response = self.client.get(reverse("carelane:case_list"))
         self._assert_spa_shell(response)
-        api_payload = self.client.get(reverse("careon:cases_api")).json()
+        api_payload = self.client.get(reverse("carelane:cases_api")).json()
         self.assertEqual(api_payload.get('total_count'), 0)
         self.assertEqual(api_payload.get('cases', []), [])
 
@@ -220,7 +220,7 @@ class CasussenOperationalContractIntegrationTests(TestCase):
             "contracts.views.build_operational_decision_for_intake",
             side_effect=lambda intake_id: _FakeDecision(self._default_payload(intake_id=intake_id)),
         ):
-            response = self.client.get(reverse("careon:case_list"))
+            response = self.client.get(reverse("carelane:case_list"))
 
         self._assert_spa_shell(response)
         self.assertTrue(CaseIntakeProcess.objects.filter(pk=intake.pk).exists())
@@ -238,10 +238,10 @@ class CasussenOperationalContractIntegrationTests(TestCase):
             side_effect=lambda intake_id: _FakeDecision(self._default_payload(intake_id=intake_id)),
         ):
             response_page1 = self.client.get(
-                reverse("careon:case_list") + "?status=INTAKE&urgency=LOW&q=FilterCase"
+                reverse("carelane:case_list") + "?status=INTAKE&urgency=LOW&q=FilterCase"
             )
             response_page2 = self.client.get(
-                reverse("careon:case_list") + "?status=INTAKE&urgency=LOW&q=FilterCase&page=2"
+                reverse("carelane:case_list") + "?status=INTAKE&urgency=LOW&q=FilterCase&page=2"
             )
 
         self.assertEqual(response_page1.status_code, 200)

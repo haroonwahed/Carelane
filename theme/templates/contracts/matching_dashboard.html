@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Matching – Careon{% endblock %}
+{% block title %}Matching – Carelane{% endblock %}
 
 {% block content %}
 <style>
@@ -147,8 +147,8 @@
     <p class="mrd-empty__body">Er staan nog geen casussen klaar voor gemeentelijke validatie.</p>
     <p class="casus-impact-summary">Rond eerst de samenvatting af of open een casus die al in de juiste workflowstap staat.</p>
     <div class="ds-list-actions">
-      <a href="{% url 'careon:case_list' %}" class="btn btn-primary">Terug naar casussen</a>
-      <a href="{% url 'careon:assessment_list' %}" class="btn btn-secondary">Open samenvatting</a>
+      <a href="{% url 'carelane:case_list' %}" class="btn btn-primary">Terug naar casussen</a>
+      <a href="{% url 'carelane:assessment_list' %}" class="btn btn-secondary">Open samenvatting</a>
     </div>
   </div>
   {% else %}
@@ -162,10 +162,10 @@
     <div class="mrd-page-header__controls">
       <span class="ds-note-text">{{ total_ready }} casussen wachten op matching</span>
       {% if selected_intake %}
-      <a href="{% url 'careon:matching_dashboard' %}?intake={{ selected_intake.pk }}" class="btn btn-ghost btn-sm">Ververs</a>
-      <a href="{% url 'careon:matching_dashboard' %}" class="btn btn-ghost btn-sm">Filter wissen</a>
+      <a href="{% url 'carelane:matching_dashboard' %}?intake={{ selected_intake.pk }}" class="btn btn-ghost btn-sm">Ververs</a>
+      <a href="{% url 'carelane:matching_dashboard' %}" class="btn btn-ghost btn-sm">Filter wissen</a>
       {% else %}
-      <a href="{% url 'careon:matching_dashboard' %}" class="btn btn-ghost btn-sm">Ververs matching</a>
+      <a href="{% url 'carelane:matching_dashboard' %}" class="btn btn-ghost btn-sm">Ververs matching</a>
       {% endif %}
     </div>
   </header>
@@ -187,7 +187,7 @@
         <p class="mrd-action-row__reason">{% firstof row.failure_reason row.recommended_action.reason "Kies de volgende actie voor deze casus." %}</p>
         <div class="mrd-action-row__actions">
           <a href="{{ row.recommended_action.url }}" class="btn btn-primary btn-sm">{% firstof row.recommended_action.label "Bekijk match" %}</a>
-          <a href="{% url 'careon:case_detail' row.intake.pk %}?tab=matching" class="btn btn-ghost btn-sm">Open casus</a>
+          <a href="{% url 'carelane:case_detail' row.intake.pk %}?tab=matching" class="btn btn-ghost btn-sm">Open casus</a>
         </div>
       </article>
       {% endfor %}
@@ -235,7 +235,7 @@
     <div class="mrd-filter-bar__actions">
       <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
       {% if has_provider_filters %}
-      <a href="{% url 'careon:matching_dashboard' %}?intake={% if selected_intake %}{{ selected_intake.pk }}{% else %}{{ focus_row.intake.pk }}{% endif %}" class="btn btn-ghost btn-sm">Filters wissen</a>
+      <a href="{% url 'carelane:matching_dashboard' %}?intake={% if selected_intake %}{{ selected_intake.pk }}{% else %}{{ focus_row.intake.pk }}{% endif %}" class="btn btn-ghost btn-sm">Filters wissen</a>
       {% endif %}
     </div>
   </form>
@@ -311,7 +311,7 @@
             <p class="mrd-card-action-block__label">Volgende stap</p>
             <p class="mrd-card-action-block__title">{% firstof focus_row.recommended_action.label|truncatechars:42 "Bekijk match" %}</p>
             {% if focus_row.can_assign %}
-            <a href="{% url 'careon:case_detail' focus_row.intake.pk %}?tab=matching"
+            <a href="{% url 'carelane:case_detail' focus_row.intake.pk %}?tab=matching"
                class="btn btn-primary">
               Bekijk match
             </a>
@@ -320,8 +320,8 @@
             {% endif %}
             <div class="mrd-card-links">
               {% if suggestion.provider_id %}
-              <a href="{% url 'careon:client_detail' suggestion.provider_id %}" class="mrd-inline-link">Bekijk profiel</a>
-              <a href="{% url 'careon:client_update' suggestion.provider_id %}" class="mrd-inline-link">Bewerk profiel</a>
+              <a href="{% url 'carelane:client_detail' suggestion.provider_id %}" class="mrd-inline-link">Bekijk profiel</a>
+              <a href="{% url 'carelane:client_update' suggestion.provider_id %}" class="mrd-inline-link">Bewerk profiel</a>
               {% endif %}
             </div>
           </div>
@@ -360,8 +360,8 @@
           <div class="mrd-field-row"><dt>Capaciteit</dt><dd>{% if focus_row.suggestions and focus_row.suggestions.0.free_slots != None %}{{ focus_row.suggestions.0.free_slots }} vrije plekken{% else %}Onbekend{% endif %}</dd></div>
         </dl>
         <div class="mrd-side-rail__actions">
-        <a href="{% url 'careon:assessment_detail' focus_row.assessment.pk %}" class="btn btn-ghost btn-sm">Valideer matching</a>
-        <a href="{% url 'careon:case_detail' focus_row.intake.pk %}" class="btn btn-ghost btn-sm">Open casus</a>
+        <a href="{% url 'carelane:assessment_detail' focus_row.assessment.pk %}" class="btn btn-ghost btn-sm">Valideer matching</a>
+        <a href="{% url 'carelane:case_detail' focus_row.intake.pk %}" class="btn btn-ghost btn-sm">Open casus</a>
         </div>
       </section>
 
@@ -381,8 +381,8 @@
         </details>
         {% if focus_row.suggestions.0.provider_id %}
         <div class="mrd-side-rail__actions">
-          <a href="{% url 'careon:client_detail' focus_row.suggestions.0.provider_id %}" class="btn btn-ghost btn-sm">Bekijk profiel</a>
-          <a href="{% url 'careon:client_update' focus_row.suggestions.0.provider_id %}" class="btn btn-ghost btn-sm">Bewerk profiel</a>
+          <a href="{% url 'carelane:client_detail' focus_row.suggestions.0.provider_id %}" class="btn btn-ghost btn-sm">Bekijk profiel</a>
+          <a href="{% url 'carelane:client_update' focus_row.suggestions.0.provider_id %}" class="btn btn-ghost btn-sm">Bewerk profiel</a>
         </div>
         {% endif %}
       </section>
@@ -462,7 +462,7 @@
         <h3 class="mrd-panel-card__title">Andere casussen</h3>
         <div class="mrd-other-cases__list">
           {% for row in rows|slice:"1:6" %}
-          <a href="{% url 'careon:matching_dashboard' %}?intake={{ row.intake.pk }}" class="mrd-other-case-item">
+          <a href="{% url 'carelane:matching_dashboard' %}?intake={{ row.intake.pk }}" class="mrd-other-case-item">
             <span class="mrd-other-case-item__name">{{ row.intake.title|truncatechars:42 }}</span>
             <span class="mrd-other-case-item__meta">{{ row.suggestions|length }} kandidaten</span>
           </a>

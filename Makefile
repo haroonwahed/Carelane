@@ -1,4 +1,4 @@
-# CareOn development tasks
+# Carelane development tasks
 # Usage: make dev | make test | make build | make migrate
 
 VENV := .venv

@@ -1,4 +1,4 @@
-# CareOn / Zorg OS — v1 execution scope
+# Carelane / Zorg OS — v1 execution scope
 
 **Effective:** 2026-05-14  
 **Status:** Active for the current sprint wave (see `docs/PRODUCT_ENGINEERING_BACKLOG_PRIORITIZED.md`).
@@ -68,5 +68,5 @@ If the next release is **gemeente pilot / rehearsal only** with **no** provider 
 | `docs/PRODUCT_ENGINEERING_BACKLOG_PRIORITIZED.md` | Top-15 execution order |
 | `docs/PILOT_PROOF_PACKAGE.md` | GO/NO-GO rehearsal |
 | `docs/FOUNDATION_LOCK.md` | WorkflowState / phase keys |
-| `docs/Careon_Operational_Constitution_v2.md` | Doctrine and UX law |
+| `docs/Carelane_Operational_Constitution_v2.md` | Doctrine and UX law |
 | `AGENTS.md` | Agent and contributor rules |

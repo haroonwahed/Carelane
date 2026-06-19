@@ -221,7 +221,7 @@ Owner:
 
 Files:
 - `docs/START_HERE.md`
-- `docs/Careon_Operational_Constitution_v2.md`
+- `docs/Carelane_Operational_Constitution_v2.md`
 - `docs/ACTOR_PROFILES_ROADMAP.md`
 - `docs/FRONTEND_UI_MODE_AUDIT.md`
 - `docs/MATCHING_EXPLAINABILITY.md`

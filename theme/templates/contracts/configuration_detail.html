@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ configuration.configuration_id }} - Careon{% endblock %}
+{% block title %}{{ configuration.configuration_id }} - Carelane{% endblock %}
 {% block content %}
 <div class="page-wrap ds-detail-shell">
 
@@ -8,7 +8,7 @@
         <h1 class="ds-page-title page-title">{{ configuration.title }}</h1>
         <span class="page-subtitle">{{ configuration.configuration_id }} &middot; {{ configuration.care_domains_display }} &middot; {{ configuration.client.name }}</span>
     </div>
-    <a href="{% url 'careon:configuration_update' configuration.pk %}" class="btn btn-secondary">Wijzigen</a>
+    <a href="{% url 'carelane:configuration_update' configuration.pk %}" class="btn btn-secondary">Wijzigen</a>
 </div>
 
 <div class="ds-detail-grid-2 xl:grid-cols-3">

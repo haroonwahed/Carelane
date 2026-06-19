@@ -7,12 +7,12 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const AGENTS = join(ROOT, "..", "AGENTS.md");
 
 describe("AGENTS UI rules", () => {
-  it("keeps the CareOn UI rules section in the root AGENTS file", () => {
+  it("keeps the Carelane UI rules section in the root AGENTS file", () => {
     const agents = readFileSync(AGENTS, "utf8");
 
-    expect(agents).toContain("## CareOn UI Rules for Codex");
-    expect(agents).toContain("docs/design/CAREON_UI_CONTRACT.md");
-    expect(agents).toContain("docs/design/CAREON_PAGE_PATTERNS.md");
+    expect(agents).toContain("## Carelane UI Rules for Codex");
+    expect(agents).toContain("docs/design/CARELANE_UI_CONTRACT.md");
+    expect(agents).toContain("docs/design/CARELANE_PAGE_PATTERNS.md");
     expect(agents).toContain("CarePageScaffold");
     expect(agents).toContain("CareTopBar");
     expect(agents).toContain("CareSidebar");

@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { cn } from "../ui/utils";
 
 /**
- * Advanced filter drawer for CareOn work queues.
+ * Advanced filter drawer for Carelane work queues.
  *
  * Supports saved views, include/exclude filter values, and active filter chips.
  * All filter application is handled by the parent via `onApply` — this component

@@ -1,5 +1,5 @@
 """
-Classification Engine — CareOn
+Classification Engine — Carelane
 Berekent een adviserend voorstel voor complexiteit en zorgintensiteit op basis van feitelijke casusgegevens.
 Het voorstel is altijd adviserend; een bevoegde professional bevestigt of wijzigt het.
 Regels zijn transparant en per criterium zichtbaar in de onderbouwing.

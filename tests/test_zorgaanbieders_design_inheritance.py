@@ -224,7 +224,7 @@ class ZorgaanbiedersDesignInheritanceTests(TestCase):
         client = DjangoTestClient()
         client.login(username='testuser', password='testpass')
 
-        response = client.get(reverse('careon:client_list'))
+        response = client.get(reverse('carelane:client_list'))
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('provider_rows', response.context)
@@ -252,7 +252,7 @@ class ZorgaanbiedersDesignInheritanceTests(TestCase):
         client.login(username='testuser', password='testpass')
 
         # Test with basic request
-        response = client.get(reverse('careon:client_list'))
+        response = client.get(reverse('carelane:client_list'))
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('provider_rows', response.context)

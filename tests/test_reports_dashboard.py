@@ -32,15 +32,15 @@ class ReportsDashboardTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<div id="root"></div>', html=True)
         self.assertContains(response, '/static/spa/assets/index-')
-        self.assertNotContains(response, 'Careon Zorgregie')
+        self.assertNotContains(response, 'Carelane Zorgregie')
         self.assertNotContains(response, 'Regiekamer')
 
     def test_reports_dashboard_loads(self):
-        response = self.client.get(reverse('careon:reports_dashboard'))
+        response = self.client.get(reverse('carelane:reports_dashboard'))
         self._assert_spa_shell(response)
 
     def test_reports_dashboard_kpi_cards_are_clickable(self):
-        response = self.client.get(reverse('careon:reports_dashboard'))
+        response = self.client.get(reverse('carelane:reports_dashboard'))
         self._assert_spa_shell(response)
 
     def test_reports_dashboard_shows_attention_items(self):
@@ -52,19 +52,19 @@ class ReportsDashboardTestCase(TestCase):
             target_completion_date=date.today(),
         )
 
-        response = self.client.get(reverse('careon:reports_dashboard'))
+        response = self.client.get(reverse('carelane:reports_dashboard'))
         self._assert_spa_shell(response)
 
     def test_reports_dashboard_flow_analysis(self):
-        response = self.client.get(reverse('careon:reports_dashboard'))
+        response = self.client.get(reverse('carelane:reports_dashboard'))
         self._assert_spa_shell(response)
 
     def test_reports_dashboard_filter_by_attention_type(self):
-        response = self.client.get(reverse('careon:reports_dashboard'), {'attention': 'stagnation'})
+        response = self.client.get(reverse('carelane:reports_dashboard'), {'attention': 'stagnation'})
         self._assert_spa_shell(response)
 
     def test_reports_dashboard_no_generic_theater(self):
-        response = self.client.get(reverse('careon:reports_dashboard'))
+        response = self.client.get(reverse('carelane:reports_dashboard'))
         self._assert_spa_shell(response)
 
     def test_reports_dashboard_has_actionable_recommendations(self):
@@ -81,7 +81,7 @@ class ReportsDashboardTestCase(TestCase):
             target_completion_date=date.today(),
         )
 
-        response = self.client.get(reverse('careon:reports_dashboard'))
+        response = self.client.get(reverse('carelane:reports_dashboard'))
         self._assert_spa_shell(response)
 
     def test_reports_dashboard_can_filter_on_region_type_and_region(self):
@@ -103,7 +103,7 @@ class ReportsDashboardTestCase(TestCase):
         )
 
         response = self.client.get(
-            reverse('careon:reports_dashboard'),
+            reverse('carelane:reports_dashboard'),
             {'region_type': 'GGD', 'region': str(region.pk)},
         )
 

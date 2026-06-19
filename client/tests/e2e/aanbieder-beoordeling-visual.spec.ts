@@ -20,7 +20,7 @@ test.describe.configure({ mode: "serial", timeout: 90_000 });
 test.describe("Aanbieder beoordeling visual (SPA)", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      window.localStorage.setItem("careon-theme", "dark");
+      window.localStorage.setItem("carelane-theme", "dark");
     });
     await installCareApiStubs(page);
   });

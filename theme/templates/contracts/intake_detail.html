@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ intake.title }} - Careon{% endblock %}
+{% block title %}{{ intake.title }} - Carelane{% endblock %}
 {% block content %}
 
 <div class="page-wrap ds-detail-shell" data-shell="case-workspace">
@@ -7,7 +7,7 @@
         <nav class="ds-breadcrumb">
             <a href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/" class="ds-breadcrumb-link">Regiekamer</a>
             <span class="mx-1">/</span>
-            <a href="{% url 'careon:case_list' %}" class="ds-breadcrumb-link">Casussen</a>
+            <a href="{% url 'carelane:case_list' %}" class="ds-breadcrumb-link">Casussen</a>
             <span class="mx-1">/</span>
     <span class="ds-breadcrumb-current">{{ anonymized_title }}</span>
         </nav>
@@ -60,14 +60,14 @@
                 <p class="text-xs font-semibold ds-text-secondary">Eigenaar: {{ intake.case_coordinator.get_full_name|default:"Niet toegewezen" }}</p>
                 <a href="{{ next_action.href }}" class="btn btn-secondary">{{ next_action.label }}</a>
                 {% if can_edit_case %}
-                <a href="{% url 'careon:case_update' intake.pk %}" class="btn btn-ghost">Bewerken</a>
+                <a href="{% url 'carelane:case_update' intake.pk %}" class="btn btn-ghost">Bewerken</a>
                 <div class="flex flex-wrap items-center justify-end gap-2">
-                    <a href="{% url 'careon:case_task_create' intake.pk %}" class="btn btn-ghost">Toewijzen</a>
-                    <a href="{% url 'careon:case_signal_create' intake.pk %}" class="btn btn-ghost">Escaleren</a>
+                    <a href="{% url 'carelane:case_task_create' intake.pk %}" class="btn btn-ghost">Toewijzen</a>
+                    <a href="{% url 'carelane:case_signal_create' intake.pk %}" class="btn btn-ghost">Escaleren</a>
                 </div>
                 {% endif %}
                 {% if can_archive_case %}
-                <form method="post" action="{% url 'careon:case_archive_action' intake.pk %}" onsubmit="return confirm('Casus archiveren?');">
+                <form method="post" action="{% url 'carelane:case_archive_action' intake.pk %}" onsubmit="return confirm('Casus archiveren?');">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-ghost">Casus archiveren</button>
                 </form>
@@ -135,7 +135,7 @@
                         <input type="hidden" name="action" value="assign">
                         <input type="hidden" name="provider_id" value="{{ top_candidate.provider_id }}">
                         <input type="hidden" name="phase" value="{{ active_flow_stage }}">
-                        <input type="hidden" name="next" value="{% url 'careon:case_detail' intake.pk %}?tab=matching&amp;phase={{ active_flow_stage }}">
+                        <input type="hidden" name="next" value="{% url 'carelane:case_detail' intake.pk %}?tab=matching&amp;phase={{ active_flow_stage }}">
                         <button type="submit" class="btn btn-primary">Naar aanbieder</button>
                     </form>
                     {% else %}
@@ -219,7 +219,7 @@
                     <form method="post" action="{{ provider_response_action_href }}" class="flex items-center justify-between gap-2">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="{{ action.action }}">
-                        <input type="hidden" name="next" value="{% url 'careon:case_detail' intake.pk %}?tab=plaatsing&amp;phase={{ active_flow_stage }}">
+                        <input type="hidden" name="next" value="{% url 'carelane:case_detail' intake.pk %}?tab=plaatsing&amp;phase={{ active_flow_stage }}">
                         <div class="text-xs ds-text-secondary">{{ action.label|truncatechars:28 }}</div>
                         <button type="submit" class="btn btn-secondary">Uitvoeren</button>
                     </form>
@@ -383,7 +383,7 @@
                 {% if documents %}
                 <div class="ds-list-container">
                     {% for row in case_document_rows %}
-                    <a href="{% url 'careon:document_detail' row.document.pk %}" class="ds-list-row ds-list-row--compact">
+                    <a href="{% url 'carelane:document_detail' row.document.pk %}" class="ds-list-row ds-list-row--compact">
                         <div>
                             <div class="ds-row-title">{{ row.document.title }}</div>
                             <div class="ds-row-meta">{{ row.document.get_status_display }} · {{ row.document.created_at|date:"d-m-Y" }}</div>
@@ -408,7 +408,7 @@
                     <div class="flex flex-wrap items-center gap-2">
                         <a href="{{ overview_links.tasks }}" class="btn btn-ghost">Takenoverzicht</a>
                         {% if can_create_case_task %}
-                        <a href="{% url 'careon:case_task_create' intake.pk %}" class="btn btn-secondary">+ Taak toevoegen</a>
+                        <a href="{% url 'carelane:case_task_create' intake.pk %}" class="btn btn-secondary">+ Taak toevoegen</a>
                         {% endif %}
                     </div>
                 </div>
@@ -423,10 +423,10 @@
                         </div>
                         {% if can_edit_case %}
                         <div class="flex items-center gap-2">
-                            <a href="{% url 'careon:task_update' task.pk %}" class="btn btn-ghost">Openen</a>
-                            <form method="post" action="{% url 'careon:deadline_complete' task.pk %}">
+                            <a href="{% url 'carelane:task_update' task.pk %}" class="btn btn-ghost">Openen</a>
+                            <form method="post" action="{% url 'carelane:deadline_complete' task.pk %}">
                                 {% csrf_token %}
-                                <input type="hidden" name="next" value="{% url 'careon:case_detail' intake.pk %}?tab=taken&amp;phase={{ active_flow_stage }}">
+                                <input type="hidden" name="next" value="{% url 'carelane:case_detail' intake.pk %}?tab=taken&amp;phase={{ active_flow_stage }}">
                                 <button type="submit" class="btn btn-secondary">Afronden</button>
                             </form>
                         </div>
@@ -443,7 +443,7 @@
                     <div class="flex flex-wrap items-center gap-2">
                         <a href="{{ overview_links.signals }}" class="btn btn-ghost">Signalenoverzicht</a>
                         {% if can_create_case_signal %}
-                        <a href="{% url 'careon:case_signal_create' intake.pk %}" class="btn btn-secondary">+ Signaal toevoegen</a>
+                        <a href="{% url 'carelane:case_signal_create' intake.pk %}" class="btn btn-secondary">+ Signaal toevoegen</a>
                         {% endif %}
                     </div>
                 </div>
@@ -457,24 +457,24 @@
                             <div class="ds-row-meta">{{ signal.get_status_display }} · {{ signal.get_risk_level_display }}</div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <a href="{% url 'careon:signal_detail' signal.pk %}" class="btn btn-ghost">Detail</a>
+                            <a href="{% url 'carelane:signal_detail' signal.pk %}" class="btn btn-ghost">Detail</a>
                             {% if can_edit_case %}
                             {% if signal.status == 'OPEN' %}
-                            <form method="post" action="{% url 'careon:signal_status_update' signal.pk %}">
+                            <form method="post" action="{% url 'carelane:signal_status_update' signal.pk %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="status" value="IN_PROGRESS">
-                                <input type="hidden" name="next" value="{% url 'careon:case_detail' intake.pk %}?tab=signalen&amp;phase={{ active_flow_stage }}">
+                                <input type="hidden" name="next" value="{% url 'carelane:case_detail' intake.pk %}?tab=signalen&amp;phase={{ active_flow_stage }}">
                                 <button type="submit" class="btn btn-secondary">Start opvolging</button>
                             </form>
                             {% else %}
-                            <form method="post" action="{% url 'careon:signal_status_update' signal.pk %}">
+                            <form method="post" action="{% url 'carelane:signal_status_update' signal.pk %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="status" value="RESOLVED">
-                                <input type="hidden" name="next" value="{% url 'careon:case_detail' intake.pk %}?tab=signalen&amp;phase={{ active_flow_stage }}">
+                                <input type="hidden" name="next" value="{% url 'carelane:case_detail' intake.pk %}?tab=signalen&amp;phase={{ active_flow_stage }}">
                                 <button type="submit" class="btn btn-secondary">Afronden</button>
                             </form>
                             {% endif %}
-                            <a href="{% url 'careon:signal_update' signal.pk %}" class="btn btn-secondary">Bewerken</a>
+                            <a href="{% url 'carelane:signal_update' signal.pk %}" class="btn btn-secondary">Bewerken</a>
                             {% endif %}
                         </div>
                     </div>
@@ -495,7 +495,7 @@
                     <strong>{{ latest_assignment.selected_provider.name }}</strong>
                     <p class="text-xs ds-text-secondary">Status: {{ latest_assignment.get_status_display }} · Bijgewerkt: {{ latest_assignment.updated_at|date:"d-m-Y H:i" }}</p>
                     {% if latest_assignment.pk %}
-                    <a href="{% url 'careon:placement_detail' latest_assignment.pk %}" class="btn btn-ghost inline-cta-top">Open plaatsing</a>
+                    <a href="{% url 'carelane:placement_detail' latest_assignment.pk %}" class="btn btn-ghost inline-cta-top">Open plaatsing</a>
                     {% endif %}
                 </div>
                 {% else %}
@@ -532,11 +532,11 @@
                                 <input type="hidden" name="action" value="assign">
                                 <input type="hidden" name="provider_id" value="{{ candidate.provider_id }}">
                                 <input type="hidden" name="phase" value="{{ active_flow_stage }}">
-                                <input type="hidden" name="next" value="{% url 'careon:case_detail' intake.pk %}?tab=matching&amp;phase={{ active_flow_stage }}">
+                                <input type="hidden" name="next" value="{% url 'carelane:case_detail' intake.pk %}?tab=matching&amp;phase={{ active_flow_stage }}">
                                 <button type="submit" class="btn btn-secondary">Selecteer</button>
                             </form>
                             {% endif %}
-                            <a href="{% url 'careon:client_detail' candidate.provider_id %}" class="btn btn-ghost">Profiel</a>
+                            <a href="{% url 'carelane:client_detail' candidate.provider_id %}" class="btn btn-ghost">Profiel</a>
                         </div>
                     </div>
                     {% endfor %}
@@ -639,7 +639,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="status" value="{{ action.status }}">
                             <input type="hidden" name="note" value="{{ action.note }}">
-                            <input type="hidden" name="next" value="{% url 'careon:case_detail' intake.pk %}?tab=plaatsing&amp;phase={{ active_flow_stage }}">
+                            <input type="hidden" name="next" value="{% url 'carelane:case_detail' intake.pk %}?tab=plaatsing&amp;phase={{ active_flow_stage }}">
                             <button type="submit" class="btn btn-secondary">Toepassen</button>
                         </form>
                     </div>
@@ -714,7 +714,7 @@
                             <form method="post" action="{{ provider_response_action_href }}" {% if action.requires_confirmation %}onsubmit="return confirm('{{ action.confirm_text }}')"{% endif %}>
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="{{ action.action }}">
-                                <input type="hidden" name="next" value="{% url 'careon:case_detail' intake.pk %}?tab=plaatsing&amp;phase={{ active_flow_stage }}">
+                                <input type="hidden" name="next" value="{% url 'carelane:case_detail' intake.pk %}?tab=plaatsing&amp;phase={{ active_flow_stage }}">
                                 {% if action.requires_confirmation and action.confirm_field %}
                                 <input type="hidden" name="{{ action.confirm_field }}" value="{{ action.confirm_value|default:'1' }}">
                                 {% endif %}
@@ -768,7 +768,7 @@
                             <form method="post" action="{{ outcome_action_href }}" class="mt-2 space-y-2">
                                 {% csrf_token %}
                                 {{ section.form.outcome_type }}
-                                <input type="hidden" name="next" value="{% url 'careon:case_detail' intake.pk %}?tab=plaatsing&amp;phase={{ active_flow_stage }}">
+                                <input type="hidden" name="next" value="{% url 'carelane:case_detail' intake.pk %}?tab=plaatsing&amp;phase={{ active_flow_stage }}">
                                 <div class="grid gap-2 sm:grid-cols-2">
                                     <div>
                                         <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide ds-text-secondary">Status</label>
@@ -833,8 +833,8 @@
                 <a href="{{ next_action.href }}" class="btn btn-primary inline-cta-block">{{ next_action.label }}</a>
                 {% if can_edit_case %}
                 <div class="mt-2 grid grid-cols-1 gap-2">
-                    <a href="{% url 'careon:case_task_create' intake.pk %}" class="btn btn-secondary">+ Taak toevoegen</a>
-                    <a href="{% url 'careon:case_signal_create' intake.pk %}" class="btn btn-secondary">+ Signaal toevoegen</a>
+                    <a href="{% url 'carelane:case_task_create' intake.pk %}" class="btn btn-secondary">+ Taak toevoegen</a>
+                    <a href="{% url 'carelane:case_signal_create' intake.pk %}" class="btn btn-secondary">+ Signaal toevoegen</a>
                 </div>
                 {% endif %}
             </section>
@@ -895,7 +895,7 @@
                 {% if documents %}
                 <div class="ds-mini-docs">
                     {% for document in documents|slice:":2" %}
-                    <a href="{% url 'careon:document_detail' document.pk %}" class="ds-mini-doc-link">{{ document.title }}</a>
+                    <a href="{% url 'carelane:document_detail' document.pk %}" class="ds-mini-doc-link">{{ document.title }}</a>
                     {% endfor %}
                 </div>
                 {% else %}

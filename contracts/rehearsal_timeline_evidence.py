@@ -63,8 +63,8 @@ def collect_timeline_boundary_evidence(
     pw = _demo_password()
     assert client.login(username=_gemeente_username(), password=pw)
 
-    assign_url = reverse('careon:matching_action_api', kwargs={'case_id': case_pk})
-    timeline_url = reverse('careon:case_timeline_api', kwargs={'case_id': case_pk})
+    assign_url = reverse('carelane:matching_action_api', kwargs={'case_id': case_pk})
+    timeline_url = reverse('carelane:case_timeline_api', kwargs={'case_id': case_pk})
 
     post_resp = client.post(
         assign_url,

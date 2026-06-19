@@ -132,7 +132,7 @@ class WorkflowFoundationLockTests(TestCase):
         region.served_municipalities.add(municipality)
 
         self.client.login(username='provider_user', password='testpass123')
-        bootstrap_response = self.client.get(reverse('careon:intake_form_options_api'))
+        bootstrap_response = self.client.get(reverse('carelane:intake_form_options_api'))
         self.assertEqual(bootstrap_response.status_code, 200)
         payload = bootstrap_response.json()['initial_values']
         payload.update({
@@ -154,7 +154,7 @@ class WorkflowFoundationLockTests(TestCase):
         })
 
         response = self.client.post(
-            reverse('careon:intake_create_api'),
+            reverse('carelane:intake_create_api'),
             data=json.dumps(payload),
             content_type='application/json',
         )
@@ -182,7 +182,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='gemeente_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:provider_decision_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:provider_decision_api', kwargs={'case_id': intake.contract_id}),
             data='{"status":"ACCEPTED"}',
             content_type='application/json',
         )
@@ -194,7 +194,7 @@ class WorkflowFoundationLockTests(TestCase):
         self.client.login(username='provider_user', password='testpass123')
 
         response = self.client.post(
-            reverse('careon:provider_decision_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:provider_decision_api', kwargs={'case_id': intake.contract_id}),
             data='{"status":"ACCEPTED","provider_comment":"We willen starten"}',
             content_type='application/json',
         )
@@ -208,7 +208,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='gemeente_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:cases_bulk_update_api'),
+            reverse('carelane:cases_bulk_update_api'),
             data=f'{{"case_ids":[{intake.case_record.pk}],"updates":{{"case_phase":"provider_beoordeling"}}}}',
             content_type='application/json',
         )
@@ -231,7 +231,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='provider_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:intake_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:intake_action_api', kwargs={'case_id': intake.contract_id}),
             data='{}',
             content_type='application/json',
         )
@@ -244,7 +244,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='gemeente_user', password='testpass123')
         assign_response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=f'{{"action":"assign","provider_id":{self.provider.pk}}}',
             content_type='application/json',
         )
@@ -253,7 +253,7 @@ class WorkflowFoundationLockTests(TestCase):
         self.client.logout()
         self.client.login(username='provider_user', password='testpass123')
         provider_response = self.client.post(
-            reverse('careon:provider_decision_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:provider_decision_api', kwargs={'case_id': intake.contract_id}),
             data='{"status":"ACCEPTED","provider_comment":"Capaciteit beschikbaar"}',
             content_type='application/json',
         )
@@ -262,7 +262,7 @@ class WorkflowFoundationLockTests(TestCase):
         self.client.logout()
         self.client.login(username='gemeente_user', password='testpass123')
         placement_response = self.client.post(
-            reverse('careon:placement_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:placement_action_api', kwargs={'case_id': intake.contract_id}),
             data='{"status":"APPROVED","note":"Plaatsing bevestigd"}',
             content_type='application/json',
         )
@@ -271,7 +271,7 @@ class WorkflowFoundationLockTests(TestCase):
         self.client.logout()
         self.client.login(username='provider_user', password='testpass123')
         intake_response = self.client.post(
-            reverse('careon:intake_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:intake_action_api', kwargs={'case_id': intake.contract_id}),
             data='{}',
             content_type='application/json',
         )
@@ -301,7 +301,7 @@ class WorkflowFoundationLockTests(TestCase):
         intake = self._create_matching_ready_case()
         self.client.login(username='gemeente_user', password='testpass123')
         assign_response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=f'{{"action":"assign","provider_id":{self.provider.pk}}}',
             content_type='application/json',
         )
@@ -310,7 +310,7 @@ class WorkflowFoundationLockTests(TestCase):
         self.client.logout()
         self.client.login(username='provider_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:provider_decision_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:provider_decision_api', kwargs={'case_id': intake.contract_id}),
             data=(
                 '{"status":"REJECTED","rejection_reason_code":"geen_capaciteit",'
                 '"provider_comment":"Afwijzing test met voldoende tekens."}'
@@ -328,7 +328,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='gemeente_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=f'{{"action":"assign","provider_id":{self.provider.pk}}}',
             content_type='application/json',
         )
@@ -355,7 +355,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='admin_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:provider_decision_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:provider_decision_api', kwargs={'case_id': intake.contract_id}),
             data='{"status":"ACCEPTED"}',
             content_type='application/json',
         )
@@ -374,28 +374,28 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='gemeente_user', password='testpass123')
         self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=f'{{"action":"assign","provider_id":{self.provider.pk}}}',
             content_type='application/json',
         )
         self.client.logout()
         self.client.login(username='provider_user', password='testpass123')
         self.client.post(
-            reverse('careon:provider_decision_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:provider_decision_api', kwargs={'case_id': intake.contract_id}),
             data='{"status":"ACCEPTED"}',
             content_type='application/json',
         )
         self.client.logout()
         self.client.login(username='gemeente_user', password='testpass123')
         self.client.post(
-            reverse('careon:placement_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:placement_action_api', kwargs={'case_id': intake.contract_id}),
             data='{"status":"APPROVED","note":"OK"}',
             content_type='application/json',
         )
         self.client.logout()
         self.client.login(username='admin_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:intake_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:intake_action_api', kwargs={'case_id': intake.contract_id}),
             data='{}',
             content_type='application/json',
         )
@@ -405,7 +405,7 @@ class WorkflowFoundationLockTests(TestCase):
         intake = self._create_matching_ready_case()
         self.client.login(username='provider_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=f'{{"action":"assign","provider_id":{self.provider.pk}}}',
             content_type='application/json',
         )
@@ -415,7 +415,7 @@ class WorkflowFoundationLockTests(TestCase):
         intake = self._create_matching_ready_case()
         self.client.login(username='gemeente_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps(
                 {
                     'action': 'prepare_waitlist_proposal',
@@ -454,7 +454,7 @@ class WorkflowFoundationLockTests(TestCase):
         intake = self._create_matching_ready_case()
         self.client.login(username='provider_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps(
                 {
                     'action': 'prepare_waitlist_proposal',
@@ -472,7 +472,7 @@ class WorkflowFoundationLockTests(TestCase):
         intake = self._create_matching_ready_case()
         self.client.login(username='gemeente_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:case_matching_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_matching_action', kwargs={'pk': intake.pk}),
             {
                 'action': 'prepare_waitlist_proposal',
                 'provider_id': str(self.provider.pk),
@@ -481,7 +481,7 @@ class WorkflowFoundationLockTests(TestCase):
             follow=False,
         )
         self.assertEqual(response.status_code, 302)
-        self.assertIn(reverse('careon:case_detail', kwargs={'pk': intake.pk}), response.url)
+        self.assertIn(reverse('carelane:case_detail', kwargs={'pk': intake.pk}), response.url)
 
         intake.refresh_from_db()
         self.assertEqual(intake.workflow_state, WorkflowState.GEMEENTE_VALIDATED)
@@ -493,7 +493,7 @@ class WorkflowFoundationLockTests(TestCase):
         intake = self._create_matching_ready_case()
         self.client.logout()
         response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps(
                 {'action': 'prepare_waitlist_proposal', 'provider_id': self.provider.pk},
             ),
@@ -514,7 +514,7 @@ class WorkflowFoundationLockTests(TestCase):
         UserProfile.objects.update_or_create(user=outsider, defaults={'role': UserProfile.Role.ASSOCIATE})
         self.client.login(username='foreign_gemeente_wf', password='testpass123')
         response = self.client.post(
-            reverse('careon:matching_action_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:matching_action_api', kwargs={'case_id': intake.contract_id}),
             data=json.dumps(
                 {'action': 'prepare_waitlist_proposal', 'provider_id': self.provider.pk},
             ),
@@ -535,7 +535,7 @@ class WorkflowFoundationLockTests(TestCase):
         UserProfile.objects.update_or_create(user=outsider, defaults={'role': UserProfile.Role.ASSOCIATE})
         self.client.login(username='foreign_html_wf', password='testpass123')
         response = self.client.post(
-            reverse('careon:case_matching_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_matching_action', kwargs={'pk': intake.pk}),
             {
                 'action': 'prepare_waitlist_proposal',
                 'provider_id': str(self.provider.pk),
@@ -578,7 +578,7 @@ class WorkflowFoundationLockTests(TestCase):
         )
         self.client.login(username='provider_user', password='testpass123')
         response = self.client.get(
-            reverse('careon:case_placement_detail_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:case_placement_detail_api', kwargs={'case_id': intake.contract_id}),
         )
         self.assertEqual(response.status_code, 404)
         self.assertIn('niet gevonden', (response.json().get('error') or '').lower())
@@ -595,7 +595,7 @@ class WorkflowFoundationLockTests(TestCase):
         )
         self.client.login(username='provider_user', password='testpass123')
         response = self.client.get(
-            reverse('careon:case_placement_detail_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:case_placement_detail_api', kwargs={'case_id': intake.contract_id}),
         )
         self.assertEqual(response.status_code, 200, response.content.decode())
         body = response.json()
@@ -621,7 +621,7 @@ class WorkflowFoundationLockTests(TestCase):
         )
         self.client.login(username='provider_user', password='testpass123')
         response = self.client.get(
-            reverse('careon:case_decision_evaluation_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:case_decision_evaluation_api', kwargs={'case_id': intake.contract_id}),
         )
         self.assertEqual(response.status_code, 404)
         self.assertIn('niet gevonden', (response.json().get('error') or '').lower())
@@ -644,7 +644,7 @@ class WorkflowFoundationLockTests(TestCase):
         )
         self.client.login(username='provider_user', password='testpass123')
         response = self.client.get(
-            reverse('careon:case_arrangement_alignment_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:case_arrangement_alignment_api', kwargs={'case_id': intake.contract_id}),
         )
         self.assertEqual(response.status_code, 404)
         self.assertIn('niet gevonden', (response.json().get('error') or '').lower())
@@ -667,7 +667,7 @@ class WorkflowFoundationLockTests(TestCase):
         )
         self.client.login(username='gemeente_user', password='testpass123')
         response = self.client.get(
-            reverse('careon:case_decision_evaluation_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:case_decision_evaluation_api', kwargs={'case_id': intake.contract_id}),
         )
         self.assertEqual(response.status_code, 200, response.content.decode())
         self.assertEqual(response.json().get('case_id'), intake.case_record.pk)
@@ -709,7 +709,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='other_provider_user', password='testpass123')
         response = self.client.post(
-            reverse('careon:provider_decision_api', kwargs={'case_id': intake.contract_id}),
+            reverse('carelane:provider_decision_api', kwargs={'case_id': intake.contract_id}),
             data='{"status":"ACCEPTED"}',
             content_type='application/json',
         )
@@ -723,7 +723,7 @@ class WorkflowFoundationLockTests(TestCase):
         self.client.login(username='gemeente_user', password='testpass123')
 
         response = self.client.post(
-            reverse('careon:cases_bulk_update_api'),
+            reverse('carelane:cases_bulk_update_api'),
             data=json.dumps({
                 'case_ids': [intake.contract_id],
                 'updates': {'workflow_state': 'HACKED', 'status': 'APPROVED'},
@@ -742,7 +742,7 @@ class WorkflowFoundationLockTests(TestCase):
         self.client.login(username='gemeente_user', password='testpass123')
 
         response = self.client.post(
-            reverse('careon:cases_bulk_update_api'),
+            reverse('carelane:cases_bulk_update_api'),
             data=json.dumps({
                 'case_ids': [intake.contract_id],
                 'updates': {'risk_level': 'HIGH'},
@@ -775,7 +775,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='gemeente_user', password='testpass123')
         response = self.client.get(
-            reverse('careon:serve_case_document_scoped_api', kwargs={'case_id': other_case.pk, 'document_id': doc.pk}),
+            reverse('carelane:serve_case_document_scoped_api', kwargs={'case_id': other_case.pk, 'document_id': doc.pk}),
         )
         self.assertEqual(response.status_code, 404)
 
@@ -800,7 +800,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='outsider_p0', password='testpass123')
         response = self.client.get(
-            reverse('careon:serve_case_document_scoped_api', kwargs={'case_id': intake.contract_id, 'document_id': doc.pk}),
+            reverse('carelane:serve_case_document_scoped_api', kwargs={'case_id': intake.contract_id, 'document_id': doc.pk}),
         )
         self.assertEqual(response.status_code, 404)
 
@@ -831,7 +831,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='unlinked_provider_p0', password='testpass123')
         response = self.client.get(
-            reverse('careon:serve_case_document_scoped_api', kwargs={'case_id': intake.contract_id, 'document_id': doc.pk}),
+            reverse('carelane:serve_case_document_scoped_api', kwargs={'case_id': intake.contract_id, 'document_id': doc.pk}),
         )
         self.assertEqual(response.status_code, 404)
 
@@ -844,7 +844,7 @@ class WorkflowFoundationLockTests(TestCase):
             title='Auth guard doc',
         )
         response = self.client.get(
-            reverse('careon:serve_case_document_scoped_api', kwargs={'case_id': intake.contract_id, 'document_id': doc.pk}),
+            reverse('carelane:serve_case_document_scoped_api', kwargs={'case_id': intake.contract_id, 'document_id': doc.pk}),
         )
         self.assertIn(response.status_code, [302, 401])
 
@@ -853,34 +853,34 @@ class WorkflowFoundationLockTests(TestCase):
     # ------------------------------------------------------------------
 
     def test_spa_only_blocks_legacy_case_communication_action(self):
-        """When CAREON_PILOT_SPA_ONLY=True, case_communication_action must redirect to /care/casussen."""
+        """When CARELANE_PILOT_SPA_ONLY=True, case_communication_action must redirect to /care/casussen."""
         intake = self._create_matching_ready_case()
         self.client.login(username='gemeente_user', password='testpass123')
-        with self.settings(CAREON_PILOT_SPA_ONLY=True):
+        with self.settings(CARELANE_PILOT_SPA_ONLY=True):
             response = self.client.post(
-                reverse('careon:case_communication_action', kwargs={'pk': intake.pk}),
+                reverse('carelane:case_communication_action', kwargs={'pk': intake.pk}),
                 data={'action': 'add_message', 'content': 'test'},
             )
         self.assertRedirects(response, '/care/casussen', fetch_redirect_response=False)
 
     def test_spa_only_blocks_legacy_case_placement_action(self):
-        """When CAREON_PILOT_SPA_ONLY=True, case_placement_action must redirect to /care/casussen."""
+        """When CARELANE_PILOT_SPA_ONLY=True, case_placement_action must redirect to /care/casussen."""
         intake = self._create_matching_ready_case()
         self.client.login(username='gemeente_user', password='testpass123')
-        with self.settings(CAREON_PILOT_SPA_ONLY=True):
+        with self.settings(CARELANE_PILOT_SPA_ONLY=True):
             response = self.client.post(
-                reverse('careon:case_placement_action', kwargs={'pk': intake.pk}),
+                reverse('carelane:case_placement_action', kwargs={'pk': intake.pk}),
                 data={'action': 'confirm'},
             )
         self.assertRedirects(response, '/care/casussen', fetch_redirect_response=False)
 
     def test_spa_only_blocks_legacy_case_archive_action(self):
-        """When CAREON_PILOT_SPA_ONLY=True, case_archive_action must redirect to /care/casussen."""
+        """When CARELANE_PILOT_SPA_ONLY=True, case_archive_action must redirect to /care/casussen."""
         intake = self._create_matching_ready_case()
         self.client.login(username='gemeente_user', password='testpass123')
-        with self.settings(CAREON_PILOT_SPA_ONLY=True):
+        with self.settings(CARELANE_PILOT_SPA_ONLY=True):
             response = self.client.post(
-                reverse('careon:case_archive_action', kwargs={'pk': intake.pk}),
+                reverse('carelane:case_archive_action', kwargs={'pk': intake.pk}),
                 data={'reason': 'test'},
             )
         self.assertRedirects(response, '/care/casussen', fetch_redirect_response=False)
@@ -890,7 +890,7 @@ class WorkflowFoundationLockTests(TestCase):
     # ------------------------------------------------------------------
 
     def test_intake_create_api_rejects_oversized_file(self):
-        """File exceeding CAREON_MAX_DOCUMENT_UPLOAD_MB must return 413."""
+        """File exceeding CARELANE_MAX_DOCUMENT_UPLOAD_MB must return 413."""
         from io import BytesIO
         from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -901,9 +901,9 @@ class WorkflowFoundationLockTests(TestCase):
         # Patch the size attribute so validation sees it as too large
         oversize_file.size = 1  # 1 byte, but max will be set to 0 MB (0 bytes) via override
 
-        with self.settings(CAREON_MAX_DOCUMENT_UPLOAD_MB=0):
+        with self.settings(CARELANE_MAX_DOCUMENT_UPLOAD_MB=0):
             response = self.client.post(
-                reverse('careon:intake_create_api'),
+                reverse('carelane:intake_create_api'),
                 data={'title': 'Test', 'document': oversize_file},
                 format='multipart',
             )
@@ -912,7 +912,7 @@ class WorkflowFoundationLockTests(TestCase):
         self.assertIn('te groot', body.get('error', ''))
 
     def test_intake_create_api_accepts_file_within_limit(self):
-        """Small file within CAREON_MAX_DOCUMENT_UPLOAD_MB must not trigger size rejection."""
+        """Small file within CARELANE_MAX_DOCUMENT_UPLOAD_MB must not trigger size rejection."""
         from django.core.files.uploadedfile import SimpleUploadedFile
         from contracts.models import MunicipalityConfiguration, RegionalConfiguration, RegionType
 
@@ -933,7 +933,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='gemeente_user', password='testpass123')
         small_file = SimpleUploadedFile('small.pdf', b'hello', content_type='application/pdf')
-        bootstrap = self.client.get(reverse('careon:intake_form_options_api'))
+        bootstrap = self.client.get(reverse('carelane:intake_form_options_api'))
         payload = bootstrap.json().get('initial_values', {})
         payload.update({
             'title': 'Upload test',
@@ -944,9 +944,9 @@ class WorkflowFoundationLockTests(TestCase):
             'service_region': str(region.pk),
             'document': small_file,
         })
-        with self.settings(CAREON_MAX_DOCUMENT_UPLOAD_MB=20):
+        with self.settings(CARELANE_MAX_DOCUMENT_UPLOAD_MB=20):
             response = self.client.post(
-                reverse('careon:intake_create_api'),
+                reverse('carelane:intake_create_api'),
                 data=payload,
             )
         # Size check passed — may succeed or fail for other form reasons, but not 413
@@ -963,7 +963,7 @@ class WorkflowFoundationLockTests(TestCase):
         self.client.login(username='gemeente_user', password='testpass123')
         f = SimpleUploadedFile('test.pdf', b'%PDF hello', content_type='application/pdf')
         response = self.client.post(
-            reverse('careon:documents_api'),
+            reverse('carelane:documents_api'),
             data={'title': 'Pilotdocument', 'file': f},
         )
         self.assertEqual(response.status_code, 201)
@@ -978,9 +978,9 @@ class WorkflowFoundationLockTests(TestCase):
 
         self.client.login(username='gemeente_user', password='testpass123')
         f = SimpleUploadedFile('big.pdf', b'x', content_type='application/pdf')
-        with self.settings(CAREON_MAX_DOCUMENT_UPLOAD_MB=0):
+        with self.settings(CARELANE_MAX_DOCUMENT_UPLOAD_MB=0):
             response = self.client.post(
-                reverse('careon:documents_api'),
+                reverse('carelane:documents_api'),
                 data={'title': 'Groot bestand', 'file': f},
             )
         self.assertEqual(response.status_code, 413)
@@ -992,7 +992,7 @@ class WorkflowFoundationLockTests(TestCase):
         self.client.login(username='provider_user', password='testpass123')
         f = SimpleUploadedFile('doc.pdf', b'hello', content_type='application/pdf')
         response = self.client.post(
-            reverse('careon:documents_api'),
+            reverse('carelane:documents_api'),
             data={'title': 'Provider upload', 'file': f},
         )
         self.assertEqual(response.status_code, 403)
@@ -1003,7 +1003,7 @@ class WorkflowFoundationLockTests(TestCase):
 
         f = SimpleUploadedFile('doc.pdf', b'hello', content_type='application/pdf')
         response = self.client.post(
-            reverse('careon:documents_api'),
+            reverse('carelane:documents_api'),
             data={'title': 'Anon upload', 'file': f},
         )
         self.assertIn(response.status_code, [302, 401])

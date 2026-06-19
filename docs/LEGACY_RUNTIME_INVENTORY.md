@@ -1,18 +1,18 @@
 # Legacy Runtime Inventory
 
-Purpose: make the boundary between active Careon runtime code, compatibility shims, and archive candidates explicit.
+Purpose: make the boundary between active Carelane runtime code, compatibility shims, and archive candidates explicit.
 
 This repository does **not** contain a separate external contract-management application. The only explicit legacy-language mention found in the runtime-facing tree is the terminology guard in `scripts/terminology_guard.py`, which blocks those words from user-facing text.
 
 ## Active runtime
 
-These files are part of the Careon product runtime today:
+These files are part of the Carelane product runtime today:
 
 - `contracts/provider_matching_service.py`
 - `contracts/views.py`
 - `contracts/api/views.py`
 
-The matching engine itself is canonical Careon logic. It is not legacy-contract-management code.
+The matching engine itself is canonical Carelane logic. It is not legacy-contract-management code.
 
 ## Compatibility shim
 
@@ -41,11 +41,11 @@ Status:
 
 These documents describe the migration and isolation rules around the legacy boundary:
 
-- `docs/CAREON_STRUCTURAL_MIGRATION_PLAN.md`
+- `docs/CARELANE_STRUCTURAL_MIGRATION_PLAN.md`
 - `docs/LEGACY_ARCHIVING_CONVENTIONS.md`
 - `docs/PROVIDER_ARCHITECTURE.md`
 - `docs/PROVIDER_DATA_ARCHITECTURE.md`
-- `docs/CAREON_TRANSFORMATIEPLAN.md`
+- `docs/CARELANE_TRANSFORMATIEPLAN.md`
 - `docs/CONTRACT_FRICTION_PLAN.md`
 
 ## What the inventory is *not*

@@ -12,10 +12,10 @@
 
 ## Doctrine Compliance (Required For UI Changes)
 
-- [ ] This change follows `docs/Careon_Operational_Constitution_v2.md` (and `docs/Careon_Operational_Constitution_v2.docx` where sign-off matters)
+- [ ] This change follows `docs/Carelane_Operational_Constitution_v2.md` (and `docs/Carelane_Operational_Constitution_v2.docx` where sign-off matters)
 - [ ] Workflow, permissions, or API changes respect `docs/FOUNDATION_LOCK.md` and `contracts/workflow_state_machine.py`
-- [ ] This change follows `docs/CAREON_VISUAL_DOCTRINE.md`
-- [ ] This change follows `docs/CAREON_DOCTRINE_ENFORCEMENT_PHASE2.md`
+- [ ] This change follows `docs/CARELANE_VISUAL_DOCTRINE.md`
+- [ ] This change follows `docs/CARELANE_DOCTRINE_ENFORCEMENT_PHASE2.md`
 - [ ] No new primitive was introduced without explicit approval
 - [ ] No canonical primitive was bypassed with a local alternative
 - [ ] No local spacing system was introduced

@@ -122,7 +122,7 @@ class CaseListN1RegressionTests(TestCase):
         """List with 10 rows must complete within _MAX_LIST_QUERIES (not O(n))."""
         with assert_max_queries(self, _MAX_LIST_QUERIES):
             resp = self.http.get(
-                reverse("careon:cases_api"),
+                reverse("carelane:cases_api"),
                 {"page_size": 10},
             )
         self.assertEqual(resp.status_code, 200)
@@ -131,7 +131,7 @@ class CaseListN1RegressionTests(TestCase):
 
     def test_list_workflow_state_is_correct(self):
         """Workflow state must be populated for all list rows (not DRAFT_CASE fallback)."""
-        resp = self.http.get(reverse("careon:cases_api"), {"page_size": 10})
+        resp = self.http.get(reverse("carelane:cases_api"), {"page_size": 10})
         self.assertEqual(resp.status_code, 200)
         for row in resp.json()["contracts"]:
             self.assertNotEqual(
@@ -142,7 +142,7 @@ class CaseListN1RegressionTests(TestCase):
 
     def test_list_total_count_is_accurate(self):
         """total_count must reflect the actual number of non-archived cases."""
-        resp = self.http.get(reverse("careon:cases_api"))
+        resp = self.http.get(reverse("carelane:cases_api"))
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertGreaterEqual(data["total_count"], 10)
@@ -176,7 +176,7 @@ class CaseDetailN1RegressionTests(TestCase):
         """Single case detail must complete within _MAX_DETAIL_QUERIES."""
         with assert_max_queries(self, _MAX_DETAIL_QUERIES):
             resp = self.http.get(
-                reverse("careon:case_detail_api", kwargs={"case_id": self.case_id})
+                reverse("carelane:case_detail_api", kwargs={"case_id": self.case_id})
             )
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
@@ -197,7 +197,7 @@ class CaseDetailN1RegressionTests(TestCase):
         )
         case_id = intake.ensure_case_record(created_by=self.user).pk
         resp = self.http.get(
-            reverse("careon:case_detail_api", kwargs={"case_id": case_id})
+            reverse("carelane:case_detail_api", kwargs={"case_id": case_id})
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["workflow_state"], WorkflowState.DRAFT_CASE)
@@ -205,7 +205,7 @@ class CaseDetailN1RegressionTests(TestCase):
     def test_detail_404_for_unknown_case(self):
         """A non-existent case must return 404, not 500."""
         resp = self.http.get(
-            reverse("careon:case_detail_api", kwargs={"case_id": 999999})
+            reverse("carelane:case_detail_api", kwargs={"case_id": 999999})
         )
         self.assertEqual(resp.status_code, 404)
 
@@ -242,7 +242,7 @@ class CreateThenDetailTests(TestCase):
 
         with assert_max_queries(self, _MAX_DETAIL_QUERIES):
             resp = self.http.get(
-                reverse("careon:case_detail_api", kwargs={"case_id": case_id})
+                reverse("carelane:case_detail_api", kwargs={"case_id": case_id})
             )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["id"], str(case_id))
@@ -252,7 +252,7 @@ class CreateThenDetailTests(TestCase):
         case_id = str(self._create_case_orm("List Refresh Test"))
 
         list_resp = self.http.get(
-            reverse("careon:cases_api"),
+            reverse("carelane:cases_api"),
             {"sort": "updated_desc", "page_size": 25},
         )
         self.assertEqual(list_resp.status_code, 200)
@@ -263,7 +263,7 @@ class CreateThenDetailTests(TestCase):
         """List query count must not spike after a new case is added."""
         self._create_case_orm("Query Count After Create")
         with assert_max_queries(self, _MAX_LIST_QUERIES):
-            resp = self.http.get(reverse("careon:cases_api"), {"page_size": 25})
+            resp = self.http.get(reverse("carelane:cases_api"), {"page_size": 25})
         self.assertEqual(resp.status_code, 200)
 
 
@@ -298,7 +298,7 @@ class CrossTenantIsolationTests(TestCase):
         http_b = Client()
         http_b.login(username="tenant_b_user", password="testpass123")
         resp = http_b.get(
-            reverse("careon:case_detail_api", kwargs={"case_id": self.org_a_case_id})
+            reverse("carelane:case_detail_api", kwargs={"case_id": self.org_a_case_id})
         )
         self.assertEqual(resp.status_code, 404)
 
@@ -306,7 +306,7 @@ class CrossTenantIsolationTests(TestCase):
         """Org B's list must not include any case from org A."""
         http_b = Client()
         http_b.login(username="tenant_b_user", password="testpass123")
-        resp = http_b.get(reverse("careon:cases_api"))
+        resp = http_b.get(reverse("carelane:cases_api"))
         self.assertEqual(resp.status_code, 200)
         ids = [row["id"] for row in resp.json()["contracts"]]
         self.assertNotIn(str(self.org_a_case_id), ids)

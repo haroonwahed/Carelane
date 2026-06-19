@@ -1,4 +1,4 @@
-# CareOn Drill Log
+# Carelane Drill Log
 
 ## 2026-05-30: Production Rollout Record
 
@@ -173,7 +173,7 @@ Stop the rollout and switch to rollback if any of these happen:
 
 - `reports/release_evidence_bundle.json` → `timeline_gate.go=true`, `no_go_reasons=[]`
 - `./scripts/run_golden_path_e2e.sh --start-server` → **GO** (12 passed, 1 skipped)
-- `./scripts/staging_pilot_signoff.sh` → **GO** on `https://careon-web.onrender.com`
+- `./scripts/staging_pilot_signoff.sh` → **GO** on `https://carelane-web.onrender.com`
 - `docs/RELEASE_ROLLOUT_CHECKLIST.md` → production preflight / deploy / verification / sign-off explicitly blocked until production evidence is filled
 
 ### Current Conclusion
@@ -193,10 +193,10 @@ Stop the rollout and switch to rollback if any of these happen:
 Commands:
 
 ```bash
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py migrate --noinput
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py migrate contracts 0006_approvalrequest_organization_and_more --noinput
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py audit_null_organizations
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py migrate --noinput
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py migrate contracts 0006_approvalrequest_organization_and_more --noinput
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py audit_null_organizations
 ```
 
 Result:
@@ -211,8 +211,8 @@ Result:
 Commands:
 
 ```bash
-cp db.sqlite3 /tmp/careon-drill.sqlite3
-SQLITE_PATH=/tmp/careon-drill.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
+cp db.sqlite3 /tmp/carelane-drill.sqlite3
+SQLITE_PATH=/tmp/carelane-drill.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
 ```
 
 Result:
@@ -235,10 +235,10 @@ Conclusion:
 Commands:
 
 ```bash
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py migrate --noinput
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py migrate contracts 0006_approvalrequest_organization_and_more --noinput
-SQLITE_PATH=/tmp/careon-drill-clean.sqlite3 python manage.py audit_null_organizations
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py migrate --noinput
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py migrate contracts 0006_approvalrequest_organization_and_more --noinput
+SQLITE_PATH=/tmp/carelane-drill-clean.sqlite3 python manage.py audit_null_organizations
 ```
 
 Result:
@@ -253,8 +253,8 @@ Result:
 Commands:
 
 ```bash
-cp db.sqlite3 /tmp/careon-drill.sqlite3
-SQLITE_PATH=/tmp/careon-drill.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
+cp db.sqlite3 /tmp/carelane-drill.sqlite3
+SQLITE_PATH=/tmp/carelane-drill.sqlite3 python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
 ```
 
 Result:
@@ -295,14 +295,14 @@ Conclusion:
 
 ## 2026-05-12: Staging HTTP smoke (Render)
 
-- Environment: **Render staging** — `https://careon-web.onrender.com`
+- Environment: **Render staging** — `https://carelane-web.onrender.com`
 - Scope: automated `scripts/go_live_http_smoke.sh` after aligning third check to `/?view=dashboard` (Whitenoise returned 404 for `/static/spa/?view=dashboard` while app was healthy)
 - Repo reference at time of check: **`eb115a0`** (local workspace; redeploy may differ)
 
 ### Commands
 
 ```bash
-BASE_URL=https://careon-web.onrender.com ./scripts/go_live_http_smoke.sh
+BASE_URL=https://carelane-web.onrender.com ./scripts/go_live_http_smoke.sh
 ```
 
 ### Result

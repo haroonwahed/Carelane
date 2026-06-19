@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Budgetdetails - Careon{% endblock %}
+{% block title %}Budgetdetails - Carelane{% endblock %}
 {% block content %}
 <div class="ds-detail-shell">
 
@@ -12,8 +12,8 @@
         </p>
     </div>
     <div class="flex gap-2">
-        <a href="{% url 'careon:add_expense' budget.pk %}" class="btn btn-primary">+ Uitgave toevoegen</a>
-        <a href="{% url 'careon:budget_update' budget.pk %}" class="btn btn-secondary">Bewerken</a>
+        <a href="{% url 'carelane:add_expense' budget.pk %}" class="btn btn-primary">+ Uitgave toevoegen</a>
+        <a href="{% url 'carelane:budget_update' budget.pk %}" class="btn btn-secondary">Bewerken</a>
     </div>
 </div>
 

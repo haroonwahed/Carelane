@@ -83,13 +83,13 @@ export function InstellingenPage() {
         if (!ignore) {
           setDesignMode(nextMode);
           try {
-            window.localStorage.setItem("careon-design-mode", nextMode);
+            window.localStorage.setItem("carelane-design-mode", nextMode);
           } catch {
             // Ignore storage failures.
           }
         }
       } catch {
-        const storedMode = window.localStorage.getItem("careon-design-mode");
+        const storedMode = window.localStorage.getItem("carelane-design-mode");
         if (!ignore && storedMode === "spa") {
           setDesignMode("spa");
         }
@@ -128,7 +128,7 @@ export function InstellingenPage() {
       }
 
       try {
-        window.localStorage.setItem("careon-design-mode", designMode);
+        window.localStorage.setItem("carelane-design-mode", designMode);
       } catch {
         // Ignore storage failures.
       }

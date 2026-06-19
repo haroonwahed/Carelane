@@ -1,6 +1,6 @@
-# CareOn Release Sign-off v1
+# Carelane Release Sign-off v1
 
-**Purpose:** final release-readiness evidence sheet for CareOn v1.
+**Purpose:** final release-readiness evidence sheet for Carelane v1.
 **Rule:** do not mark production-ready without evidence in every production checklist category.
 
 ## Demo-ready checklist

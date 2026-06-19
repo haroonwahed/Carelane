@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { CareFilterDrawer, CareFilterDrawerTrigger, type CareFilterValues } from "./CareFilterDrawer";
 
 const meta: Meta<typeof CareFilterDrawer> = {
-  title: "CareOn/Domain/CareFilterDrawer",
+  title: "Carelane/Domain/CareFilterDrawer",
   component: CareFilterDrawer,
   parameters: { layout: "centered" },
   tags: ["autodocs"],

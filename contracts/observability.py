@@ -12,7 +12,7 @@ import uuid
 from contextvars import ContextVar
 from typing import Any
 
-_correlation_id_var: ContextVar[str | None] = ContextVar("careon_correlation_id", default=None)
+_correlation_id_var: ContextVar[str | None] = ContextVar("carelane_correlation_id", default=None)
 
 _REQUEST_ID_HEADER_IN = ("HTTP_X_REQUEST_ID", "HTTP_X_CORRELATION_ID")
 _REQUEST_ID_HEADER_OUT = "X-Request-ID"
@@ -22,8 +22,8 @@ _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_.:@+-]+$")
 
 logger = logging.getLogger("contracts.observability")
 
-CACHE_KEY_LAST_API_FAILURE = "careon:last_api_failure"
-CACHE_KEY_LATEST_REHEARSAL = "careon:latest_rehearsal_run"
+CACHE_KEY_LAST_API_FAILURE = "carelane:last_api_failure"
+CACHE_KEY_LATEST_REHEARSAL = "carelane:latest_rehearsal_run"
 
 
 def record_api_failure(request, *, status_code: int) -> None:
@@ -125,7 +125,7 @@ def log_api_outcome(
     """Log API request outcome (paths under /care/api/ only; caller filters)."""
     from django.conf import settings
 
-    access_all = getattr(settings, "CAREON_API_ACCESS_LOG_ALL", False)
+    access_all = getattr(settings, "CARELANE_API_ACCESS_LOG_ALL", False)
     if status_code < 400 and not access_all:
         return
 

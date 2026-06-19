@@ -18,7 +18,7 @@ async function loginGemeente(page: import("@playwright/test").Page): Promise<voi
   const username = pilotSmokeUsername();
   const password = pilotSmokePassword();
   await page.addInitScript(() => {
-    window.localStorage.setItem("careon-theme", "dark");
+    window.localStorage.setItem("carelane-theme", "dark");
   });
   await page.goto(new URL("/login/", BASE_URL).toString());
   await expect(page.getByRole("heading", { name: "Welkom terug" })).toBeVisible();
@@ -78,7 +78,7 @@ test.describe("pilot deterministic screenshots", () => {
     await loginGemeente(page);
     await page.goto(new URL("/settings/", BASE_URL).toString());
     await expect(page.getByRole("heading", { name: /Regiekamer/i })).toBeVisible({ timeout: 45_000 });
-    await expect(page.getByText("Careon ZORGREGIE")).toHaveCount(0);
+    await expect(page.getByText("Carelane ZORGREGIE")).toHaveCount(0);
     await expect(page.getByText("CASUSMANAGEMENT")).toHaveCount(0);
     await expect(page.getByText("Rapportages & coördinatie")).toHaveCount(0);
 

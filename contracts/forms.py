@@ -412,7 +412,7 @@ class DocumentForm(forms.ModelForm):
             if identifier in {'image', 'scan'}:
                 self.add_error(
                     'file',
-                    'Afbeeldingen en scan-PDF\'s worden niet in CareOn opgeslagen. Gebruik een externe beveiligde handoff.',
+                    'Afbeeldingen en scan-PDF\'s worden niet in Carelane opgeslagen. Gebruik een externe beveiligde handoff.',
                 )
             elif identifier is not None:
                 self.add_error(

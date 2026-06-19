@@ -3,7 +3,7 @@
 :root {
   --font-size: 16px;
 
-  /* CareOn operational infrastructure — light mode */
+  /* Carelane operational infrastructure — light mode */
   --bg-base: #EEF1F8;
   --bg-surface: #F8FAFD;
   --bg-subtle: #E7EDF6;
@@ -277,7 +277,7 @@
   --color-glow-primary: var(--glow-primary);
   --color-glow-primary-soft: var(--glow-primary-soft);
 
-  /* CareOn Design System V1 — Tailwind aliases for semantic tokens */
+  /* Carelane Design System V1 — Tailwind aliases for semantic tokens */
   --care-sidebar-width: var(--care-sidebar-width);
   --care-sidebar-width-expanded: var(--care-sidebar-width-expanded);
   --care-sidebar-width-collapsed: var(--care-sidebar-width-collapsed);
@@ -544,45 +544,45 @@ select:not([multiple]):not([size]):disabled {
     }
   }
 
-  .careon-alert-error {
+  .carelane-alert-error {
     @apply bg-red-light border-red-border text-red-base;
   }
 
-  .careon-alert-warning {
+  .carelane-alert-warning {
     @apply bg-yellow-light border-yellow-border text-yellow-base;
   }
 
-  .careon-alert-info {
+  .carelane-alert-info {
     @apply bg-blue-light border-blue-border text-blue-base;
   }
 
-  .careon-alert-success {
+  .carelane-alert-success {
     @apply bg-green-light border-green-border text-green-base;
   }
 
-  .careon-alert-primary {
+  .carelane-alert-primary {
     @apply bg-primary-light border-primary/25 text-primary;
   }
 
-  .careon-badge-red {
+  .carelane-badge-red {
     background-color: var(--badge-red-bg);
     color: var(--badge-red-text);
     border-color: transparent;
   }
 
-  .careon-badge-yellow {
+  .carelane-badge-yellow {
     background-color: var(--badge-yellow-bg);
     color: var(--badge-yellow-text);
     border-color: transparent;
   }
 
-  .careon-badge-blue {
+  .carelane-badge-blue {
     background-color: var(--badge-blue-bg);
     color: var(--badge-blue-text);
     border-color: transparent;
   }
 
-  .careon-badge-purple {
+  .carelane-badge-purple {
     background-color: var(--badge-purple-bg);
     color: var(--badge-purple-text);
     border-color: transparent;
@@ -1420,7 +1420,7 @@ select:not([multiple]):not([size]):disabled {
 }
 
 /* --------------------------------------------------------------------------
-   CareOn Design System V1 — Semantic token layer
+   Carelane Design System V1 — Semantic token layer
    One source of truth for shell geometry, radius, shadows, CTAs, and badges.
    Components consume --care-* tokens; never hardcode equivalent values.
    -------------------------------------------------------------------------- */
@@ -1494,7 +1494,7 @@ select:not([multiple]):not([size]):disabled {
   --care-queue-width: 320px;
   --care-panel-detail-width: 400px;
 
-  /* Typography scale — closed set, two weights (400/500). See CAREON_DESIGN_LANGUAGE.md §3.
+  /* Typography scale — closed set, two weights (400/500). See CARELANE_DESIGN_LANGUAGE.md §3.
      Consume via the .care-text-* utility classes; never hardcode text-[Npx]. */
   --care-text-display-size: 1.625rem;     /* 26px — KPI numbers */
   --care-text-display-leading: 1.25;
@@ -1517,7 +1517,7 @@ select:not([multiple]):not([size]):disabled {
   --care-weight-medium: 500;
 
   /* Semantic colour intents — meaning, not chroma. Map onto per-mode primitives
-     so they peer light/dark automatically. See CAREON_DESIGN_LANGUAGE.md §4.
+     so they peer light/dark automatically. See CARELANE_DESIGN_LANGUAGE.md §4.
      Write `urgent`, never `red`. */
   --care-semantic-urgent-bg: var(--badge-red-bg);
   --care-semantic-urgent-text: var(--badge-red-text);
@@ -1550,7 +1550,7 @@ select:not([multiple]):not([size]):disabled {
 }
 
 /* --------------------------------------------------------------------------
-   Typography scale utilities — the closed type system (CAREON_DESIGN_LANGUAGE.md §3).
+   Typography scale utilities — the closed type system (CARELANE_DESIGN_LANGUAGE.md §3).
    Use these classes in product code instead of arbitrary text-[Npx] values.
    -------------------------------------------------------------------------- */
 .care-text-display {
@@ -1606,7 +1606,7 @@ select:not([multiple]):not([size]):disabled {
 }
 
 /* --------------------------------------------------------------------------
-   Operational spacing rhythm (CareOn list/command pages)
+   Operational spacing rhythm (Carelane list/command pages)
    Compact throughput + intentional pauses between zones — not card padding.
    -------------------------------------------------------------------------- */
 :root {

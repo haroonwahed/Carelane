@@ -1,5 +1,5 @@
 (function () {
-  var STORAGE_KEY = "careon-theme";
+  var STORAGE_KEY = "carelane-theme";
   var THEMES = ["light", "dark"];
 
   function isValidTheme(theme) {
@@ -68,7 +68,7 @@
     applyTheme(initial);
   }
 
-  window.CAREON_THEMES = THEMES.slice(0);
+  window.CARELANE_THEMES = THEMES.slice(0);
   window.setTheme = setTheme;
   window.toggleTheme = cycleTheme;
 

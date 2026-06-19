@@ -28,12 +28,12 @@ class PublicAuthFlowTests(TestCase):
         response = self.client.get(reverse('index'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'CareOn')
+        self.assertContains(response, 'Carelane')
         self.assertContains(response, 'public-shell')
         self.assertNotContains(response, 'Welkom terug')
 
     def test_care_home_redirects_to_spa_landing(self):
-        response = self.client.get(reverse('careon:home'), follow=False)
+        response = self.client.get(reverse('carelane:home'), follow=False)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/')
@@ -115,9 +115,9 @@ class PublicAuthFlowTests(TestCase):
 
     def test_protected_care_routes_redirect_anonymous_users_to_login(self):
         for url_name in (
-            'careon:case_create',
-            'careon:matching_dashboard',
-            'careon:case_list',
+            'carelane:case_create',
+            'carelane:matching_dashboard',
+            'carelane:case_list',
         ):
             with self.subTest(url_name=url_name):
                 response = self.client.get(reverse(url_name), follow=False)

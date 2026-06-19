@@ -9,7 +9,7 @@ test.describe.configure({ mode: "serial" });
 test("capture matching page full page @visual", async ({ page }) => {
   const origin = process.env.MATCHING_PAGE_ORIGIN ?? "http://127.0.0.1:3000";
   await page.addInitScript(() => {
-    window.localStorage.setItem("careon-theme", "dark");
+    window.localStorage.setItem("carelane-theme", "dark");
   });
   await installCareApiStubs(page);
   await page.goto(`${origin}/matching?openCase=e2e-matching-1`, {

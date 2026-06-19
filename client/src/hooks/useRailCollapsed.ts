@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-const STORAGE_KEY = "careon.rail.collapsed";
+const STORAGE_KEY = "carelane.rail.collapsed";
 
 function shouldAvoidLocalStorage(): boolean {
   if (typeof window === "undefined") {

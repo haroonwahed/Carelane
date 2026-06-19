@@ -11,7 +11,7 @@ Aanbieder Beoordeling date: 2026-04-24
 
 This plan turns the go-live matrix into a practical release order. It is based on the current repository state, the release docs, and the release validation runs from 2026-04-24.
 
-For a sprint-sized breakdown of the same work, see [`docs/SPRINT_PLAN.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/SPRINT_PLAN.md).
+For a sprint-sized breakdown of the same work, see [`docs/SPRINT_PLAN.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/SPRINT_PLAN.md).
 
 ## Priority Order
 

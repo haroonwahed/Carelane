@@ -208,7 +208,7 @@ class RegiekamerDecisionOverviewTests(TestCase):
         self.client.login(username=user.username, password="pass123")
 
     def _fetch_payload(self):
-        response = self.client.get(reverse("careon:regiekamer_decision_overview_api"))
+        response = self.client.get(reverse("carelane:regiekamer_decision_overview_api"))
         self.assertEqual(response.status_code, 200)
         return json.loads(response.content)
 

@@ -94,7 +94,7 @@ class MatchingOperationalContractRegressionTests(TestCase):
             "recommended_action": {
                 "label": "Start rematch met handmatige prioriteit",
                 "reason": "Contract reason: geen passende aanbieder binnen SLA",
-                "url": reverse("careon:matching_dashboard") + f"?intake={intake_id}",
+                "url": reverse("carelane:matching_dashboard") + f"?intake={intake_id}",
             },
             "impact_summary": {
                 "text": "Ontgrendelt vervolgstap naar plaatsing",
@@ -112,21 +112,21 @@ class MatchingOperationalContractRegressionTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<div id="root"></div>', html=True)
         self.assertContains(response, '/static/spa/assets/index-')
-        self.assertNotContains(response, 'Careon Zorgregie')
+        self.assertNotContains(response, 'Carelane Zorgregie')
 
     def test_failure_explanation_for_no_match_uses_shared_decision_reason(self):
         intake, _ = self._create_approved_assessment("No Match Contract Casus")
-        response = self.client.get(reverse("careon:matching_dashboard") + f"?intake={intake.pk}")
+        response = self.client.get(reverse("carelane:matching_dashboard") + f"?intake={intake.pk}")
         self._assert_spa_shell(response)
 
     def test_failure_state_has_recommended_action_and_no_dead_end(self):
         intake, _ = self._create_approved_assessment("No Dead End Casus")
-        response = self.client.get(reverse("careon:matching_dashboard") + f"?intake={intake.pk}")
+        response = self.client.get(reverse("carelane:matching_dashboard") + f"?intake={intake.pk}")
         self._assert_spa_shell(response)
 
     def test_recommended_action_always_paired_with_impact_summary(self):
         intake, _ = self._create_approved_assessment("Action Impact Pair Casus")
-        response = self.client.get(reverse("careon:matching_dashboard") + f"?intake={intake.pk}")
+        response = self.client.get(reverse("carelane:matching_dashboard") + f"?intake={intake.pk}")
         self._assert_spa_shell(response)
 
     def test_capacity_failures_are_visible_and_distinguishable(self):
@@ -134,7 +134,7 @@ class MatchingOperationalContractRegressionTests(TestCase):
         self._create_provider_profile("Geen Capaciteit BV", current_capacity=3, max_capacity=3, average_wait_days=7)
         self._create_provider_profile("Wachtlijst Zorg", current_capacity=2, max_capacity=3, average_wait_days=45)
         self._create_provider_profile("Afwijzing Historie", current_capacity=1, max_capacity=3, average_wait_days=10)
-        response = self.client.get(reverse("careon:matching_dashboard") + f"?intake={intake.pk}")
+        response = self.client.get(reverse("carelane:matching_dashboard") + f"?intake={intake.pk}")
         self._assert_spa_shell(response)
 
     def test_density_rules_limit_strip_and_signals_per_row_and_no_command_bar(self):
@@ -142,11 +142,11 @@ class MatchingOperationalContractRegressionTests(TestCase):
         self._create_provider_profile("Aanbieder A", current_capacity=0, max_capacity=3, average_wait_days=35)
         self._create_provider_profile("Aanbieder B", current_capacity=1, max_capacity=3, average_wait_days=20)
         self._create_provider_profile("Aanbieder C", current_capacity=2, max_capacity=3, average_wait_days=10)
-        response = self.client.get(reverse("careon:matching_dashboard") + f"?intake={intake.pk}")
+        response = self.client.get(reverse("carelane:matching_dashboard") + f"?intake={intake.pk}")
         self._assert_spa_shell(response)
 
     def test_safe_fallbacks_for_empty_results_and_partial_data(self):
-        response_empty = self.client.get(reverse("careon:matching_dashboard"))
+        response_empty = self.client.get(reverse("carelane:matching_dashboard"))
         self._assert_spa_shell(response_empty)
 
         intake, _ = self._create_approved_assessment("Partial Data Casus")
@@ -165,6 +165,6 @@ class MatchingOperationalContractRegressionTests(TestCase):
         ]
 
         with patch("contracts.views._build_matching_suggestions_for_intake", return_value=partial_suggestions):
-            response_partial = self.client.get(reverse("careon:matching_dashboard") + f"?intake={intake.pk}")
+            response_partial = self.client.get(reverse("carelane:matching_dashboard") + f"?intake={intake.pk}")
 
         self._assert_spa_shell(response_partial)

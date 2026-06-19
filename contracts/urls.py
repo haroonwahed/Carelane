@@ -5,7 +5,7 @@ from .api import views as api_views
 from .api import classification as classification_api
 from .navigation import SPA_LANDING_URL
 
-app_name = 'careon'
+app_name = 'carelane'
 
 urlpatterns = [
     # API — auth (JSON, session-cookie based; used by the React SPA login form)
@@ -160,7 +160,7 @@ urlpatterns = [
 
 
     path('plaatsingen/', views.PlacementRequestListView.as_view(), name='placement_list'),
-    path('plaatsingen/new/', RedirectView.as_view(pattern_name='careon:matching_dashboard', permanent=False), name='placement_create'),
+    path('plaatsingen/new/', RedirectView.as_view(pattern_name='carelane:matching_dashboard', permanent=False), name='placement_create'),
     path('plaatsingen/<int:pk>/', views.PlacementRequestDetailView.as_view(), name='placement_detail'),
     path('plaatsingen/<int:pk>/edit/', views.PlacementRequestUpdateView.as_view(), name='placement_update'),
     path('intake-overdracht/', views.PlacementRequestListView.as_view(), name='intake_handoff_list'),

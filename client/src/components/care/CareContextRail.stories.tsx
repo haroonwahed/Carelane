@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { CareContextRail } from "./CareContextRail";
 
 const meta: Meta<typeof CareContextRail> = {
-  title: "CareOn/Domain/CareContextRail",
+  title: "Carelane/Domain/CareContextRail",
   component: CareContextRail,
   parameters: { layout: "centered" },
   tags: ["autodocs"],

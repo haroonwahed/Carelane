@@ -7,14 +7,14 @@ Takenbord
 {% endblock %}
 
 {% block page_actions %}
-<a href="{% url 'careon:case_list' %}" class="btn btn-primary">Open casussen</a>
+<a href="{% url 'carelane:case_list' %}" class="btn btn-primary">Open casussen</a>
 {% endblock %}
 
 {% block content %}
 <div class="ds-list-shell ds-page-shell">
     <div class="ds-list-header ds-page-header">
         <h1 class="ds-section-title">Takenbord</h1>
-        <a href="{% url 'careon:case_list' %}" class="btn btn-primary">Open casussen</a>
+        <a href="{% url 'carelane:case_list' %}" class="btn btn-primary">Open casussen</a>
     </div>
     <p class="ds-note-text">Dit is de kanbanweergave binnen Taken. Voor dagelijkse sturing gebruik je de lijstweergave.</p>
     <!-- Filters -->
@@ -62,7 +62,7 @@ Takenbord
                     </div>
                     <div class="ds-list-row-actions">
                         {% if task.case_record and task.case_record.due_diligence_process_id %}
-                        <a href="{% url 'careon:case_detail' task.case_record.due_diligence_process_id %}?tab=taken" class="ds-list-row-action-btn">Open casus</a>
+                        <a href="{% url 'carelane:case_detail' task.case_record.due_diligence_process_id %}?tab=taken" class="ds-list-row-action-btn">Open casus</a>
                         {% else %}
                         <span class="ds-list-row-action-btn">Inspectie</span>
                         {% endif %}
@@ -72,7 +72,7 @@ Takenbord
                 <div class="ds-list-empty">
                     <p class="ds-list-empty-copy">Geen taken in deze kolom.</p>
                     {% if status_display == 'To Do' %}
-                    <a href="{% url 'careon:case_list' %}" class="btn btn-secondary">Open casussen</a>
+                    <a href="{% url 'carelane:case_list' %}" class="btn btn-secondary">Open casussen</a>
                     {% endif %}
                 </div>
                 {% endfor %}

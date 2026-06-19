@@ -36,9 +36,9 @@ PREFLIGHT_URL="${PREFLIGHT_POSTGRES_URL:-${STAGING_DATABASE_URL:-}}"
 if [[ -n "$PREFLIGHT_URL" ]]; then
   DATABASE_URL="$PREFLIGHT_URL" DJANGO_SETTINGS_MODULE=config.settings_production \
     DJANGO_SECRET_KEY="${DJANGO_SECRET_KEY:-preflight-secret-not-for-prod}" \
-    ALLOWED_HOSTS="${ALLOWED_HOSTS:-careon-web.onrender.com,localhost}" \
-    CSRF_TRUSTED_ORIGINS="${CSRF_TRUSTED_ORIGINS:-https://careon-web.onrender.com,https://localhost}" \
-    DEFAULT_FROM_EMAIL="${DEFAULT_FROM_EMAIL:-ops@careon.local}" \
+    ALLOWED_HOSTS="${ALLOWED_HOSTS:-carelane-web.onrender.com,localhost}" \
+    CSRF_TRUSTED_ORIGINS="${CSRF_TRUSTED_ORIGINS:-https://carelane-web.onrender.com,https://localhost}" \
+    DEFAULT_FROM_EMAIL="${DEFAULT_FROM_EMAIL:-ops@carelane.local}" \
     "$PYTHON_BIN" manage.py check --deploy
 else
   echo "[production_go_live_preflight] skip check --deploy (set PREFLIGHT_POSTGRES_URL or STAGING_DATABASE_URL)"

@@ -1,6 +1,6 @@
-# CareOn (Zorg OS)
+# Carelane (Zorg OS)
 
-**CareOn / Zorg OS** is a **regulated operational coordination layer** for care placement and chain progression under capacity scarcity. It implements workflow-first **aanvragen** coordination, **gemeente** financing/arrangement validation, and **zorgaanbieder** responses — with the backend as the **source of truth** for state and permissions.
+**Carelane / Zorg OS** is a **regulated operational coordination layer** for care placement and chain progression under capacity scarcity. It implements workflow-first **aanvragen** coordination, **gemeente** financing/arrangement validation, and **zorgaanbieder** responses — with the backend as the **source of truth** for state and permissions.
 
 This repository is **production-oriented infrastructure**, not a Figma-only prototype. Visual exploration history may exist separately; **canonical product and engineering law** lives in the docs below.
 
@@ -10,9 +10,9 @@ This repository is **production-oriented infrastructure**, not a Figma-only prot
 
 **Docs index:** [`docs/INDEX.md`](docs/INDEX.md) — compact entry point for the current active doc set and archive pointers.
 
-**Doctrine:** [`docs/Careon_Operational_Constitution_v2.md`](docs/Careon_Operational_Constitution_v2.md) (export) · [`docs/Careon_Operational_Constitution_v2.docx`](docs/Careon_Operational_Constitution_v2.docx) (Word master) · [`docs/FOUNDATION_LOCK.md`](docs/FOUNDATION_LOCK.md) (states, API phases, endpoints, UI density).
+**Doctrine:** [`docs/Carelane_Operational_Constitution_v2.md`](docs/Carelane_Operational_Constitution_v2.md) (export) · [`docs/Carelane_Operational_Constitution_v2.docx`](docs/Carelane_Operational_Constitution_v2.docx) (Word master) · [`docs/FOUNDATION_LOCK.md`](docs/FOUNDATION_LOCK.md) (states, API phases, endpoints, UI density).
 
-**UI contract:** [`docs/design/CAREON_UI_CONTRACT.md`](docs/design/CAREON_UI_CONTRACT.md) — hard visual rules for layout, spacing, radii, surfaces, and CTAs.
+**UI contract:** [`docs/design/CARELANE_UI_CONTRACT.md`](docs/design/CARELANE_UI_CONTRACT.md) — hard visual rules for layout, spacing, radii, surfaces, and CTAs.
 
 **Agents / contributors:** [`AGENTS.md`](AGENTS.md).
 
@@ -73,7 +73,7 @@ This setup expects an external PostgreSQL database. Add its connection string ma
 
 Do not paste placeholder values like `:port` into `DATABASE_URL`. Use a real connection string, for example:
 
-- `postgresql://careon_user:super-secret-password@db.example.com:5432/careon?sslmode=require`
+- `postgresql://carelane_user:super-secret-password@db.example.com:5432/carelane?sslmode=require`
 
 Before first production traffic, set these host-specific values in Render:
 

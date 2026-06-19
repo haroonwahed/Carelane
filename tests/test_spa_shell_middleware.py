@@ -42,7 +42,7 @@ class SpaShellMigrationMiddlewareTests(TestCase):
 
         body = response.content.decode('utf-8')
         self.assertEqual(response.status_code, 500)
-        self.assertNotIn('Careon Zorgregie', body)
+        self.assertNotIn('Carelane Zorgregie', body)
         self.assertNotIn('Regiekamer', body)
         self.assertIn('Er ging iets mis', body)
 
@@ -56,7 +56,7 @@ class SpaShellMigrationMiddlewareTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content.decode('utf-8'), 'api-ok')
-        self.assertNotIn('X-Careon-Ui-Surface', response)
+        self.assertNotIn('X-Carelane-Ui-Surface', response)
 
     def test_shell_paths_cover_canonical_workflow_routes(self):
         shell_paths = SpaShellMigrationMiddleware.SHELL_PATHS
@@ -93,7 +93,7 @@ class SpaShellMigrationIntegrationTests(TestCase):
         client = self._login_client()
 
         legacy_strings = (
-            'Careon Zorgregie',
+            'Carelane Zorgregie',
             'Globaal zoeken',
             'CASUSMANAGEMENT',
             'NETWERK',
@@ -107,18 +107,18 @@ class SpaShellMigrationIntegrationTests(TestCase):
         )
 
         for path in (
-            reverse('careon:matching_dashboard'),
-            reverse('careon:case_list'),
+            reverse('carelane:matching_dashboard'),
+            reverse('carelane:case_list'),
             '/casussen/',
             '/casussen/nieuw/',
             '/geen-toegang/',
-            reverse('careon:global_search') + '?q=test',
+            reverse('carelane:global_search') + '?q=test',
             '/care/does-not-exist/',
         ):
             with self.subTest(path=path):
                 response = client.get(path)
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(response['X-Careon-Ui-Surface'], 'spa')
+                self.assertEqual(response['X-Carelane-Ui-Surface'], 'spa')
                 self.assertContains(response, '<div id="root"></div>', html=True)
                 self.assertContains(response, '/static/spa/assets/index-')
                 for legacy_string in legacy_strings:
@@ -126,13 +126,13 @@ class SpaShellMigrationIntegrationTests(TestCase):
 
     def test_case_create_redirects_to_spa_nieuwe_casus(self):
         client = self._login_client()
-        response = client.get(reverse('careon:case_create'), follow=False)
+        response = client.get(reverse('carelane:case_create'), follow=False)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/casussen/nieuw/')
 
         shell_response = client.get('/casussen/nieuw/')
         self.assertEqual(shell_response.status_code, 200)
-        self.assertEqual(shell_response['X-Careon-Ui-Surface'], 'spa')
+        self.assertEqual(shell_response['X-Carelane-Ui-Surface'], 'spa')
         self.assertContains(shell_response, '<div id="root"></div>', html=True)
 
     def test_html_403_redirects_to_spa_geen_toegang(self):

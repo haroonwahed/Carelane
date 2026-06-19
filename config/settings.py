@@ -152,7 +152,7 @@ if '*' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, *_LOCAL_ALLOWED_HOSTS]))
 
 # Render injects RENDER_EXTERNAL_HOSTNAME / RENDER_EXTERNAL_URL for every service
-# (e.g. "careon-web-630u.onrender.com"). Auto-trust them so recreating the service
+# (e.g. "carelane-web-630u.onrender.com"). Auto-trust them so recreating the service
 # — which changes the hostname — never 400s on a stale ALLOWED_HOSTS / CSRF list,
 # and so SPA_ORIGIN / OIDC redirect resolve to the live host without manual env
 # edits. No effect locally or in tests (the vars are unset).
@@ -334,10 +334,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Feature Flags
 # Pilot: server-driven UI (hide demo role switch) and optional single SPA workflow rail
-CAREON_PILOT_UI = _bool_env('CAREON_PILOT_UI', False)
-CAREON_PILOT_SPA_ONLY = _bool_env('CAREON_PILOT_SPA_ONLY', False)
+CARELANE_PILOT_UI = _bool_env('CARELANE_PILOT_UI', False)
+CARELANE_PILOT_SPA_ONLY = _bool_env('CARELANE_PILOT_SPA_ONLY', False)
 # Upload: maximum document size accepted by the API (in megabytes)
-CAREON_MAX_DOCUMENT_UPLOAD_MB = int(os.getenv('CAREON_MAX_DOCUMENT_UPLOAD_MB', '20'))
+CARELANE_MAX_DOCUMENT_UPLOAD_MB = int(os.getenv('CARELANE_MAX_DOCUMENT_UPLOAD_MB', '20'))
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
@@ -380,7 +380,7 @@ OIDC_REDIRECT_ALLOWED_HOSTS = [
     )
     if host
 ]
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@careon.local')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@carelane.local')
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', '')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
@@ -393,7 +393,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 if SSO_ENABLED:
-    AUTHENTICATION_BACKENDS.insert(0, 'contracts.auth_backends.CareonOIDCAuthenticationBackend')
+    AUTHENTICATION_BACKENDS.insert(0, 'contracts.auth_backends.CarelaneOIDCAuthenticationBackend')
 
 OIDC_RP_CLIENT_ID = os.getenv('OIDC_RP_CLIENT_ID', '')
 OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET', '')
@@ -449,7 +449,7 @@ if not QUIET_TEST_LOGS and any(arg == 'test' for arg in sys.argv):
     QUIET_TEST_LOGS = 'ERROR'
 
 # Log every successful /care/api/* request at INFO (verbose); default is 4xx/5xx only via middleware.
-CAREON_API_ACCESS_LOG_ALL = _bool_env('CAREON_API_ACCESS_LOG_ALL', default=False)
+CARELANE_API_ACCESS_LOG_ALL = _bool_env('CARELANE_API_ACCESS_LOG_ALL', default=False)
 
 # Geocoding / maps (optional — PDOK is default for backend geocoding)
 GOOGLE_GEOCODING_API_KEY = os.getenv('GOOGLE_GEOCODING_API_KEY', '').strip()

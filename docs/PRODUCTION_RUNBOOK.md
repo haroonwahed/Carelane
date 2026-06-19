@@ -55,7 +55,7 @@ GitHub Actions job **`deploy-production-check`** (`.github/workflows/platform-gu
 
 | Symptom | Likely fix |
 |---------|------------|
-| `ImproperlyConfigured` on import | Add missing env vars to that job’s `env:` block (same names as production). `config/settings_production.py` requires non-empty `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `DEFAULT_FROM_EMAIL` (not `noreply@careon.local`), PostgreSQL `DATABASE_URL`, and a non-`django-insecure-*` `DJANGO_SECRET_KEY`. |
+| `ImproperlyConfigured` on import | Add missing env vars to that job’s `env:` block (same names as production). `config/settings_production.py` requires non-empty `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `DEFAULT_FROM_EMAIL` (not `noreply@carelane.local`), PostgreSQL `DATABASE_URL`, and a non-`django-insecure-*` `DJANGO_SECRET_KEY`. |
 | `migrate` errors | Ensure migrations are compatible with Postgres 16; fix forward in a normal PR (do not relax production checks). |
 | Intermittent DB connection refused | The workflow waits on `127.0.0.1:5432`; if failures persist, increase the wait loop or Postgres `health-retries`. |
 | `npm audit` / `npm ci` failures | Resolve or bump vulnerable dependencies in `client/` or `theme/static_src/`; audits are intentionally strict (`--audit-level=high`). |

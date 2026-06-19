@@ -96,11 +96,11 @@ class ProviderDecisionFlowTests(TestCase):
         )
 
         resp = self.http.post(
-            reverse('careon:case_placement_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_placement_action', kwargs={'pk': intake.pk}),
             {
                 'status': PlacementRequest.Status.APPROVED,
                 'note': 'Plaatsing bevestigd na aanbiederacceptatie.',
-                'next': reverse('careon:case_detail', kwargs={'pk': intake.pk}),
+                'next': reverse('carelane:case_detail', kwargs={'pk': intake.pk}),
             },
             follow=True,
         )
@@ -116,11 +116,11 @@ class ProviderDecisionFlowTests(TestCase):
         )
 
         resp = self.http.post(
-            reverse('careon:case_placement_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_placement_action', kwargs={'pk': intake.pk}),
             {
                 'status': PlacementRequest.Status.APPROVED,
                 'note': 'Poging tot vroegtijdige goedkeuring.',
-                'next': reverse('careon:case_detail', kwargs={'pk': intake.pk}),
+                'next': reverse('carelane:case_detail', kwargs={'pk': intake.pk}),
             },
             follow=True,
         )
@@ -149,7 +149,7 @@ class ProviderDecisionFlowTests(TestCase):
         intake, _, _ = _bootstrap_intake_with_placement(self.org, self.coordinator)
         anon = Client()
         resp = anon.post(
-            reverse('careon:case_placement_action', kwargs={'pk': intake.pk}),
+            reverse('carelane:case_placement_action', kwargs={'pk': intake.pk}),
             {'status': PlacementRequest.Status.APPROVED, 'note': ''},
         )
         self.assertIn(resp.status_code, [302, 401, 403])
@@ -165,7 +165,7 @@ class ProviderDecisionFlowTests(TestCase):
         case_id = intake.contract_id
 
         resp = self.http.post(
-            reverse('careon:placement_action_api', kwargs={'case_id': case_id}),
+            reverse('carelane:placement_action_api', kwargs={'case_id': case_id}),
             data=json.dumps({'status': 'APPROVED', 'notes': 'Via JSON API.'}),
             content_type='application/json',
         )

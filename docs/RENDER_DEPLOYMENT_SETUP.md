@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-This guide explains how to deploy Careon to Render with proper database configuration.
+This guide explains how to deploy Carelane to Render with proper database configuration.
 
 ## Initial Deployment Steps
 
@@ -33,7 +33,7 @@ The following variables must be set in Render's dashboard. They have `sync: fals
 | -------- | ------- | ------- |
 | `ALLOWED_HOSTS` | `your-app.render.com` | Allowed domain names |
 | `CSRF_TRUSTED_ORIGINS` | `https://your-app.render.com` | CSRF validation origins |
-| `DEFAULT_FROM_EMAIL` | `noreply@careon.nl` | Email sender address |
+| `DEFAULT_FROM_EMAIL` | `noreply@carelane.nl` | Email sender address |
 
 ### Staging pilot (demo logins + Playwright)
 
@@ -91,7 +91,7 @@ Remote seed (when `STAGING_DATABASE_URL` is available locally or in CI secrets):
 
 For a field-by-field checklist of the production environment values, see:
 
-- [`docs/RENDER_ENV_FIX_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RENDER_ENV_FIX_CHECKLIST.md)
+- [`docs/RENDER_ENV_FIX_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/RENDER_ENV_FIX_CHECKLIST.md)
 
 ### Migrations Not Running
 

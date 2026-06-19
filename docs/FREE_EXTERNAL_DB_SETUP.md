@@ -44,14 +44,14 @@ For Render deployments, the **session pooler** is the safer default if you are n
 
 ### 3. Set Render environment variables
 
-In the Render service for `careon-web`, set:
+In the Render service for `carelane-web`, set:
 
 | Variable | Example value |
 |---|---|
 | `DATABASE_URL` | `postgres://postgres.<project-ref>:[PASSWORD]@aws-0-<region>.pooler.supabase.com:5432/postgres` |
-| `ALLOWED_HOSTS` | `careon-web.onrender.com` |
-| `CSRF_TRUSTED_ORIGINS` | `https://careon-web.onrender.com` |
-| `DEFAULT_FROM_EMAIL` | `noreply@careon.nl` |
+| `ALLOWED_HOSTS` | `carelane-web.onrender.com` |
+| `CSRF_TRUSTED_ORIGINS` | `https://carelane-web.onrender.com` |
+| `DEFAULT_FROM_EMAIL` | `noreply@carelane.nl` |
 
 If you use a custom domain, add it to both `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`.
 
@@ -59,7 +59,7 @@ If you use a custom domain, add it to both `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORI
 
 After saving the environment variables:
 
-1. Redeploy the `careon-web` service.
+1. Redeploy the `carelane-web` service.
 2. Confirm startup logs no longer show the `DATABASE_URL` guard failure.
 3. Confirm Django boots with `config.settings_production`.
 4. Run `python manage.py check --deploy` from the deployed environment if available.
@@ -94,7 +94,7 @@ Use this only if you are fine with the 30-day free-instance lifecycle.
 
 1. Create a new Render Postgres database.
 2. Copy the internal or external connection string from the Render dashboard.
-3. Set `DATABASE_URL` in the `careon-web` service to that full connection string.
+3. Set `DATABASE_URL` in the `carelane-web` service to that full connection string.
 4. Keep `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, and `DEFAULT_FROM_EMAIL` configured.
 5. Redeploy.
 
@@ -104,6 +104,6 @@ Render app services and Render databases in the same region should use the inter
 
 ## Related Repo Docs
 
-- [`docs/RENDER_ENV_FIX_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RENDER_ENV_FIX_CHECKLIST.md)
-- [`docs/RENDER_DEPLOYMENT_SETUP.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RENDER_DEPLOYMENT_SETUP.md)
-- [`docs/RELEASE_ROLLOUT_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RELEASE_ROLLOUT_CHECKLIST.md)
+- [`docs/RENDER_ENV_FIX_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/RENDER_ENV_FIX_CHECKLIST.md)
+- [`docs/RENDER_DEPLOYMENT_SETUP.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/RENDER_DEPLOYMENT_SETUP.md)
+- [`docs/RELEASE_ROLLOUT_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/RELEASE_ROLLOUT_CHECKLIST.md)

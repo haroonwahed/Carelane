@@ -1,4 +1,4 @@
-# CareOn Pilot Findings Session 001
+# Carelane Pilot Findings Session 001
 
 **Purpose:** concise findings note for the first closed-pilot session.
 **Source inputs reviewed:** `PILOT_FEEDBACK_LOG_V1.md`, `PILOT_RISK_REGISTER_V1.md`, `PILOT_SESSION_PLAN_V1.md`, `PILOT_FACILITATION_SCRIPT_V1.md`.

@@ -41,7 +41,7 @@ function manualVendorChunks(id: string) {
 
   export default defineConfig(({ command }) => {
     /** Django for Vite proxy (API, OIDC, server-rendered auth pages). Default matches `manage.py runserver 127.0.0.1:8000`. */
-    const djangoDevOrigin = (process.env.CAREON_DJANGO_DEV_ORIGIN || 'http://127.0.0.1:8000').replace(
+    const djangoDevOrigin = (process.env.CARELANE_DJANGO_DEV_ORIGIN || 'http://127.0.0.1:8000').replace(
       /\/$/,
       '',
     );

@@ -458,7 +458,7 @@ function DocumentPreview({
           </>
         ) : (
           <div className="rounded-[10px] border border-border/70 bg-muted/30 p-3 text-xs text-muted-foreground">
-            Geen lokaal bestand opgeslagen. Gebruik de externe handoffreferentie voor veilige uitwisseling buiten CareOn.
+            Geen lokaal bestand opgeslagen. Gebruik de externe handoffreferentie voor veilige uitwisseling buiten Carelane.
           </div>
         )}
         {document.linkedTo.type === "geen" && document.hasStoredFile && (

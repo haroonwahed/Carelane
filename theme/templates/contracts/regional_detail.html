@@ -6,7 +6,7 @@
     <nav class="ds-breadcrumb">
         <a class="ds-breadcrumb-link" href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/">Regiekamer</a>
         <span class="ds-breadcrumb-sep">/</span>
-        <a class="ds-breadcrumb-link" href="{% url 'careon:regional_list' %}">Zorgregio's</a>
+        <a class="ds-breadcrumb-link" href="{% url 'carelane:regional_list' %}">Zorgregio's</a>
         <span class="ds-breadcrumb-sep">/</span>
         <span class="ds-breadcrumb-current">{{ region.region_name }}</span>
     </nav>
@@ -42,8 +42,8 @@
                 </dl>
             </div>
             <div class="ds-detail-actions">
-                <a href="{% url 'careon:regional_update' region.pk %}" class="btn btn-secondary">Bewerken</a>
-                <a href="{% url 'careon:regional_list' %}" class="btn btn-ghost">Terug naar regio's</a>
+                <a href="{% url 'carelane:regional_update' region.pk %}" class="btn btn-secondary">Bewerken</a>
+                <a href="{% url 'carelane:regional_list' %}" class="btn btn-ghost">Terug naar regio's</a>
             </div>
         </div>
     </section>
@@ -121,7 +121,7 @@
                 <div class="ds-list-shell">
                     {% for municipality in region.served_municipalities.all %}
                     <div class="ds-list-row">
-                        <a href="{% url 'careon:municipality_detail' municipality.pk %}" class="ds-link">{{ municipality.municipality_name }}</a>
+                        <a href="{% url 'carelane:municipality_detail' municipality.pk %}" class="ds-link">{{ municipality.municipality_name }}</a>
                         <div style="display:flex;gap:6px;align-items:center;">
                             <span class="ds-summary-caption">{{ municipality.municipality_code }}</span>
                             {% if not municipality.max_wait_days %}
@@ -142,7 +142,7 @@
                 <div class="ds-list-shell">
                     {% for provider in region.linked_providers.all %}
                     <div class="ds-list-row">
-                        <a href="{% url 'careon:client_detail' provider.pk %}" class="ds-link">{{ provider.name }}</a>
+                        <a href="{% url 'carelane:client_detail' provider.pk %}" class="ds-link">{{ provider.name }}</a>
                         <span class="badge-sm badge-green">{{ provider.client_type }}</span>
                     </div>
                     {% endfor %}
@@ -222,7 +222,7 @@
                         <dd>{{ region.updated_at|date:"d-m-Y H:i" }}</dd>
                     </div>
                 </dl>
-                <a href="{% url 'careon:regional_update' region.pk %}" class="btn btn-primary ds-btn-block">Regio bijwerken</a>
+                <a href="{% url 'carelane:regional_update' region.pk %}" class="btn btn-primary ds-btn-block">Regio bijwerken</a>
             </section>
         </aside>
     </div>

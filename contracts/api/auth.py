@@ -56,7 +56,7 @@ def current_user_api(request):
     """Session-backed actor for SPA shell (no client-side role switching)."""
     organization = _active_organization(request)
     workflow_role = resolve_actor_role(user=request.user, organization=organization)
-    pilot_ui = bool(getattr(settings, 'CAREON_PILOT_UI', False))
+    pilot_ui = bool(getattr(settings, 'CARELANE_PILOT_UI', False))
     payload = {
         'id': request.user.pk,
         'email': getattr(request.user, 'email', '') or '',
@@ -69,7 +69,7 @@ def current_user_api(request):
         },
         'flags': {
             'pilotUi': pilot_ui,
-            'spaOnlyWorkflow': bool(getattr(settings, 'CAREON_PILOT_SPA_ONLY', False)),
+            'spaOnlyWorkflow': bool(getattr(settings, 'CARELANE_PILOT_SPA_ONLY', False)),
         },
     }
     if organization is not None:

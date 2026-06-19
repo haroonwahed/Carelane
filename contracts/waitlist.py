@@ -1,7 +1,7 @@
 """
 contracts/waitlist.py
 
-Waitlist prioritization logic for CareOn.
+Waitlist prioritization logic for Carelane.
 
 Default rule: first-come, first-served based on casus.start_date
               (aanmeldingsdatum in het systeem).

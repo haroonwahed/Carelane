@@ -146,20 +146,20 @@ class UIButtonAndFlowIntegrityTests(TestCase):
     def test_click_targets_and_forms_are_wired_on_core_pages(self):
         pages = [
             reverse('dashboard'),
-            reverse('careon:case_create'),
-            reverse('careon:case_list'),
-            reverse('careon:document_list'),
-            reverse('careon:deadline_list'),
-            reverse('careon:task_list'),
-            reverse('careon:signal_list'),
-            reverse('careon:budget_list'),
-            reverse('careon:placement_list'),
-            reverse('careon:intake_list'),
-            reverse('careon:workflow_dashboard'),
-            reverse('careon:municipality_list'),
-            reverse('careon:reports_dashboard'),
-            reverse('careon:organization_team'),
-            reverse('careon:notification_list'),
+            reverse('carelane:case_create'),
+            reverse('carelane:case_list'),
+            reverse('carelane:document_list'),
+            reverse('carelane:deadline_list'),
+            reverse('carelane:task_list'),
+            reverse('carelane:signal_list'),
+            reverse('carelane:budget_list'),
+            reverse('carelane:placement_list'),
+            reverse('carelane:intake_list'),
+            reverse('carelane:workflow_dashboard'),
+            reverse('carelane:municipality_list'),
+            reverse('carelane:reports_dashboard'),
+            reverse('carelane:organization_team'),
+            reverse('carelane:notification_list'),
         ]
 
         for page in pages:
@@ -195,13 +195,13 @@ class UIButtonAndFlowIntegrityTests(TestCase):
 
     def test_labels_reference_real_elements_on_core_pages(self):
         pages = [
-            reverse('careon:case_create'),
-            reverse('careon:task_create'),
-            reverse('careon:signal_create'),
-            reverse('careon:assessment_create'),
-            reverse('careon:budget_create'),
-            reverse('careon:municipality_create'),
-            reverse('careon:regional_create'),
+            reverse('carelane:case_create'),
+            reverse('carelane:task_create'),
+            reverse('carelane:signal_create'),
+            reverse('carelane:assessment_create'),
+            reverse('carelane:budget_create'),
+            reverse('carelane:municipality_create'),
+            reverse('carelane:regional_create'),
         ]
 
         for page in pages:
@@ -224,16 +224,16 @@ class UIButtonAndFlowIntegrityTests(TestCase):
             )
 
     def test_case_create_redirects_to_spa_nieuwe_casus(self):
-        response = self.client.get(reverse('careon:case_create'), follow=False)
+        response = self.client.get(reverse('carelane:case_create'), follow=False)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/casussen/nieuw/')
 
-        shell_response = self.client.get(reverse('careon:case_create'), follow=True)
+        shell_response = self.client.get(reverse('carelane:case_create'), follow=True)
         self.assertEqual(shell_response.status_code, 200)
         html = shell_response.content.decode('utf-8')
         self.assertIn('id="root"', html)
         self.assertIn('/static/spa/assets/index-', html)
-        self.assertIsNone(shell_response.get('X-Careon-Template-Version'))
+        self.assertIsNone(shell_response.get('X-Carelane-Template-Version'))
         self.assertNotIn('Intakeformulier', html)
 
     def test_case_create_entry_links_stay_versioned(self):
@@ -245,7 +245,7 @@ class UIButtonAndFlowIntegrityTests(TestCase):
         self.assertNotIn('href="/care/casussen/new/"', dashboard_html)
         self.assertNotIn('/care/casussen/new/?v=', dashboard_html)
 
-        list_response = self.client.get(reverse('careon:case_list'), follow=True)
+        list_response = self.client.get(reverse('carelane:case_list'), follow=True)
         self.assertEqual(list_response.status_code, 200)
         list_html = list_response.content.decode('utf-8')
         self.assertIn('href="/care/casussen/new/"', list_html)

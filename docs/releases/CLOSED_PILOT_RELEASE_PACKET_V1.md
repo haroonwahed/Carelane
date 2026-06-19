@@ -1,11 +1,11 @@
-# CareOn Closed Pilot Release Packet v1
+# Carelane Closed Pilot Release Packet v1
 
 **Purpose:** evidence-backed release packet for a controlled closed pilot.
 **Decision posture:** demo-ready and closed-pilot-ready are GO; production-ready remains NO-GO until real operational evidence exists.
 
 ## Release scope
 
-This packet covers the current CareOn pilot release wave for:
+This packet covers the current Carelane pilot release wave for:
 
 - canonical workflow execution
 - tenant isolation and role/permission behavior

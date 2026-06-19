@@ -124,7 +124,7 @@ class ProviderDecisionAuthTests(TestCase):
         self.other_provider.save()
 
     def _url(self, case_id):
-        return reverse('careon:provider_decision_api', kwargs={'case_id': case_id})
+        return reverse('carelane:provider_decision_api', kwargs={'case_id': case_id})
 
     def _accept_payload(self):
         return json.dumps({'status': 'ACCEPTED'})

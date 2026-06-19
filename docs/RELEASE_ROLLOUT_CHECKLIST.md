@@ -1,9 +1,9 @@
-# CareOn Release Rollout Checklist
+# Carelane Release Rollout Checklist
 
 Foundation reference:
 
 - `docs/START_HERE.md`
-- `docs/Careon_Operational_Constitution_v2.md` / `docs/Careon_Operational_Constitution_v2.docx`
+- `docs/Carelane_Operational_Constitution_v2.md` / `docs/Carelane_Operational_Constitution_v2.docx`
 - `docs/ZORG_OS_FOUNDATION_APPROACH.md`
 - `docs/FOUNDATION_LOCK.md`
 - `docs/PILOT_PROOF_PACKAGE.md` (rehearsal GO/NO-GO bundle)
@@ -100,7 +100,7 @@ Latest reviewed evidence:
 - `reports/release_evidence_bundle.json` → `timeline_gate.go=true`, `no_go_reasons=[]`
 - `./scripts/run_golden_path_e2e.sh --start-server` → **GO** (2026-05-29; 12 passed, 1 skipped)
 - Targeted provider / golden-path rerun → **GO** (2026-05-31; 9 passed, 1 skipped) after stabilizing Playwright login waits
-- `./scripts/staging_pilot_signoff.sh` → **GO** on `https://careon-web.onrender.com`
+- `./scripts/staging_pilot_signoff.sh` → **GO** on `https://carelane-web.onrender.com`
 
 Explicit blockers before production promotion:
 - Production promotion has **not** started.
@@ -148,7 +148,7 @@ Reference release SHA:
 | Step | Owner | Target timestamp | Actual timestamp | Evidence to capture |
 |---|---|---|---|---|
 | Staging preflight | Release captain + Ops owner | `T-90m` | 2026-05-16 | `ca146bdc`; Render env pilot bootstrap + demo seed |
-| Staging deploy | Backend owner + Ops owner | `T-60m` | 2026-05-16 | Live on https://careon-web.onrender.com |
+| Staging deploy | Backend owner + Ops owner | `T-60m` | 2026-05-16 | Live on https://carelane-web.onrender.com |
 | Staging verification | QA owner | `T-45m` | 2026-05-16 | `staging_pilot_signoff.sh` GO (9 Playwright / 3 skipped) |
 | Staging sign-off | Release captain | `T-30m` | 2026-05-16 | See `docs/RELEASE_EXECUTION_SHEET_2026-05-30.md` |
 | Production preflight | Release captain + Ops owner | `T-15m` | — | BLOCKED: backup confirmation, change window confirmation, rollback owner confirmation still need production scheduling |
@@ -195,7 +195,7 @@ git fetch --all --tags
 git log --oneline -5 "$RELEASE_SHA"
 python manage.py showmigrations contracts
 python manage.py check
-ls -lth /backups/careon/ | head -5
+ls -lth /backups/carelane/ | head -5
 ```
 
 Record:
@@ -232,7 +232,7 @@ git checkout "$RELEASE_SHA"
 pip install -r requirements/runtime.txt
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
-sudo systemctl restart gunicorn-careon
+sudo systemctl restart gunicorn-carelane
 ```
 
 Record:
@@ -323,7 +323,7 @@ git fetch --all --tags
 git log --oneline -5 "$RELEASE_SHA"
 python manage.py showmigrations contracts
 python manage.py check --deploy
-ls -lth /backups/careon/ | head -5
+ls -lth /backups/carelane/ | head -5
 ```
 
 Record:
@@ -361,7 +361,7 @@ git checkout "$RELEASE_SHA"
 pip install -r requirements/runtime.txt
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
-sudo systemctl restart gunicorn-careon
+sudo systemctl restart gunicorn-carelane
 ```
 
 Record:
@@ -450,7 +450,7 @@ Stop rollout and switch to rollback if any of the following occur:
 
 Rollback reference:
 
-- [docs/ROLLBACK_RUNBOOK.md](/Users/haroonwahed/Documents/Projects/Careon/docs/ROLLBACK_RUNBOOK.md)
+- [docs/ROLLBACK_RUNBOOK.md](/Users/haroonwahed/Documents/Projects/Carelane/docs/ROLLBACK_RUNBOOK.md)
 
 ## 9. Release Evidence To Record
 
@@ -471,7 +471,7 @@ Capture these before closing the rollout:
 
 Record rollout evidence in:
 
-- [docs/DRILL_LOG.md](/Users/haroonwahed/Documents/Projects/Careon/docs/DRILL_LOG.md)
+- [docs/DRILL_LOG.md](/Users/haroonwahed/Documents/Projects/Carelane/docs/DRILL_LOG.md)
 
 ## 10. Current status summary
 

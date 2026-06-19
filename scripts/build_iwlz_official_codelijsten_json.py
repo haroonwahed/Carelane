@@ -43,7 +43,7 @@ def _unwrap_codelijst(blob: object) -> dict[str, object] | None:
 
 
 def _fetch_json(url: str) -> object:
-    req = urllib.request.Request(url, headers={"User-Agent": "Careon-build-script/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Carelane-build-script/1.0"})
     with urllib.request.urlopen(req, timeout=120) as resp:  # noqa: S310
         return json.loads(resp.read().decode("utf-8"))
 
@@ -100,7 +100,7 @@ def main() -> None:
             "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "tables": len(tables),
             "note": (
-                "Alleen voor read-only arrangement hints in CareOn. "
+                "Alleen voor read-only arrangement hints in Carelane. "
                 "Raadpleeg de actuele iWlz-documentatie voor implementatiekeuzes."
             ),
         },

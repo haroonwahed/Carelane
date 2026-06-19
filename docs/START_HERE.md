@@ -1,6 +1,6 @@
-# Start here — Zorg OS / CareOn
+# Start here — Zorg OS / Carelane
 
-This repository is **CareOn (Zorg OS)**: a **regulated operational coordination layer** for care placement under scarcity. It is **not** a generic SaaS bundle, municipal ERP, or permanent youth-care dossier.
+This repository is **Carelane (Zorg OS)**: a **regulated operational coordination layer** for care placement under scarcity. It is **not** a generic SaaS bundle, municipal ERP, or permanent youth-care dossier.
 
 For a compact view of the active document set, also see [`INDEX.md`](./INDEX.md).
 
@@ -8,8 +8,8 @@ For a compact view of the active document set, also see [`INDEX.md`](./INDEX.md)
 
 | Document | Use when |
 |----------|----------|
-| [`Careon_Operational_Constitution_v2.md`](./Careon_Operational_Constitution_v2.md) | Product doctrine, UX law, roles, non-negotiables |
-| [`Careon_Operational_Constitution_v2.docx`](./Careon_Operational_Constitution_v2.docx) | Same content — formatted master for sign-off |
+| [`Carelane_Operational_Constitution_v2.md`](./Carelane_Operational_Constitution_v2.md) | Product doctrine, UX law, roles, non-negotiables |
+| [`Carelane_Operational_Constitution_v2.docx`](./Carelane_Operational_Constitution_v2.docx) | Same content — formatted master for sign-off |
 | [`FOUNDATION_LOCK.md`](./FOUNDATION_LOCK.md) | Persisted `WorkflowState`, API `phase` keys, mutation endpoints, decision engine, UI density guardrails |
 | [`PRODUCT_ENGINEERING_BACKLOG_PRIORITIZED.md`](./PRODUCT_ENGINEERING_BACKLOG_PRIORITIZED.md) | **MoSCoW + top-15** execution order for product/engineering debt (**provider-chain-first** default; pilot/rehearsal in alternate lens) |
 | [`AGENTS.md`](../AGENTS.md) | Agent and contributor operating rules (workflow-first, UI modes, risk class) |
@@ -39,6 +39,6 @@ Supporting: [`ZORG_OS_FOUNDATION_APPROACH.md`](./ZORG_OS_FOUNDATION_APPROACH.md)
 - [`PRODUCT_ENGINEERING_BACKLOG_PRIORITIZED.md`](./PRODUCT_ENGINEERING_BACKLOG_PRIORITIZED.md) — **single prioritized queue** (Must/Should/Could/Won’t + top 15).
 - [`ACTOR_PROFILES_ROADMAP.md`](./ACTOR_PROFILES_ROADMAP.md) — Aanmelder vs `WorkflowRole` alignment.
 - [`FRONTEND_UI_MODE_AUDIT.md`](./FRONTEND_UI_MODE_AUDIT.md) — Metric strip / NBA / timeline placement rules.
-- [`CAREON_DESIGN_LAW_AUDIT_AND_ROADMAP.md`](./CAREON_DESIGN_LAW_AUDIT_AND_ROADMAP.md) — current-platform audit against the CareOn Design Laws plus the implementation roadmap.
-- [`CAREON_DESIGN_LAW_BACKLOG.md`](./CAREON_DESIGN_LAW_BACKLOG.md) — ordered execution backlog derived from the design-law roadmap.
+- [`CARELANE_DESIGN_LAW_AUDIT_AND_ROADMAP.md`](./CARELANE_DESIGN_LAW_AUDIT_AND_ROADMAP.md) — current-platform audit against the Carelane Design Laws plus the implementation roadmap.
+- [`CARELANE_DESIGN_LAW_BACKLOG.md`](./CARELANE_DESIGN_LAW_BACKLOG.md) — ordered execution backlog derived from the design-law roadmap.
 - [`MATCHING_EXPLAINABILITY.md`](./MATCHING_EXPLAINABILITY.md) — Advisory matching, factors, rejection signals.

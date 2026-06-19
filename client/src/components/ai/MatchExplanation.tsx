@@ -32,7 +32,7 @@ export function MatchExplanation({
   };
 
   return (
-    <div className="premium-card p-4 border careon-alert-info">
+    <div className="premium-card p-4 border carelane-alert-info">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <TrendingUp size={16} className="text-blue-base" />

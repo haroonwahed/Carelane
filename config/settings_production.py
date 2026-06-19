@@ -25,7 +25,7 @@ if not CSRF_TRUSTED_ORIGINS:
     raise ImproperlyConfigured('CSRF_TRUSTED_ORIGINS must be set in production.')
 if SECRET_KEY.startswith('django-insecure-'):
     raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set in production.')
-if DEFAULT_FROM_EMAIL == 'noreply@careon.local':
+if DEFAULT_FROM_EMAIL == 'noreply@carelane.local':
     raise ImproperlyConfigured('DEFAULT_FROM_EMAIL must be set in production.')
 if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
     raise ImproperlyConfigured('DATABASE_URL must point to PostgreSQL in production.')

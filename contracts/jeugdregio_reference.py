@@ -29,7 +29,7 @@ JEUGDREGIO_REFERENCE_SOURCE = {
         "consulted_at": "2026-06-14",
         "original_source_reference": "https://service.pdok.nl/kadaster/bestuurlijkegebieden/wfs/v1_0?service=WFS&version=2.0.0&request=GetFeature&typeName=Gemeentegebied&outputFormat=application/json&srsName=EPSG:4326",
         "source_checksum": "c2ed8a042b8b33fed75ce993fcba3636c479d6ab531199c500c3d78d31707b5e",
-        "notes": "The external source is the authoritative municipality geometry/name baseline. CareOn does not treat the checked-in CSVs as the source of truth.",
+        "notes": "The external source is the authoritative municipality geometry/name baseline. Carelane does not treat the checked-in CSVs as the source of truth.",
     },
     "imported_source_copy": {
         "regions_csv": "contracts/management/seed_data/regios_jeugdregio.csv",
@@ -38,18 +38,18 @@ JEUGDREGIO_REFERENCE_SOURCE = {
         "municipality_mapping_csv_checksum": "1e2a5c27ecbcbca2778abffb44bde65dc81d340ec7c7cb10eef8aaf3d4fd87a8",
         "municipality_mvp_csv": "contracts/management/seed_data/gemeenten_jeugdregio_mvp.csv",
         "municipality_mvp_csv_checksum": None,
-        "notes": "These CSVs are the CareOn-imported source copies used to build the normalized reference snapshot.",
+        "notes": "These CSVs are the Carelane-imported source copies used to build the normalized reference snapshot.",
     },
     "normalized_careon_snapshot": {
         "manifest_path": "contracts/management/seed_data/jeugdregio_reference_manifest.json",
         "manifest_checksum": None,
-        "notes": "Normalized CareOn reference snapshot with canonical municipality naming and CareOn-generated region codes.",
+        "notes": "Normalized Carelane reference snapshot with canonical municipality naming and Carelane-generated region codes.",
     },
     "tenant_specific_records": {
         "included": False,
         "notes": "Tenant-specific records are validated separately and are not part of the reference snapshot.",
     },
-    "mapping_policy": "CareOn curated mapping policy from contracts/management/commands/seed_jeugdregio_backbone.py (province defaults + municipality overrides)",
+    "mapping_policy": "Carelane curated mapping policy from contracts/management/commands/seed_jeugdregio_backbone.py (province defaults + municipality overrides)",
 }
 
 MUNICIPALITY_NAME_ALIASES = {
@@ -171,7 +171,7 @@ def build_jeugdregio_manifest() -> dict[str, Any]:
         active = str(row.get("actief") or "").strip().lower() == "true"
         code = region_code_from_name(index=index, name=name)
         coverage_status = "ACTIVE_POPULATED" if active else "INACTIVE"
-        coverage_reason = "Regio heeft gekoppelde gemeenten in de CareOn-snapshot."
+        coverage_reason = "Regio heeft gekoppelde gemeenten in de Carelane-snapshot."
         reference = JeugdregioRegionReference(
             name=name,
             code=code,
@@ -218,13 +218,13 @@ def build_jeugdregio_manifest() -> dict[str, Any]:
         municipalities = tuple(sorted(region_entry["municipalities"]))
         if municipalities:
             coverage_status = "ACTIVE_POPULATED" if reference.active else "INACTIVE_POPULATED"
-            coverage_reason = "Regio heeft gekoppelde gemeenten in de CareOn-snapshot."
+            coverage_reason = "Regio heeft gekoppelde gemeenten in de Carelane-snapshot."
         elif reference.active:
             coverage_status = "ACTIVE_EMPTY"
-            coverage_reason = "Actieve regio zonder deelnemende gemeenten in de CareOn-snapshot; handmatige review vereist."
+            coverage_reason = "Actieve regio zonder deelnemende gemeenten in de Carelane-snapshot; handmatige review vereist."
         else:
             coverage_status = "INACTIVE_EMPTY"
-            coverage_reason = "Inactieve regio zonder deelnemende gemeenten in de CareOn-snapshot."
+            coverage_reason = "Inactieve regio zonder deelnemende gemeenten in de Carelane-snapshot."
         region_entry["reference"] = JeugdregioRegionReference(
             name=reference.name,
             code=reference.code,
@@ -278,7 +278,7 @@ def build_jeugdregio_manifest() -> dict[str, Any]:
             "peildatum": JEUGDREGIO_REFERENCE_PEILDATUM.isoformat(),
             "source": provenance,
             "notes": (
-                "This snapshot is a CareOn reference package. It is not treated as a live "
+                "This snapshot is a Carelane reference package. It is not treated as a live "
                 "authoritative source during runtime; it documents the checked-in mapping only."
             ),
         },
@@ -335,7 +335,7 @@ def validate_jeugdregio_manifest(manifest: dict[str, Any] | None = None) -> dict
                 "code": "ACTIVE_REGION_WITHOUT_MUNICIPALITIES",
                 "region": region.get("name"),
                 "classification": "FAULTY",
-                "message": "Actieve jeugdhulpregio heeft geen deelnemende gemeenten in de CareOn-snapshot.",
+                "message": "Actieve jeugdhulpregio heeft geen deelnemende gemeenten in de Carelane-snapshot.",
             })
         elif not municipalities and coverage_status == "INACTIVE_EMPTY":
             issues.append({
@@ -343,7 +343,7 @@ def validate_jeugdregio_manifest(manifest: dict[str, Any] | None = None) -> dict
                 "code": "INACTIVE_REGION_WITHOUT_MUNICIPALITIES",
                 "region": region.get("name"),
                 "classification": "HISTORICAL",
-                "message": "Inactieve jeugdhulpregio heeft geen deelnemende gemeenten in de CareOn-snapshot.",
+                "message": "Inactieve jeugdhulpregio heeft geen deelnemende gemeenten in de Carelane-snapshot.",
             })
 
     municipalities_without_region = sorted(

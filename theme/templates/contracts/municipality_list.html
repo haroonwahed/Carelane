@@ -9,7 +9,7 @@
             <p class="provider-workspace__subtitle">Overzicht van bediende gemeenten en regionale drukpatronen.</p>
         </div>
         <div class="page-actions">
-            <a href="{% url 'careon:municipality_create' %}" class="btn btn-primary">Nieuwe gemeente</a>
+            <a href="{% url 'carelane:municipality_create' %}" class="btn btn-primary">Nieuwe gemeente</a>
         </div>
     </div>
 
@@ -88,7 +88,7 @@
                 <tbody>
                     {% for municipality in municipalities %}
                     <tr>
-                        <td><a href="{% url 'careon:municipality_detail' municipality.pk %}">{{ municipality.municipality_name }}</a></td>
+                        <td><a href="{% url 'carelane:municipality_detail' municipality.pk %}">{{ municipality.municipality_name }}</a></td>
                         <td>{{ municipality.municipality_code|default:"—" }}</td>
                         <td><span class="ds-badge badge-blue">{{ municipality.provider_count }}</span></td>
                         <td>{{ municipality.care_domains_display|truncatechars:36 }}</td>
@@ -113,13 +113,13 @@
                                 <span class="oversight-pressure-chip oversight-pressure-chip--neutral">Ingericht</span>
                             {% endif %}
                         </td>
-                        <td class="td-right"><a href="{% url 'careon:municipality_update' municipality.pk %}" class="btn btn-ghost">Wijzigen</a></td>
+                        <td class="td-right"><a href="{% url 'carelane:municipality_update' municipality.pk %}" class="btn btn-ghost">Wijzigen</a></td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="8" class="td-empty">
                             U hebt nog geen gemeenten ingesteld.
-                            <div class=""><a href="{% url 'careon:municipality_create' %}" class="btn btn-primary">Voeg eerste gemeente toe</a></div>
+                            <div class=""><a href="{% url 'carelane:municipality_create' %}" class="btn btn-primary">Voeg eerste gemeente toe</a></div>
                         </td>
                     </tr>
                     {% endfor %}

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Restart (or start) Careon local dev servers: Django on :8000, Vite on :3000.
+# Restart (or start) Carelane local dev servers: Django on :8000, Vite on :3000.
 # Run from anywhere:  bash scripts/dev-restart.sh
 # Or from repo root:   ./scripts/dev-restart.sh
 
@@ -8,12 +8,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-BACKEND_PORT="${CAREON_BACKEND_PORT:-8000}"
-FRONTEND_PORT="${CAREON_FRONTEND_PORT:-3000}"
-BACKEND_LOG="${CAREON_BACKEND_LOG:-/tmp/careon-backend.log}"
-FRONTEND_LOG="${CAREON_FRONTEND_LOG:-/tmp/careon-frontend.log}"
-BACKEND_PID_FILE="${CAREON_BACKEND_PID_FILE:-/tmp/careon-dev-backend.pid}"
-FRONTEND_PID_FILE="${CAREON_FRONTEND_PID_FILE:-/tmp/careon-dev-frontend.pid}"
+BACKEND_PORT="${CARELANE_BACKEND_PORT:-8000}"
+FRONTEND_PORT="${CARELANE_FRONTEND_PORT:-3000}"
+BACKEND_LOG="${CARELANE_BACKEND_LOG:-/tmp/carelane-backend.log}"
+FRONTEND_LOG="${CARELANE_FRONTEND_LOG:-/tmp/carelane-frontend.log}"
+BACKEND_PID_FILE="${CARELANE_BACKEND_PID_FILE:-/tmp/carelane-dev-backend.pid}"
+FRONTEND_PID_FILE="${CARELANE_FRONTEND_PID_FILE:-/tmp/carelane-dev-frontend.pid}"
 
 if [[ ! -x "${ROOT}/.venv/bin/python" ]]; then
   echo "error: ${ROOT}/.venv/bin/python not found. Create the venv and install deps first." >&2
@@ -49,7 +49,7 @@ stop_pidfile() {
   fi
 }
 
-echo "== Careon dev restart =="
+echo "== Carelane dev restart =="
 stop_pidfile "${BACKEND_PID_FILE}"
 stop_pidfile "${FRONTEND_PID_FILE}"
 stop_port "${BACKEND_PORT}"

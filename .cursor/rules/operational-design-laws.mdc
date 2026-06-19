@@ -1,11 +1,11 @@
 ---
-description: Enforceable operational UX laws for CareOn consolidation phase. Apply to all care routes, layout, and matching.
+description: Enforceable operational UX laws for Carelane consolidation phase. Apply to all care routes, layout, and matching.
 alwaysApply: true
 ---
 
-# CareOn Operational UX Laws
+# Carelane Operational UX Laws
 
-CareOn is an **operational coordination system under scarcity**, not a healthcare SaaS dashboard.
+Carelane is an **operational coordination system under scarcity**, not a healthcare SaaS dashboard.
 
 ## Archetypes (exactly one per route)
 

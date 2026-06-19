@@ -46,7 +46,7 @@ class AuditLogExportApiTest(TestCase):
 
     def test_gemeente_csv_export(self):
         self.client.login(username='export_gemeente', password='passE1234!')
-        response = self.client.get(reverse('careon:audit_log_export_api'))
+        response = self.client.get(reverse('carelane:audit_log_export_api'))
         self.assertEqual(response.status_code, 200)
         self.assertIn('text/csv', response['Content-Type'])
         self.assertIn(b'timestamp', response.content)
@@ -54,7 +54,7 @@ class AuditLogExportApiTest(TestCase):
 
     def test_gemeente_json_export(self):
         self.client.login(username='export_gemeente', password='passE1234!')
-        response = self.client.get(reverse('careon:audit_log_export_api') + '?format=json')
+        response = self.client.get(reverse('carelane:audit_log_export_api') + '?format=json')
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertGreaterEqual(payload.get('rowCount', 0), 1)
@@ -101,7 +101,7 @@ class CaseDisputeExportApiTest(TestCase):
 
     def test_dispute_export_json(self):
         self.client.login(username='dispute_user', password='passD1234!')
-        url = reverse('careon:case_dispute_export_api', kwargs={'case_id': self.case.pk})
+        url = reverse('carelane:case_dispute_export_api', kwargs={'case_id': self.case.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, response.content.decode())
         payload = response.json()
@@ -118,5 +118,5 @@ class CaseDisputeExportApiTest(TestCase):
             is_active=True,
         )
         self.client.login(username='other_dispute', password='passO1234!')
-        url = reverse('careon:case_dispute_export_api', kwargs={'case_id': self.case.pk})
+        url = reverse('carelane:case_dispute_export_api', kwargs={'case_id': self.case.pk})
         self.assertEqual(self.client.get(url).status_code, 404)

@@ -1,6 +1,6 @@
-# CareOn Secrets Inventory
+# Carelane Secrets Inventory
 
-**Purpose:** inventory of environment variables and credentials required to boot, secure, observe, and operate CareOn.
+**Purpose:** inventory of environment variables and credentials required to boot, secure, observe, and operate Carelane.
 **Rule:** do not store real secret values here. Document metadata only.
 
 ## Scope
@@ -47,8 +47,8 @@ This inventory covers the runtime and CI variables that affect:
 | `SENTRY_ENVIRONMENT` | Monitoring environment label | monitoring | Optional | Recommended | Recommended | Ops / Observability | Update when environment naming changes. |
 | `SENTRY_RELEASE` | Release identifier for monitoring | monitoring, deployment | Optional | Recommended | Recommended | Release captain / Ops | Set per deploy; not a secret but required for traceability. |
 | `DJANGO_TEST_LOG_LEVEL` | Test logging noise control | boot, QA | Optional | Optional | Optional | QA / Engineering | No rotation; keep aligned with CI/debug policy. |
-| `CAREON_PILOT_UI` | Pilot UI flag | deployment | Optional | Common | Common | Product / Ops | Change only via release coordination. |
-| `CAREON_PILOT_SPA_ONLY` | Pilot SPA-only mode flag | deployment | Optional | Common | Common | Product / Ops | Change only via release coordination. |
+| `CARELANE_PILOT_UI` | Pilot UI flag | deployment | Optional | Common | Common | Product / Ops | Change only via release coordination. |
+| `CARELANE_PILOT_SPA_ONLY` | Pilot SPA-only mode flag | deployment | Optional | Common | Common | Product / Ops | Change only via release coordination. |
 | `PILOT_AUTO_BOOTSTRAP` | Auto-bootstrap staging/pilot data | deployment | Optional | Common | Rare | Ops | Disable outside controlled bootstrap windows. |
 | `PILOT_FORCE_RESET` | Force full demo reset | deployment | Optional | Controlled use only | No | Ops / Release captain | Use only in maintenance windows; destructive to demo state. |
 | `PILOT_FULL_DEMO_SEED` | Seed full demo work queue | deployment | Optional | Controlled use only | No | Ops / Release captain | Use only when the rehearsal queue must be regenerated. |
@@ -72,8 +72,8 @@ These values are not secrets, but they are release-critical and should be treate
 - `EMAIL_HOST_USER`
 - `EMAIL_PORT`
 - `EMAIL_USE_TLS`
-- `CAREON_PILOT_UI`
-- `CAREON_PILOT_SPA_ONLY`
+- `CARELANE_PILOT_UI`
+- `CARELANE_PILOT_SPA_ONLY`
 
 ## Current gaps / explicit non-requirements
 

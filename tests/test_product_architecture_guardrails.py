@@ -67,11 +67,11 @@ class ProductArchitectureGuardrailTests(TestCase):
 
     def test_legacy_doc_paths_redirect_to_constitution_v2(self):
         """Bookmarks and external wikis may still point at v1.3 filenames."""
-        needles = ['Careon_Operational_Constitution_v2.md', 'FOUNDATION_LOCK.md']
+        needles = ['Carelane_Operational_Constitution_v2.md', 'FOUNDATION_LOCK.md']
         for rel in (
             'docs/Zorg_OS_Product_System_Core_v1_3.md',
             'docs/Zorg_OS_Technical_Foundation_v1_3.md',
-            'docs/CareOn_Design_Constitution_v1_3.md',
+            'docs/Carelane_Design_Constitution_v1_3.md',
         ):
             text = self._read_text(rel)
             self.assertIn('(Redirect)', text)

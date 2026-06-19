@@ -255,7 +255,7 @@ function buildReference(prefix: "CO" | "TMP" | "BR", now = new Date()): string {
   return `${prefix}-${year}-${serial}`;
 }
 
-const NIEUWE_CASUS_DRAFT_STORAGE_KEY = "careon:nieuwe-casus-draft:v2";
+const NIEUWE_CASUS_DRAFT_STORAGE_KEY = "carelane:nieuwe-casus-draft:v2";
 const DRAFT_TTL_MS = 24 * 60 * 60 * 1000; // discard drafts older than 24 hours
 
 type NieuweCasusDraft = {
@@ -665,7 +665,7 @@ export function NieuweCasusPage({ onCancel, onCreated, backLabel = "Terug naar c
   }, [stepError]);
   const [searchRadiusKm, setSearchRadiusKm] = useState<10 | 25 | 50>(25);
   const [urgencyDocument, setUrgencyDocument] = useState<File | null>(null);
-  const [careonReference] = useState(() => buildReference("CO"));
+  const [carelaneReference] = useState(() => buildReference("CO"));
   const [previewPhase, setPreviewPhase] = useState<WorkflowPhase>("casus");
   const [previewRole, setPreviewRole] = useState<VisibilityRole>("gemeente");
   const [revealRequested, setRevealRequested] = useState(false);
@@ -1009,7 +1009,7 @@ export function NieuweCasusPage({ onCancel, onCreated, backLabel = "Terug naar c
     }
 
     const assessmentSummary = [formState.assessment_summary?.trim(), (
-      `Coördinatiecasus: ${careonReference}\n` +
+      `Coördinatiecasus: ${carelaneReference}\n` +
       `Woonplaatsbeginsel: ${selectedGemeenteLabel || "onbekend"}\n` +
       `Privacy: casusgegevens worden AVG-minimaal verwerkt. Persoonsidentificerende gegevens blijven afgeschermd totdat formele koppeling, intake of geautoriseerde toegang nodig is.`
     )].filter(Boolean).join("\n\n");
@@ -1019,7 +1019,7 @@ export function NieuweCasusPage({ onCancel, onCreated, backLabel = "Terug naar c
       return {
         ...formState,
         urgency: operationalUrgency,
-        title: careonReference,
+        title: carelaneReference,
         assessment_summary: assessmentSummary,
       };
     }
@@ -1032,7 +1032,7 @@ export function NieuweCasusPage({ onCancel, onCreated, backLabel = "Terug naar c
     Object.entries({
       ...formState,
       urgency: operationalUrgency,
-      title: careonReference,
+      title: carelaneReference,
       assessment_summary: assessmentSummary,
     }).forEach(([key, value]) => {
       if (Array.isArray(value)) {
@@ -1102,7 +1102,7 @@ export function NieuweCasusPage({ onCancel, onCreated, backLabel = "Terug naar c
       const payload = await apiClient.post<IntakeCreateSuccess>("/care/api/cases/intake-create/", requestBody);
       clearNieuweCasusDraft();
       const createdCaseId = payload.case_id?.trim();
-      setSuccessMessage(`Casus ${payload.title} is aangemaakt. Let op: voeg deze CareOn referentiecode toe aan het dossier van uw client binnen uw ECD. Referentiecode: ${payload.source_reference || careonReference}. Je wordt doorgestuurd naar het nieuwe coördinatietraject.`);
+      setSuccessMessage(`Casus ${payload.title} is aangemaakt. Let op: voeg deze Carelane referentiecode toe aan het dossier van uw client binnen uw ECD. Referentiecode: ${payload.source_reference || carelaneReference}. Je wordt doorgestuurd naar het nieuwe coördinatietraject.`);
       const target =
         payload.redirect_url ||
         (createdCaseId ? toCareCaseDetail(createdCaseId) : `${SPA_DASHBOARD_URL}?page=casussen`);
@@ -1224,8 +1224,8 @@ export function NieuweCasusPage({ onCancel, onCreated, backLabel = "Terug naar c
   }
 
   const canRevealIdentity = previewPhase === "plaatsing" || previewPhase === "intake";
-  const maskedIdentity = `${careonReference} · afgeschermd`;
-  const revealedIdentity = careonReference;
+  const maskedIdentity = `${carelaneReference} · afgeschermd`;
+  const revealedIdentity = carelaneReference;
   const identityDisplay =
     previewRole === "zorgaanbieder" && !canRevealIdentity
       ? maskedIdentity

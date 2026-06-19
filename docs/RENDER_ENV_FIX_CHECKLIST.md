@@ -8,7 +8,7 @@ The production startup path requires a real PostgreSQL `DATABASE_URL`. If Render
 
 ## Local staticfiles refresh for UI verification
 
-When you are checking CareOn theme or login page changes locally, stale hashed static assets can make the page look unchanged or broken even after the source CSS/template has been updated. This is a local render-verify issue, not a product defect.
+When you are checking Carelane theme or login page changes locally, stale hashed static assets can make the page look unchanged or broken even after the source CSS/template has been updated. This is a local render-verify issue, not a product defect.
 
 ### Symptoms of stale staticfiles
 
@@ -36,7 +36,7 @@ After refreshing, restart the local Django server and reload the page you are ch
 
 ## Start command drift (your logs look “old”)
 
-If deploy logs still show **`Starting careon-web revision=`** and **“Set it on the careon-web service”**, but this repo’s **`render.yaml`** uses **`Starting web revision=`**, different `DATABASE_URL` error text, and a direct **gunicorn startup** after `render_startup_checks.py`, then Render is **not** running the current `startCommand` from Git — usually because the service has a **manual Start Command** saved in the dashboard (from an older setup) that overrides the blueprint.
+If deploy logs still show **`Starting carelane-web revision=`** and **“Set it on the carelane-web service”**, but this repo’s **`render.yaml`** uses **`Starting web revision=`**, different `DATABASE_URL` error text, and a direct **gunicorn startup** after `render_startup_checks.py`, then Render is **not** running the current `startCommand` from Git — usually because the service has a **manual Start Command** saved in the dashboard (from an older setup) that overrides the blueprint.
 
 **Fix:** Render requires a **non-empty** Start Command. Use a **one-liner** so it never drifts from the repo:
 
@@ -50,20 +50,20 @@ Alternatively, copy-paste the full script from that file if your deploy layout c
 
 ## Required Variables
 
-Fill these in on **the Python web service that runs your Django start command** (in `render.yaml` the default name is `careon-web`; your dashboard name may differ).
+Fill these in on **the Python web service that runs your Django start command** (in `render.yaml` the default name is `carelane-web`; your dashboard name may differ).
 
 | Variable | Required value | Notes |
 |---|---|---|
 | `DATABASE_URL` | `postgresql://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require` | Must be a real PostgreSQL DSN. `postgres://` is also accepted. |
 | `ALLOWED_HOSTS` | `<your-render-service-hostname>,<your-custom-domain-if-any>` | Use the actual public hostnames that should serve the app. |
 | `CSRF_TRUSTED_ORIGINS` | `https://<your-render-service-hostname>,https://<your-custom-domain-if-any>` | Must include every HTTPS origin that submits forms. |
-| `DEFAULT_FROM_EMAIL` | `noreply@careon.nl` or your real outbound sender | Must not stay at the local default value. |
+| `DEFAULT_FROM_EMAIL` | `noreply@carelane.nl` or your real outbound sender | Must not stay at the local default value. |
 
 ### Recommended (avoid broken public links / tune throughput)
 
 | Variable | Example | Notes |
 |---|---|---|
-| `SPA_ORIGIN` | `https://careon-web.onrender.com` | No trailing slash. Required so Django landing nav (`SPA_ORIGIN/login/`) does not default to `http://127.0.0.1:3000`. |
+| `SPA_ORIGIN` | `https://carelane-web.onrender.com` | No trailing slash. Required so Django landing nav (`SPA_ORIGIN/login/`) does not default to `http://127.0.0.1:3000`. |
 | `GUNICORN_WORKERS` | `2` | Optional override for `gunicorn --workers`. If unset, Render’s `WEB_CONCURRENCY` is used, then `2`. Raise only if the instance has enough RAM. |
 
 ## Fill-In Steps
@@ -102,7 +102,7 @@ If startup still fails:
 
 ## Related Docs
 
-- [`docs/FREE_EXTERNAL_DB_SETUP.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/FREE_EXTERNAL_DB_SETUP.md)
-- [`docs/RENDER_DEPLOYMENT_SETUP.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RENDER_DEPLOYMENT_SETUP.md)
-- [`docs/RELEASE_ROLLOUT_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RELEASE_ROLLOUT_CHECKLIST.md)
-- [`docs/RELEASE_EXECUTION_SHEET_2026-05-30.md`](/Users/haroonwahed/Documents/Projects/Careon/docs/RELEASE_EXECUTION_SHEET_2026-05-30.md)
+- [`docs/FREE_EXTERNAL_DB_SETUP.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/FREE_EXTERNAL_DB_SETUP.md)
+- [`docs/RENDER_DEPLOYMENT_SETUP.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/RENDER_DEPLOYMENT_SETUP.md)
+- [`docs/RELEASE_ROLLOUT_CHECKLIST.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/RELEASE_ROLLOUT_CHECKLIST.md)
+- [`docs/RELEASE_EXECUTION_SHEET_2026-05-30.md`](/Users/haroonwahed/Documents/Projects/Carelane/docs/RELEASE_EXECUTION_SHEET_2026-05-30.md)

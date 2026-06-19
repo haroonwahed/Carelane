@@ -7,7 +7,7 @@
             <h1 class="page-title">Wachttijden</h1>
             </div>
         <div class="page-actions">
-            <a href="{% url 'careon:waittime_create' %}" class="btn btn-primary">Wachttijd registreren</a>
+            <a href="{% url 'carelane:waittime_create' %}" class="btn btn-primary">Wachttijd registreren</a>
         </div>
     </div>
 
@@ -52,7 +52,7 @@
                 <tbody>
                     {% for wt in waittimes %}
                     <tr{% if wt.open_slots <= 0 %} class="row-no-capacity"{% endif %}>
-                        <td><a href="{% url 'careon:waittime_detail' wt.pk %}">{{ wt.provider.name }}</a></td>
+                        <td><a href="{% url 'carelane:waittime_detail' wt.pk %}">{{ wt.provider.name }}</a></td>
                         <td>{{ wt.region }}</td>
                         <td>{{ wt.get_care_type_display }}</td>
                         <td class="td-num {% if wt.wait_days > 42 %}tone-critical{% elif wt.wait_days > 14 %}tone-warning{% else %}tone-good{% endif %}">{{ wt.wait_days }}</td>
@@ -64,13 +64,13 @@
                             {% endif %}
                         </td>
                         <td class="td-num">{{ wt.waiting_list_size }}</td>
-                        <td class="td-right"><a href="{% url 'careon:waittime_update' wt.pk %}" class="btn btn-ghost">Bijwerken</a></td>
+                        <td class="td-right"><a href="{% url 'carelane:waittime_update' wt.pk %}" class="btn btn-ghost">Bijwerken</a></td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="7" class="td-empty">
                             Nog geen wachttijden geregistreerd.
-                            <div class=""><a href="{% url 'careon:waittime_create' %}" class="btn btn-primary">Eerste wachttijd registreren</a></div>
+                            <div class=""><a href="{% url 'carelane:waittime_create' %}" class="btn btn-primary">Eerste wachttijd registreren</a></div>
                         </td>
                     </tr>
                     {% endfor %}

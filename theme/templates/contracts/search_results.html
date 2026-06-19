@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Zoeken{% if q %}: {{ q }}{% endif %} - Careon{% endblock %}
+{% block title %}Zoeken{% if q %}: {{ q }}{% endif %} - Carelane{% endblock %}
 {% block content %}
 <div class="page-wrap page-stack">
     <div class="page-header">
@@ -26,7 +26,7 @@
                 <div class="panel-head"><h2 class="panel-title">Casussen ({{ results.case_records|length }})</h2></div>
                 <div class="page-stack">
                     {% for c in results.case_records %}
-                    <a class="list-row" href="{% url 'careon:case_detail' c.pk %}">
+                    <a class="list-row" href="{% url 'carelane:case_detail' c.pk %}">
                         <div class="title-strong">{{ c.title }}</div>
                         <div class="sub-quiet">{{ c.get_case_phase_display|default:c.get_status_display }} &middot; {{ c.preferred_provider|default:"Geen voorkeursaanbieder" }}</div>
                     </a>
@@ -40,7 +40,7 @@
                 <div class="panel-head"><h2 class="panel-title">Aanbieders ({{ results.clients|length }})</h2></div>
                 <div class="page-stack">
                     {% for c in results.clients %}
-                    <a class="list-row" href="{% url 'careon:client_detail' c.pk %}">
+                    <a class="list-row" href="{% url 'carelane:client_detail' c.pk %}">
                         <div class="title-strong">{{ c.name }}</div>
                         <div class="sub-quiet">{{ c.get_client_type_display }} &middot; {{ c.industry|default:"Specialisatie onbekend" }}</div>
                     </a>
@@ -54,7 +54,7 @@
                 <div class="panel-head"><h2 class="panel-title">Configuraties ({{ results.configurations|length }})</h2></div>
                 <div class="page-stack">
                     {% for m in results.configurations %}
-                    <a class="list-row" href="{% url 'careon:configuration_detail' m.pk %}">
+                    <a class="list-row" href="{% url 'carelane:configuration_detail' m.pk %}">
                         <div class="title-strong">{{ m.configuration_id }} - {{ m.title }}</div>
                         <div class="sub-quiet">{{ m.care_domains_display }} &middot; {{ m.get_status_display }}</div>
                     </a>
@@ -68,7 +68,7 @@
                 <div class="panel-head"><h2 class="panel-title">Documenten ({{ results.documents|length }})</h2></div>
                 <div class="page-stack">
                     {% for d in results.documents %}
-                    <a class="list-row" href="{% url 'careon:document_detail' d.pk %}">
+                    <a class="list-row" href="{% url 'carelane:document_detail' d.pk %}">
                         <div class="title-strong">{{ d.title }}</div>
                         <div class="sub-quiet">{{ d.get_document_type_display }} &middot; {{ d.get_status_display }}</div>
                     </a>
@@ -82,7 +82,7 @@
             <h2 class="panel-title">Geen resultaten gevonden</h2>
             <p class="sub-quiet">Controleer de zoekterm of probeer een andere casusnaam, aanbieder of documenttitel.</p>
             <div class="ds-list-actions">
-                <a href="{% url 'careon:case_list' %}" class="btn btn-primary">Terug naar casussen</a>
+                <a href="{% url 'carelane:case_list' %}" class="btn btn-primary">Terug naar casussen</a>
                 <a href="{{ SPA_ORIGIN|default:'http://127.0.0.1:3000' }}/dashboard/" class="btn btn-secondary">Terug naar dashboard</a>
             </div>
         </section>
