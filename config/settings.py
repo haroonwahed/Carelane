@@ -342,7 +342,9 @@ CAREON_MAX_DOCUMENT_UPLOAD_MB = int(os.getenv('CAREON_MAX_DOCUMENT_UPLOAD_MB', '
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
-SPA_ORIGIN = os.getenv('SPA_ORIGIN', _RENDER_URL or 'http://127.0.0.1:3000').rstrip('/')
+# Treat an empty SPA_ORIGIN (e.g. a blank Render env var) the same as unset, so
+# it falls back to the live Render URL instead of an empty/broken origin.
+SPA_ORIGIN = (os.getenv('SPA_ORIGIN', '').strip() or _RENDER_URL or 'http://127.0.0.1:3000').rstrip('/')
 
 
 def _resolve_oidc_public_base_url() -> str:
