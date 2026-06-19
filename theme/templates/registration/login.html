@@ -5,7 +5,7 @@
 
 {% block body %}
 <style>
-/* ── Auth shell ─────────────────────────────────────────── */
+/* ── Reset ──────────────────────────────────────────────── */
 html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
 body {
   display: block !important;
@@ -17,6 +17,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* ── Shell ──────────────────────────────────────────────── */
 .sa-shell {
   display: grid;
   grid-template-columns: 1fr;
@@ -24,38 +25,51 @@ body {
   overflow: hidden;
 }
 @media (min-width: 1024px) {
-  .sa-shell { grid-template-columns: 1.1fr 0.9fr; }
+  .sa-shell { grid-template-columns: 1.15fr 0.85fr; }
 }
 
-/* ── Left brand panel ───────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   LEFT BRAND PANEL
+══════════════════════════════════════════════════════════ */
 .sa-brand {
   display: none;
   position: relative;
-  padding: 40px 60px;
+  padding: 44px 56px;
   overflow: hidden;
-  background: linear-gradient(160deg, #0d1424 0%, #080e1c 100%);
-  border-right: 1px solid rgba(51,65,85,0.35);
+  background: linear-gradient(155deg, #0b1322 0%, #070b12 55%, #090c1a 100%);
+  border-right: 1px solid rgba(51,65,85,0.28);
 }
 @media (min-width: 1024px) {
-  .sa-brand { display: flex; flex-direction: column; overflow: hidden; }
+  .sa-brand { display: flex; flex-direction: column; }
 }
+
+/* Grid */
 .sa-brand::before {
   content: "";
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(248,250,252,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(248,250,252,0.025) 1px, transparent 1px);
-  background-size: 44px 44px;
+    linear-gradient(rgba(248,250,252,0.016) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(248,250,252,0.016) 1px, transparent 1px);
+  background-size: 48px 48px;
   pointer-events: none;
 }
-.sa-brand::after {
-  content: "";
+
+/* Ambient glows (decorative divs injected in HTML) */
+.sa-glow-1 {
   position: absolute;
-  top: -120px; left: -120px;
+  top: -100px; left: -100px;
+  width: 560px; height: 560px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.13) 0%, transparent 65%);
+  pointer-events: none;
+}
+.sa-glow-2 {
+  position: absolute;
+  bottom: -120px; right: -80px;
   width: 480px; height: 480px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(124,77,255,0.09) 0%, transparent 65%);
   pointer-events: none;
 }
 
@@ -65,14 +79,10 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 20px;
 }
 
-.sa-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+/* Logo */
+.sa-logo { display: flex; align-items: center; gap: 12px; }
 .sa-logo-mark {
   display: flex;
   align-items: center;
@@ -81,126 +91,189 @@ body {
   border-radius: 12px;
   background: rgba(99,102,241,0.15);
   border: 1px solid rgba(99,102,241,0.3);
+  box-shadow: 0 0 0 4px rgba(99,102,241,0.06), 0 4px 20px rgba(99,102,241,0.18);
 }
 .sa-logo-mark svg { width: 22px; height: 22px; color: #a5b4fc; }
 .sa-logo-name { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #f1f5f9; }
-.sa-logo-tag { font-size: 12px; color: #94a3b8; margin-top: 1px; }
+.sa-logo-tag {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
 
+/* Hero */
 .sa-hero {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 16px;
+  gap: 20px;
+  padding: 44px 0 32px;
 }
 
 .sa-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #7C4DFF;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  color: #a5b4fc;
+  background: rgba(99,102,241,0.1);
+  border: 1px solid rgba(99,102,241,0.22);
+  border-radius: 20px;
+  padding: 4px 10px 4px 8px;
+  width: fit-content;
 }
 .sa-eyebrow::before {
   content: "";
   display: inline-block;
-  width: 16px; height: 2px;
-  background: #7C4DFF;
-  border-radius: 2px;
+  width: 6px; height: 6px;
+  background: #818cf8;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .sa-headline {
   margin: 0;
-  font-size: clamp(24px, 2.4vw, 36px);
-  font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.03em;
+  font-size: clamp(26px, 2.6vw, 40px);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
   color: #f1f5f9;
 }
-.sa-headline em {
-  font-style: normal;
-  color: #a5b4fc;
-}
+.sa-headline em { font-style: normal; color: #a5b4fc; }
 
 .sa-subline {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.6;
   color: #94a3b8;
-  max-width: 420px;
+  max-width: 380px;
 }
 
-.sa-features {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+/* Feature cards */
+.sa-features { display: flex; flex-direction: column; gap: 8px; }
 .sa-feature {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  padding: 12px 14px;
+  background: rgba(13,20,36,0.6);
+  border: 1px solid rgba(99,102,241,0.1);
+  border-radius: 12px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.sa-feature:hover {
+  border-color: rgba(99,102,241,0.22);
+  background: rgba(99,102,241,0.04);
 }
 .sa-feature-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  background: rgba(99,102,241,0.1);
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  background: rgba(99,102,241,0.12);
   border: 1px solid rgba(99,102,241,0.2);
   flex-shrink: 0;
-  margin-top: 1px;
 }
 .sa-feature-icon svg { width: 16px; height: 16px; color: #818cf8; }
-.sa-feature-title { font-size: 14px; font-weight: 600; color: #e2e8f0; }
-.sa-feature-copy { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+.sa-feature-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sa-feature-title { font-size: 13px; font-weight: 600; color: #e2e8f0; margin: 0; }
+.sa-feature-copy { font-size: 12px; color: #94a3b8; line-height: 1.4; margin: 0; }
 
+/* Trust row */
+.sa-trust {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 16px;
+}
+.sa-trust-avatars { display: flex; }
+.sa-trust-avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid #0b1322;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: #fff;
+  margin-left: -6px;
+  flex-shrink: 0;
+}
+.sa-trust-avatars .sa-trust-avatar:first-child { margin-left: 0; }
+.sa-trust-avatar:nth-child(1) { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.sa-trust-avatar:nth-child(2) { background: linear-gradient(135deg, #7C4DFF, #6366f1); }
+.sa-trust-avatar:nth-child(3) { background: linear-gradient(135deg, #a855f7, #7C4DFF); }
+.sa-trust-text { font-size: 12px; color: #64748b; }
+.sa-trust-text strong { color: #94a3b8; font-weight: 600; }
+
+/* Workflow flow strip */
 .sa-flow {
   display: flex;
   align-items: center;
-  gap: 0;
   padding-top: 16px;
-  border-top: 1px solid rgba(51,65,85,0.4);
+  border-top: 1px solid rgba(51,65,85,0.35);
   flex-wrap: nowrap;
   overflow: hidden;
+  gap: 0;
 }
 .sa-flow-step {
   font-size: 11px;
   font-weight: 500;
   color: #64748b;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
-.sa-flow-step--active { color: #94a3b8; }
+.sa-flow-step--active { color: #94a3b8; font-weight: 600; }
+.sa-flow-step--active::before {
+  content: "";
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #6366f1;
+  flex-shrink: 0;
+}
 .sa-flow-div {
   display: inline-block;
-  width: 16px;
-  height: 1px;
-  background: rgba(100,116,139,0.5);
+  width: 18px; height: 1px;
+  background: rgba(100,116,139,0.35);
   flex-shrink: 0;
   margin: 0 6px;
 }
 
-/* ── Right form panel ───────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   RIGHT FORM PANEL
+══════════════════════════════════════════════════════════ */
 .sa-form-panel {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 32px;
+  padding: 32px;
   background: #070b12;
   height: 100%;
   overflow-y: auto;
+  position: relative;
+}
+.sa-form-panel::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 68%);
+  pointer-events: none;
 }
 
-/* mobile logo */
+/* Mobile logo */
 .sa-mobile-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 40px;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 36px;
 }
 @media (min-width: 1024px) { .sa-mobile-logo { display: none; } }
 .sa-mobile-logo-mark {
@@ -212,32 +285,55 @@ body {
 .sa-mobile-logo-mark svg { width: 18px; height: 18px; color: #a5b4fc; }
 .sa-mobile-logo-name { font-size: 16px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.02em; }
 
-.sa-card {
+/* Glass card wrapper */
+.sa-card-wrap {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  background: rgba(13,20,36,0.7);
+  border: 1px solid rgba(99,102,241,0.13);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.25),
+    0 24px 64px rgba(0,0,0,0.35),
+    0 0 40px rgba(99,102,241,0.04);
 }
 
-.sa-card-head {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+.sa-card { display: flex; flex-direction: column; gap: 20px; }
+
+/* Card header */
+.sa-card-head { display: flex; flex-direction: column; gap: 8px; }
 .sa-card-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #7C4DFF;
+  color: #a5b4fc;
+  background: rgba(99,102,241,0.1);
+  border: 1px solid rgba(99,102,241,0.22);
+  border-radius: 6px;
+  padding: 3px 8px;
+  width: fit-content;
+}
+.sa-card-eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 5px; height: 5px;
+  background: #818cf8;
+  border-radius: 50%;
 }
 .sa-card-title {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   color: #f1f5f9;
   margin: 0;
+  line-height: 1.1;
 }
 .sa-card-sub {
   font-size: 14px;
@@ -246,7 +342,7 @@ body {
   line-height: 1.5;
 }
 
-/* SSO */
+/* SSO button */
 .sa-sso-btn {
   display: flex;
   align-items: center;
@@ -255,80 +351,62 @@ body {
   width: 100%;
   padding: 11px 16px;
   border-radius: 10px;
-  border: 1px solid rgba(51,65,85,0.7);
-  background: rgba(15,23,42,0.6);
-  color: #e2e8f0;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.06);
+  color: #f1f5f9;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset;
+  box-sizing: border-box;
 }
 .sa-sso-btn:hover {
-  border-color: rgba(99,102,241,0.4);
-  background: rgba(99,102,241,0.07);
+  border-color: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.09);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.06) inset;
 }
 .sa-sso-icon { width: 18px; height: 18px; flex-shrink: 0; }
 
+/* Divider */
 .sa-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #334155;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  display: flex; align-items: center; gap: 12px;
+  color: #475569;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
 }
 .sa-divider::before, .sa-divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: rgba(51,65,85,0.5);
+  content: ""; flex: 1; height: 1px;
+  background: rgba(51,65,85,0.55);
 }
 
 /* Alert */
 .sa-alert {
   padding: 12px 14px;
-  border-radius: 8px;
-  background: rgba(239,68,68,0.08);
-  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 10px;
+  background: rgba(239,68,68,0.07);
+  border: 1px solid rgba(239,68,68,0.2);
   font-size: 13px;
   color: #fca5a5;
   line-height: 1.5;
 }
 
 /* Form */
-.sa-form { display: flex; flex-direction: column; gap: 16px; }
-
+.sa-form { display: flex; flex-direction: column; gap: 14px; }
 .sa-field { display: flex; flex-direction: column; gap: 6px; }
-
-.sa-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #cbd5e1;
-}
-.sa-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.sa-forgot {
-  font-size: 12px;
-  color: #7C4DFF;
-  text-decoration: none;
-  font-weight: 500;
-}
-.sa-forgot:hover { color: #818cf8; }
+.sa-label { font-size: 13px; font-weight: 600; color: #cbd5e1; }
+.sa-label-row { display: flex; align-items: center; justify-content: space-between; }
+.sa-forgot { font-size: 12px; color: #818cf8; text-decoration: none; font-weight: 500; }
+.sa-forgot:hover { color: #a5b4fc; }
 
 .sa-input-wrap { position: relative; }
-
 .sa-input {
   width: 100%;
   padding: 10px 14px;
   border-radius: 9px;
-  border: 1px solid rgba(51,65,85,0.7);
-  background: rgba(15,23,42,0.8);
+  border: 1px solid rgba(71,85,105,0.45);
+  background: rgba(7,11,18,0.9);
   color: #f1f5f9;
   font-size: 14px;
   outline: none;
@@ -339,96 +417,70 @@ body {
 .sa-input:-webkit-autofill,
 .sa-input:-webkit-autofill:hover,
 .sa-input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #0d1524 inset !important;
   -webkit-text-fill-color: #f1f5f9 !important;
 }
-.sa-input::placeholder { color: #475569; }
+.sa-input::placeholder { color: #4b5563; }
 .sa-input:focus {
-  border-color: rgba(99,102,241,0.6);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+  border-color: rgba(99,102,241,0.7);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12), 0 0 0 1px rgba(99,102,241,0.3);
 }
 .sa-input--pw { padding-right: 44px; }
 
 .sa-pw-toggle {
-  position: absolute;
-  right: 12px; top: 50%;
+  position: absolute; right: 12px; top: 50%;
   transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #475569;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: none; border: none;
+  color: #4b5563; cursor: pointer;
+  padding: 4px; display: flex; align-items: center; justify-content: center;
   border-radius: 4px;
   transition: color 0.15s;
 }
 .sa-pw-toggle:hover { color: #94a3b8; }
 .sa-pw-toggle svg { width: 17px; height: 17px; }
+.sa-field-error { font-size: 12px; color: #f87171; }
 
-.sa-field-error {
-  font-size: 12px;
-  color: #f87171;
-}
-
-/* Remember */
+/* Remember me */
 .sa-checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #94a3b8;
-  cursor: pointer;
-  user-select: none;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: #94a3b8;
+  cursor: pointer; user-select: none;
 }
-.sa-checkbox {
-  width: 15px; height: 15px;
-  border-radius: 4px;
-  accent-color: #7C4DFF;
-  cursor: pointer;
-}
+.sa-checkbox { width: 15px; height: 15px; border-radius: 4px; accent-color: #7C4DFF; cursor: pointer; }
 
 /* Submit */
 .sa-submit {
   width: 100%;
-  padding: 11px 16px;
+  padding: 12px 16px;
   border-radius: 10px;
   border: none;
-  background: #7C4DFF;
+  background: linear-gradient(135deg, #7C4DFF 0%, #6366f1 100%);
   color: #fff;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s, opacity 0.15s;
   letter-spacing: -0.01em;
+  transition: opacity 0.15s, box-shadow 0.15s, transform 0.1s;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.3);
 }
-.sa-submit:hover { background: #6F42E8; box-shadow: 0 4px 16px rgba(99,102,241,0.3); }
-.sa-submit:active { background: #5E35D0; }
-.sa-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+.sa-submit:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: 0 6px 22px rgba(99,102,241,0.45);
+  transform: translateY(-1px);
+}
+.sa-submit:active { transform: translateY(0); opacity: 1; }
+.sa-submit:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
 /* Footer */
 .sa-card-footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding-top: 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 4px;
 }
-.sa-foot-text {
-  font-size: 13px;
-  color: #94a3b8;
-}
-.sa-foot-link {
-  color: #7C4DFF;
-  text-decoration: none;
-  font-weight: 600;
-}
-.sa-foot-link:hover { color: #818cf8; }
+.sa-foot-text { font-size: 13px; color: #94a3b8; }
+.sa-foot-link { color: #818cf8; text-decoration: none; font-weight: 600; }
+.sa-foot-link:hover { color: #a5b4fc; }
 .sa-foot-back {
-  font-size: 12px;
-  color: #64748b;
-  text-decoration: none;
+  font-size: 12px; color: #64748b; text-decoration: none;
+  transition: color 0.15s; display: flex; align-items: center; gap: 3px;
 }
 .sa-foot-back:hover { color: #94a3b8; }
 </style>
@@ -437,6 +489,8 @@ body {
 
   <!-- Left: brand panel -->
   <aside class="sa-brand" aria-hidden="true">
+    <div class="sa-glow-1"></div>
+    <div class="sa-glow-2"></div>
     <div class="sa-brand-inner">
 
       <div class="sa-logo">
@@ -462,10 +516,10 @@ body {
           <div class="sa-feature">
             <div class="sa-feature-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 5-3.5 9.7-7 10-3.5-.3-7-5-7-10V6l7-3z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 5-3.5 9.7-7 10-3.5-.3-7-5-7-10V6l7-3z"/>
               </svg>
             </div>
-            <div>
+            <div class="sa-feature-body">
               <p class="sa-feature-title">Rolgebaseerde toegang</p>
               <p class="sa-feature-copy">Iedere gebruiker ziet alleen wat nodig is voor de eigen taak.</p>
             </div>
@@ -473,10 +527,10 @@ body {
           <div class="sa-feature">
             <div class="sa-feature-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
               </svg>
             </div>
-            <div>
+            <div class="sa-feature-body">
               <p class="sa-feature-title">Auditbare acties</p>
               <p class="sa-feature-copy">Besluiten en overdrachten blijven volledig herleidbaar.</p>
             </div>
@@ -484,15 +538,24 @@ body {
           <div class="sa-feature">
             <div class="sa-feature-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
               </svg>
             </div>
-            <div>
+            <div class="sa-feature-body">
               <p class="sa-feature-title">Directe doorstroom</p>
               <p class="sa-feature-copy">Minder handovers, minder wachttijd, minder losse afstemming.</p>
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="sa-trust">
+        <div class="sa-trust-avatars">
+          <div class="sa-trust-avatar">GR</div>
+          <div class="sa-trust-avatar">ZA</div>
+          <div class="sa-trust-avatar">GM</div>
+        </div>
+        <span class="sa-trust-text">Gebruikt door <strong>gemeenten en zorginstellingen</strong></span>
       </div>
 
       <div class="sa-flow">
@@ -525,111 +588,112 @@ body {
       <span class="sa-mobile-logo-name">Carelane</span>
     </div>
 
-    <div class="sa-card">
+    <div class="sa-card-wrap">
+      <div class="sa-card">
 
-      <div class="sa-card-head">
-        <div class="sa-card-eyebrow">Beveiligde toegang</div>
-        <h2 class="sa-card-title">Welkom terug</h2>
-        <p class="sa-card-sub">Log in om verder te gaan met openstaande casussen en plaatsingen.</p>
-      </div>
+        <div class="sa-card-head">
+          <div class="sa-card-eyebrow">Beveiligde toegang</div>
+          <h2 class="sa-card-title">Welkom terug</h2>
+          <p class="sa-card-sub">Log in om verder te gaan met openstaande casussen en plaatsingen.</p>
+        </div>
 
-      {% if SSO_ENABLED %}
-      {% with next_url=SPA_ORIGIN|add:"/dashboard/" %}
-      {% url 'oidc_authentication_init' as oidc_path %}
-      <a href="{{ OIDC_PUBLIC_BASE_URL }}{{ oidc_path }}?next={{ next_url|urlencode }}" class="sa-sso-btn">
-        <svg class="sa-sso-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="#4285F4" d="M12 10.2v3.9h5.5c-.2 1.2-1.5 3.5-5.5 3.5-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.8 2.9 14.7 2 12 2 6.5 2 2 6.5 2 12s4.5 10 10 10c5.7 0 9.5-4 9.5-9.7 0-.7-.1-1.2-.2-1.8H12Z"/>
-          <path fill="#34A853" d="M4.5 7.5l3.4 2.5C8.7 8.1 10.2 7 12 7c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.8 2.9 14.7 2 12 2 8.6 2 5.6 4 4.5 7.5Z"/>
-          <path fill="#FBBC05" d="M12 22c2.6 0 4.8-.9 6.4-2.4l-3-2.5c-.9.6-2.1 1-3.4 1-2.7 0-5-1.7-5.8-4.1l-3.5 2.7C4.8 19.8 8 22 12 22Z"/>
-          <path fill="#EA4335" d="M19.4 19.6c1.4-1.5 2.1-3.6 2.1-5.6 0-.7-.1-1.2-.2-1.8H12v3.9h5.5c-.3 1.6-1.1 2.6-2 3.1l3.9.4Z"/>
-        </svg>
-        Doorgaan met organisatieaccount
-      </a>
-      {% endwith %}
-      <div class="sa-divider">of</div>
-      {% endif %}
-
-      {% if form.errors %}
-      <div class="sa-alert" role="alert" aria-live="polite">
-        {% if form.non_field_errors %}
-          {% for error in form.non_field_errors %}{{ error }}{% endfor %}
-        {% else %}
-          De gebruikersnaam of het wachtwoord is onjuist.
+        {% if SSO_ENABLED %}
+        {% with next_url=SPA_ORIGIN|add:"/dashboard/" %}
+        {% url 'oidc_authentication_init' as oidc_path %}
+        <a href="{{ OIDC_PUBLIC_BASE_URL }}{{ oidc_path }}?next={{ next_url|urlencode }}" class="sa-sso-btn">
+          <svg class="sa-sso-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M12 10.2v3.9h5.5c-.2 1.2-1.5 3.5-5.5 3.5-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.8 2.9 14.7 2 12 2 6.5 2 2 6.5 2 12s4.5 10 10 10c5.7 0 9.5-4 9.5-9.7 0-.7-.1-1.2-.2-1.8H12Z"/>
+            <path fill="#34A853" d="M4.5 7.5l3.4 2.5C8.7 8.1 10.2 7 12 7c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.8 2.9 14.7 2 12 2 8.6 2 5.6 4 4.5 7.5Z"/>
+            <path fill="#FBBC05" d="M12 22c2.6 0 4.8-.9 6.4-2.4l-3-2.5c-.9.6-2.1 1-3.4 1-2.7 0-5-1.7-5.8-4.1l-3.5 2.7C4.8 19.8 8 22 12 22Z"/>
+            <path fill="#EA4335" d="M19.4 19.6c1.4-1.5 2.1-3.6 2.1-5.6 0-.7-.1-1.2-.2-1.8H12v3.9h5.5c-.3 1.6-1.1 2.6-2 3.1l3.9.4Z"/>
+          </svg>
+          Doorgaan met organisatieaccount
+        </a>
+        {% endwith %}
+        <div class="sa-divider">of</div>
         {% endif %}
-      </div>
-      {% endif %}
 
-      <form method="post" class="sa-form" novalidate id="login-form">
-        {% csrf_token %}
-        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-
-        <div class="sa-field">
-          <label for="id_username" class="sa-label">Gebruikersnaam</label>
-          <input
-            type="text"
-            name="username"
-            id="id_username"
-            autofocus
-            required
-            autocomplete="username"
-            value="{{ form.username.value|default_if_none:'' }}"
-            class="sa-input"
-            placeholder="Jouw gebruikersnaam"
-          >
-          {% if form.username.errors %}<div class="sa-field-error">{{ form.username.errors.0 }}</div>{% endif %}
+        {% if form.errors %}
+        <div class="sa-alert" role="alert" aria-live="polite">
+          {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          {% else %}
+            De gebruikersnaam of het wachtwoord is onjuist.
+          {% endif %}
         </div>
+        {% endif %}
 
-        <div class="sa-field">
-          <div class="sa-label-row">
-            <label for="id_password" class="sa-label">Wachtwoord</label>
-            <a href="{% url 'password_reset' %}" class="sa-forgot">Wachtwoord vergeten?</a>
-          </div>
-          <div class="sa-input-wrap">
+        <form method="post" class="sa-form" novalidate id="login-form">
+          {% csrf_token %}
+          {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+          <div class="sa-field">
+            <label for="id_username" class="sa-label">Gebruikersnaam</label>
             <input
-              type="password"
-              name="password"
-              id="id_password"
+              type="text"
+              name="username"
+              id="id_username"
+              autofocus
               required
-              autocomplete="current-password"
-              class="sa-input sa-input--pw"
-              placeholder="••••••••"
+              autocomplete="username"
+              value="{{ form.username.value|default_if_none:'' }}"
+              class="sa-input"
+              placeholder="Jouw gebruikersnaam"
             >
-            <button type="button" class="sa-pw-toggle" data-pw-toggle="id_password" aria-label="Toon wachtwoord">
-              <svg class="icon-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.25 9.75-7.25S21.75 12 21.75 12s-3.75 7.25-9.75 7.25S2.25 12 2.25 12z"/>
-                <circle cx="12" cy="12" r="3.25"/>
-              </svg>
-              <svg class="icon-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18"/>
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.58 10.58A3 3 0 0012 15a3 3 0 003-3 2.99 2.99 0 00-.42-1.5M8.82 8.82A8.3 8.3 0 002.25 12s3.75 7.25 9.75 7.25c1.36 0 2.65-.24 3.82-.68m2.12-1.32A16.18 16.18 0 0021.75 12s-3.75-7.25-9.75-7.25a12.2 12.2 0 00-2.03.17"/>
-              </svg>
-            </button>
+            {% if form.username.errors %}<div class="sa-field-error">{{ form.username.errors.0 }}</div>{% endif %}
           </div>
-          {% if form.password.errors %}<div class="sa-field-error">{{ form.password.errors.0 }}</div>{% endif %}
+
+          <div class="sa-field">
+            <div class="sa-label-row">
+              <label for="id_password" class="sa-label">Wachtwoord</label>
+              <a href="{% url 'password_reset' %}" class="sa-forgot">Wachtwoord vergeten?</a>
+            </div>
+            <div class="sa-input-wrap">
+              <input
+                type="password"
+                name="password"
+                id="id_password"
+                required
+                autocomplete="current-password"
+                class="sa-input sa-input--pw"
+                placeholder="••••••••"
+              >
+              <button type="button" class="sa-pw-toggle" data-pw-toggle="id_password" aria-label="Toon wachtwoord">
+                <svg class="icon-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.25 9.75-7.25S21.75 12 21.75 12s-3.75 7.25-9.75 7.25S2.25 12 2.25 12z"/>
+                  <circle cx="12" cy="12" r="3.25"/>
+                </svg>
+                <svg class="icon-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.58 10.58A3 3 0 0012 15a3 3 0 003-3 2.99 2.99 0 00-.42-1.5M8.82 8.82A8.3 8.3 0 002.25 12s3.75 7.25 9.75 7.25c1.36 0 2.65-.24 3.82-.68m2.12-1.32A16.18 16.18 0 0021.75 12s-3.75-7.25-9.75-7.25a12.2 12.2 0 00-2.03.17"/>
+                </svg>
+              </button>
+            </div>
+            {% if form.password.errors %}<div class="sa-field-error">{{ form.password.errors.0 }}</div>{% endif %}
+          </div>
+
+          <label class="sa-checkbox-row">
+            <input id="remember" name="remember" type="checkbox" class="sa-checkbox" {% if request.POST.remember %}checked{% endif %}>
+            <span>Onthoud mij op dit apparaat</span>
+          </label>
+
+          <button type="submit" class="sa-submit" id="login-submit">Inloggen</button>
+        </form>
+
+        <div class="sa-card-footer">
+          <p class="sa-foot-text">
+            Geen account? <a href="{% url 'register' %}" class="sa-foot-link">Account aanmaken</a>
+          </p>
+          <a href="/" class="sa-foot-back">← Terug naar Carelane</a>
         </div>
 
-        <label class="sa-checkbox-row">
-          <input id="remember" name="remember" type="checkbox" class="sa-checkbox" {% if request.POST.remember %}checked{% endif %}>
-          <span>Onthoud mij op dit apparaat</span>
-        </label>
-
-        <button type="submit" class="sa-submit" id="login-submit">Inloggen</button>
-      </form>
-
-      <div class="sa-card-footer">
-        <p class="sa-foot-text">
-          Geen account? <a href="{% url 'register' %}" class="sa-foot-link">Account aanmaken</a>
-        </p>
-        <a href="/" class="sa-foot-back">← Terug naar Carelane</a>
       </div>
-
     </div>
   </main>
 
 </div>
 
 <script>
-// Password show/hide
 document.querySelectorAll('[data-pw-toggle]').forEach(btn => {
   const input = document.getElementById(btn.dataset.pwToggle);
   if (!input) return;
@@ -642,7 +706,6 @@ document.querySelectorAll('[data-pw-toggle]').forEach(btn => {
   });
 });
 
-// Loading state on submit
 document.getElementById('login-form')?.addEventListener('submit', () => {
   const btn = document.getElementById('login-submit');
   if (btn) { btn.disabled = true; btn.textContent = 'Inloggen…'; }
