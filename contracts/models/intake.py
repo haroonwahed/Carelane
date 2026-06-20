@@ -474,6 +474,35 @@ class CaseIntakeProcess(models.Model):
         verbose_name='Intake-uitkomst vastgelegd door',
     )
 
+    # ── Intake appointment planning ───────────────────────────────────────────
+    intake_appointment_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Geplande intake-afspraak',
+        help_text='Datum en tijdstip van de geplande intake bij de aanbieder.',
+    )
+    intake_appointment_location = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        verbose_name='Locatie intake-afspraak',
+        help_text='Locatieomschrijving zonder direct herleidbare persoonsgegevens.',
+    )
+    intake_appointment_notes = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Notities intake-afspraak',
+        help_text='Voorbereiding of agendapunten; geen medische of herleidbare informatie.',
+    )
+    intake_appointment_conducted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='conducted_intake_appointments',
+        verbose_name='Intakecoordinator',
+    )
+
     # ── Urgency validation (gemeente-controlled) ──────────────────────────────
     urgency_validated = models.BooleanField(
         default=False,

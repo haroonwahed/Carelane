@@ -24,7 +24,8 @@ export type CaseDecisionActionCode =
   | "BUDGET_DEFER"
   | "COMPLETE_WIJKTEAM_INTAKE"
   | "COMPLETE_ZORGVRAAG_ASSESSMENT"
-  | "ACTIVATE_PLACEMENT_MONITORING";
+  | "ACTIVATE_PLACEMENT_MONITORING"
+  | "SCHEDULE_INTAKE";
 
 export type CaseDecisionActionKind = "mutation" | "navigate" | "noop";
 
@@ -92,9 +93,9 @@ async function request(path: string, init: RequestInit = {}) {
   return { response, text };
 }
 
-async function requestJson(path: string, body: unknown) {
+async function requestJson(path: string, body: unknown, method: string = "POST") {
   const { text } = await request(path, {
-    method: "POST",
+    method,
     body: JSON.stringify(body),
   });
 
@@ -217,6 +218,14 @@ export async function executeCaseAction(
     case "START_INTAKE":
       await requestJson(`/care/api/cases/${caseIdString}/intake-action/`, {});
       return { kind: "mutation", message: "Intake gestart; actieve plaatsing geactiveerd." };
+
+    case "SCHEDULE_INTAKE":
+      await requestJson(
+        `/care/api/cases/${caseIdString}/intake-schedule/`,
+        options.payload ?? {},
+        "PATCH",
+      );
+      return { kind: "mutation", message: "Intake-afspraak opgeslagen." };
 
     case "BUDGET_APPROVE":
       await requestJson(`/care/api/cases/${caseIdString}/budget-decision/`, {

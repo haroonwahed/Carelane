@@ -401,6 +401,12 @@ def _build_case_data(case, *, include_geo=False):
             intake.arrangement_end_date.isoformat() if getattr(intake, 'arrangement_end_date', None) else None
         )
         result['intake_start_date'] = intake.start_date.isoformat() if getattr(intake, 'start_date', None) else None
+        result['intake_appointment_at'] = (
+            intake.intake_appointment_at.isoformat() if getattr(intake, 'intake_appointment_at', None) else None
+        )
+        result['intake_appointment_location'] = getattr(intake, 'intake_appointment_location', '') or ''
+        result['intake_appointment_notes'] = getattr(intake, 'intake_appointment_notes', '') or ''
+        result['intake_appointment_conducted_by'] = getattr(intake, 'intake_appointment_conducted_by_id', None)
         result['urgency_validated'] = bool(getattr(intake, 'urgency_validated', False))
         result['urgency_document_present'] = bool(getattr(intake, 'urgency_document', None))
         result['urgency_granted_date'] = (
@@ -451,6 +457,10 @@ def _build_case_data(case, *, include_geo=False):
         result['arrangement_provider'] = ''
         result['arrangement_end_date'] = None
         result['intake_start_date'] = None
+        result['intake_appointment_at'] = None
+        result['intake_appointment_location'] = ''
+        result['intake_appointment_notes'] = ''
+        result['intake_appointment_conducted_by'] = None
         result['urgency_validated'] = False
         result['urgency_document_present'] = False
         result['urgency_granted_date'] = None

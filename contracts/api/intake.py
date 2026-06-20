@@ -488,3 +488,93 @@ def _intake_action_api_inner(request, case_id):
                 source='intake_action_api',
             )
         return JsonResponse({'ok': True, 'nextPage': 'intake', 'caseId': str(intake.pk)})
+
+
+@login_required
+@require_http_methods(["PATCH"])
+def intake_schedule_api(request, case_id):
+    """Save or update intake appointment planning fields.
+
+    Allowed states: PLACEMENT_CONFIRMED or INTAKE_STARTED.
+    Allowed roles: GEMEENTE or ADMIN.
+    Body (all optional): { appointment_at, location, notes, conducted_by_id }
+    """
+    from django.http import Http404
+    from django.utils.dateparse import parse_datetime
+    from contracts.api._helpers import _get_intake_for_case_api_id
+    from contracts.workflow_state_machine import derive_workflow_state
+    from contracts.models import PlacementRequest
+
+    organization = get_user_organization(request.user)
+    try:
+        intake = _get_intake_for_case_api_id(case_id, organization, lock=True, user=request.user)
+    except Http404:
+        return JsonResponse({'ok': False, 'error': 'Casus niet gevonden.'}, status=404)
+
+    actor_role = resolve_actor_role(request.user, organization)
+    if actor_role not in {WorkflowRole.GEMEENTE, WorkflowRole.ADMIN}:
+        return JsonResponse({'ok': False, 'error': 'Geen toegang.'}, status=403)
+
+    placement = (
+        PlacementRequest.objects
+        .filter(due_diligence_process=intake)
+        .order_by('-updated_at')
+        .first()
+    )
+    current_state = derive_workflow_state(intake=intake, placement=placement)
+    allowed_states = {WorkflowState.PLACEMENT_CONFIRMED, WorkflowState.INTAKE_STARTED}
+    if current_state not in allowed_states:
+        return JsonResponse(
+            {'ok': False, 'error': 'Intake-afspraak kan alleen worden gepland na bevestigde plaatsing.'},
+            status=400,
+        )
+
+    try:
+        body = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'Ongeldig JSON-verzoek.'}, status=400)
+
+    update_fields = ['updated_at']
+
+    raw_at = body.get('appointment_at')
+    if raw_at is not None:
+        if raw_at == '':
+            intake.intake_appointment_at = None
+        else:
+            parsed = parse_datetime(raw_at)
+            if parsed is None:
+                return JsonResponse({'ok': False, 'error': 'Ongeldige datum/tijd voor appointment_at.'}, status=400)
+            intake.intake_appointment_at = parsed
+        update_fields.append('intake_appointment_at')
+
+    if 'location' in body:
+        intake.intake_appointment_location = str(body['location'])[:200]
+        update_fields.append('intake_appointment_location')
+
+    if 'notes' in body:
+        intake.intake_appointment_notes = str(body['notes'])
+        update_fields.append('intake_appointment_notes')
+
+    if 'conducted_by_id' in body:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        cby_id = body['conducted_by_id']
+        if cby_id is None or cby_id == '':
+            intake.intake_appointment_conducted_by = None
+        else:
+            try:
+                intake.intake_appointment_conducted_by = User.objects.get(pk=int(cby_id))
+            except (User.DoesNotExist, TypeError, ValueError):
+                return JsonResponse({'ok': False, 'error': 'Onbekende gebruiker voor conducted_by_id.'}, status=400)
+        update_fields.append('intake_appointment_conducted_by')
+
+    with transaction.atomic():
+        intake.save(update_fields=update_fields)
+
+    return JsonResponse({
+        'ok': True,
+        'intake_appointment_at': intake.intake_appointment_at.isoformat() if intake.intake_appointment_at else None,
+        'intake_appointment_location': intake.intake_appointment_location,
+        'intake_appointment_notes': intake.intake_appointment_notes,
+        'intake_appointment_conducted_by': intake.intake_appointment_conducted_by_id,
+    })

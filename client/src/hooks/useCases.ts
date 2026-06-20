@@ -40,6 +40,10 @@ interface ApiCase {
   placement_pressure_implication?: string | null;
   waitlist_bucket?: number;          // 0 = validated urgent, 1 = FCFS
   intake_start_date?: string | null; // aanmeldingsdatum
+  intake_appointment_at?: string | null;
+  intake_appointment_location?: string;
+  intake_appointment_notes?: string;
+  intake_appointment_conducted_by?: number | null;
   // Arrangement metadata
   arrangement_type_code?: string;
   arrangement_provider?: string;
@@ -101,6 +105,10 @@ export interface SpaCase {
   placementPressureImplication?: string | null;
   waitlistBucket: number;           // 0 = validated urgent first, 1 = FCFS
   intakeStartDate: string | null;   // aanmeldingsdatum (startdatum casus)
+  intakeAppointmentAt?: string | null;
+  intakeAppointmentLocation?: string;
+  intakeAppointmentNotes?: string;
+  intakeAppointmentConductedBy?: number | null;
   // Arrangement metadata
   arrangementTypeCode: string;
   arrangementProvider: string;
@@ -224,6 +232,10 @@ function mapApiCase(c: ApiCase): SpaCase {
     placementPressureImplication: c.placement_pressure_implication ?? null,
     waitlistBucket: c.waitlist_bucket ?? 1,
     intakeStartDate: c.intake_start_date ?? null,
+    intakeAppointmentAt: c.intake_appointment_at ?? null,
+    intakeAppointmentLocation: c.intake_appointment_location ?? '',
+    intakeAppointmentNotes: c.intake_appointment_notes ?? '',
+    intakeAppointmentConductedBy: c.intake_appointment_conducted_by ?? null,
     // Arrangement metadata
     arrangementTypeCode: c.arrangement_type_code ?? '',
     arrangementProvider: c.arrangement_provider ?? '',

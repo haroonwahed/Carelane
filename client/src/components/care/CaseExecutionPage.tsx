@@ -497,6 +497,12 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, backLabel
     summary: null,
   });
   const wasHiddenRef = useRef(false);
+  const [intakeSchedule, setIntakeSchedule] = useState({
+    appointment_at: "",
+    location: "",
+    notes: "",
+  });
+  const [scheduleSaving, setScheduleSaving] = useState(false);
 
   const loadDecisionEvaluation = useCallback(async () => {
     setDecisionLoading(true);
@@ -522,6 +528,18 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, backLabel
   useEffect(() => {
     void loadDecisionEvaluation();
   }, [loadDecisionEvaluation]);
+
+  useEffect(() => {
+    if (spaCase) {
+      setIntakeSchedule({
+        appointment_at: spaCase.intakeAppointmentAt
+          ? spaCase.intakeAppointmentAt.slice(0, 16)
+          : "",
+        location: spaCase.intakeAppointmentLocation ?? "",
+        notes: spaCase.intakeAppointmentNotes ?? "",
+      });
+    }
+  }, [spaCase?.intakeAppointmentAt, spaCase?.intakeAppointmentLocation, spaCase?.intakeAppointmentNotes]);
 
   useEffect(() => {
     const onVisibilityChange = () => {
@@ -561,6 +579,27 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, backLabel
     ? decisionEvaluation?.blocked_actions.find((action) => action.action === nextBestAction.action) ?? null
     : null;
   const hasBlockers = Boolean(decisionEvaluation?.blockers?.length);
+
+  const handleSaveIntakeSchedule = async () => {
+    setScheduleSaving(true);
+    try {
+      await executeCaseAction(caseId, "SCHEDULE_INTAKE", {
+        decisionEvaluation: decisionEvaluation ?? undefined,
+        role,
+        payload: {
+          appointment_at: intakeSchedule.appointment_at || "",
+          location: intakeSchedule.location,
+          notes: intakeSchedule.notes,
+        },
+      });
+      toast.success("Intake-afspraak opgeslagen.");
+      refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Opslaan mislukt.");
+    } finally {
+      setScheduleSaving(false);
+    }
+  };
 
   const handleAction = async (action: CaseDecisionActionCode, payload?: Record<string, unknown>) => {
     if (!decisionEvaluation) {
@@ -1103,6 +1142,55 @@ export function CaseExecutionPage({ caseId, role = "gemeente", onBack, backLabel
           onShowAll={attentionItems.length > 3 ? () => setDetailTab("overzicht") : undefined}
         />
       ) : null}
+      {(resolvedState === "PLACEMENT_CONFIRMED" || resolvedState === "INTAKE_STARTED") && role !== "zorgaanbieder" && (
+        <div
+          data-testid="intake-planning-panel"
+          className="rounded-[10px] border border-border bg-card p-4 space-y-3"
+        >
+          <p className="text-[13px] font-medium text-foreground">Intake-afspraak plannen</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-[12px] text-muted-foreground">Datum en tijd</span>
+              <input
+                type="datetime-local"
+                className="rounded-[10px] border border-input bg-background px-3 py-2 text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                value={intakeSchedule.appointment_at}
+                onChange={(e) => setIntakeSchedule((prev) => ({ ...prev, appointment_at: e.target.value }))}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-[12px] text-muted-foreground">Locatie</span>
+              <input
+                type="text"
+                placeholder="Gebouw, kamer of adres"
+                className="rounded-[10px] border border-input bg-background px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                value={intakeSchedule.location}
+                onChange={(e) => setIntakeSchedule((prev) => ({ ...prev, location: e.target.value }))}
+              />
+            </label>
+          </div>
+          <label className="flex flex-col gap-1">
+            <span className="text-[12px] text-muted-foreground">Notities / agenda</span>
+            <Textarea
+              placeholder="Voorbereiding of agendapunten — geen medische gegevens"
+              rows={2}
+              value={intakeSchedule.notes}
+              onChange={(e) => setIntakeSchedule((prev) => ({ ...prev, notes: e.target.value }))}
+            />
+          </label>
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              onClick={handleSaveIntakeSchedule}
+              disabled={scheduleSaving}
+              className="gap-2"
+            >
+              {scheduleSaving && <Loader2 size={13} className="animate-spin" />}
+              Afspraak opslaan
+            </Button>
+          </div>
+        </div>
+      )}
       <CaseExecutionDetailTabs
         activeTab={detailTab}
         onTabChange={setDetailTab}
