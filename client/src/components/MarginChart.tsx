@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { CHART_COLORS } from "../lib/chartColors";
 import { Card } from "./ui/card";
 import { Language, t, formatDate } from "../lib/i18n";
 import { DateRangePreset } from "./DateRangePicker";
@@ -170,7 +171,7 @@ export function MarginChart({ data, delta, language, customFrom, customTo, aggre
         <div 
           className="rounded-xl border bg-popover p-3 min-w-[180px]"
           style={{
-            boxShadow: "0 0 0 1px rgba(168,85,247,0.25), 0 0 28px rgba(168,85,247,0.10)"
+            boxShadow: CHART_COLORS.cardGlow
           }}
         >
           <p className="text-muted-foreground mb-3" style={{ fontSize: "12px", fontWeight: 600 }}>
@@ -194,7 +195,7 @@ export function MarginChart({ data, delta, language, customFrom, customTo, aggre
     <Card 
       className="rounded-2xl border p-6 bg-card shadow-sm"
       style={{
-        boxShadow: "0 0 0 1px rgba(168,85,247,0.25), 0 0 28px rgba(168,85,247,0.10)"
+        boxShadow: CHART_COLORS.cardGlow
       }}
     >
       {/* Header with inline metrics */}
@@ -236,22 +237,22 @@ export function MarginChart({ data, delta, language, customFrom, customTo, aggre
           <LineChart data={chartData}>
             <CartesianGrid 
               strokeDasharray="0" 
-              stroke="rgba(167, 139, 250, 0.10)" 
+              stroke={CHART_COLORS.grid}
               strokeWidth={1}
             />
             <XAxis 
               dataKey="date" 
-              stroke="#9CA3AF"
-              tick={{ fontSize: 13, fill: "#9CA3AF" }}
-              tickLine={{ stroke: "rgba(167, 139, 250, 0.10)" }}
-              axisLine={{ stroke: "rgba(167, 139, 250, 0.10)" }}
+              stroke={CHART_COLORS.axis}
+              tick={{ fontSize: 13, fill: CHART_COLORS.axis }}
+              tickLine={{ stroke: CHART_COLORS.grid }}
+              axisLine={{ stroke: CHART_COLORS.grid }}
               interval={getXAxisInterval()}
             />
             <YAxis 
-              stroke="#9CA3AF"
-              tick={{ fontSize: 13, fill: "#9CA3AF" }}
-              tickLine={{ stroke: "rgba(167, 139, 250, 0.10)" }}
-              axisLine={{ stroke: "rgba(167, 139, 250, 0.10)" }}
+              stroke={CHART_COLORS.axis}
+              tick={{ fontSize: 13, fill: CHART_COLORS.axis }}
+              tickLine={{ stroke: CHART_COLORS.grid }}
+              axisLine={{ stroke: CHART_COLORS.grid }}
               domain={[0, 100]}
               tickFormatter={(value) => `${value}%`}
             />
@@ -261,7 +262,7 @@ export function MarginChart({ data, delta, language, customFrom, customTo, aggre
             <Line
               type="monotone"
               dataKey="marginPercent"
-              stroke="#8B5CF6"
+              stroke={CHART_COLORS.line}
               strokeWidth={2}
               dot={false}
               name={t(language, "chart.marginPct")}

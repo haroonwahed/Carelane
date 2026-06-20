@@ -1,4 +1,5 @@
 import { Card } from "./ui/card";
+import { CHART_COLORS } from "../lib/chartColors";
 import { Language, t, formatCurrency } from "../lib/i18n";
 import {
   BarChart,
@@ -35,7 +36,7 @@ export function RevenueShareChart({ data, language }: RevenueShareChartProps) {
         <div
           className="rounded-xl border bg-popover p-3"
           style={{
-            boxShadow: "0 0 0 1px rgba(168,85,247,0.25), 0 0 28px rgba(168,85,247,0.10)",
+            boxShadow: CHART_COLORS.cardGlow,
           }}
         >
           <p
@@ -64,7 +65,7 @@ export function RevenueShareChart({ data, language }: RevenueShareChartProps) {
       <text
         x={x + width + 8}
         y={y + 10}
-        fill="#9CA3AF"
+        fill={CHART_COLORS.axis}
         fontSize={12}
         fontWeight={500}
       >
@@ -77,7 +78,7 @@ export function RevenueShareChart({ data, language }: RevenueShareChartProps) {
     <Card
       className="rounded-2xl border p-6 bg-card shadow-sm"
       style={{
-        boxShadow: "0 0 0 1px rgba(168,85,247,0.25), 0 0 28px rgba(168,85,247,0.10)",
+        boxShadow: CHART_COLORS.cardGlow,
       }}
     >
       <h3
@@ -106,7 +107,7 @@ export function RevenueShareChart({ data, language }: RevenueShareChartProps) {
           </defs>
           <CartesianGrid
             strokeDasharray="0"
-            stroke="rgba(167, 139, 250, 0.10)"
+            stroke={CHART_COLORS.grid}
             strokeWidth={1}
             horizontal={true}
             vertical={false}
@@ -114,19 +115,19 @@ export function RevenueShareChart({ data, language }: RevenueShareChartProps) {
           <XAxis
             type="number"
             domain={[0, 100]}
-            stroke="#9CA3AF"
-            tick={{ fontSize: 13, fill: "#9CA3AF" }}
-            tickLine={{ stroke: "rgba(167, 139, 250, 0.10)" }}
-            axisLine={{ stroke: "rgba(167, 139, 250, 0.10)" }}
+            stroke={CHART_COLORS.axis}
+            tick={{ fontSize: 13, fill: CHART_COLORS.axis }}
+            tickLine={{ stroke: CHART_COLORS.grid }}
+            axisLine={{ stroke: CHART_COLORS.grid }}
             tickFormatter={(value) => `${value}%`}
           />
           <YAxis
             type="category"
             dataKey="account"
-            stroke="#9CA3AF"
-            tick={{ fontSize: 13, fill: "#E7E7F0", fontWeight: 500 }}
+            stroke={CHART_COLORS.axis}
+            tick={{ fontSize: 13, fill: CHART_COLORS.labelBold, fontWeight: 500 }}
             tickLine={false}
-            axisLine={{ stroke: "rgba(167, 139, 250, 0.10)" }}
+            axisLine={{ stroke: CHART_COLORS.grid }}
             width={80}
           />
           <Tooltip content={<CustomTooltip />} cursor={false} />
