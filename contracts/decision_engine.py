@@ -29,6 +29,7 @@ from contracts.workflow_state_machine import (
     derive_workflow_state,
     resolve_actor_role,
 )
+from django.conf import settings
 from contracts.zorgbehoefte_taxonomy import format_taxonomy_explainability
 from contracts.workflow_summary_gate import workflow_summary_can_bootstrap
 
@@ -43,6 +44,28 @@ def _safe_related(instance: Any, attr: str) -> Any:
         return None
 
 
+def get_decision_engine_thresholds() -> dict[str, Any]:
+    """Return the active SLA/engine thresholds, reading from SystemPolicyConfig DB rows
+    when present, falling back to Django settings (env-configurable), then hardcoded defaults.
+    """
+    from contracts.governance import get_policy_values
+    defaults = {
+        "low_match_confidence": 0.65,
+        "aanmelding_sla_hours": getattr(settings, 'CARELANE_SLA_AANMELDING_HOURS', 24),
+        "provider_response_sla_hours": getattr(settings, 'CARELANE_SLA_PROVIDER_RESPONSE_HOURS', 72),
+        "urgent_idle_hours": getattr(settings, 'CARELANE_SLA_URGENT_IDLE_HOURS', 48),
+        "intake_start_sla_days": getattr(settings, 'CARELANE_SLA_INTAKE_START_DAYS', 5),
+        "repeated_rejection_count": getattr(settings, 'CARELANE_SLA_REPEATED_REJECTION_COUNT', 2),
+    }
+    try:
+        policy = get_policy_values({k: v for k, v in defaults.items() if isinstance(v, (int, float))})
+        return {**defaults, **policy}
+    except Exception:
+        return defaults
+
+
+# Module-level constant for backwards-compat; hot-path callers should prefer
+# get_decision_engine_thresholds() to pick up DB/env overrides.
 DECISION_ENGINE_THRESHOLDS = {
     "low_match_confidence": 0.65,
     "aanmelding_sla_hours": 24,
@@ -1565,6 +1588,7 @@ def _build_blockers_and_alerts(
     alerts: list[dict[str, Any]] = []
     alert_codes: set[str] = set()
     provider_pending_sla_breached = False
+    _thresholds = get_decision_engine_thresholds()
 
     def add_alert(payload: dict[str, Any]) -> None:
         code = payload.get("code")
@@ -1612,7 +1636,7 @@ def _build_blockers_and_alerts(
     if (
         current_state in {WorkflowState.DRAFT_CASE, WorkflowState.SUMMARY_READY}
         and hours_in_current_state is not None
-        and hours_in_current_state >= DECISION_ENGINE_THRESHOLDS["aanmelding_sla_hours"]
+        and hours_in_current_state >= _thresholds["aanmelding_sla_hours"]
     ):
         add_alert(
             _serialize_alert(
@@ -1727,7 +1751,7 @@ def _build_blockers_and_alerts(
         )
 
     if current_state == WorkflowState.PROVIDER_REVIEW_PENDING:
-        if hours_in_current_state is not None and hours_in_current_state >= DECISION_ENGINE_THRESHOLDS["provider_response_sla_hours"]:
+        if hours_in_current_state is not None and hours_in_current_state >= _thresholds["provider_response_sla_hours"]:
             provider_pending_sla_breached = True
             add_alert(
                 _serialize_alert(
@@ -1740,7 +1764,7 @@ def _build_blockers_and_alerts(
                 )
             )
 
-    if provider_rejection_count >= DECISION_ENGINE_THRESHOLDS["repeated_rejection_count"]:
+    if provider_rejection_count >= _thresholds["repeated_rejection_count"]:
         risks.append(
             _serialize_risk(
                 "REPEATED_PROVIDER_REJECTIONS",
@@ -1766,7 +1790,7 @@ def _build_blockers_and_alerts(
             )
         )
 
-    if latest_match_confidence is not None and latest_match_confidence < DECISION_ENGINE_THRESHOLDS["low_match_confidence"]:
+    if latest_match_confidence is not None and latest_match_confidence < _thresholds["low_match_confidence"]:
         risks.append(
             _serialize_risk(
                 "LOW_MATCH_CONFIDENCE",
@@ -1790,7 +1814,7 @@ def _build_blockers_and_alerts(
         risks.extend(capacity_signals)
 
     if urgency in {CaseIntakeProcess.Urgency.HIGH, CaseIntakeProcess.Urgency.CRISIS} and hours_in_current_state is not None:
-        if hours_in_current_state >= DECISION_ENGINE_THRESHOLDS["urgent_idle_hours"]:
+        if hours_in_current_state >= _thresholds["urgent_idle_hours"]:
             risks.append(
                 _serialize_risk(
                     "HIGH_URGENCY_IDLE",
@@ -1802,7 +1826,7 @@ def _build_blockers_and_alerts(
 
     if placement_confirmed and not intake_started:
         days_since_placement = hours_in_current_state / 24.0 if hours_in_current_state is not None else None
-        if days_since_placement is not None and days_since_placement >= DECISION_ENGINE_THRESHOLDS["intake_start_sla_days"]:
+        if days_since_placement is not None and days_since_placement >= _thresholds["intake_start_sla_days"]:
             risks.append(
                 _serialize_risk(
                     "INTAKE_DELAYED",

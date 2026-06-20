@@ -1,6 +1,8 @@
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List
 
+from django.conf import settings
+
 from contracts.governance import get_policy_values
 from contracts.provider_metrics import build_provider_behavior_metrics, derive_behavior_signals
 
@@ -242,14 +244,14 @@ def calculate_provider_response_sla(
     hours_waiting = _elapsed_waiting_hours(reference_at, current_now)
 
     policy_defaults = {
-        'SLA_PENDING_ON_TRACK_HOURS': 48,
-        'SLA_PENDING_AT_RISK_HOURS': 72,
-        'SLA_PENDING_OVERDUE_HOURS': 96,
-        'SLA_PENDING_ESCALATED_HOURS': 120,
-        'SLA_NEEDS_INFO_ON_TRACK_HOURS': 24,
-        'SLA_NEEDS_INFO_AT_RISK_HOURS': 48,
-        'SLA_NEEDS_INFO_OVERDUE_HOURS': 72,
-        'SLA_WAITLIST_ESCALATED_HOURS': 72,
+        'SLA_PENDING_ON_TRACK_HOURS': getattr(settings, 'CARELANE_SLA_PENDING_ON_TRACK_HOURS', 48),
+        'SLA_PENDING_AT_RISK_HOURS': getattr(settings, 'CARELANE_SLA_PENDING_AT_RISK_HOURS', 72),
+        'SLA_PENDING_OVERDUE_HOURS': getattr(settings, 'CARELANE_SLA_PENDING_OVERDUE_HOURS', 96),
+        'SLA_PENDING_ESCALATED_HOURS': getattr(settings, 'CARELANE_SLA_PENDING_ESCALATED_HOURS', 120),
+        'SLA_NEEDS_INFO_ON_TRACK_HOURS': getattr(settings, 'CARELANE_SLA_NEEDS_INFO_ON_TRACK_HOURS', 24),
+        'SLA_NEEDS_INFO_AT_RISK_HOURS': getattr(settings, 'CARELANE_SLA_NEEDS_INFO_AT_RISK_HOURS', 48),
+        'SLA_NEEDS_INFO_OVERDUE_HOURS': getattr(settings, 'CARELANE_SLA_NEEDS_INFO_OVERDUE_HOURS', 72),
+        'SLA_WAITLIST_ESCALATED_HOURS': getattr(settings, 'CARELANE_SLA_WAITLIST_ESCALATED_HOURS', 72),
     }
     policy = get_policy_values(policy_defaults)
     pending_on_track_hours = policy['SLA_PENDING_ON_TRACK_HOURS']

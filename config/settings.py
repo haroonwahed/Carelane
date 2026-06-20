@@ -339,6 +339,25 @@ CARELANE_PILOT_SPA_ONLY = _bool_env('CARELANE_PILOT_SPA_ONLY', False)
 # Upload: maximum document size accepted by the API (in megabytes)
 CARELANE_MAX_DOCUMENT_UPLOAD_MB = int(os.getenv('CARELANE_MAX_DOCUMENT_UPLOAD_MB', '20'))
 
+# ── SLA thresholds (hours) ────────────────────────────────────────────────────
+# Override these via Render env vars.  They are also the default fallback when no
+# SystemPolicyConfig DB row exists (contracts.governance.get_policy_values()).
+# decision_engine.py thresholds — provider SLA countdown and matching urgency:
+CARELANE_SLA_AANMELDING_HOURS = int(os.getenv('CARELANE_SLA_AANMELDING_HOURS', '24'))
+CARELANE_SLA_PROVIDER_RESPONSE_HOURS = int(os.getenv('CARELANE_SLA_PROVIDER_RESPONSE_HOURS', '72'))
+CARELANE_SLA_URGENT_IDLE_HOURS = int(os.getenv('CARELANE_SLA_URGENT_IDLE_HOURS', '48'))
+CARELANE_SLA_INTAKE_START_DAYS = int(os.getenv('CARELANE_SLA_INTAKE_START_DAYS', '5'))
+CARELANE_SLA_REPEATED_REJECTION_COUNT = int(os.getenv('CARELANE_SLA_REPEATED_REJECTION_COUNT', '2'))
+# case_intelligence.py thresholds — provider-response SLA escalation ladder:
+CARELANE_SLA_PENDING_ON_TRACK_HOURS = int(os.getenv('CARELANE_SLA_PENDING_ON_TRACK_HOURS', '48'))
+CARELANE_SLA_PENDING_AT_RISK_HOURS = int(os.getenv('CARELANE_SLA_PENDING_AT_RISK_HOURS', '72'))
+CARELANE_SLA_PENDING_OVERDUE_HOURS = int(os.getenv('CARELANE_SLA_PENDING_OVERDUE_HOURS', '96'))
+CARELANE_SLA_PENDING_ESCALATED_HOURS = int(os.getenv('CARELANE_SLA_PENDING_ESCALATED_HOURS', '120'))
+CARELANE_SLA_NEEDS_INFO_ON_TRACK_HOURS = int(os.getenv('CARELANE_SLA_NEEDS_INFO_ON_TRACK_HOURS', '24'))
+CARELANE_SLA_NEEDS_INFO_AT_RISK_HOURS = int(os.getenv('CARELANE_SLA_NEEDS_INFO_AT_RISK_HOURS', '48'))
+CARELANE_SLA_NEEDS_INFO_OVERDUE_HOURS = int(os.getenv('CARELANE_SLA_NEEDS_INFO_OVERDUE_HOURS', '72'))
+CARELANE_SLA_WAITLIST_ESCALATED_HOURS = int(os.getenv('CARELANE_SLA_WAITLIST_ESCALATED_HOURS', '72'))
+
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGIN_REDIRECT_URL_FAILURE = '/login/?sso_error=1'
