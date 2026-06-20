@@ -4,10 +4,6 @@
  * This file re-exports semantic values from the CSS custom property layer.
  * It does NOT define a parallel color palette. One source of truth lives in
  * globals.css; these constants give TypeScript code access to the same values.
- *
- * HISTORY: `tokens.colors` and `tokens.visualContract` were two parallel palettes
- * that disagreed on background, sidebar width, topbar height, radius, and padding.
- * Both have been replaced by `tokens.visual`, which maps 1:1 to --care-* tokens.
  */
 
 /** Canonical Carelane accent — Zorg OS primary purple. */
@@ -197,23 +193,3 @@ export const tokens = {
   },
 } as const;
 
-/**
- * Backwards-compatibility aliases for code that still references the old
- * tokens.colors or tokens.visualContract palettes. These are deprecated and
- * will be removed once all callsites migrate to tokens.visual or CSS tokens.
- *
- * @deprecated Use tokens.visual or CSS --care-* custom properties instead.
- */
-export const legacyVisualContract = {
-  sidebarWidth: tokens.visual.sidebarWidthExpanded,
-  topbarHeight: tokens.visual.topbarHeight,
-  pageHorizontalPadding: tokens.visual.pageHPadding,
-  cardRadius: tokens.visual.radiusCard,
-  sectionCardRadius: tokens.visual.radiusCard,
-  primaryCta: tokens.visual.primaryCta,
-  warningCta: tokens.visual.warningCta,
-  /** @deprecated background values come from CSS --background token */
-  background: "#070B18",
-  surface1: "#0E1424",
-  surface2: "#121A2C",
-} as const;
