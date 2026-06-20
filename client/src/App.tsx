@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState } from "react";
-import { MultiTenantDemo } from "./components/examples/MultiTenantDemo";
+import { CareAppShell } from "./components/examples/CareAppShell";
 import { PublicLandingPage } from "./components/public/PublicLandingPage";
 import { LoginPage } from "./components/care/LoginPage";
 import { LOGIN_URL, PUBLIC_LANDING_URL, LOGOUT_URL, REGISTER_URL } from "./lib/routes";
@@ -90,7 +90,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div className={effectiveTheme === "dark" ? "dark" : ""}>
-        <MultiTenantDemo
+        <CareAppShell
           theme={effectiveTheme}
           onThemeToggle={() => setTheme((currentTheme) => currentTheme === "dark" ? "light" : "dark")}
         />

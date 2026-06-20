@@ -15,6 +15,12 @@ import logging
 from django.dispatch import receiver
 
 from contracts.workflow_bus import WorkflowBus
+from contracts.workflow_notifications import (
+    notify_assessment_approved_for_matching,
+    notify_org_provider_response,
+    notify_placement_confirmed,
+    notify_provider_review_requested,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +63,8 @@ def on_case_phase_changed(sender, *, case=None, old_phase=None, new_phase=None, 
         new_phase,
         getattr(user, 'pk', 'system'),
     )
+    notify_provider_review_requested(case=case, old_phase=old_phase, new_phase=new_phase)
+    notify_placement_confirmed(case=case, old_phase=old_phase, new_phase=new_phase)
 
 
 @receiver(WorkflowBus.PLACEMENT_STATUS_CHANGED)
@@ -83,6 +91,11 @@ def on_placement_response_status_changed(sender, *, placement=None, old_response
         new_response_status,
         getattr(user, 'pk', 'system'),
     )
+    notify_org_provider_response(
+        placement=placement,
+        old_response_status=old_response_status,
+        new_response_status=new_response_status,
+    )
 
 
 @receiver(WorkflowBus.ASSESSMENT_STATUS_CHANGED)
@@ -95,6 +108,9 @@ def on_assessment_status_changed(sender, *, assessment=None, old_status=None, ne
         old_status,
         new_status,
         getattr(user, 'pk', 'system'),
+    )
+    notify_assessment_approved_for_matching(
+        assessment=assessment, old_status=old_status, new_status=new_status,
     )
 
 

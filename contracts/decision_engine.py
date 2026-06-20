@@ -22,6 +22,7 @@ from contracts.models import (
     ProviderCareTransitionRequest,
     ProviderRegioDekking,
 )
+from contracts.escalation_registry import escalation_code_for_engine_alert
 from contracts.workflow_state_machine import (
     WAITLIST_PROPOSAL_NOTES_MARKER,
     WorkflowRole,
@@ -63,17 +64,6 @@ def get_decision_engine_thresholds() -> dict[str, Any]:
     except Exception:
         return defaults
 
-
-# Module-level constant for backwards-compat; hot-path callers should prefer
-# get_decision_engine_thresholds() to pick up DB/env overrides.
-DECISION_ENGINE_THRESHOLDS = {
-    "low_match_confidence": 0.65,
-    "aanmelding_sla_hours": 24,
-    "provider_response_sla_hours": 72,
-    "urgent_idle_hours": 48,
-    "intake_start_sla_days": 5,
-    "repeated_rejection_count": 2,
-}
 
 _EXPLAINABILITY_FACTOR_WEIGHTS = {
     # Weighted by operational impact in matching decisions.
@@ -655,7 +645,7 @@ def _serialize_alert(
     recommended_action: str,
     evidence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
+    result: dict[str, Any] = {
         "code": code,
         "severity": severity,
         "title": title,
@@ -663,6 +653,10 @@ def _serialize_alert(
         "recommended_action": recommended_action,
         "evidence": evidence or {},
     }
+    esc = escalation_code_for_engine_alert(code)
+    if esc:
+        result["escalation_code"] = esc
+    return result
 
 
 def _confidence_to_score(match_result: MatchResultaat | None) -> float | None:

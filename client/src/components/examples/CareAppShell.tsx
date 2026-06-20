@@ -1,5 +1,5 @@
 /**
- * MultiTenantDemo - Full Platform shell for authenticated Care surfaces.
+ * CareAppShell - Full platform shell for authenticated Care surfaces.
  *
  * The shell mirrors the active session context and keeps internal demo affordances
  * out of the stakeholder-facing UI.
@@ -312,12 +312,12 @@ function buildProfileInitials(fullName: string, username: string): string {
   return u ? u.slice(0, 1).toUpperCase() : "?";
 }
 
-interface MultiTenantDemoProps {
+interface CareAppShellProps {
   theme: "light" | "dark";
   onThemeToggle: () => void;
 }
 
-export function MultiTenantDemo({ theme, onThemeToggle }: MultiTenantDemoProps) {
+export function CareAppShell({ theme, onThemeToggle }: CareAppShellProps) {
   const { me, refetch: refetchMe } = useCurrentUser();
   /** If the shell ever mounts on `/login` etc. (missed redirect), leave immediately for Django auth HTML. */
   useLayoutEffect(() => {

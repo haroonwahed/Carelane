@@ -75,8 +75,22 @@ REGISTRY: dict[str, EscalationDefinition] = {
 }
 
 
+# Reverse index: decision-engine alert code → escalation code.
+# Built once at import time so lookups are O(1).
+_ENGINE_CODE_TO_ESCALATION: dict[str, str] = {
+    engine_code: defn.code
+    for defn in REGISTRY.values()
+    for engine_code in defn.related_engine_codes
+}
+
+
 def get_escalation_definition(code: str) -> EscalationDefinition | None:
     return REGISTRY.get(code)
+
+
+def escalation_code_for_engine_alert(engine_code: str) -> str | None:
+    """Return the escalation code that owns *engine_code*, or None."""
+    return _ENGINE_CODE_TO_ESCALATION.get(engine_code)
 
 
 def all_escalation_codes() -> tuple[str, ...]:

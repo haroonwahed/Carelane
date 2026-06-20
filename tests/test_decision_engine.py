@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from contracts import decision_engine as decision_engine_module
-from contracts.decision_engine import DECISION_ENGINE_THRESHOLDS, build_regiekamer_decision_overview, evaluate_case
+from contracts.decision_engine import get_decision_engine_thresholds, build_regiekamer_decision_overview, evaluate_case
 from contracts.models import (
     CareCase,
     CaseAssessment,
@@ -304,7 +304,7 @@ class DecisionEngineTests(TestCase):
             provider_response_status=PlacementRequest.ProviderResponseStatus.PENDING,
             placement_status=PlacementRequest.Status.IN_REVIEW,
         )
-        placement.provider_response_recorded_at = timezone.now() - timedelta(hours=DECISION_ENGINE_THRESHOLDS["provider_response_sla_hours"] + 4)
+        placement.provider_response_recorded_at = timezone.now() - timedelta(hours=get_decision_engine_thresholds()["provider_response_sla_hours"] + 4)
         placement.save(update_fields=["provider_response_recorded_at", "updated_at"])
 
         result = evaluate_case(case_record, actor=self.gemeente_user)
