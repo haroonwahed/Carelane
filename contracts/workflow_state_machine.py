@@ -377,3 +377,49 @@ def log_transition_event(
         )
     except Exception:
         logger.exception("workflow_bus.signal_failed_in_log_transition_event action=%s", action)
+
+
+# Canonical mapping: fine-grained workflow_state → coarse case_phase.
+# workflow_state is the authoritative control field; case_phase is a UI/reporting
+# projection. This dict is the single source of truth for that projection.
+_WORKFLOW_STATE_TO_CASE_PHASE: dict[str, str] = {
+    WorkflowState.WIJKTEAM_INTAKE: 'intake',
+    WorkflowState.ZORGVRAAG_BEOORDELING: 'intake',
+    WorkflowState.DRAFT_CASE: 'intake',
+    WorkflowState.SUMMARY_READY: 'intake',
+    WorkflowState.MATCHING_READY: 'matching',
+    WorkflowState.GEMEENTE_VALIDATED: 'matching',
+    WorkflowState.PROVIDER_REVIEW_PENDING: 'provider_beoordeling',
+    WorkflowState.PROVIDER_ACCEPTED: 'provider_beoordeling',
+    WorkflowState.BUDGET_REVIEW_PENDING: 'provider_beoordeling',
+    WorkflowState.PROVIDER_REJECTED: 'provider_beoordeling',
+    WorkflowState.PLACEMENT_CONFIRMED: 'plaatsing',
+    WorkflowState.INTAKE_STARTED: 'actief',
+    WorkflowState.ACTIVE_PLACEMENT: 'actief',
+    WorkflowState.ARCHIVED: 'afgerond',
+}
+
+
+def sync_case_phase_from_workflow_state(intake: CaseIntakeProcess, case=None, *, user=None) -> None:
+    """Keep CareCase.case_phase consistent with intake.workflow_state.
+
+    Call this immediately after every intake.workflow_state write so the two
+    fields never drift.  The function is a no-op when case cannot be resolved
+    or the phase hasn't changed.
+    """
+    if case is None:
+        case = getattr(intake, 'case_record', None) or getattr(intake, 'contract', None)
+    if case is None:
+        return
+    new_phase = _WORKFLOW_STATE_TO_CASE_PHASE.get(intake.workflow_state)
+    if new_phase is None:
+        return
+    old_phase = getattr(case, 'case_phase', None)
+    if old_phase != new_phase:
+        case.case_phase = new_phase
+        case.save(update_fields=['case_phase', 'updated_at'])
+        try:
+            from contracts.workflow_bus import emit_case_phase_changed
+            emit_case_phase_changed(case=case, old_phase=old_phase, new_phase=new_phase, user=user)
+        except Exception:
+            logger.exception("sync_case_phase_from_workflow_state: emit_case_phase_changed failed")

@@ -30,6 +30,7 @@ from contracts.workflow_state_machine import (
     derive_workflow_state,
     evaluate_transition,
     log_transition_event,
+    sync_case_phase_from_workflow_state,
 )
 from contracts.workflow_summary_gate import workflow_summary_complete
 from contracts.legacy_backend.provider_matching_service import MatchContext
@@ -298,11 +299,7 @@ def _matching_action_api_inner(request, case_id):
             if intake.status != CaseIntakeProcess.ProcessStatus.DECISION:
                 intake.status = CaseIntakeProcess.ProcessStatus.DECISION
             intake.save(update_fields=['workflow_state', 'status', 'updated_at'])
-
-            case_record = intake.case_record
-            if case_record is not None and case_record.case_phase != CareCase.CasePhase.MATCHING:
-                case_record.case_phase = CareCase.CasePhase.MATCHING
-                case_record.save(update_fields=['case_phase', 'updated_at'])
+            sync_case_phase_from_workflow_state(intake)
 
             if previous_state == WorkflowState.MATCHING_READY:
                 log_transition_event(
@@ -355,10 +352,7 @@ def _matching_action_api_inner(request, case_id):
             )
             intake.workflow_state = WorkflowState.GEMEENTE_VALIDATED
             intake.save(update_fields=['workflow_state', 'updated_at'])
-            case_record_cv = intake.case_record
-            if case_record_cv is not None and case_record_cv.case_phase != CareCase.CasePhase.MATCHING:
-                case_record_cv.case_phase = CareCase.CasePhase.MATCHING
-                case_record_cv.save(update_fields=['case_phase', 'updated_at'])
+            sync_case_phase_from_workflow_state(intake)
             log_transition_event(
                 intake=intake,
                 actor_user=request.user,
@@ -429,11 +423,8 @@ def _matching_action_api_inner(request, case_id):
             if intake.workflow_state != WorkflowState.PROVIDER_REVIEW_PENDING:
                 intake.workflow_state = WorkflowState.PROVIDER_REVIEW_PENDING
                 update_fields.append('workflow_state')
-            case_record_sp = intake.case_record
-            if case_record_sp is not None and case_record_sp.case_phase != CareCase.CasePhase.PROVIDER_BEOORDELING:
-                case_record_sp.case_phase = CareCase.CasePhase.PROVIDER_BEOORDELING
-                case_record_sp.save(update_fields=['case_phase', 'updated_at'])
             intake.save(update_fields=list(dict.fromkeys(update_fields)))
+            sync_case_phase_from_workflow_state(intake)
             new_state = derive_workflow_state(intake=intake, assessment=assessment, placement=placement)
             log_transition_event(
                 intake=intake,
@@ -522,12 +513,8 @@ def _matching_action_api_inner(request, case_id):
                 intake.workflow_state = WorkflowState.PROVIDER_REVIEW_PENDING
                 update_fields.append('workflow_state')
 
-            case_record = intake.case_record
-            if case_record is not None and case_record.case_phase != CareCase.CasePhase.PROVIDER_BEOORDELING:
-                case_record.case_phase = CareCase.CasePhase.PROVIDER_BEOORDELING
-                case_record.save(update_fields=['case_phase', 'updated_at'])
-
             intake.save(update_fields=list(dict.fromkeys(update_fields)))
+            sync_case_phase_from_workflow_state(intake)
             new_state = derive_workflow_state(intake=intake, assessment=assessment, placement=placement)
             log_transition_event(
                 intake=intake,

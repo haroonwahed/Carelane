@@ -24,6 +24,7 @@ from ..workflow_state_machine import (
     WorkflowAction, WorkflowRole, WorkflowState,
     derive_workflow_state, evaluate_transition, log_transition_event,
     normalize_provider_rejection_states, resolve_actor_role,
+    sync_case_phase_from_workflow_state,
 )
 from ..governance import (
     build_matching_recommendation_payload, detect_and_log_sla_transition, log_case_decision_event,
@@ -33,7 +34,6 @@ from ..case_timeline import record_gemeente_validation_to_provider_review_bounda
 from ..operational_decision_contract import build_operational_decision_for_intake
 from ..operational_decision_presenter import present_operational_decision
 from contracts.workflow_bus import (
-    emit_case_phase_changed,
     emit_placement_response_status_changed,
     emit_placement_status_changed,
 )
@@ -534,14 +534,7 @@ def case_matching_action(request, pk):
         elif intake.workflow_state != WorkflowState.PROVIDER_REVIEW_PENDING:
             intake.workflow_state = WorkflowState.PROVIDER_REVIEW_PENDING
             intake.save(update_fields=['workflow_state', 'updated_at'])
-        if intake.case_record is not None:
-            _old_phase = intake.case_record.case_phase
-            intake.case_record.case_phase = CareCase.CasePhase.PROVIDER_BEOORDELING
-            intake.case_record.save(update_fields=['case_phase', 'updated_at'])
-            emit_case_phase_changed(
-                case=intake.case_record, old_phase=_old_phase,
-                new_phase=CareCase.CasePhase.PROVIDER_BEOORDELING, user=request.user,
-            )
+        sync_case_phase_from_workflow_state(intake, user=request.user)
 
         log_case_decision_event(
             case_id=intake.pk,
@@ -652,15 +645,7 @@ def case_matching_action(request, pk):
         if intake.status != CaseIntakeProcess.ProcessStatus.DECISION:
             intake.status = CaseIntakeProcess.ProcessStatus.DECISION
         intake.save(update_fields=['workflow_state', 'status', 'updated_at'])
-
-        if intake.case_record is not None and intake.case_record.case_phase != CareCase.CasePhase.MATCHING:
-            _old_phase = intake.case_record.case_phase
-            intake.case_record.case_phase = CareCase.CasePhase.MATCHING
-            intake.case_record.save(update_fields=['case_phase', 'updated_at'])
-            emit_case_phase_changed(
-                case=intake.case_record, old_phase=_old_phase,
-                new_phase=CareCase.CasePhase.MATCHING, user=request.user,
-            )
+        sync_case_phase_from_workflow_state(intake, user=request.user)
 
         if previous_state == WorkflowState.MATCHING_READY:
             log_transition_event(
@@ -836,19 +821,11 @@ def case_outcome_action(request, pk):
             request=request,
         )
 
-        if intake.case_record is not None and normalized_status == PlacementRequest.ProviderResponseStatus.ACCEPTED:
-            _old_phase = intake.case_record.case_phase
-            intake.case_record.case_phase = CareCase.CasePhase.PLAATSING
-            intake.case_record.save(update_fields=['case_phase', 'updated_at'])
-            emit_case_phase_changed(
-                case=intake.case_record, old_phase=_old_phase,
-                new_phase=CareCase.CasePhase.PLAATSING, user=request.user,
-            )
-
         new_state = target_state
         if intake.workflow_state != new_state:
             intake.workflow_state = new_state
             intake.save(update_fields=['workflow_state', 'updated_at'])
+            sync_case_phase_from_workflow_state(intake, user=request.user)
         log_transition_event(
             intake=intake,
             actor_user=request.user,
@@ -974,9 +951,7 @@ def case_placement_action(request, pk):
         intake.status = CaseIntakeProcess.ProcessStatus.MATCHING
         intake.workflow_state = WorkflowState.MATCHING_READY
         intake.save(update_fields=['status', 'workflow_state', 'updated_at'])
-        if intake.case_record is not None:
-            intake.case_record.case_phase = CareCase.CasePhase.MATCHING
-            intake.case_record.save(update_fields=['case_phase', 'updated_at'])
+        sync_case_phase_from_workflow_state(intake, user=request.user)
 
     if status == PlacementRequest.Status.APPROVED and intake.case_record is not None:
         intake.case_record.case_phase = CareCase.CasePhase.PLAATSING

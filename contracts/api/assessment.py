@@ -25,6 +25,7 @@ from contracts.workflow_state_machine import (
     evaluate_transition,
     log_transition_event,
     resolve_actor_role,
+    sync_case_phase_from_workflow_state,
 )
 from contracts.workflow_summary_gate import (
     ensure_workflow_summary_for_matching,
@@ -200,7 +201,6 @@ def assessment_decision_api(request, case_id):
         assessment.matching_ready = True
         assessment.reason_not_ready = ''
         intake.status = CaseIntakeProcess.ProcessStatus.MATCHING
-        case_record.case_phase = CareCase.CasePhase.MATCHING
         if short_description:
             assessment.notes = short_description
         if isinstance(constraints, list):
@@ -221,7 +221,6 @@ def assessment_decision_api(request, case_id):
             assessment.reason_not_ready = short_description
         assessment.notes = short_description or assessment.notes
         intake.status = CaseIntakeProcess.ProcessStatus.INTAKE
-        case_record.case_phase = CareCase.CasePhase.INTAKE
     else:
         transition = evaluate_transition(
             current_state=previous_state,
@@ -237,14 +236,13 @@ def assessment_decision_api(request, case_id):
         if short_description:
             assessment.notes = short_description
         intake.status = CaseIntakeProcess.ProcessStatus.INTAKE
-        case_record.case_phase = CareCase.CasePhase.INTAKE
 
     new_state = WorkflowState.MATCHING_READY if decision == 'matching' else WorkflowState.SUMMARY_READY
     try:
         with transaction.atomic():
             intake.workflow_state = new_state
             intake.save(update_fields=['urgency', 'complexity', 'care_intensity', 'zorgvorm_gewenst', 'preferred_care_form', 'status', 'workflow_state', 'updated_at'])
-            case_record.save(update_fields=['case_phase', 'updated_at'])
+            sync_case_phase_from_workflow_state(intake, case_record)
             assessment.assessed_by = request.user
             assessment.save()
             if decision == 'matching' and transition_steps:

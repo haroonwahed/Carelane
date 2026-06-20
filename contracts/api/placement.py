@@ -33,6 +33,7 @@ from contracts.workflow_state_machine import (
     evaluate_transition,
     log_transition_event,
     normalize_provider_rejection_states,
+    sync_case_phase_from_workflow_state,
 )
 from contracts.care_lifecycle_v12 import (
     sync_placement_budget_review_flags,
@@ -221,13 +222,10 @@ def _provider_decision_api_inner(request, case_id):
             if not transition.allowed:
                 return JsonResponse({'ok': False, 'error': transition.reason}, status=400)
 
-            if intake.case_record is not None and intake.case_record.case_phase != CareCase.CasePhase.PLAATSING:
-                intake.case_record.case_phase = CareCase.CasePhase.PLAATSING
-                intake.case_record.save(update_fields=['case_phase', 'updated_at'])
-
             if intake.workflow_state != target_state:
                 intake.workflow_state = target_state
                 intake.save(update_fields=['workflow_state', 'updated_at'])
+                sync_case_phase_from_workflow_state(intake)
             log_transition_event(
                 intake=intake,
                 actor_user=request.user,
@@ -273,6 +271,7 @@ def _provider_decision_api_inner(request, case_id):
             if intake.workflow_state != new_state:
                 intake.workflow_state = new_state
                 intake.save(update_fields=['workflow_state', 'updated_at'])
+                sync_case_phase_from_workflow_state(intake)
             log_transition_event(
                 intake=intake,
                 actor_user=request.user,
@@ -312,6 +311,7 @@ def _provider_decision_api_inner(request, case_id):
             if intake.workflow_state != WorkflowState.PROVIDER_REVIEW_PENDING:
                 intake.workflow_state = WorkflowState.PROVIDER_REVIEW_PENDING
                 intake.save(update_fields=['workflow_state', 'updated_at'])
+                sync_case_phase_from_workflow_state(intake)
             log_transition_event(
                 intake=intake,
                 actor_user=request.user,
@@ -397,14 +397,11 @@ def _placement_action_api_inner(request, case_id):
             else:
                 placement.save(update_fields=['status', 'updated_at'])
 
-            if intake.case_record is not None and intake.case_record.case_phase != CareCase.CasePhase.PLAATSING:
-                intake.case_record.case_phase = CareCase.CasePhase.PLAATSING
-                intake.case_record.save(update_fields=['case_phase', 'updated_at'])
-
             new_state = WorkflowState.PLACEMENT_CONFIRMED
             if intake.workflow_state != new_state:
                 intake.workflow_state = new_state
                 intake.save(update_fields=['workflow_state', 'updated_at'])
+                sync_case_phase_from_workflow_state(intake)
             log_transition_event(
                 intake=intake,
                 actor_user=request.user,
@@ -435,10 +432,7 @@ def _placement_action_api_inner(request, case_id):
             intake.status = CaseIntakeProcess.ProcessStatus.MATCHING
             intake.workflow_state = WorkflowState.MATCHING_READY
             intake.save(update_fields=['status', 'workflow_state', 'updated_at'])
-            if intake.case_record is not None and intake.case_record.case_phase != CareCase.CasePhase.MATCHING:
-                intake.case_record.case_phase = CareCase.CasePhase.MATCHING
-                intake.case_record.save(update_fields=['case_phase', 'updated_at'])
-
+            sync_case_phase_from_workflow_state(intake)
             log_transition_event(
                 intake=intake,
                 actor_user=request.user,
@@ -542,9 +536,7 @@ def placement_budget_decision_api(request, case_id):
             intake.status = CaseIntakeProcess.ProcessStatus.MATCHING
             intake.workflow_state = WorkflowState.MATCHING_READY
             intake.save(update_fields=['status', 'workflow_state', 'updated_at'])
-            if intake.case_record is not None and intake.case_record.case_phase != CareCase.CasePhase.MATCHING:
-                intake.case_record.case_phase = CareCase.CasePhase.MATCHING
-                intake.case_record.save(update_fields=['case_phase', 'updated_at'])
+            sync_case_phase_from_workflow_state(intake)
         else:
             placement.budget_review_status = new_budget
             placement.save(update_fields=[
@@ -557,6 +549,7 @@ def placement_budget_decision_api(request, case_id):
             if new_budget == PlacementRequest.BudgetReviewStatus.APPROVED:
                 intake.workflow_state = WorkflowState.PROVIDER_ACCEPTED
                 intake.save(update_fields=['workflow_state', 'updated_at'])
+                sync_case_phase_from_workflow_state(intake)
 
         log_case_decision_event(
             case_id=intake.pk,
@@ -612,6 +605,7 @@ def activate_placement_monitoring_api(request, case_id):
             return JsonResponse({'ok': False, 'error': t.reason}, status=400)
         intake.workflow_state = WorkflowState.ACTIVE_PLACEMENT
         intake.save(update_fields=['workflow_state', 'updated_at'])
+        sync_case_phase_from_workflow_state(intake)
         log_transition_event(
             intake=intake,
             actor_user=request.user,

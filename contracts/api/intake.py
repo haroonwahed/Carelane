@@ -28,6 +28,7 @@ from contracts.workflow_state_machine import (
     WorkflowState,
     log_transition_event,
     resolve_actor_role,
+    sync_case_phase_from_workflow_state,
 )
 
 from contracts.api._helpers import (
@@ -309,6 +310,7 @@ def intake_create_api(request):
             )
             intake = form.save()
             case_record = intake.ensure_case_record(created_by=request.user)
+            sync_case_phase_from_workflow_state(intake, case_record)
             try:
                 log_action(
                     request.user,
@@ -446,13 +448,10 @@ def _intake_action_api_inner(request, case_id):
         if not transition.allowed:
             return JsonResponse({'ok': False, 'error': transition.reason}, status=400)
 
-        from contracts.models import CareCase
         intake.status = CaseIntakeProcess.ProcessStatus.COMPLETED
         intake.workflow_state = WorkflowState.INTAKE_STARTED
         intake.save(update_fields=['status', 'workflow_state', 'updated_at'])
-        if intake.case_record is not None and intake.case_record.case_phase != CareCase.CasePhase.ACTIEF:
-            intake.case_record.case_phase = CareCase.CasePhase.ACTIEF
-            intake.case_record.save(update_fields=['case_phase', 'updated_at'])
+        sync_case_phase_from_workflow_state(intake)
 
         new_state = WorkflowState.INTAKE_STARTED
         log_transition_event(
@@ -477,6 +476,7 @@ def _intake_action_api_inner(request, case_id):
         if activate.allowed:
             intake.workflow_state = WorkflowState.ACTIVE_PLACEMENT
             intake.save(update_fields=['workflow_state', 'updated_at'])
+            sync_case_phase_from_workflow_state(intake)
             log_transition_event(
                 intake=intake,
                 actor_user=request.user,

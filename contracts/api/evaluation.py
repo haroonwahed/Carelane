@@ -44,6 +44,7 @@ from contracts.workflow_state_machine import (
     evaluate_transition,
     log_transition_event,
     resolve_actor_role,
+    sync_case_phase_from_workflow_state,
 )
 from contracts.care_lifecycle_v12 import serialize_evaluation
 from contracts.workflow_summary_gate import MIN_SUMMARY_CONTEXT_LEN
@@ -737,6 +738,7 @@ def case_early_lifecycle_api(request, case_id):
                 return JsonResponse({'ok': False, 'error': t.reason}, status=400)
             intake.workflow_state = WorkflowState.ZORGVRAAG_BEOORDELING
             intake.save(update_fields=['workflow_state', 'updated_at'])
+            sync_case_phase_from_workflow_state(intake)
             log_transition_event(
                 intake=intake,
                 actor_user=request.user,
@@ -759,6 +761,7 @@ def case_early_lifecycle_api(request, case_id):
                 return JsonResponse({'ok': False, 'error': t.reason}, status=400)
             intake.workflow_state = WorkflowState.DRAFT_CASE
             intake.save(update_fields=['workflow_state', 'updated_at'])
+            sync_case_phase_from_workflow_state(intake)
             log_transition_event(
                 intake=intake,
                 actor_user=request.user,
