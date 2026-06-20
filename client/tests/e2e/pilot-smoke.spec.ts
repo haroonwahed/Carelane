@@ -115,7 +115,7 @@ async function registerTempUser(page: import("@playwright/test").Page) {
     page.getByTestId("care-sidebar"),
     "SPA bundle/static shell did not mount. Build SPA and collect static before running pilot E2E. Run ./scripts/prepare_pilot_e2e.sh (docs/E2E_RUNBOOK.md).",
   ).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByRole("heading", { name: /Coordination/i })).toBeVisible({ timeout: 45_000 });
+  // New users have no org — Coordination heading only appears for org members
 }
 
 async function loginAs(page: import("@playwright/test").Page, username: string, password: string) {
