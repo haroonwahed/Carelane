@@ -40,7 +40,7 @@ JEUGDREGIO_REFERENCE_SOURCE = {
         "municipality_mvp_csv_checksum": None,
         "notes": "These CSVs are the Carelane-imported source copies used to build the normalized reference snapshot.",
     },
-    "normalized_careon_snapshot": {
+    "normalized_carelane_snapshot": {
         "manifest_path": "contracts/management/seed_data/jeugdregio_reference_manifest.json",
         "manifest_checksum": None,
         "notes": "Normalized Carelane reference snapshot with canonical municipality naming and Carelane-generated region codes.",
@@ -266,8 +266,8 @@ def build_jeugdregio_manifest() -> dict[str, Any]:
             "municipality_mapping_csv_checksum": _checksum(GEMEENTEN_CSV),
             "municipality_mvp_csv_checksum": _checksum(MVP_GEMEENTEN_CSV) if MVP_GEMEENTEN_CSV.exists() else None,
         },
-        "normalized_careon_snapshot": {
-            **JEUGDREGIO_REFERENCE_SOURCE["normalized_careon_snapshot"],
+        "normalized_carelane_snapshot": {
+            **JEUGDREGIO_REFERENCE_SOURCE["normalized_carelane_snapshot"],
         },
         "tenant_specific_records": dict(JEUGDREGIO_REFERENCE_SOURCE["tenant_specific_records"]),
         "mapping_policy": JEUGDREGIO_REFERENCE_SOURCE["mapping_policy"],
@@ -287,7 +287,7 @@ def build_jeugdregio_manifest() -> dict[str, Any]:
     }
 
     canonical_snapshot = json.dumps(payload_without_checksum, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-    provenance["normalized_careon_snapshot"]["manifest_checksum"] = hashlib.sha256(canonical_snapshot.encode("utf-8")).hexdigest()
+    provenance["normalized_carelane_snapshot"]["manifest_checksum"] = hashlib.sha256(canonical_snapshot.encode("utf-8")).hexdigest()
     payload_without_checksum["snapshot"]["source"] = provenance
     return payload_without_checksum
 

@@ -17,7 +17,7 @@ class JeugdregioReferenceTests(TestCase):
         self.assertEqual(manifest["snapshot"]["peildatum"], "2026-06-14")
         self.assertIn("external_source", manifest["snapshot"]["source"])
         self.assertIn("imported_source_copy", manifest["snapshot"]["source"])
-        self.assertIn("normalized_careon_snapshot", manifest["snapshot"]["source"])
+        self.assertIn("normalized_carelane_snapshot", manifest["snapshot"]["source"])
         self.assertEqual(report["summary"]["region_count"], 41)
         self.assertEqual(report["summary"]["municipality_link_count"], 342)
         self.assertEqual(report["summary"]["regions_without_municipalities"], 7)
