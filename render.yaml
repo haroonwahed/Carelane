@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: carelane
+    name: careon
     runtime: python
     plan: free
     # Co-locate the app with the database. The Postgres (Supabase) lives in
