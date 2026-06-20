@@ -50,19 +50,16 @@ jobs:
           python manage.py seed_redesign_data || python manage.py seed_demo_data || true
           python manage.py seed_pilot_e2e || true
 
-      - name: Start Django dev server
-        run: |
-          python manage.py runserver 127.0.0.1:8010 &
-          echo "Django PID=$!" >> $GITHUB_ENV
-
       - name: Install Node dependencies
         run: npm ci --prefix client
 
       - name: Build SPA
         run: npm --prefix client run build
 
-      - name: Collect static files
-        run: python manage.py collectstatic --noinput
+      - name: Start Django dev server
+        run: |
+          python manage.py runserver 127.0.0.1:8010 --insecure &
+          echo "Django PID=$!" >> $GITHUB_ENV
 
       - name: Install Playwright browsers
         run: npx --prefix client playwright install --with-deps chromium
