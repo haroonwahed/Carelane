@@ -37,7 +37,7 @@ from ..workflow_state_machine import (
     normalize_provider_rejection_states, resolve_actor_role,
 )
 from ._utils import _coerce_coordinate, _extract_coordinates, _to_bool_filter, _urgency_rank
-from contracts.workflow_bus import emit_placement_status_changed
+from contracts.workflow_bus import emit_placement_status_changed, emit_intake_status_changed
 from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
@@ -1206,8 +1206,14 @@ def _assign_provider_to_intake(*, request, intake, provider, source):
         )
 
     if intake.status != CaseIntakeProcess.ProcessStatus.MATCHING:
+        _old_intake_status = intake.status
         intake.status = CaseIntakeProcess.ProcessStatus.MATCHING
         intake.save(update_fields=['status', 'updated_at'])
+        emit_intake_status_changed(
+            intake=intake, old_status=_old_intake_status,
+            new_status=CaseIntakeProcess.ProcessStatus.MATCHING,
+            user=getattr(request, 'user', None),
+        )
 
     log_action(
         request.user,

@@ -10,6 +10,7 @@ from ..models import (
 from ..permissions import CaseAction, can_access_case_action, can_manage_organization
 from ..tenancy import scope_queryset_for_organization
 from ..workflow_state_machine import resolve_actor_role
+from ..workflow_bus import emit_assessment_status_changed
 from ._utils import _redirect_to_safe_next_or_default
 
 AUTO_INTAKE_TASKS = {
@@ -304,6 +305,7 @@ def sync_case_flow_state(case, user=None):
         process.save(update_fields=['status'])
 
     assessment_changed = False
+    _old_assessment_status = assessment.assessment_status
     if case.case_phase in [CareCase.CasePhase.MATCHING, CareCase.CasePhase.PLAATSING, CareCase.CasePhase.ACTIEF, CareCase.CasePhase.AFGEROND]:
         if not assessment.matching_ready:
             assessment.matching_ready = True
@@ -316,6 +318,11 @@ def sync_case_flow_state(case, user=None):
         assessment_changed = True
     if assessment_changed:
         assessment.save(update_fields=['matching_ready', 'assessment_status'])
+        emit_assessment_status_changed(
+            assessment=assessment,
+            old_status=_old_assessment_status,
+            new_status=assessment.assessment_status,
+        )
 
     placement = process.indications.order_by('-updated_at', '-created_at').first()
     if case.client_id:

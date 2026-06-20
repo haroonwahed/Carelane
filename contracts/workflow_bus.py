@@ -159,6 +159,18 @@ def emit_intake_state_changed(*, intake, old_state, new_state, user=None, action
         logger.exception("workflow_bus.emit_intake_state_changed failed")
 
 
+def emit_intake_status_changed(*, intake, old_status, new_status, user=None):
+    if old_status == new_status:
+        return
+    try:
+        WorkflowBus.INTAKE_STATUS_CHANGED.send(
+            sender=type(intake), intake=intake,
+            old_status=old_status, new_status=new_status, user=user, extra={},
+        )
+    except Exception:
+        logger.exception("workflow_bus.emit_intake_status_changed failed")
+
+
 def emit_case_phase_changed(*, case, old_phase, new_phase, user=None):
     if old_phase == new_phase:
         return
