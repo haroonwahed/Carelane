@@ -61,9 +61,9 @@ Render production service settings (from `render.yaml`):
 
 - Date: 2026-06-21
 - Environment: local rehearsal (`config.settings_rehearsal`)
-- Executor: automated — `./scripts/run_full_pilot_rehearsal.sh`
-- Result: **pass** — `release_evidence_bundle.json` → `timeline_gate.go=true`
-- Notes: ORM + TestClient preflight green; Playwright golden path optional (`--with-playwright`)
+- Executor: automated — `./scripts/run_full_pilot_rehearsal.sh --with-playwright --skip-spa-build`
+- Result: **pass** — `release_evidence_bundle.json` → `timeline_gate.go=true`; Playwright **12 passed**, 1 skipped (golden path)
+- Notes: E2E helpers aligned to `MEERVOUDIG` complexity + Aanmeldingen/Matching UI labels
 
 ### Rollback rehearsal
 

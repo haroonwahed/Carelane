@@ -269,7 +269,7 @@ test("pilot demo part 1 creates case, summary, matching, rejection, and Coordina
     assessment_summary: "",
     description: "Pilotdemo voor de keten: urgente jeugdvraag, providerafwijzing en rematch.",
     urgency: "HIGH",
-    complexity: "MULTIPLE",
+    complexity: "MEERVOUDIG",
     zorgvorm_gewenst: "OUTPATIENT",
     preferred_care_form: "OUTPATIENT",
     preferred_region_type: bootstrap.json?.initial_values.preferred_region_type ?? "JEUGDREGIO",

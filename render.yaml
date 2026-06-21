@@ -10,6 +10,7 @@ services:
     name: carelane
     runtime: python
     plan: free
+    repo: https://github.com/haroonwahed/Carelane
     branch: main
     autoDeploy: false
     healthCheckPath: /_health/
@@ -114,6 +115,7 @@ services:
     name: carelane-staging
     runtime: python
     plan: free
+    repo: https://github.com/haroonwahed/Carelane
     branch: main
     autoDeploy: false
     healthCheckPath: /_health/
@@ -176,7 +178,7 @@ services:
       - key: NGINX_MEDIA_ACCEL_REDIRECT
         value: "false"
       - key: GUNICORN_WORKERS
-        sync: false
+        value: "1"
       # Demo seed — staging only. These must NOT appear on the production service.
       - key: PILOT_AUTO_BOOTSTRAP
         value: "1"

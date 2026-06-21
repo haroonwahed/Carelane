@@ -42,7 +42,7 @@ test("Zorg OS golden path — gemeente → matching → provider scope → accep
   await expect(page.getByTestId("care-sidebar")).toBeVisible();
 
   await clickSidebarNav(page, /Aanmeldingen/);
-  await expect(page.getByRole("heading", { name: "Werkvoorraad" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Aanmeldingen" })).toBeVisible();
 
   await page.goto(`${GOLDEN_PATH_BASE_URL}/care/cases/${seeded.goldenCaseId}/`);
   await expect(page.getByTestId("next-best-action")).toBeVisible();
@@ -53,8 +53,9 @@ test("Zorg OS golden path — gemeente → matching → provider scope → accep
   await clickSidebarNav(page, "Matching");
   await expect(page.getByRole("heading", { name: "Matching" })).toBeVisible();
   await expect(page.getByTestId("matching-uitvoerlijst")).toBeVisible();
-  await expect(page.getByText(/Reden:/i).first()).toBeVisible();
-  await expect(page.getByText(/Volgende actie/i).first()).toBeVisible();
+  await expect(page.getByText("Afwegingen")).toBeVisible();
+  await expect(page.getByText(/capaciteit|validatie|onderbouwing/i).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /Vraag gegevens op|Doorsturen|Valideer/i }).first()).toBeVisible();
 
   const gemeenteTitles = await page.evaluate(async () => {
     const r = await fetch("/care/api/cases/");
@@ -110,7 +111,7 @@ test("Zorg OS golden path — gemeente → matching → provider scope → accep
       );
       return phase;
     })
-    .toBe("plaatsing");
+    .toBe("provider_beoordeling");
 
   await logout(page);
 
@@ -123,6 +124,23 @@ test("Zorg OS golden path — gemeente → matching → provider scope → accep
   evaluation = await getDecisionEvaluation(page, seeded.goldenCaseId);
   expect(evaluation.current_state).toBe("PLACEMENT_CONFIRMED");
   expect(evaluation.next_best_action?.action).toBe("START_INTAKE");
+
+  await expect
+    .poll(async () => {
+      const phase = await page.evaluate(
+        async ({ casePk, title }: { casePk: number; title: string }) => {
+          const resp = await fetch("/care/api/cases/");
+          const j = (await resp.json()) as {
+            contracts?: Array<{ id: number; title: string; case_phase: string }>;
+          };
+          const row = (j.contracts ?? []).find((c) => c.id === casePk || c.title === title);
+          return row?.case_phase ?? "";
+        },
+        { casePk: seeded.goldenCaseId, title: seeded.goldenTitle },
+      );
+      return phase;
+    })
+    .toBe("plaatsing");
 
   await logout(page);
 

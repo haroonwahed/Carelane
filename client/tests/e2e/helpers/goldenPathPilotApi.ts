@@ -229,7 +229,7 @@ export async function seedGoldenPathCases(page: import("@playwright/test").Page)
     target_completion_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     assessment_summary: "",
     urgency: "HIGH",
-    complexity: "MULTIPLE",
+    complexity: "MEERVOUDIG",
     zorgvorm_gewenst: "OUTPATIENT",
     preferred_care_form: "OUTPATIENT",
     preferred_region_type: bootstrap.json?.initial_values.preferred_region_type ?? "JEUGDREGIO",
