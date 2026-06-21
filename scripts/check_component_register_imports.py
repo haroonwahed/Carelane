@@ -58,7 +58,6 @@ _GRANDFATHER = frozenset([
     'client/src/components/care/AanbiederreactiePage.tsx',
     'client/src/components/care/AccessDeniedPage.tsx',
     'client/src/components/care/ActiesPage.tsx',
-    'client/src/components/care/AssessmentQueuePage.tsx',
     'client/src/components/care/AudittrailPage.tsx',
     'client/src/components/care/CoordinationControlCenter.tsx',
     'client/src/components/care/DocumentenPage.tsx',

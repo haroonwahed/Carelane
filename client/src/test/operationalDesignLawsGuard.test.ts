@@ -24,7 +24,6 @@ const QUEUE_PAGE_FILES = [
   "IntakeListPage.tsx",
   "SignalenPage.tsx",
   "AanbiederreactiePage.tsx",
-  "AssessmentQueuePage.tsx",
   "DocumentenPage.tsx",
   "PlacementTrackingPage.tsx",
 ];
@@ -176,7 +175,6 @@ describe("operationalDesignLawsGuard", () => {
       "PlacementTrackingPage.tsx",
       "IntakeListPage.tsx",
       "SignalenPage.tsx",
-      "AssessmentQueuePage.tsx",
     ];
     for (const file of mustHeader) {
       const source = readCareFile(file);

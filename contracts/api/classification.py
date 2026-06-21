@@ -17,6 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from contracts.models import CaseIntakeProcess, CaseTimelineEvent
+from contracts.tenancy import get_scoped_object_or_404, get_user_organization
 from contracts.workflow_state_machine import resolve_actor_role
 
 logger = logging.getLogger(__name__)
@@ -33,10 +34,12 @@ def confirm_classification(request, intake_id):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Ongeldige JSON.'}, status=400)
 
-    try:
-        intake = CaseIntakeProcess.objects.select_related('contract', 'organization').get(pk=intake_id)
-    except CaseIntakeProcess.DoesNotExist:
-        return JsonResponse({'error': 'Casus niet gevonden.'}, status=404)
+    organization = get_user_organization(request.user)
+    intake = get_scoped_object_or_404(
+        CaseIntakeProcess.objects.select_related('contract', 'organization'),
+        organization,
+        pk=intake_id,
+    )
 
     actor_role = resolve_actor_role(user=request.user, organization=intake.organization)
     if actor_role not in {'gemeente', 'admin'}:

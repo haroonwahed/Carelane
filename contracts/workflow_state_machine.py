@@ -192,6 +192,13 @@ def resolve_actor_role(*, user: User, organization=None, strict: bool = False) -
         if profile_role == UserProfile.Role.ADMIN:
             return WorkflowRole.ADMIN
 
+        # When an organisation was specified but the actor has no active
+        # membership in it, they cannot hold a municipal-authority role for
+        # that tenant. UNRESOLVED causes every authorisation gate to deny,
+        # preventing cross-tenant privilege escalation.
+        if organization is not None and membership is None:
+            return WorkflowRole.UNRESOLVED
+
         return WorkflowRole.GEMEENTE
     except Exception:
         logger.exception(

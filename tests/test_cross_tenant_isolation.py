@@ -1304,3 +1304,65 @@ class RegiekamerDecisionOverviewIsolationTest(CrossTenantFixtureMixin, TestCase)
                          'Regiekamer overview must not leak other-tenant case titles')
         self.assertNotIn(self.contract_a.pk, case_ids,
                          'Regiekamer overview must not leak other-tenant case IDs')
+
+
+# ===========================================================================
+# Classification confirm API — cross-tenant isolation
+# ===========================================================================
+
+@_DJANGO_HTML_WS
+class ClassificationApiCrossTenantTest(CrossTenantFixtureMixin, TestCase):
+    """
+    POST /care/api/cases/<intake_id>/classification/confirm/ must be tenant-scoped.
+
+    Before the fix, the endpoint did a raw .get(pk=intake_id) lookup without
+    an organisation filter, which allowed any authenticated user to confirm
+    classification on another tenant's intake (IDOR).  The fix uses
+    get_scoped_object_or_404 so a foreign intake_id returns 404.
+    """
+
+    def setUp(self):
+        super().setUp()
+        # Give intake_a a proposed_complexity so a genuine confirm can succeed.
+        self.intake_a.complexity = CaseIntakeProcess.Complexity.ENKELVOUDIG
+        self.intake_a.proposed_complexity = CaseIntakeProcess.Complexity.MEERVOUDIG
+        self.intake_a.save(update_fields=['complexity', 'proposed_complexity'])
+
+    def _post_confirm(self, *, intake_id, field='complexity', action='confirm', value='', reason=''):
+        url = reverse('carelane:classification_confirm', kwargs={'intake_id': intake_id})
+        body = {'field': field, 'action': action}
+        if value:
+            body['value'] = value
+        if reason:
+            body['reason'] = reason
+        return self.client.post(url, data=json.dumps(body), content_type='application/json')
+
+    def test_cross_tenant_classification_blocked_404(self):
+        """user_b (org_b) must not be able to classify org_a's intake."""
+        self.client.login(username='user_b', password='passB1234!')
+        response = self._post_confirm(intake_id=self.intake_a.pk)
+        self.assertEqual(response.status_code, 404,
+                         'Cross-tenant classification must return 404, not modify another org intake')
+
+    def test_cross_tenant_classification_does_not_mutate_intake(self):
+        """After a cross-tenant attempt, org_a's intake must be unchanged."""
+        original_status = self.intake_a.complexity_status or ''
+        self.client.login(username='user_b', password='passB1234!')
+        self._post_confirm(intake_id=self.intake_a.pk)
+        self.intake_a.refresh_from_db()
+        self.assertEqual(self.intake_a.complexity_status or '', original_status)
+
+    def test_same_tenant_classification_allowed(self):
+        """user_a (org_a owner) can confirm classification on their own intake."""
+        self.client.login(username='user_a', password='passA1234!')
+        response = self._post_confirm(intake_id=self.intake_a.pk, action='confirm')
+        self.assertEqual(response.status_code, 200,
+                         f'Same-tenant classification must succeed; got: {response.content}')
+        payload = response.json()
+        self.assertTrue(payload.get('ok'))
+        self.assertEqual(payload.get('field'), 'complexity')
+
+    def test_unauthenticated_classification_returns_401(self):
+        url = reverse('carelane:classification_confirm', kwargs={'intake_id': self.intake_a.pk})
+        response = self.client.post(url, data='{}', content_type='application/json')
+        self.assertEqual(response.status_code, 401)

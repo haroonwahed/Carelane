@@ -16,7 +16,6 @@ import { buildAanbiederreactieRows } from "../care/AanbiederreactiePage";
 // Route-level code splitting — each page loads only when first rendered
 const SystemAwarenessPage = lazy(() => import("../care/SystemAwarenessPage").then(m => ({ default: m.SystemAwarenessPage })));
 const RegiosPage = lazy(() => import("../care/RegiosPage").then(m => ({ default: m.RegiosPage })));
-const AssessmentQueuePage = lazy(() => import("../care/AssessmentQueuePage").then(m => ({ default: m.AssessmentQueuePage })));
 const MatchingPageWrapper = lazy(() => import("../care/MatchingPageWrapper").then(m => ({ default: m.MatchingPageWrapper })));
 const PlacementPageWrapper = lazy(() => import("../care/PlacementPageWrapper").then(m => ({ default: m.PlacementPageWrapper })));
 const IntakeListPage = lazy(() => import("../care/IntakeListPage").then(m => ({ default: m.IntakeListPage })));
