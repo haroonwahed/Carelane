@@ -22,6 +22,8 @@
 - backup/restore drill → **pass** (rehearsal SQLite; live Postgres `27` cases / `31` decision logs)
 - rollback rehearsal → **pass** (`/_health/` 200; live SHA `9f7aa53`)
 - security gate pytest → **130 passed**
+- Playwright golden path → **12 passed**, 1 skipped (`run_golden_path_e2e.sh`)
+- Render: **autoDeploy off**, health check `/_health/`, deploy `e444e78f` live (manual deploy for `f5573ab1` pending)
 - Render Redis → **pending** Blueprint sync (`docs/ops/RENDER_INFRA_SYNC.md`)
 
 ### Follow-up
