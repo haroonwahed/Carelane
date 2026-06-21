@@ -6,7 +6,6 @@ import logging
 from datetime import date
 
 from django.http import Http404, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -242,7 +241,6 @@ def intake_form_options_api(request):
         return JsonResponse({'error': f'Intake-form kon niet worden opgebouwd: {str(e)}'}, status=500)
 
 
-@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def intake_create_api(request):

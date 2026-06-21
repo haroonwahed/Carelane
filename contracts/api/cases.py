@@ -7,7 +7,6 @@ import logging
 from django.core.cache import cache
 from django.db.models import Prefetch, Q
 from django.http import Http404, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -391,7 +390,6 @@ def coordination_decision_overview_api(request):
 
 regiekamer_decision_overview_api = coordination_decision_overview_api
 
-@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def cases_bulk_update_api(request):

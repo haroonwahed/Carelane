@@ -13,7 +13,6 @@ import logging
 
 from django.http import JsonResponse
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from contracts.models import CaseIntakeProcess, CaseTimelineEvent
@@ -23,7 +22,6 @@ from contracts.workflow_state_machine import resolve_actor_role
 logger = logging.getLogger(__name__)
 
 
-@csrf_exempt
 @require_POST
 def confirm_classification(request, intake_id):
     if not request.user.is_authenticated:
@@ -125,20 +123,20 @@ def confirm_classification(request, intake_id):
         audit_metadata['system_proposal_criteria'] = intake.classification_rationale.get('criteria', [])
 
     if intake.contract_id:
+        audit_metadata['user_action'] = audit_action
         CaseTimelineEvent.objects.create(
             organization=intake.organization,
             care_case_id=intake.contract_id,
-            event_type='STATE_TRANSITION',
+            event_type='CLASSIFICATION_UPDATED',
             occurred_at=now,
             actor=request.user,
             actor_role=actor_role,
-            user_action=audit_action,
             summary=(
                 f'{display_field} {"bevestigd" if action == "confirm" else "gewijzigd"}: '
                 f'{previous_value or "—"} → {new_value}'
                 + (f' (reden: {reason[:100]})' if reason else '')
             ),
-            audit_log=audit_metadata,
+            metadata=audit_metadata,
         )
 
     new_status = (
