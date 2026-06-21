@@ -77,3 +77,54 @@ if SENTRY_DSN:
         traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0')),
         profiles_sample_rate=float(os.getenv('SENTRY_PROFILES_SAMPLE_RATE', '0')),
     )
+
+# ---------------------------------------------------------------------------
+# Logging — production override
+# ---------------------------------------------------------------------------
+# Render has an ephemeral filesystem; the pilot_file rotating handler defined
+# in base settings writes to logs/pilot.log which vanishes on every deploy.
+# In production we only log to stdout (Render captures it). Sentry captures
+# exceptions independently via the SDK above.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'correlation_id': {
+            '()': 'contracts.observability.CorrelationIdFilter',
+        },
+    },
+    'formatters': {
+        'standard': {
+            'format': '[{asctime}] {levelname} {name} corr={correlation_id} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+            'filters': ['correlation_id'],
+        },
+    },
+    'loggers': {
+        'contracts.views': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'contracts.api.views': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'contracts.observability': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}

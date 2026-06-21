@@ -79,12 +79,94 @@ services:
       # Optional. When set, overrides Render WEB_CONCURRENCY for gunicorn --workers (e.g. 2 on free tier).
       - key: GUNICORN_WORKERS
         sync: false
-      # Staging pilot: migrate + bootstrap on boot (see bootstrap_staging_pilot).
-      # Existing demo_gemeente: sync passwords via seed_pilot_e2e. Full wipe: PILOT_FORCE_RESET=1 once in dashboard.
+      # Error monitoring. Set SENTRY_DSN in Render dashboard (never commit the DSN).
+      # SENTRY_RELEASE is set automatically by the deploy hook to the git SHA.
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_ENVIRONMENT
+        value: production
+      - key: SENTRY_RELEASE
+        sync: false
+
+  # ---------------------------------------------------------------------------
+  # Staging service — isolated from production
+  # ---------------------------------------------------------------------------
+  # Points at main by default; switch to a staging branch once you have one.
+  # DATABASE_URL must point at a SEPARATE Supabase project — never share a DB
+  # between staging and production.
+  # After creating this service in Render, set STAGING_HOST to the assigned
+  # *.onrender.com hostname so ALLOWED_HOSTS and CSRF_TRUSTED_ORIGINS resolve.
+  - type: web
+    name: carelane-staging
+    runtime: python
+    plan: free
+    branch: main
+    autoDeploy: false
+    healthCheckPath: /_health/
+    region: frankfurt
+    buildCommand: |
+      pip install -r requirements/runtime.txt
+      PYTHON_BIN="$(command -v python || command -v python3)"
+      DJANGO_TEST_LOG_LEVEL=ERROR DATABASE_URL='sqlite:////tmp/carelane-build.sqlite3' "$PYTHON_BIN" manage.py check --settings=config.settings
+      npm ci --prefix client
+      npm run build --prefix client
+      DATABASE_URL='sqlite:////tmp/carelane-build.sqlite3' "$PYTHON_BIN" manage.py collectstatic --noinput --settings=config.settings
+      DATABASE_URL='sqlite:////tmp/carelane-build.sqlite3' "$PYTHON_BIN" manage.py migrate --noinput --settings=config.settings
+    startCommand: bash scripts/render_start_command.sh
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings_staging
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      # Must be a separate Supabase project from production.
+      - key: DATABASE_URL
+        sync: false
+      # Set to the Render-assigned *.onrender.com hostname after service creation.
+      - key: STAGING_HOST
+        sync: false
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: SPA_ORIGIN
+        sync: false
+      - key: OIDC_PUBLIC_BASE_URL
+        sync: false
+      - key: SSO_ENABLED
+        value: "0"
+      - key: OIDC_RP_CLIENT_ID
+        sync: false
+      - key: OIDC_RP_CLIENT_SECRET
+        sync: false
+      - key: OIDC_OP_DISCOVERY_ENDPOINT
+        value: https://accounts.google.com/.well-known/openid-configuration
+      - key: OIDC_RP_SCOPES
+        value: openid email profile
+      - key: DEFAULT_FROM_EMAIL
+        value: staging-noreply@carelane.nl
+      - key: SECURE_SSL_REDIRECT
+        value: "true"
+      - key: GUNICORN_WORKERS
+        sync: false
+      # Demo seed — staging only. These must NOT appear on the production service.
       - key: PILOT_AUTO_BOOTSTRAP
         value: "1"
       - key: E2E_DEMO_PASSWORD
         value: pilot_demo_pass_123
-      # Cold start: set to 1 once to load full demo werkvoorraad (may fail if DB has legacy NOT NULL columns).
       - key: PILOT_FULL_DEMO_SEED
         value: "1"
+      # Sentry — same DSN, different environment tag.
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_ENVIRONMENT
+        value: staging
+      - key: SENTRY_RELEASE
+        sync: false
