@@ -511,7 +511,7 @@ def intake_schedule_api(request, case_id):
     except Http404:
         return JsonResponse({'ok': False, 'error': 'Casus niet gevonden.'}, status=404)
 
-    actor_role = resolve_actor_role(request.user, organization)
+    actor_role = resolve_actor_role(user=request.user, organization=organization)
     if actor_role not in {WorkflowRole.GEMEENTE, WorkflowRole.ADMIN}:
         return JsonResponse({'ok': False, 'error': 'Geen toegang.'}, status=403)
 

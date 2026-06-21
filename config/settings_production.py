@@ -19,8 +19,8 @@ CSRF_TRUSTED_ORIGINS = [
 if DEBUG:
     raise ImproperlyConfigured('DJANGO_DEBUG must be false in production settings.')
 
-if not ALLOWED_HOSTS:
-    raise ImproperlyConfigured('ALLOWED_HOSTS must be set in production.')
+if not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS:
+    raise ImproperlyConfigured('ALLOWED_HOSTS must be set to explicit hostnames in production (wildcard not allowed).')
 if not CSRF_TRUSTED_ORIGINS:
     raise ImproperlyConfigured('CSRF_TRUSTED_ORIGINS must be set in production.')
 if SECRET_KEY.startswith('django-insecure-'):
@@ -38,7 +38,7 @@ WHITENOISE_USE_FINDERS = False
 # In production, file downloads MUST go through the authenticated download endpoint.
 # Django never serves /media/ directly (no static(MEDIA_URL) in urlpatterns at DEBUG=False).
 # Set to True so _serve_field_file emits X-Accel-Redirect → nginx internal alias only.
-NGINX_MEDIA_ACCEL_REDIRECT = base._bool_env('NGINX_MEDIA_ACCEL_REDIRECT', default=True)
+NGINX_MEDIA_ACCEL_REDIRECT = base._bool_env('NGINX_MEDIA_ACCEL_REDIRECT', default=False)
 SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '3600'))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = base._bool_env('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True)
 SECURE_HSTS_PRELOAD = base._bool_env('SECURE_HSTS_PRELOAD', default=True)

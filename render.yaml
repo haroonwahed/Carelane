@@ -3,6 +3,9 @@ services:
     name: carelane
     runtime: python
     plan: free
+    branch: main
+    autoDeploy: false
+    healthCheckPath: /_health/
     # Co-locate the app with the database. The Postgres (Supabase) lives in
     # eu-west-1 (Ireland); Frankfurt is Render's closest EU region. Without this
     # Render defaults to Oregon (US-West) — every DB query then crosses the
