@@ -14,7 +14,7 @@ As a provider (zorgaanbieder), Carelane notifies you when a municipality has sel
 2. Review the case details
 3. Accept or decline the placement request
 
-You do **not** see cases assigned to other providers, and you cannot see the full case list of the municipality.
+You do **not** see cases assigned to other providers, and you cannot see the municipality's full case list.
 
 ---
 
@@ -26,17 +26,36 @@ You do **not** see cases assigned to other providers, and you cannot see the ful
 - **Username:** provided by your contact at the municipality or pilot lead
 - **Temporary password:** provided via separate secure channel
 
-Change your password on first login.
+Change your password after first login.
 
 ### What you can see
 
 | Feature | Provider access |
 |---------|----------------|
 | Cases assigned to your organisation | ✅ Yes |
-| Other organisations' cases | ✅ No |
-| Audit log | No (gemeente-only feature) |
-| Matching candidates | No (gemeente-only feature) |
-| Your own notification inbox | ✅ Yes |
+| Other organisations' cases | ✗ No |
+| Audittrail | ✗ No (gemeente-only feature) |
+| Matching candidates | ✗ No (gemeente-only feature) |
+| Your notification inbox | ✅ Yes |
+
+---
+
+## Your navigation (left sidebar)
+
+After login you will see:
+
+```
+WERK
+  Intake            — cases in active placement / intake phase
+  Reacties          — cases waiting for your response (main working area)
+  Mijn aanvragen    — your submitted requests
+
+ONDERSTEUNING
+  Nieuwe aanvraag
+  Documenten
+```
+
+Your daily working area is **Reacties**. That is where pending cases appear.
 
 ---
 
@@ -44,11 +63,11 @@ Change your password on first login.
 
 ### In-app bell
 
-When the municipality sends a case to your organisation, the bell icon in the top bar shows an unread count. Click the bell to see the notification.
-
-The notification contains:
-- A reference number for the case
+When the municipality sends a case to your organisation, the bell icon in the top navigation bar shows an unread count on your next login. Click the bell to see the notification. The notification contains:
+- The case reference number
 - A prompt to log in and respond
+
+> Notifications update when you load a page — they are not pushed in real time. If you are already logged in when a case is sent, refresh or navigate to **Reacties** to see it.
 
 ### Email notification
 
@@ -62,31 +81,45 @@ You will also receive an email to the address registered for your organisation. 
 
 ### Step 1 — Find the case
 
-After login, navigate to **Casussen** in the sidebar. Cases assigned to your organisation appear here with status **PROVIDER_REVIEW_PENDING**.
+After login, click **Reacties** in the left sidebar. Cases sent to your organisation appear here under the heading **"Wacht op uw reactie"**.
 
 ### Step 2 — Review the case
 
-Click on a case to open it. You will see:
-- The care form requested
-- Urgency level
-- Start date
-- Region
+Click on a case to open it. You will see the care need, urgency, start date, and region.
 
 ### Step 3 — Respond
 
-In the case detail panel, you will see two actions:
+Three action buttons appear:
 
-**Accepteren (Accept)**
-- Click to accept the placement
-- The case moves to PROVIDER_ACCEPTED
-- The municipality is notified
-- Your capacity is decremented by 1 in the system
+| Button | What it does |
+|--------|-------------|
+| **Accepteren** | Accept the placement. The case moves to accepted state. The municipality is notified. Your capacity decrements by 1. |
+| **Afwijzen** | Decline the placement. You must select a **Reden voor afwijzing** (required). The case returns to the municipality for rematching. Capacity is not affected. |
+| **Info vragen** | Request additional information. Provide a **Toelichting** (required, minimum 10 characters). |
 
-**Afwijzen (Decline)**
-- Click to decline the placement
-- You may be asked to provide a reason
-- The case returns to the municipality for rematching
-- Your capacity is not affected
+**Rejection reasons available:**
+- Capaciteit
+- Wachtlijst
+- Zorgvraag past niet
+- Regio past niet
+- Veiligheidsrisico
+- Administratieve blokkade
+- Anders
+
+---
+
+## Tracking your responses
+
+After responding, the case moves to the **"Eerder beantwoord"** section on the **Reacties** page.
+
+Status labels:
+
+| Label | Meaning |
+|-------|---------|
+| **Wacht op uw reactie** | Case is pending your response |
+| **Geaccepteerd** | You accepted |
+| **Afgewezen** | You declined |
+| **Plaatsing bevestigd** | Municipality confirmed the placement |
 
 ---
 
@@ -94,7 +127,7 @@ In the case detail panel, you will see two actions:
 
 The system tracks available capacity per organisation. When you accept a placement:
 - Available capacity decreases by 1 automatically
-- The system prevents double-booking: if two requests arrive simultaneously, only one will succeed
+- The system prevents double-booking: if two requests arrive simultaneously, only one will succeed (the other receives a 409 error — the municipality is responsible for re-sending)
 
 If capacity reaches 0 for your organisation, the matching engine will not assign new cases to you until capacity is updated. Contact the pilot lead if your capacity settings need adjustment.
 
@@ -104,7 +137,7 @@ If capacity reaches 0 for your organisation, the matching engine will not assign
 
 This pilot uses fabricated data only:
 - Case references are test cases — not real clients
-- Do not act as if these are real placements for reporting or invoicing purposes
+- Do not act on these as real placements for reporting or invoicing purposes
 - Do not enter real client information anywhere in the system during this pilot
 
 ---
@@ -113,14 +146,14 @@ This pilot uses fabricated data only:
 
 | Problem | What to do |
 |---------|-----------|
-| You didn't receive an email for a case | Check spam folder. Contact pilot lead if not there. |
-| You can't see a case the gemeente says they sent | Contact pilot lead with the case reference. |
+| You didn't receive an email for a case | Check spam folder. Check **Reacties** in the sidebar — the case may be there even if email is missing. Contact pilot lead if you can't find it. |
+| You can't see a case the gemeente says they sent | Go to **Reacties** and refresh. If still missing, contact pilot lead with the case reference. |
 | You accepted a case by mistake | Contact pilot lead immediately — capacity rollback requires operator action. |
 | You see unexpected data (another org's cases) | Stop and contact pilot lead as P1. |
 | System error or blank page | Note the URL and contact pilot lead. |
 
 **Support contact:** haroonwahed@live.nl  
-**Response time:** same business day during supervised pilot weeks
+**Response:** same business day during supervised pilot weeks
 
 ---
 
@@ -129,10 +162,10 @@ This pilot uses fabricated data only:
 ```
 [ ] Login succeeds at https://www.carelane.nl/care/
 [ ] Bell icon visible in top navigation bar
-[ ] Navigate to Casussen — see at least one case in PROVIDER_REVIEW_PENDING
-[ ] Click case to view details
-[ ] Accept OR decline the test case
-[ ] Confirm case status updates correctly
+[ ] Click "Reacties" in sidebar — see at least one case under "Wacht op uw reactie"
+[ ] Click the case to open it
+[ ] Accept OR decline the test case (use "Accepteren" or "Afwijzen")
+[ ] Case moves to "Eerder beantwoord" section
 [ ] Check email inbox — received notification email for the test case
 [ ] Logout successfully
 ```

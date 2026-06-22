@@ -28,13 +28,14 @@
 ### 2. Workflow coverage
 
 ```
-[ ] At least 1 case created (Aanmelding → CaseIntakeProcess exists)
-[ ] At least 1 case reached MATCHING_READY
-[ ] At least 1 case sent to provider (PROVIDER_REVIEW_PENDING)
-[ ] At least 1 provider response received (ACCEPTED or REJECTED)
+[ ] At least 1 case created (Aanmeldingen → Nieuwe aanmelding used)
+[ ] At least 1 case reached matching-ready state (Valideer matching clicked)
+[ ] At least 1 case sent to provider (Stuur naar aanbieder used)
+[ ] At least 1 provider response received (Accepteren or Afwijzen)
 
-Cases in flight by state:
-  INTAKE:                    ___
+Cases in flight by workflow state:
+  DRAFT_CASE:                ___
+  SUMMARY_READY:             ___
   MATCHING_READY:            ___
   GEMEENTE_VALIDATED:        ___
   PROVIDER_REVIEW_PENDING:   ___
@@ -55,13 +56,14 @@ for r in CaseIntakeProcess.objects.values('workflow_state').annotate(n=Count('pk
 ### 3. Notifications
 
 ```
-[ ] In-app notification created for every send_to_provider action
+[ ] In-app notification (type=APPROVAL) created for every "Stuur naar aanbieder" action
     Count: ___  (should equal PROVIDER_REVIEW_PENDING transitions)
 
 [ ] No "failed to send email" ERROR in application logs
     Log check date/time: ________________________
 
-[ ] At least 1 provider confirmed receipt of notification (email or bell)
+[ ] At least 1 provider confirmed receipt of notification
+    (Ask provider: check bell icon on Reacties page, or check email)
     Confirmed by: ___________________________
 ```
 
@@ -74,7 +76,7 @@ for r in CaseIntakeProcess.objects.values('workflow_state').annotate(n=Count('pk
 [ ] Sentry shows 0 P1/P2 open incidents
     Sentry URL checked: _________________
 
-[ ] Audit log API returns rows for completed cases (spot-check 1 case)
+[ ] Audittrail shows rows for completed cases (spot-check 1 case)
     Case ID spot-checked: _______________
 
 [ ] No cross-tenant data leak reported
@@ -114,25 +116,24 @@ Unresolved issues carried to Week 2:
 ### 1. Cumulative workflow metrics
 
 ```
-Total cases created:                    ___
-Reached PROVIDER_REVIEW_PENDING:        ___  (target: ≥ 90% of started)
-Received a provider response:           ___  (target: ≥ 80%)
-Reached PLACEMENT_CONFIRMED:            ___  (target: ≥ 70% of accepted)
-Cases rematched (PROVIDER_REJECTED):    ___  (target: ≤ 30%)
+Total cases created:                                      ___
+Reached matching-ready (Valideer matching clicked):       ___  (target: ≥ 90% of started)
+Sent to provider (Stuur naar aanbieder):                  ___  (target: ≥ 90% of validated)
+Received a provider response (Accepteren or Afwijzen):    ___  (target: ≥ 80%)
+Reached confirmed placement (Bevestig plaatsing clicked): ___  (target: ≥ 70% of accepted)
+Cases rematched (provider clicked Afwijzen):              ___  (target: ≤ 30%)
 ```
 
 ### 2. Time-to-completion
 
 ```
-Average days aanmelding → PROVIDER_REVIEW_PENDING:  ___  (target: ≤ 3 days)
-Average days PROVIDER_REVIEW_PENDING → response:   ___  (target: ≤ 3 days)
+Average days aanmelding → Stuur naar aanbieder:       ___  (target: ≤ 3 days)
+Average days sent → provider response:                ___  (target: ≤ 3 days)
 ```
 
 Run to fill in (approximate — full calculation in Week 4):
 ```python
 from contracts.models import CaseIntakeProcess
-from django.db.models import F
-# Manual inspection for now — filter cases with timestamps
 intakes = CaseIntakeProcess.objects.filter(
     workflow_state__in=['PROVIDER_REVIEW_PENDING','PROVIDER_ACCEPTED','PLACEMENT_CONFIRMED']
 ).values('pk','created_at','updated_at','workflow_state')[:10]
@@ -179,13 +180,13 @@ Summary of week 2 survey responses:
 [ ] Uptime ≥ 99% this week (check Render uptime graph)
 [ ] No P1 incidents since Week 1 review
 [ ] API p95 latency within range (check Render request logs)
-[ ] Audit log complete for all confirmed cases
+[ ] Audittrail complete for all confirmed cases
 ```
 
 ### 6. Pilot data compliance
 
 ```
-[ ] Spot-check 3 cases — no real BSN or personal names found
+[ ] Spot-check 3 cases — no real BSN or personal names found in Persoonsbeeld
     Cases checked: ___, ___, ___
 [ ] No real address data in case descriptions
 ```
@@ -212,7 +213,7 @@ Summary of week 2 survey responses:
 ```
 [ ] Zero data isolation incidents throughout pilot
 [ ] Zero capacity double-bookings
-[ ] Zero audit log corruption incidents
+[ ] Zero Audittrail corruption incidents
 [ ] Sentry: zero P0 events in final week
 ```
 
@@ -221,28 +222,28 @@ If any P0 breach: **STOP — activate No-Go condition.**
 ### 2. P1 metrics — final evaluation
 
 ```
-Workflow completion rate (aanmelding → MATCHING_READY):  ___  (target: ≥ 90%)
-send_to_provider rate (validated → sent):                ___  (target: ≥ 90%)
-Provider response rate within 5 days:                   ___  (target: ≥ 80%)
-PLACEMENT_CONFIRMED rate:                               ___  (target: ≥ 70%)
+Workflow completion rate (aanmelding → matching-ready):   ___  (target: ≥ 90%)
+Send-to-provider rate (validated → sent):                 ___  (target: ≥ 90%)
+Provider response rate within 5 days:                     ___  (target: ≥ 80%)
+Confirmed placement rate:                                 ___  (target: ≥ 70%)
 
-System uptime (business hours):                         ___%  (target: ≥ 99%)
-API p95 latency:                                        ___ s  (target: ≤ 2s)
+System uptime (business hours):                           ___%  (target: ≥ 99%)
+API p95 latency:                                          ___ s  (target: ≤ 2s)
 
-All users logged in at least once:                      [ ] Yes  [ ] No
-At least 1 full case completed:                         [ ] Yes  [ ] No
+All users logged in at least once:                        [ ] Yes  [ ] No
+At least 1 full case completed (placement confirmed):     [ ] Yes  [ ] No
 ```
 
 ### 3. P2 metrics — pilot quality
 
 ```
-Average time aanmelding → PROVIDER_REVIEW_PENDING:  ___ days  (target: ≤ 3)
-Average time PROVIDER_REVIEW_PENDING → response:    ___ days  (target: ≤ 3)
-Rematch rate:                                       ___%  (target: ≤ 30%)
+Average time aanmelding → Stuur naar aanbieder:       ___ days  (target: ≤ 3)
+Average time sent → provider response:                ___ days  (target: ≤ 3)
+Rematch rate (Afwijzen actions / total sent):         ___%  (target: ≤ 30%)
 
-Email delivery error rate:                          ___%  (target: ≤ 10%)
-Cases with complete audit trail:                    ___%  (target: 100%)
-Providers with email configured:                    ___%  (target: 100%)
+Email delivery error rate:                            ___%  (target: ≤ 10%)
+Cases with complete Audittrail:                       ___%  (target: 100%)
+Providers with email configured:                      ___%  (target: 100%)
 ```
 
 ### 4. User feedback summary

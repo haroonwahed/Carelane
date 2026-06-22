@@ -24,7 +24,7 @@ Credentials are sent via **two separate channels** (URL + username via one chann
 | Provider Alpha Contact | `pilot_provider_alpha` | OWNER — Provider | Pilot Aanbieder Alpha |
 | Provider Beta Contact | `pilot_provider_beta` | OWNER — Provider | Pilot Aanbieder Beta |
 
-**Change password on first login.**
+**Change password on first login:** Gemeente → **Instellingen** (sidebar, BEHEER section) → **Algemeen**. Provider → same path.
 
 ---
 
@@ -33,26 +33,26 @@ Credentials are sent via **two separate channels** (URL + username via one chann
 ### Day 1 (Morning) — Gemeente Coordinator
 - [ ] Receive login credentials (two channels)
 - [ ] Login at `https://www.carelane.nl/care/`
-- [ ] Change password
+- [ ] Change password (Instellingen → Algemeen)
 - [ ] Read [Municipality Onboarding Guide](02_MUNICIPALITY_ONBOARDING.md) (15 min)
 - [ ] Complete First Session Checklist in that guide
-- [ ] Create first test case: "Pilotcasus 001" (fabricated data)
-- [ ] Advance case to MATCHING_READY
+- [ ] Create first test case: click **Aanmeldingen** → **Nieuwe aanmelding** → enter "Pilotcasus 001" in the **Persoonsbeeld** field
+- [ ] Advance case through **Toetsing** → click **Valideer matching**
 - [ ] Call with pilot lead: 30 min walkthrough
 
 ### Day 1 (Afternoon) — Provider Alpha
 - [ ] Receive login credentials (two channels)
 - [ ] Login at `https://www.carelane.nl/care/`
-- [ ] Change password
+- [ ] Change password (Instellingen → Algemeen)
 - [ ] Read [Provider Onboarding Guide](03_PROVIDER_ONBOARDING.md) (10 min)
 - [ ] Complete First Session Checklist in that guide
 
 ### Day 2 — First live case through full workflow
-- [ ] Gemeente sends "Pilotcasus 001" to Provider Alpha
-- [ ] Provider Alpha receives in-app notification + email
-- [ ] Provider Alpha accepts or declines
-- [ ] Gemeente confirms placement (if accepted) OR rematches (if declined)
-- [ ] Gemeente reviews audit log for the case
+- [ ] Gemeente sends "Pilotcasus 001" to Provider Alpha via **Stuur naar aanbieder**
+- [ ] Provider Alpha sees case in **Reacties** (and receives email notification)
+- [ ] Provider Alpha clicks **Accepteren** or **Afwijzen**
+- [ ] Gemeente clicks **Bevestig plaatsing** (if accepted) OR uses **Her-match casus** (if declined)
+- [ ] Gemeente reviews **Audittrail** for the case
 
 ---
 
@@ -75,9 +75,9 @@ Full support procedures: [Support Playbook](05_SUPPORT_PLAYBOOK.md)
 
 Pilot is considered successful if, at Week 4:
 - Zero data isolation incidents
-- ≥ 90% of cases advance from Aanmelding to MATCHING_READY
+- ≥ 90% of cases advance from Aanmelding to matching-ready state
 - ≥ 80% of provider assignments receive a response within 5 business days
-- ≥ 70% of accepted cases reach PLACEMENT_CONFIRMED
+- ≥ 70% of accepted cases reach confirmed placement
 - System uptime ≥ 99% during business hours
 
 Full metrics: [Pilot Success Metrics](04_SUCCESS_METRICS.md)
@@ -90,8 +90,8 @@ See [Review Checklists — End of Week 1](07_REVIEW_CHECKLISTS.md#end-of-week-1-
 
 Key items:
 - All users activated (logged in ≥ once)
-- At least 1 case sent to provider
-- At least 1 provider response received
+- At least 1 case sent to provider via **Stuur naar aanbieder**
+- At least 1 provider response received (**Accepteren** or **Afwijzen**)
 - `/_health/` returns `{"status": "ok"}`
 - No P1 incidents unresolved
 - No cross-tenant data leak reported
@@ -100,16 +100,13 @@ Key items:
 
 ## Known limitations (pilot scope)
 
-From [PILOT_KNOWN_LIMITATIONS.md](../../PILOT_KNOWN_LIMITATIONS.md):
-
 1. **No external system integration** — no iWlz/VECOZO connection in this pilot.
-2. **No real-time push** — provider notifications arrive at login; no WebSocket push.
-3. **Email best-effort** — email delivery is fire-and-forget; in-app notification is the reliable channel.
-4. **Capacity requires operator update** — capacity increments/decrements are automatic, but the initial capacity values for new providers require operator setup via shell.
-5. **No cancel/undo after PLACEMENT_CONFIRMED** — rematching a confirmed placement requires operator action.
+2. **Notifications update on page load** — provider bell count updates when they navigate to a page; no real-time push.
+3. **Email best-effort** — email delivery is fire-and-forget; the in-app bell on **Reacties** is the reliable channel.
+4. **Capacity requires operator setup** — initial capacity values for new providers require operator shell access; automatic decrements work after setup.
+5. **No cancel/undo after confirmed placement** — rematching a confirmed placement requires operator action.
 6. **Fabricated data only** — no real client BSN, addresses, or personal information during this pilot.
-7. **Concurrency test skipped on SQLite** — the SELECT FOR UPDATE concurrency guard is verified on PostgreSQL (Render production) only; the test is correctly skipped in local SQLite.
-8. **Manual user provisioning** — new pilot users require operator shell access; no self-registration.
+7. **Manual user provisioning** — new pilot users require operator shell access; no self-registration.
 
 ---
 

@@ -12,9 +12,29 @@
 |-------|-----------|---------|
 | **P1** | Pilot blocked — no user can progress | Login broken, app returns 500, data isolation breach |
 | **P2** | Workflow blocked for ≥ 1 user | Case stuck in wrong state, provider not notified, email not sending |
-| **P3** | Degraded but functional | Slow responses, confusing UI, notification bell wrong count |
+| **P3** | Degraded but functional | Slow responses, UI confusion, notification bell wrong count |
 
 Upgrade P2 → P1 if it affects all users or involves data integrity.
+
+---
+
+## Quick UI reference for support calls
+
+When a user describes what they see on screen, use this to locate the issue:
+
+**Gemeente sidebar:** DOORSTROOM (Regiekamer, Aanmeldingen) · CAPACITEIT (Matching, Reacties, Plaatsingen) · ONDERSTEUNING (Acties) · NETWERK · BEHEER (Documenten, **Audittrail**, Instellingen)
+
+**Provider sidebar:** WERK (**Reacties** is their main working area, Intake, Mijn aanvragen) · ONDERSTEUNING (Nieuwe aanvraag, Documenten)
+
+**Key button names:**
+- Create case: **Nieuwe aanmelding** (button on Aanmeldingen page — not in sidebar nav)
+- Validate route: **Valideer matching** (appears in next-best-action panel on Toetsing tab)
+- Send to provider: **Stuur naar aanbieder** (on Matching tab)
+- Provider accept: **Accepteren** · Provider decline: **Afwijzen**
+- Confirm placement: **Bevestig plaatsing** → confirm dialog → **Bevestig**
+- Rematch: **Her-match casus** (appears in next-best-action after provider declines)
+
+**Key tab names (case detail):** Overzicht · Aanmelding · Documenten · Activiteit · **Toetsing** (appears when case is ready for validation) · Matching · Arrangement
 
 ---
 
@@ -36,7 +56,7 @@ Upgrade P2 → P1 if it affects all users or involves data integrity.
    print('Password reset.')
    "
    → Send new temp password via secure channel
-   → Instruct user to change immediately
+   → Instruct user to change immediately via Instellingen → Algemeen
 
 3. Account locked (too many attempts):
    → From Render shell:
@@ -56,13 +76,36 @@ Upgrade P2 → P1 if it affects all users or involves data integrity.
 
 ---
 
-## Playbook 2 — Case stuck in wrong workflow state
+## Playbook 2 — User cannot find where to start
+
+**Reported as:** "Waar maak ik een nieuwe casus aan?" / "Ik zie geen Nieuwe casus knop"
+
+This is a documentation-gap issue, not a system bug. The create button is not in the sidebar nav.
+
+```
+Tell the user:
+  1. Click "Aanmeldingen" in the left sidebar (under DOORSTROOM)
+  2. The "Nieuwe aanmelding" button is at the top right of that page
+  3. A four-step wizard opens: Casus → Matching → Aanbieder beoordeling → Plaatsing
+  4. Fill in Gemeente, Gewenste startdatum, Uiterste plaatsingsdatum, 
+     Zorgbehoefte categorie, and Persoonsbeeld
+  5. Click "Volgende stap" to advance through each step
+  6. Click "Casus aanmaken" on the final step
+
+If Toetsing tab is not visible after creation:
+  → The case has missing fields. A "Casus is nog niet compleet" banner
+    appears on the Overzicht tab — complete those fields first.
+```
+
+---
+
+## Playbook 3 — Case stuck in wrong workflow state
 
 **Reported as:** "Case toont verkeerde status" / "Kan stap niet voltooien"
 
 ```
-1. Ask user: case reference (case ID from URL), current displayed state, 
-   expected state, last action they took.
+1. Ask user: case reference (ID from URL), what they see on screen,
+   last action they took.
 
 2. Check actual state:
    python manage.py shell -c "
@@ -72,28 +115,38 @@ Upgrade P2 → P1 if it affects all users or involves data integrity.
    print(f'Status: {intake.status}')
    "
 
-3. Valid state transitions only:
-   MATCHING_READY → GEMEENTE_VALIDATED → PROVIDER_REVIEW_PENDING
+3. Valid state transitions:
+   DRAFT_CASE → SUMMARY_READY → MATCHING_READY
+   → GEMEENTE_VALIDATED → PROVIDER_REVIEW_PENDING
    → PROVIDER_ACCEPTED → PLACEMENT_CONFIRMED
+
    PROVIDER_REJECTED → MATCHING_READY  (only rematch path)
 
-4. If state is correct but UI shows wrong value:
+4. Match state to what the user should see on screen:
+   MATCHING_READY / GEMEENTE_VALIDATED  → next action: "Valideer matching"
+                                           then "Stuur naar aanbieder"
+   PROVIDER_REVIEW_PENDING              → context rail: "Wacht op aanbiederreactie"
+   PROVIDER_ACCEPTED                    → next action: "Bevestig plaatsing"
+   PROVIDER_REJECTED                    → next action: "Her-match casus"
+   PLACEMENT_CONFIRMED                  → status: "Plaatsing bevestigd"
+
+5. If state is correct but UI shows wrong value:
    → Hard refresh (Ctrl+Shift+R). SPA may have stale state.
 
-5. If state is genuinely wrong (e.g., GEMEENTE_VALIDATED when placement was confirmed):
+6. If state is genuinely wrong:
    → Do NOT manually set workflow_state via shell without explicit lead approval
    → Log the discrepancy: case ID, expected state, actual state, how it got there
    → Treat as potential code bug; check Sentry for errors around that case
    → Only correct manually if blocking pilot and you understand the cause
 
-6. Document the incident in PILOT_INCIDENT_LOG.md
+7. Document the incident in PILOT_INCIDENT_LOG.md
 ```
 
 ---
 
-## Playbook 3 — Provider not receiving notifications
+## Playbook 4 — Provider not receiving notifications
 
-**Reported as:** "Aanbieder heeft geen melding ontvangen"
+**Reported as:** "Aanbieder heeft geen melding ontvangen" / bell count not updating
 
 ```
 1. Verify in-app notification was created:
@@ -111,12 +164,16 @@ Upgrade P2 → P1 if it affects all users or involves data integrity.
    "
 
 2. If 0 notifications:
-   → The send_to_provider action may have failed silently (check Sentry)
+   → The Stuur naar aanbieder action may have failed silently (check Sentry)
    → Check application log for:
      "notify_provider_review_requested: provider client X has no active members"
-     (provider org has no users — see provisioning fix)
+     (provider org has no users — see provisioning)
 
-3. If notification exists but email not received:
+3. Tell provider: notifications appear on the Reacties page in the sidebar.
+   The bell icon also shows a count. Both update on next page load — not in real time.
+   Ask provider to navigate to Reacties and refresh.
+
+4. If in-app notification exists but email not received:
    a) Check application log for:
       "notify_provider_review_requested: no contact email for provider client X"
       → Fix: set Client.primary_contact_email
@@ -136,20 +193,20 @@ Upgrade P2 → P1 if it affects all users or involves data integrity.
         print('Sent.')
         "
 
-4. If email config confirmed broken:
+5. If email config confirmed broken:
    → Set EMAIL_HOST credentials in Render dashboard
    → Trigger a test send
-   → Consider: manually inform provider via direct message while email is fixed
+   → Manually inform provider via direct message while email is fixed
 ```
 
 ---
 
-## Playbook 4 — Capacity error (409 on placement confirmation)
+## Playbook 5 — Capacity error (409 on placement confirmation)
 
 **Reported as:** "Plaatsing mislukt — geen capaciteit" / 409 error in browser network tab
 
 ```
-1. This is working as designed. The 409 means the provider's capacity is 0 
+1. This is working as designed. The 409 means the provider's capacity is 0
    or was consumed by a concurrent request.
 
 2. Check current capacity:
@@ -169,7 +226,6 @@ Upgrade P2 → P1 if it affects all users or involves data integrity.
 3. If capacity is 0 but should be higher:
    → Contact pilot lead for capacity record update
    → Do NOT update capacity records via shell without lead approval
-   → For pilot: capacity can be manually adjusted by creating a new CapaciteitRecord
 
 4. If capacity is > 0 but still getting 409:
    → Possible race condition resolved correctly (second of two concurrent requests)
@@ -179,31 +235,25 @@ Upgrade P2 → P1 if it affects all users or involves data integrity.
 
 ---
 
-## Playbook 5 — Potential cross-tenant data leak
+## Playbook 6 — Potential cross-tenant data leak
 
 **Reported as:** "Ik zie casussen van een andere organisatie"
 
 **TREAT AS P1. Act immediately.**
 
 ```
-1. Ask user: what did they see, exactly? (screenshot if possible)
+1. Ask user: what did they see exactly? (screenshot if possible)
    Do not ask them to navigate further.
 
 2. Immediately check for real leakage:
    python manage.py shell -c "
-   from contracts.models import CareCase
-   # Check if any case is visible outside its org
    from contracts.tenancy import get_user_organization
    from django.contrib.auth import get_user_model
    User = get_user_model()
    u = User.objects.get(username='<REPORTING_USER>')
-   from contracts.models import Organization
    org = get_user_organization(u)
    if org:
        print(f'User org: {org.slug}')
-       # Check for cases not in their org visible in API response
-       other_cases = CareCase.objects.exclude(organization=org).count()
-       print(f'Cases in other orgs (should be inaccessible): {other_cases}')
    "
 
 3. If real leakage confirmed:
@@ -217,18 +267,18 @@ Upgrade P2 → P1 if it affects all users or involves data integrity.
       print('Account disabled.')
       "
    b) Notify all affected organisation contacts
-   c) Raise P1 incident — do NOT proceed with pilot until root cause is found
-   d) Document incident timestamp, affected users, data scope
+   c) Raise P1 — do NOT proceed with pilot until root cause is found
+   d) Document: incident timestamp, affected users, data scope
    e) This is a potential AVG breach — document for 72h notification assessment
 
-4. If false alarm (user confused about which org context they're in):
-   → Explain the context switcher in the top bar
+4. If false alarm (user confused about context):
+   → Explain the sidebar — providers only see Reacties, Intake, Mijn aanvragen
    → Document as P3 UX issue
 ```
 
 ---
 
-## Playbook 6 — Application returning 500 errors
+## Playbook 7 — Application returning 500 errors
 
 **Reported as:** Error page, blank screen, or API returning 500
 
@@ -240,7 +290,7 @@ Upgrade P2 → P1 if it affects all users or involves data integrity.
    → 500 or no response = app is down; check Render service status
 
 2. Check Sentry for the error:
-   → Look for the stack trace; the error message usually identifies the cause
+   → Look for the stack trace
    → Note correlation_id from the error (shown in Render logs and Sentry)
 
 3. Check Render logs:
@@ -263,12 +313,16 @@ Upgrade P2 → P1 if it affects all users or involves data integrity.
 
 ---
 
-## Playbook 7 — Audit log concerns
+## Playbook 8 — Audit trail concerns
 
-**Reported as:** "We can't see an event that should be logged" or concern about completeness
+**Reported as:** "We can't see an event that should be logged" / concern about completeness
 
 ```
-1. Query audit log for the specific case:
+1. The audit trail is accessed via "Audittrail" in the sidebar (BEHEER section).
+   It is not called "Audit log". Direct the user there first.
+
+2. If the user can reach Audittrail but a specific event is missing,
+   query from Render shell:
    python manage.py shell -c "
    from contracts.models import AuditLog
    entries = AuditLog.objects.filter(
@@ -279,18 +333,21 @@ Upgrade P2 → P1 if it affects all users or involves data integrity.
        print(f'{e.timestamp} | {e.action} | {e.user} | {e.object_repr}')
    "
 
-2. Verify state transition events are present:
+3. Also check decision events:
+   python manage.py shell -c "
    from contracts.models import CaseDecisionLog
    logs = CaseDecisionLog.objects.filter(case_id=<INTAKE_ID>).order_by('timestamp')
    for l in logs:
        print(f'{l.timestamp} | {l.event_type} | {l.user_action}')
+   "
 
-3. If a log is missing:
+4. If a log is missing:
    → Check if the action was completed in the UI (vs. interrupted)
    → Check Sentry for errors around that time
-   → GovernanceLogImmutableError in logs = someone attempted to modify a row (security alert)
+   → GovernanceLogImmutableError in logs = modification attempt (security alert)
 
-4. Audit log is append-only. Missing logs = action did not complete, not tampering.
+5. The audit trail is append-only. A missing entry means the action did not
+   complete successfully — not that a record was deleted.
 ```
 
 ---
