@@ -21,10 +21,6 @@ services:
     # NOTE: Render fixes a service's region at creation; applying this to the
     # live service requires recreating it in Frankfurt (DB stays in eu-west-1).
     region: frankfurt
-    disk:
-      name: carelane-media
-      mountPath: /opt/render/project/storage
-      sizeGB: 1
     buildCommand: |
       pip install -r requirements/runtime.txt
       PYTHON_BIN="$(command -v python || command -v python3)"
