@@ -1,87 +1,75 @@
 /**
  * Care Journey Route — five connected phases in the canonical order:
  * Aanmelding → Matching → Aanbiederreactie → Plaatsing → Intake
+ * No Framer Motion. lucide-react icons.
  */
+import { UserPlus, Search, Mail, CheckCircle, Calendar } from "lucide-react";
 
 const phases = [
   {
     name: "Aanmelding",
     role: "Gemeente",
     text: "De zorgvraag wordt aangemaakt, gecontroleerd en compleet gemaakt.",
-    friction: "Onvolledige gegevens vertragen de start",
+    friction: "Onvolledige informatie vertraagt de keten",
+    frictionColor: "var(--cl-blue)",
+    frictionBg: "rgba(62,168,255,.12)",
     color: "var(--cl-blue)",
-    bg: "rgba(62,168,255,.10)",
-    border: "rgba(62,168,255,.22)",
+    bg: "rgba(62,168,255,.12)",
+    border: "rgba(62,168,255,.25)",
     step: "01",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <path d="M10 2a6 6 0 1 1 0 12A6 6 0 0 1 10 2Zm0 13c-3.5 0-6.5 1.34-6.5 3v1h13v-1c0-1.66-3-3-6.5-3Z" fill="currentColor"/>
-      </svg>
-    ),
+    Icon: UserPlus,
   },
   {
     name: "Matching",
     role: "Carelane",
     text: "Carelane vergelijkt passende aanbieders en maakt afwegingen zichtbaar.",
-    friction: "Adviserend — de professional beslist",
+    friction: "Wacht op reactie van aanbieder",
+    frictionColor: "var(--cl-violet-bright)",
+    frictionBg: "rgba(155,130,255,.12)",
     color: "var(--cl-violet-bright)",
-    bg: "rgba(155,130,255,.10)",
-    border: "rgba(155,130,255,.26)",
+    bg: "rgba(155,130,255,.12)",
+    border: "rgba(155,130,255,.28)",
     step: "02",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <circle cx="6" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="14" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M9.5 10h1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
+    Icon: Search,
   },
   {
     name: "Aanbiederreactie",
     role: "Zorgaanbieder",
     text: "De aanbieder accepteert, wijst af of vraagt aanvullende informatie.",
-    friction: "Wachttijd op reactie zichtbaar",
+    friction: "Capaciteit of beschikbaarheid is beperkt",
+    frictionColor: "var(--cl-amber)",
+    frictionBg: "rgba(245,165,36,.12)",
     color: "var(--cl-amber)",
-    bg: "rgba(245,165,36,.10)",
-    border: "rgba(245,165,36,.22)",
+    bg: "rgba(245,165,36,.12)",
+    border: "rgba(245,165,36,.25)",
     step: "03",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <path d="M3 4h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="m2 5 8 6 8-6" stroke="currentColor" strokeWidth="1.5"/>
-      </svg>
-    ),
+    Icon: Mail,
   },
   {
     name: "Plaatsing",
     role: "Gemeente + Aanbieder",
     text: "De plaatsing wordt bevestigd en zorgvuldig voorbereid.",
     friction: "Overdracht met volledige context",
+    frictionColor: "var(--cl-teal)",
+    frictionBg: "rgba(46,200,166,.12)",
     color: "var(--cl-teal)",
-    bg: "rgba(46,200,166,.10)",
-    border: "rgba(46,200,166,.22)",
+    bg: "rgba(46,200,166,.12)",
+    border: "rgba(46,200,166,.25)",
     step: "04",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <path d="M5 10.5 8.5 14 15 7" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
+    Icon: CheckCircle,
   },
   {
     name: "Intake",
     role: "Zorgaanbieder",
     text: "De intake wordt gepland en de overdracht wordt afgerond.",
-    friction: "Zorgstart bevestigd",
+    friction: "Intake nog niet ingepland",
+    frictionColor: "var(--cl-teal)",
+    frictionBg: "rgba(46,200,166,.12)",
     color: "var(--cl-teal)",
-    bg: "rgba(46,200,166,.10)",
-    border: "rgba(46,200,166,.22)",
+    bg: "rgba(46,200,166,.12)",
+    border: "rgba(46,200,166,.25)",
     step: "05",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M7 2v4M13 2v4M3 9h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
+    Icon: Calendar,
   },
 ];
 
@@ -94,7 +82,7 @@ export function CareJourneySection() {
     >
       <div className="cl-container">
         <div className="mb-12 max-w-2xl">
-          <p className="cl-eyebrow">Eén zorgketen, één route</p>
+          <p className="cl-eyebrow">ÉÉN ZORGKETEN, ÉÉN ROUTE</p>
           <h2 id="journey-heading" className="cl-heading">
             Van aanmelding tot intake.
           </h2>
@@ -104,64 +92,83 @@ export function CareJourneySection() {
           </p>
         </div>
 
-        {/* Desktop: connected horizontal route */}
+        {/* Desktop: connected horizontal flow */}
         <div className="hidden lg:block">
-          {/* Connection line */}
-          <div className="relative mb-0">
-            <div className="absolute left-[10%] right-[10%] top-[52px] h-px bg-gradient-to-r from-[var(--cl-blue)] via-[var(--cl-violet)] via-[var(--cl-amber)] to-[var(--cl-teal)] opacity-30" aria-hidden="true" />
-          </div>
-
-          <ol className="relative grid grid-cols-5 gap-4" aria-label="Zorgketen fasen">
+          <ol className="relative grid grid-cols-5 gap-3" aria-label="Zorgketen fasen">
             {phases.map((phase, i) => (
-              <li key={phase.name} className="group relative flex flex-col">
-                {/* Step marker */}
-                <div className="mb-4 flex justify-center">
+              <li key={phase.name} className="group relative flex flex-col items-center">
+                {/* Circle icon + connecting arrow row */}
+                <div className="relative mb-4 flex w-full items-center justify-center">
+                  {/* Arrow to the left — drawn AFTER first item so it spans from prev icon */}
+                  {i > 0 && (
+                    <span
+                      className="absolute right-[calc(50%+28px)] top-1/2 -translate-y-1/2 flex items-center"
+                      aria-hidden="true"
+                      style={{ color: "var(--cl-text-muted)" }}
+                    >
+                      <svg width="20" height="10" viewBox="0 0 20 10" fill="none">
+                        <path d="M0 5h18M14 1l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  )}
+
+                  {/* Circle icon */}
                   <div
-                    className="relative flex h-[52px] w-[52px] items-center justify-center rounded-2xl border transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_24px_rgba(0,0,0,.5)]"
+                    className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full border transition-all duration-200 group-hover:scale-105"
                     style={{
                       background: phase.bg,
                       borderColor: phase.border,
                       color: phase.color,
+                      boxShadow: `0 0 0 4px ${phase.bg}`,
                     }}
                   >
-                    {phase.icon}
-                    {/* Connecting arrow, not on last */}
-                    {i < phases.length - 1 && (
-                      <div
-                        className="pointer-events-none absolute -right-[calc(50%+.5rem)] top-1/2 -translate-y-1/2 hidden text-[var(--cl-text-muted)] lg:block"
-                        aria-hidden="true"
-                      >
-                        <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
-                          <path d="M0 5h14M10 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    )}
+                    <phase.Icon size={22} strokeWidth={1.75} />
+                    {/* Number badge */}
+                    <span
+                      className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold"
+                      style={{
+                        background: phase.color,
+                        color: "#0a0e1a",
+                      }}
+                    >
+                      {phase.step}
+                    </span>
                   </div>
                 </div>
 
-                {/* Content */}
+                {/* Content card */}
                 <div
-                  className="flex-1 rounded-[var(--cl-radius-lg)] border p-4 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[var(--cl-shadow-card)]"
+                  className="flex-1 w-full rounded-[var(--cl-radius-lg)] border p-4 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[var(--cl-shadow-card)]"
                   style={{
                     background: "var(--cl-surface-1)",
                     borderColor: "var(--cl-border-subtle)",
                   }}
                 >
-                  <div
-                    className="mb-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
-                    style={{ background: phase.bg, color: phase.color }}
-                  >
-                    {phase.step}
-                  </div>
-                  <h3 className="text-sm font-semibold text-[var(--cl-text)]">{phase.name}</h3>
-                  <p className="mt-1 text-xs leading-relaxed text-[var(--cl-text-secondary)]">
+                  <h3 className="mb-1 text-sm font-semibold" style={{ color: "var(--cl-text)" }}>
+                    {phase.name}
+                  </h3>
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--cl-text-secondary)" }}>
                     {phase.text}
                   </p>
+
                   <div className="mt-3 border-t pt-2.5" style={{ borderColor: "var(--cl-border-subtle)" }}>
-                    <p className="text-[10px] uppercase tracking-wide text-[var(--cl-text-muted)]">
+                    <p
+                      className="mb-1.5 text-[9px] font-bold uppercase tracking-widest"
+                      style={{ color: "var(--cl-text-muted)" }}
+                    >
                       {phase.role}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-[var(--cl-text-muted)]">{phase.friction}</p>
+                    {/* Friction pill */}
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium"
+                      style={{
+                        background: phase.frictionBg,
+                        color: phase.frictionColor,
+                        border: `1px solid ${phase.border}`,
+                      }}
+                    >
+                      {phase.friction}
+                    </span>
                   </div>
                 </div>
               </li>
@@ -174,18 +181,32 @@ export function CareJourneySection() {
           <ol className="relative space-y-0" aria-label="Zorgketen fasen">
             {/* Vertical line */}
             <div
-              className="pointer-events-none absolute left-[23px] top-6 bottom-6 w-px"
-              style={{ background: "linear-gradient(to bottom, var(--cl-blue), var(--cl-violet), var(--cl-amber), var(--cl-teal))", opacity: .25 }}
+              className="pointer-events-none absolute left-7 top-7 bottom-7 w-px"
+              style={{
+                background: "linear-gradient(to bottom, var(--cl-blue), var(--cl-violet-bright), var(--cl-amber), var(--cl-teal))",
+                opacity: 0.25,
+              }}
               aria-hidden="true"
             />
+
             {phases.map((phase) => (
-              <li key={phase.name} className="relative flex gap-4 pb-8 last:pb-0">
-                {/* Icon */}
+              <li key={phase.name} className="relative flex gap-4 pb-6 last:pb-0">
+                {/* Icon circle */}
                 <div
-                  className="relative z-10 flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border"
-                  style={{ background: phase.bg, borderColor: phase.border, color: phase.color }}
+                  className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-full border"
+                  style={{
+                    background: phase.bg,
+                    borderColor: phase.border,
+                    color: phase.color,
+                  }}
                 >
-                  {phase.icon}
+                  <phase.Icon size={20} strokeWidth={1.75} />
+                  <span
+                    className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold"
+                    style={{ background: phase.color, color: "#0a0e1a" }}
+                  >
+                    {phase.step}
+                  </span>
                 </div>
 
                 {/* Content */}
@@ -193,22 +214,26 @@ export function CareJourneySection() {
                   className="min-w-0 flex-1 rounded-[var(--cl-radius-md)] border p-4"
                   style={{ background: "var(--cl-surface-1)", borderColor: "var(--cl-border-subtle)" }}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-semibold text-[var(--cl-text)]">{phase.name}</h3>
-                    <span
-                      className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
-                      style={{ background: phase.bg, color: phase.color }}
-                    >
-                      {phase.step}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm leading-relaxed text-[var(--cl-text-secondary)]">
+                  <h3 className="text-sm font-semibold" style={{ color: "var(--cl-text)" }}>
+                    {phase.name}
+                  </h3>
+                  <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--cl-text-secondary)" }}>
                     {phase.text}
                   </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-xs text-[var(--cl-text-muted)]">{phase.role}</span>
-                    <span className="text-[var(--cl-border)]">·</span>
-                    <span className="text-xs text-[var(--cl-text-muted)]">{phase.friction}</span>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs" style={{ color: "var(--cl-text-muted)" }}>
+                      {phase.role}
+                    </span>
+                    <span
+                      className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium"
+                      style={{
+                        background: phase.frictionBg,
+                        color: phase.frictionColor,
+                        border: `1px solid ${phase.border}`,
+                      }}
+                    >
+                      {phase.friction}
+                    </span>
                   </div>
                 </div>
               </li>

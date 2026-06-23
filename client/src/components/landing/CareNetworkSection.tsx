@@ -1,58 +1,78 @@
 /**
  * Care Network section — one case at the centre with surrounding organisations.
- * Desktop: SVG node graph centred on the case.
- * Mobile: vertical role list with directional arrows.
- * Emphasises role-based visibility: not all parties see all data.
+ * Desktop: CSS-absolute node cards + SVG dashed lines, no Framer Motion.
+ * Mobile: role cards grid.
  */
+import type { CSSProperties } from "react";
+import { Share2, BookOpen, Activity, Building2, ShieldCheck, User, Users } from "lucide-react";
 
-const roles = [
+const bullets = [
+  {
+    Icon: Share2,
+    label: "Informatie delen",
+    desc: "Elke partij ziet precies wat nodig is voor de eigen rol — niet meer, niet minder.",
+  },
+  {
+    Icon: BookOpen,
+    label: "Beslissingen vastleggen",
+    desc: "Elk besluit is herleidbaar tot een actor, rol en moment.",
+  },
+  {
+    Icon: Activity,
+    label: "Voortgang bewaken",
+    desc: "Carelane bewaakt de informatiestroom en houdt eigenaarschap expliciet.",
+  },
+];
+
+// svgX/svgY = where the dashed line should end in the 480×480 SVG coordinate space
+const nodes = [
   {
     id: "gemeente",
     label: "Gemeente",
-    sub: "Financiering & regie",
+    sub: "Regievoering & samenwerking",
+    Icon: Building2,
     color: "var(--cl-blue)",
-    bg: "rgba(62,168,255,.10)",
-    border: "rgba(62,168,255,.22)",
-    x: 50,
-    y: 5,
-    access: "Volledig zorgdossier",
-    flow: "Valideert aanmelding",
-  },
-  {
-    id: "coordinator",
-    label: "Coordinator",
-    sub: "Procesregie",
-    color: "var(--cl-violet-bright)",
-    bg: "rgba(155,130,255,.10)",
-    border: "rgba(155,130,255,.22)",
-    x: 90,
-    y: 40,
-    access: "Processen & eigenaarschap",
-    flow: "Bewaakt voortgang",
+    bg: "rgba(62,168,255,.12)",
+    border: "rgba(62,168,255,.28)",
+    svgX: 80,
+    svgY: 78,
+    pos: { top: "3%", left: "1%" } as CSSProperties,
   },
   {
     id: "aanbieder",
-    label: "Zorgaanbieder",
-    sub: "Capaciteit & beoordeling",
+    label: "Aanbieder",
+    sub: "Zorg & behandeling",
+    Icon: ShieldCheck,
+    color: "var(--cl-violet-bright)",
+    bg: "rgba(155,130,255,.12)",
+    border: "rgba(155,130,255,.28)",
+    svgX: 400,
+    svgY: 78,
+    pos: { top: "3%", right: "1%" } as CSSProperties,
+  },
+  {
+    id: "coordinator",
+    label: "Coördinator",
+    sub: "Casemanagement & voortgang",
+    Icon: User,
     color: "var(--cl-amber)",
-    bg: "rgba(245,165,36,.10)",
-    border: "rgba(245,165,36,.22)",
-    x: 70,
-    y: 82,
-    access: "Beperkt na koppeling",
-    flow: "Accepteert of wijst af",
+    bg: "rgba(245,165,36,.12)",
+    border: "rgba(245,165,36,.28)",
+    svgX: 80,
+    svgY: 400,
+    pos: { bottom: "3%", left: "1%" } as CSSProperties,
   },
   {
     id: "client",
     label: "Cliënt & gezin",
-    sub: "Zorgvraag",
+    sub: "Betrokken & geïnformeerd",
+    Icon: Users,
     color: "var(--cl-teal)",
-    bg: "rgba(46,200,166,.10)",
-    border: "rgba(46,200,166,.22)",
-    x: 15,
-    y: 70,
-    access: "Eigen dossier",
-    flow: "Centrale zorgvraag",
+    bg: "rgba(46,200,166,.12)",
+    border: "rgba(46,200,166,.28)",
+    svgX: 400,
+    svgY: 400,
+    pos: { bottom: "3%", right: "1%" } as CSSProperties,
   },
 ];
 
@@ -61,157 +81,210 @@ export function CareNetworkSection() {
     <section
       className="cl-section"
       aria-labelledby="network-heading"
+      style={{ background: "var(--cl-bg-deep)" }}
     >
       <div className="cl-container">
-        <div className="mb-12 grid gap-8 lg:grid-cols-2 lg:items-center">
+        <div className="grid gap-12 lg:grid-cols-[40%_60%] lg:items-center">
+
+          {/* LEFT: text column */}
           <div>
-            <p className="cl-eyebrow">Eén casus, meerdere organisaties</p>
+            <p className="cl-eyebrow">ÉÉN CASUS, MEERDERE ORGANISATIES</p>
             <h2 id="network-heading" className="cl-heading">
-              Gecontroleerde samenwerking rondom de zorgvraag.
+              Samenwerken rondom de jongere.
             </h2>
             <p className="cl-lead">
-              Elke partij ziet precies wat nodig is voor de eigen rol — niet meer, niet minder.
-              Carelane bewaakt de informatiestroom en houdt eigenaarschap expliciet.
+              Gemeenten, aanbieders, coördinatoren en gezin werken in een gedeelde omgeving.
             </p>
 
-            <ul className="mt-8 space-y-3">
-              {[
-                { label: "Rolgebaseerde toegang", desc: "Elke actor ziet alleen contextrelevante informatie." },
-                { label: "Gecontroleerde informatiedeling", desc: "De aanbieder krijgt toegang na een goedgekeurde plaatsingsverzoek." },
-                { label: "Aantoonbare beslissingen", desc: "Elk besluit is herleidbaar tot een actor, rol en moment." },
-              ].map((item) => (
-                <li
-                  key={item.label}
-                  className="flex items-start gap-3 rounded-[var(--cl-radius-md)] border p-3"
-                  style={{ background: "var(--cl-surface-1)", borderColor: "var(--cl-border-subtle)" }}
-                >
+            <ul className="mt-8 space-y-5">
+              {bullets.map(({ Icon, label, desc }) => (
+                <li key={label} className="flex items-start gap-3">
                   <span
-                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
-                    style={{ background: "rgba(155,130,255,.15)", color: "var(--cl-violet-bright)" }}
+                    className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                    style={{
+                      background: "rgba(155,130,255,.12)",
+                      color: "var(--cl-violet-bright)",
+                      border: "1px solid rgba(155,130,255,.22)",
+                    }}
                     aria-hidden="true"
                   >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <Icon size={16} strokeWidth={1.75} />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-[var(--cl-text)]">{item.label}</p>
-                    <p className="text-xs text-[var(--cl-text-muted)]">{item.desc}</p>
+                    <p className="text-sm font-semibold" style={{ color: "var(--cl-text)" }}>
+                      {label}
+                    </p>
+                    <p className="mt-0.5 text-sm leading-relaxed" style={{ color: "var(--cl-text-muted)" }}>
+                      {desc}
+                    </p>
                   </div>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* SVG network diagram (desktop) + role cards (mobile) */}
-          <div>
-            {/* Desktop: SVG orbit diagram */}
+          {/* RIGHT: network diagram — desktop only */}
+          <div
+            className="hidden lg:block"
+            role="img"
+            aria-label="Diagram: centrale casus omringd door gemeente, aanbieder, coördinator en cliënt & gezin"
+          >
             <div
-              className="hidden lg:block relative"
-              aria-label="Diagram: centrale casus omringd door gemeente, coordinator, zorgaanbieder en cliënt"
-              role="img"
+              style={{
+                position: "relative",
+                width: "100%",
+                maxWidth: 480,
+                aspectRatio: "1 / 1",
+                margin: "0 auto",
+              }}
             >
+              {/* Dashed SVG connecting lines + subtle orbit ring */}
               <svg
-                viewBox="0 0 400 340"
-                className="w-full"
+                viewBox="0 0 480 480"
                 aria-hidden="true"
-              >
-                {/* Connection lines */}
-                {roles.map((role) => (
-                  <line
-                    key={role.id}
-                    x1={200}
-                    y1={170}
-                    x2={(role.x / 100) * 400}
-                    y2={(role.y / 100) * 340}
-                    stroke={role.color}
-                    strokeWidth="1.5"
-                    strokeOpacity={0.3}
-                    strokeDasharray="4 3"
-                  />
-                ))}
-
-                {/* Centre — the case */}
-                <g transform="translate(200,170)">
-                  <circle r="44" fill="rgba(155,130,255,.08)" stroke="rgba(155,130,255,.25)" strokeWidth="1.5" />
-                  <circle r="30" fill="var(--cl-surface-2)" stroke="rgba(155,130,255,.35)" strokeWidth="1" />
-                  {/* Person icon */}
-                  <circle cx="0" cy="-8" r="9" fill="none" stroke="var(--cl-violet-bright)" strokeWidth="1.5" />
-                  <path d="M-12 14c0-6.6 5.4-12 12-12s12 5.4 12 12" fill="none" stroke="var(--cl-violet-bright)" strokeWidth="1.5" />
-                  <text y="32" textAnchor="middle" fill="var(--cl-text-muted)" fontSize="9" fontFamily="Inter, sans-serif" letterSpacing="0.05em">
-                    CASUS
-                  </text>
-                </g>
-
-                {/* Role nodes */}
-                {roles.map((role) => {
-                  const cx = (role.x / 100) * 400;
-                  const cy = (role.y / 100) * 340;
-                  return (
-                    <g key={role.id} transform={`translate(${cx},${cy})`}>
-                      <circle r="36" fill={role.bg} stroke={role.border} strokeWidth="1.5" />
-                      <text
-                        y="4"
-                        textAnchor="middle"
-                        fill={role.color}
-                        fontSize="8.5"
-                        fontWeight="700"
-                        fontFamily="Inter, sans-serif"
-                      >
-                        {role.label.split(" ").map((word, i) => (
-                          <tspan key={i} x="0" dy={i === 0 ? 0 : 11}>{word}</tspan>
-                        ))}
-                      </text>
-                      <text
-                        y={role.label.includes(" ") ? 22 : 16}
-                        textAnchor="middle"
-                        fill="var(--cl-text-muted)"
-                        fontSize="7.5"
-                        fontFamily="Inter, sans-serif"
-                      >
-                        {role.flow}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-
-            {/* Mobile: role cards */}
-            <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
-              {roles.map((role) => (
-                <div
-                  key={role.id}
-                  className="rounded-[var(--cl-radius-md)] border p-4"
-                  style={{ background: "var(--cl-surface-1)", borderColor: role.border }}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ background: role.color }}
-                      aria-hidden="true"
-                    />
-                    <p className="text-sm font-semibold" style={{ color: role.color }}>{role.label}</p>
-                  </div>
-                  <p className="text-xs text-[var(--cl-text-muted)]">{role.sub}</p>
-                  <p className="mt-2 text-xs text-[var(--cl-text-secondary)]">{role.access}</p>
-                </div>
-              ))}
-
-              {/* Central case card */}
-              <div
-                className="sm:col-span-2 rounded-[var(--cl-radius-md)] border p-4 text-center"
                 style={{
-                  background: "rgba(155,130,255,.08)",
-                  borderColor: "rgba(155,130,255,.25)",
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  pointerEvents: "none",
                 }}
               >
-                <p className="text-sm font-semibold text-[var(--cl-violet-bright)]">De casus / zorgvraag</p>
-                <p className="mt-1 text-xs text-[var(--cl-text-muted)]">
-                  Alle partijen werken rondom één centrale zorgvraag
+                <circle
+                  cx="240"
+                  cy="240"
+                  r="150"
+                  fill="none"
+                  stroke="rgba(155,130,255,.07)"
+                  strokeWidth="1"
+                  strokeDasharray="3 9"
+                />
+                {nodes.map((n) => (
+                  <line
+                    key={n.id}
+                    x1="240"
+                    y1="240"
+                    x2={n.svgX}
+                    y2={n.svgY}
+                    stroke="rgba(155,130,255,.28)"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 4"
+                  />
+                ))}
+              </svg>
+
+              {/* Center — CASUS circle */}
+              <div
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: 120,
+                  height: 120,
+                  borderRadius: "50%",
+                  background:
+                    "radial-gradient(circle at 40% 35%, rgba(155,130,255,.30), rgba(91,62,230,.10))",
+                  border: "1.5px solid rgba(155,130,255,.32)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4,
+                  boxShadow: "0 0 48px rgba(155,130,255,.14)",
+                }}
+              >
+                {/* Person silhouette */}
+                <svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true" fill="none">
+                  <circle cx="23" cy="15" r="8.5" fill="rgba(171,155,255,.55)" />
+                  <path d="M4 42c0-10.49 8.51-19 19-19s19 8.51 19 19" fill="rgba(171,155,255,.40)" />
+                </svg>
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                    color: "var(--cl-text-muted)",
+                    textTransform: "uppercase" as const,
+                  }}
+                >
+                  CASUS
+                </span>
+              </div>
+
+              {/* 4 role node cards at corners */}
+              {nodes.map(({ id, label, sub, Icon, color, bg, border, pos }) => (
+                <div
+                  key={id}
+                  style={{
+                    position: "absolute",
+                    ...pos,
+                    width: 112,
+                    borderRadius: "var(--cl-radius-lg)",
+                    background: bg,
+                    border: `1.5px solid ${border}`,
+                    padding: "10px 12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 5,
+                    textAlign: "center" as const,
+                    boxShadow: "var(--cl-shadow-card)",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 32,
+                      height: 32,
+                      borderRadius: "50%",
+                      background: bg,
+                      color,
+                      border: `1px solid ${border}`,
+                    }}
+                    aria-hidden="true"
+                  >
+                    <Icon size={15} strokeWidth={1.75} />
+                  </span>
+                  <p style={{ fontSize: 11, fontWeight: 700, color, lineHeight: 1.2 }}>
+                    {label}
+                  </p>
+                  <p style={{ fontSize: 9.5, color: "var(--cl-text-muted)", lineHeight: 1.3 }}>
+                    {sub}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile: role cards grid */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
+            {nodes.map(({ id, label, sub, Icon, color, bg, border }) => (
+              <div
+                key={id}
+                className="rounded-[var(--cl-radius-md)] border p-4"
+                style={{ background: "var(--cl-surface-1)", borderColor: border }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                    style={{ background: bg, color }}
+                    aria-hidden="true"
+                  >
+                    <Icon size={14} strokeWidth={1.75} />
+                  </span>
+                  <p className="text-sm font-semibold" style={{ color }}>
+                    {label}
+                  </p>
+                </div>
+                <p className="text-xs" style={{ color: "var(--cl-text-muted)" }}>
+                  {sub}
                 </p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

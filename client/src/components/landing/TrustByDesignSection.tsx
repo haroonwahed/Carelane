@@ -1,84 +1,40 @@
-/**
- * Trust by Design section — five governance pillars.
- * Architectural visuals, not padlock imagery.
- * No fabricated certifications.
- */
+import { Eye, FileText, Lock, ShieldCheck, UserCheck } from "lucide-react";
 
 const pillars = [
   {
-    id: "access",
+    icon: UserCheck,
     title: "Rolgebaseerde toegang",
-    desc: "Iedere actor ziet alleen wat past bij de eigen taak en verantwoordelijkheid. Zorgaanbieders krijgen toegang uitsluitend na een goedgekeurd plaatsingsverzoek.",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-        <circle cx="11" cy="9" r="4" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M4 19c0-3.866 3.134-7 7-7h0c3.866 0 7 3.134 7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M15 6l1.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <circle cx="18" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.25"/>
-      </svg>
-    ),
-    color: "var(--cl-blue)",
-    bg: "rgba(62,168,255,.10)",
-    border: "rgba(62,168,255,.20)",
+    description: "Alleen de juiste mensen zien wat ze nodig hebben.",
+    iconColor: "var(--cl-violet-bright)",
+    iconBg: "rgba(139,92,246,0.15)",
   },
   {
-    id: "integrity",
-    title: "Werkstroombewaking",
-    desc: "Overgangen tussen fasen worden server-side gevalideerd. Geen stap kan worden overgeslagen of geforceerd door de browser. Elke transitie vereist actor, rol en vereiste gegevens.",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-        <rect x="3" y="6" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M7 6V5a4 4 0 0 1 8 0v1" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M11 11v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <circle cx="11" cy="10" r=".75" fill="currentColor"/>
-      </svg>
-    ),
-    color: "var(--cl-violet-bright)",
-    bg: "rgba(155,130,255,.10)",
-    border: "rgba(155,130,255,.20)",
+    icon: Lock,
+    title: "Workflow-integriteit",
+    description: "Strikte fasen en validaties. Geen omzeilen, geen skip.",
+    iconColor: "var(--cl-teal)",
+    iconBg: "rgba(20,184,166,0.15)",
   },
   {
-    id: "audit",
-    title: "Auditbare beslissingen",
-    desc: "Iedere actie wordt vastgelegd: actor, rol, tijdstip, vorige toestand, nieuwe toestand en reden. Handmatige afwijkingen van de aanbeveling worden expliciet geregistreerd.",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-        <path d="M5 3h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M7 8h8M7 12h6M7 16h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-    color: "var(--cl-teal)",
-    bg: "rgba(46,200,166,.10)",
-    border: "rgba(46,200,166,.20)",
+    icon: FileText,
+    title: "Audittrail beslissingen",
+    description: "Elke actie wordt gelogd, zichtbaar voor wie mag.",
+    iconColor: "var(--cl-blue)",
+    iconBg: "rgba(59,130,246,0.15)",
   },
   {
-    id: "data",
+    icon: ShieldCheck,
     title: "Gegevensbescherming",
-    desc: "Zorgdata wordt verwerkt conform de AVG. Gegevens worden niet gedeeld zonder expliciete koppeling en goedkeuring. Toegang is tijdgebonden en doelgebonden.",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-        <path d="M11 2L3 6v5c0 4.4 3.4 8.5 8 9.5 4.6-1 8-5.1 8-9.5V6L11 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-        <path d="M8 11l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-    color: "var(--cl-teal)",
-    bg: "rgba(46,200,166,.10)",
-    border: "rgba(46,200,166,.20)",
+    description: "AVG-compliant omgeving en veilige verwerking van data.",
+    iconColor: "#22c55e",
+    iconBg: "rgba(34,197,94,0.15)",
   },
   {
-    id: "visibility",
+    icon: Eye,
     title: "Gecontroleerde zichtbaarheid",
-    desc: "De frontend is geen autorisatielaag. De API handhaaft alle permissies. Cliëntgegevens zijn afgeschermd tot wat de rol en de fase vereisen.",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-        <ellipse cx="11" cy="11" rx="9" ry="5.5" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="11" cy="11" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M2 11c3-4 14-4 18 0" stroke="currentColor" strokeWidth="0" />
-      </svg>
-    ),
-    color: "var(--cl-amber)",
-    bg: "rgba(245,165,36,.10)",
-    border: "rgba(245,165,36,.20)",
+    description: "Aanbieders zien alleen wat én wanneer het relevant is.",
+    iconColor: "var(--cl-amber)",
+    iconBg: "rgba(245,158,11,0.15)",
   },
 ];
 
@@ -87,79 +43,71 @@ export function TrustByDesignSection() {
     <section
       id="veiligheid"
       className="cl-section scroll-mt-20"
-      aria-labelledby="trust-heading"
+      style={{ background: "var(--cl-bg-deep)" }}
     >
-      <div className="cl-container">
-        <div className="mb-12 max-w-2xl">
-          <p className="cl-eyebrow">Trust by design</p>
-          <h2 id="trust-heading" className="cl-heading">
-            Vertrouwen is geen feature. Het is de basis.
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <p
+            className="text-xs font-semibold tracking-widest uppercase mb-4"
+            style={{ color: "var(--cl-violet-bright)" }}
+          >
+            TRUST BY DESIGN
+          </p>
+          <h2
+            className="text-3xl lg:text-4xl font-bold leading-tight mb-4"
+            style={{ color: "var(--cl-text)" }}
+          >
+            Vertrouwen is geen feature. Het is onze basis.
           </h2>
-          <p className="cl-lead">
-            Toegang, processtappen en besluiten zijn gecontroleerd, traceerbaar en afgestemd op de
-            rol van de gebruiker.
+          <p
+            className="text-base leading-relaxed max-w-2xl mx-auto"
+            style={{ color: "var(--cl-text-secondary)" }}
+          >
+            Toegang, processtappen en besluiten zijn gecontroleerd, traceerbaar
+            en afgestemd op de rol van de gebruiker.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {pillars.map((pillar, i) => (
-            <div
-              key={pillar.id}
-              className={`rounded-[var(--cl-radius-xl)] border p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--cl-shadow-card)] ${
-                i === 4 ? "sm:col-span-2 lg:col-span-1" : ""
-              }`}
-              style={{
-                background: "var(--cl-surface-1)",
-                borderColor: "var(--cl-border-subtle)",
-              }}
-            >
+        {/* Pillar cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {pillars.map((pillar) => {
+            const Icon = pillar.icon;
+            return (
               <div
-                className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border"
+                key={pillar.title}
+                className="rounded-2xl p-5 flex flex-col gap-4"
                 style={{
-                  background: pillar.bg,
-                  borderColor: pillar.border,
-                  color: pillar.color,
+                  background: "var(--cl-surface-1)",
+                  border: "1px solid var(--cl-border-subtle)",
                 }}
               >
-                {pillar.icon}
-              </div>
-              <h3 className="text-base font-semibold text-[var(--cl-text)]">{pillar.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--cl-text-secondary)]">
-                {pillar.desc}
-              </p>
-            </div>
-          ))}
+                {/* Icon badge */}
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: pillar.iconBg }}
+                >
+                  <Icon size={20} style={{ color: pillar.iconColor }} />
+                </div>
 
-          {/* Architecture note */}
-          <div
-            className="sm:col-span-2 lg:col-span-3 rounded-[var(--cl-radius-lg)] border p-5"
-            style={{
-              background: "rgba(155,130,255,.06)",
-              borderColor: "rgba(155,130,255,.18)",
-            }}
-          >
-            <div className="flex items-start gap-4">
-              <div
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg mt-0.5"
-                style={{ background: "rgba(155,130,255,.15)", color: "var(--cl-violet-bright)" }}
-                aria-hidden="true"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 2v4l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.25"/>
-                </svg>
+                {/* Text */}
+                <div>
+                  <p
+                    className="text-sm font-bold mb-1.5"
+                    style={{ color: "var(--cl-text)" }}
+                  >
+                    {pillar.title}
+                  </p>
+                  <p
+                    className="text-xs leading-relaxed"
+                    style={{ color: "var(--cl-text-secondary)" }}
+                  >
+                    {pillar.description}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-[var(--cl-text)]">
-                  Backend is de bron van waarheid
-                </p>
-                <p className="mt-1 text-sm text-[var(--cl-text-muted)]">
-                  De SPA is een client, geen autoriteit. Alle workflowtransities, toegangscontrole en
-                  auditregistratie worden afgedwongen door de API — niet door de browser.
-                </p>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>

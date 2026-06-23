@@ -183,29 +183,45 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
                   </a>
                 </div>
 
-                {/* Benefits / trust strip */}
-                <div
-                  className="grid gap-2 pt-2 sm:grid-cols-3"
-                >
+                {/* Benefits */}
+                <div className="flex flex-col gap-3 pt-2">
                   {[
-                    { label: "Minder vertraging", text: "Zie direct waar een casus vastloopt." },
-                    { label: "Duidelijk eigenaarschap", text: "Iedere stap heeft een concrete actie." },
-                    { label: "Vertrouwd samenwerken", text: "Beslissingen zijn uitlegbaar en controleerbaar." },
+                    {
+                      icon: (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1v6m0 0-2-2m2 2 2-2M1 10h12" stroke="#3ea8ff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      ),
+                      iconBg: "rgba(62,168,255,.12)",
+                      label: "Minder vertraging",
+                      text: "Zie direct waar een casus vastloopt en wat nodig is.",
+                    },
+                    {
+                      icon: (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="5" r="2.5" stroke="#9b82ff" strokeWidth="1.5"/><path d="M2 12c0-2.2 2.2-4 5-4s5 1.8 5 4" stroke="#9b82ff" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      ),
+                      iconBg: "rgba(155,130,255,.12)",
+                      label: "Duidelijk eigenaarschap",
+                      text: "Iedere stap heeft een verantwoordelijke en een concrete vervolgactie.",
+                    },
+                    {
+                      icon: (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M9.5 5.5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0ZM1.5 12c0-1.93 2.24-3.5 5-3.5s5 1.57 5 3.5M10.5 3.5a2 2 0 1 1 0 4M12.5 12c0-1.5-1.34-2.8-3.25-3.3" stroke="#2ec8a6" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      ),
+                      iconBg: "rgba(46,200,166,.12)",
+                      label: "Vertrouwd samenwerken",
+                      text: "Beslissingen zijn uitlegbaar, controleerbaar en passend bij de rol.",
+                    },
                   ].map((b) => (
-                    <div
-                      key={b.label}
-                      className="rounded-xl border px-3 py-2.5"
-                      style={{ borderColor: "var(--cl-border-subtle)", background: "rgba(13,23,42,.60)" }}
-                    >
-                      <p
-                        className="text-[10px] font-bold uppercase tracking-widest"
-                        style={{ color: "var(--cl-text-muted)" }}
+                    <div key={b.label} className="flex items-start gap-3">
+                      <div
+                        className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                        style={{ background: b.iconBg }}
                       >
-                        {b.label}
-                      </p>
-                      <p className="mt-1 text-xs" style={{ color: "var(--cl-text-secondary)" }}>
-                        {b.text}
-                      </p>
+                        {b.icon}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: "var(--cl-text)" }}>{b.label}</p>
+                        <p className="text-xs leading-relaxed" style={{ color: "var(--cl-text-muted)" }}>{b.text}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
