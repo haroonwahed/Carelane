@@ -61,7 +61,30 @@ export function AudienceSection() {
         </div>
 
         {/* Desktop: 2+center+2 composition */}
-        <div className="hidden lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center gap-6">
+        <div className="hidden lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center gap-6" style={{ position: "relative" }}>
+
+          {/* Connection lines SVG — desktop only */}
+          <div className="pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true"
+            style={{ position: "absolute", inset: 0, zIndex: 1 }}>
+            <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
+              <defs>
+                <linearGradient id="aud-line-left" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="rgba(155,130,255,0)" />
+                  <stop offset="100%" stopColor="rgba(155,130,255,0.35)" />
+                </linearGradient>
+                <linearGradient id="aud-line-right" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="rgba(155,130,255,0.35)" />
+                  <stop offset="100%" stopColor="rgba(155,130,255,0)" />
+                </linearGradient>
+              </defs>
+              {/* Left connection line — center of hub to right edge of left column */}
+              <line x1="33%" y1="50%" x2="43%" y2="50%"
+                stroke="url(#aud-line-left)" strokeWidth="1.5" strokeDasharray="4 4" />
+              {/* Right connection line — left edge of right column to center of hub */}
+              <line x1="57%" y1="50%" x2="67%" y2="50%"
+                stroke="url(#aud-line-right)" strokeWidth="1.5" strokeDasharray="4 4" />
+            </svg>
+          </div>
 
           {/* Left column: 2 roles */}
           <div className="flex flex-col gap-4">
@@ -103,23 +126,16 @@ export function AudienceSection() {
             <div
               className="flex flex-col items-center justify-center rounded-2xl border p-5 text-center"
               style={{
-                width: 140,
+                width: 156,
                 background: "rgba(155,130,255,0.10)",
                 borderColor: "rgba(155,130,255,0.32)",
-                boxShadow: "0 0 40px rgba(155,130,255,0.16)",
+                boxShadow: "0 0 0 1px rgba(155,130,255,0.20), 0 0 48px rgba(155,130,255,0.18), 0 16px 40px rgba(0,0,0,0.30)",
               }}
             >
-              {/* Logo mark */}
+              {/* Carelane mark — dagger cross (†) */}
               <svg width="28" height="28" viewBox="0 0 22 22" fill="none" aria-hidden="true" style={{ color: "var(--cl-violet-bright)" }}>
-                <circle cx="11" cy="11" r="2.2" fill="currentColor" />
-                <line x1="11" y1="11" x2="4.5" y2="4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <line x1="11" y1="11" x2="17.5" y2="4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <line x1="11" y1="11" x2="4.5" y2="17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <line x1="11" y1="11" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="4.5" cy="4.5" r="1.6" fill="currentColor" opacity="0.7" />
-                <circle cx="17.5" cy="4.5" r="1.6" fill="currentColor" opacity="0.7" />
-                <circle cx="4.5" cy="17.5" r="1.6" fill="currentColor" opacity="0.7" />
-                <circle cx="17.5" cy="17.5" r="1.6" fill="currentColor" opacity="0.7" />
+                <line x1="11" y1="2" x2="11" y2="20" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+                <line x1="3.5" y1="8.5" x2="18.5" y2="8.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
               </svg>
               <p className="mt-2 text-sm font-bold" style={{ color: "var(--cl-violet-bright)" }}>Carelane</p>
               <p className="mt-1 text-[10px] leading-snug" style={{ color: "var(--cl-text-muted)" }}>

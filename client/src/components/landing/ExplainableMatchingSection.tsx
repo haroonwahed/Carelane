@@ -108,11 +108,12 @@ export function ExplainableMatchingSection() {
     <section
       className="cl-section"
       aria-labelledby="matching-heading"
+      style={{ paddingTop: "4rem", paddingBottom: "4rem" }}
     >
       <div className="cl-container">
-        <div className="mb-10 max-w-2xl">
+        <div className="mb-10 max-w-2xl" style={{ overflow: "visible" }}>
           <p className="cl-eyebrow">Verklaarbare matching</p>
-          <h2 id="matching-heading" className="cl-heading">
+          <h2 id="matching-heading" className="cl-heading" style={{ overflow: "visible" }}>
             De juiste match. Uitlegbaar en onderbouwd.
           </h2>
           <p className="cl-lead">
@@ -146,9 +147,22 @@ export function ExplainableMatchingSection() {
                 aria-pressed={selected === p.id}
                 className="group w-full text-left rounded-[var(--cl-radius-lg)] border p-4 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cl-violet-bright)]"
                 style={{
-                  background: selected === p.id ? "var(--cl-surface-2)" : "var(--cl-surface-1)",
-                  borderColor: selected === p.id ? "var(--cl-border-focus)" : "var(--cl-border-subtle)",
-                  boxShadow: selected === p.id ? "var(--cl-shadow-glow)" : "none",
+                  background: p.recommended
+                    ? "rgba(46,200,166,.07)"
+                    : selected === p.id
+                    ? "var(--cl-surface-2)"
+                    : "var(--cl-surface-1)",
+                  borderColor: p.recommended
+                    ? "rgba(46,200,166,.45)"
+                    : selected === p.id
+                    ? "var(--cl-border-focus)"
+                    : "var(--cl-border-subtle)",
+                  borderWidth: p.recommended ? "1.5px" : "1px",
+                  boxShadow: p.recommended
+                    ? "0 0 0 1px rgba(46,200,166,.12), 0 0 32px rgba(46,200,166,.18), var(--cl-shadow-glow)"
+                    : selected === p.id
+                    ? "var(--cl-shadow-glow)"
+                    : "none",
                 }}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">

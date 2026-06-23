@@ -4,6 +4,12 @@ interface CarelaneMarkProps extends SVGProps<SVGSVGElement> {
   size?: number;
 }
 
+/**
+ * Carelane brand mark — a dagger cross (†):
+ * long vertical arm rising above a horizontal crossbar.
+ * Represents care coordination: a care cross plus a junction/route.
+ * Uses currentColor so it inherits its parent's colour.
+ */
 export function CarelaneMark({ size = 22, ...props }: CarelaneMarkProps) {
   return (
     <svg
@@ -15,18 +21,22 @@ export function CarelaneMark({ size = 22, ...props }: CarelaneMarkProps) {
       aria-hidden="true"
       {...props}
     >
-      {/* Center circle */}
-      <circle cx="11" cy="11" r="2.2" fill="currentColor" />
-      {/* Four arms — NW, NE, SW, SE */}
-      <line x1="11" y1="11" x2="4.5" y2="4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="11" y1="11" x2="17.5" y2="4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="11" y1="11" x2="4.5" y2="17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="11" y1="11" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      {/* Small endpoint dots */}
-      <circle cx="4.5" cy="4.5" r="1.6" fill="currentColor" opacity="0.7" />
-      <circle cx="17.5" cy="4.5" r="1.6" fill="currentColor" opacity="0.7" />
-      <circle cx="4.5" cy="17.5" r="1.6" fill="currentColor" opacity="0.7" />
-      <circle cx="17.5" cy="17.5" r="1.6" fill="currentColor" opacity="0.7" />
+      {/* Vertical arm — longer above crossbar, shorter below */}
+      <line
+        x1="11" y1="2"
+        x2="11" y2="20"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      {/* Horizontal crossbar — placed at ~35% from top */}
+      <line
+        x1="3.5" y1="8.5"
+        x2="18.5" y2="8.5"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

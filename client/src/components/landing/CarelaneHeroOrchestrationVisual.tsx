@@ -43,15 +43,44 @@ export function CarelaneHeroOrchestrationVisual() {
           zIndex: 0,
         }}
       >
+        {/* Primary ambient glow — stronger */}
         <div
           aria-hidden="true"
           style={{
             position: "absolute",
             inset: "-24px",
             borderRadius: 40,
-            background: "radial-gradient(circle at 50% 40%, rgba(91,62,230,.26), transparent 65%)",
+            background: "radial-gradient(circle at 50% 40%, rgba(91,62,230,.40), transparent 65%)",
             filter: "blur(32px)",
             zIndex: -1,
+            pointerEvents: "none",
+          }}
+        />
+        {/* Secondary glow — top-right violet bloom */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: "-24px",
+            borderRadius: 40,
+            background: "radial-gradient(circle at 30% 20%, rgba(155,130,255,.20), transparent 45%)",
+            filter: "blur(24px)",
+            zIndex: -1,
+            pointerEvents: "none",
+          }}
+        />
+        {/* Depth shadow layer — sits behind and slightly offset */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: 22,
+            background: "#060b17",
+            filter: "blur(12px)",
+            transform: "translate(4px, 6px)",
+            zIndex: -1,
+            opacity: 0.70,
             pointerEvents: "none",
           }}
         />
@@ -59,13 +88,42 @@ export function CarelaneHeroOrchestrationVisual() {
         {/* Device frame */}
         <div
           style={{
+            position: "relative",
             borderRadius: 22,
             border: "1.5px solid rgba(171,188,218,.14)",
             background: "#0d172a",
-            boxShadow: "0 24px 80px rgba(0,0,0,.50)",
+            boxShadow: "0 24px 80px rgba(0,0,0,.50), inset 0 1px 0 rgba(155,130,255,.20), inset 0 0 0 1px rgba(171,188,218,.10)",
             overflow: "hidden",
           }}
         >
+          {/* Top reflection strip */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: "1.5px",
+              background: "linear-gradient(to right, rgba(155,130,255,.60), rgba(91,62,230,.30), transparent)",
+              zIndex: 20,
+              pointerEvents: "none",
+            }}
+          />
+          {/* Violet left-edge accent */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: "2px",
+              background: "linear-gradient(to bottom, rgba(155,130,255,.50), rgba(91,62,230,.20) 50%, transparent)",
+              zIndex: 20,
+              pointerEvents: "none",
+            }}
+          />
           {/* Header bar */}
           <div
             style={{
@@ -223,8 +281,8 @@ export function CarelaneHeroOrchestrationVisual() {
               </span>
             </div>
           </div>
-        </div>
-      </div>
+        </div>{/* end device frame */}
+      </div>{/* end relative wrapper */}
     </div>
   );
 }

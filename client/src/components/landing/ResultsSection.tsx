@@ -63,6 +63,34 @@ export function ResultsSection() {
               </p>
             </div>
 
+            {/* Before / after flow indicator */}
+            <div
+              className="flex items-center gap-0 rounded-xl overflow-hidden text-xs font-medium"
+              style={{ border: "1px solid var(--cl-border-subtle)" }}
+            >
+              <div
+                className="flex-1 px-3 py-2.5 flex items-center gap-2"
+                style={{ background: "rgba(239,91,98,0.06)" }}
+              >
+                <span style={{ color: "#ef5b62", fontSize: 16, lineHeight: 1 }}>→</span>
+                <div>
+                  <p style={{ color: "#ef5b62", fontWeight: 700, fontSize: 10, letterSpacing: "0.05em" }}>VOOR</p>
+                  <p style={{ color: "var(--cl-text-muted)", fontSize: 11 }}>Traag, versnipperd, onduidelijk</p>
+                </div>
+              </div>
+              <div style={{ width: 1, alignSelf: "stretch", background: "var(--cl-border-subtle)" }} />
+              <div
+                className="flex-1 px-3 py-2.5 flex items-center gap-2"
+                style={{ background: "rgba(46,200,166,0.06)" }}
+              >
+                <span style={{ color: "var(--cl-teal)", fontSize: 16, lineHeight: 1 }}>→</span>
+                <div>
+                  <p style={{ color: "var(--cl-teal)", fontWeight: 700, fontSize: 10, letterSpacing: "0.05em" }}>NA</p>
+                  <p style={{ color: "var(--cl-text-muted)", fontSize: 11 }}>Helder, verantwoord, op tijd</p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               {outcomes.map(({ icon: Icon, color, bg, title, desc }) => (
                 <div key={title} className="flex gap-3">
@@ -88,13 +116,21 @@ export function ResultsSection() {
 
           {/* Right column: evidence panel */}
           <div
-            className="rounded-2xl border p-6 flex flex-col gap-5"
+            className="rounded-2xl border flex flex-col gap-5 overflow-hidden"
             style={{
               background: "var(--cl-surface-1)",
               borderColor: "var(--cl-border-subtle)",
               boxShadow: "var(--cl-shadow-card)",
             }}
           >
+            {/* Decorative gradient top stripe */}
+            <div
+              style={{
+                height: 2,
+                background: "linear-gradient(to right, var(--cl-violet-bright), transparent)",
+              }}
+            />
+            <div className="px-6 pb-6 flex flex-col gap-5">
             <div>
               <p
                 className="text-[10px] font-bold uppercase tracking-widest mb-2"
@@ -102,7 +138,7 @@ export function ResultsSection() {
               >
                 OPERATIONELE UITKOMSTEN
               </p>
-              <p className="text-sm font-bold" style={{ color: "var(--cl-text)" }}>
+              <p className="text-sm font-bold" style={{ color: "var(--cl-text)", fontSize: "0.9rem" }}>
                 Wat pilotpartners terugmelden
               </p>
             </div>
@@ -143,6 +179,7 @@ export function ResultsSection() {
               Deelnemen aan de pilot
               <ArrowRight size={13} strokeWidth={2.5} />
             </a>
+            </div>
           </div>
         </div>
       </div>

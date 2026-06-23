@@ -83,22 +83,24 @@ export function TrustByDesignSection() {
             className="hidden lg:flex items-center justify-center"
             aria-hidden="true"
           >
-            <svg viewBox="0 0 160 200" style={{ width: 160, height: 200 }}>
+            <svg viewBox="0 0 200 240" style={{ width: 200, height: 240 }}>
               {/* Outer ring */}
-              <ellipse cx="80" cy="100" rx="72" ry="88"
-                fill="none" stroke="rgba(155,130,255,0.12)" strokeWidth="1" strokeDasharray="4 6" />
+              <ellipse cx="100" cy="120" rx="90" ry="108"
+                fill="none" stroke="rgba(155,130,255,0.12)" strokeWidth="1.5" strokeDasharray="4 6" />
               {/* Middle ring */}
-              <ellipse cx="80" cy="100" rx="52" ry="64"
-                fill="none" stroke="rgba(155,130,255,0.18)" strokeWidth="1.2" strokeDasharray="3 5" />
+              <ellipse cx="100" cy="120" rx="65" ry="80"
+                fill="none" stroke="rgba(155,130,255,0.18)" strokeWidth="1.8" strokeDasharray="3 5" />
               {/* Inner ring */}
-              <ellipse cx="80" cy="100" rx="32" ry="40"
-                fill="rgba(155,130,255,0.06)" stroke="rgba(155,130,255,0.30)" strokeWidth="1.5" />
+              <ellipse cx="100" cy="120" rx="40" ry="50"
+                fill="rgba(155,130,255,0.06)" stroke="rgba(155,130,255,0.30)" strokeWidth="2" />
+              {/* Outer glow behind center circle */}
+              <circle cx="100" cy="120" r="34" fill="rgba(155,130,255,0.06)" />
               {/* Center node */}
-              <circle cx="80" cy="100" r="18"
-                fill="rgba(155,130,255,0.15)" stroke="rgba(155,130,255,0.45)" strokeWidth="1.5" />
+              <circle cx="100" cy="120" r="22"
+                fill="rgba(155,130,255,0.22)" stroke="rgba(155,130,255,0.45)" strokeWidth="1.5" />
               {/* Center lock icon simplified */}
-              <rect x="73" y="97" width="14" height="11" rx="2" fill="rgba(155,130,255,0.70)" />
-              <path d="M76 97 v-3 a4 4 0 0 1 8 0 v3" stroke="rgba(155,130,255,0.70)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              <rect x="91" y="115" width="18" height="14" rx="2" fill="rgba(155,130,255,0.90)" />
+              <path d="M94 115 v-4 a6 6 0 0 1 12 0 v4" stroke="rgba(155,130,255,0.90)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
               {/* Pillar dots on outer ring */}
               {[
                 { angle: -90, color: "rgba(139,92,246,0.85)" },
@@ -108,15 +110,15 @@ export function TrustByDesignSection() {
                 { angle: 198, color: "rgba(245,158,11,0.85)" },
               ].map(({ angle, color }, i) => {
                 const rad = (angle * Math.PI) / 180;
-                const x = 80 + 72 * Math.cos(rad);
-                const y = 100 + 88 * Math.sin(rad);
+                const x = 100 + 90 * Math.cos(rad);
+                const y = 120 + 108 * Math.sin(rad);
                 return (
                   <g key={i}>
                     <line
-                      x1="80" y1="100" x2={x} y2={y}
-                      stroke={color} strokeWidth="0.8" opacity="0.30"
+                      x1="100" y1="120" x2={x} y2={y}
+                      stroke={color} strokeWidth="1" opacity="0.45"
                     />
-                    <circle cx={x} cy={y} r="5" fill={color} opacity="0.85" />
+                    <circle cx={x} cy={y} r="6" fill={color} opacity="0.85" />
                   </g>
                 );
               })}

@@ -25,12 +25,29 @@ function toPolyline(pts: number[][]): string {
 
 export function RegiekamerSection() {
   return (
-    <section id="platform" className="cl-section scroll-mt-20" aria-labelledby="regiekamer-heading">
+    <section
+      id="platform"
+      className="cl-section scroll-mt-20"
+      aria-labelledby="regiekamer-heading"
+      style={{ position: "relative" }}
+    >
+      {/* Radial glow behind right panel */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: -1,
+          background: "radial-gradient(ellipse at 80% 50%, rgba(91,62,230,0.08), transparent 65%)",
+        }}
+      />
+
       <div className="cl-container">
         <div className="flex flex-col gap-12 lg:flex-row lg:gap-16 lg:items-center">
 
           {/* LEFT COLUMN */}
-          <div className="w-full lg:w-[44%] flex-shrink-0">
+          <div className="w-full lg:w-[40%] flex-shrink-0">
             <p className="cl-eyebrow">REGIEKAMER</p>
             <h2 id="regiekamer-heading" className="cl-heading">
               Zicht op het geheel. Grip op wat nu nodig is.
@@ -64,15 +81,24 @@ export function RegiekamerSection() {
           </div>
 
           {/* RIGHT COLUMN */}
-          <div className="w-full lg:w-[56%]">
+          <div className="w-full lg:w-[60%]">
             <div
-              className="rounded-2xl p-5 space-y-3"
+              className="rounded-2xl overflow-hidden"
               style={{
                 background: "var(--cl-bg-deep)",
                 border: "1px solid var(--cl-border)",
-                boxShadow: "0 24px 64px rgba(0,0,0,0.28)",
+                boxShadow: "0 32px 80px rgba(0,0,0,0.40), 0 0 0 1px rgba(155,130,255,0.08)",
               }}
             >
+              {/* Violet top-edge accent line */}
+              <div
+                aria-hidden="true"
+                style={{
+                  height: 1,
+                  background: "linear-gradient(90deg, rgba(155,130,255,0.30), transparent)",
+                }}
+              />
+              <div className="p-6 space-y-4">
               {/* Top two panels */}
               <div className="grid grid-cols-2 gap-3">
 
@@ -89,7 +115,13 @@ export function RegiekamerSection() {
                   </p>
                   <ul className="space-y-2.5">
                     {attentionItems.map((item) => (
-                      <li key={item.label} className="flex items-center justify-between gap-2">
+                      <li
+                        key={item.label}
+                        className="flex items-center justify-between gap-2 pl-2 rounded-sm"
+                        style={{
+                          borderLeft: `2px solid ${item.severity !== "normal" ? item.color : "transparent"}`,
+                        }}
+                      >
                         {item.severity === "red" && (
                           <AlertCircle
                             size={11}
@@ -107,6 +139,7 @@ export function RegiekamerSection() {
                         <span
                           className="text-xs font-bold tabular-nums flex-shrink-0 rounded-md px-1.5 py-0.5"
                           style={{
+                            fontSize: item.severity === "red" ? 13 : undefined,
                             color: item.severity !== "normal" ? item.color : "var(--cl-text)",
                             background: item.severity === "red"
                               ? "rgba(239,91,98,0.12)"
@@ -225,6 +258,7 @@ export function RegiekamerSection() {
                   </a>
                 </div>
               </div>
+            </div>{/* end p-6 space-y-4 */}
             </div>
           </div>
         </div>

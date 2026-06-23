@@ -50,7 +50,7 @@ const nodes: NodeDef[] = [
     color: "var(--cl-blue)",
     bg: "rgba(62,168,255,.12)",
     border: "rgba(62,168,255,.28)",
-    pos: { top: "4%", left: "4%", width: 108 },
+    pos: { top: "4%", left: "4%", width: 116 },
     cx: 100, cy: 90,
     connLabel: "aanmelding",
   },
@@ -62,7 +62,7 @@ const nodes: NodeDef[] = [
     color: "var(--cl-violet-bright)",
     bg: "rgba(155,130,255,.12)",
     border: "rgba(155,130,255,.28)",
-    pos: { top: "4%", right: "4%", width: 108 },
+    pos: { top: "4%", right: "4%", width: 116 },
     cx: 378, cy: 90,
     connLabel: "reactie",
   },
@@ -74,7 +74,7 @@ const nodes: NodeDef[] = [
     color: "var(--cl-amber)",
     bg: "rgba(245,165,36,.12)",
     border: "rgba(245,165,36,.28)",
-    pos: { bottom: "4%", left: "4%", width: 108 },
+    pos: { bottom: "4%", left: "4%", width: 116 },
     cx: 100, cy: 390,
     connLabel: "informatie",
   },
@@ -86,7 +86,7 @@ const nodes: NodeDef[] = [
     color: "var(--cl-teal)",
     bg: "rgba(46,200,166,.12)",
     border: "rgba(46,200,166,.28)",
-    pos: { bottom: "4%", right: "4%", width: 108 },
+    pos: { bottom: "4%", right: "4%", width: 116 },
     cx: 378, cy: 390,
     connLabel: "terugkoppeling",
   },
@@ -175,19 +175,28 @@ export function CareNetworkSection() {
                 margin: "0 auto",
               }}
             >
-              {/* SVG: curved connection paths + labels + orbit ring */}
+              {/* SVG: curved connection paths + labels + orbit rings */}
               <svg
                 viewBox="0 0 480 480"
                 aria-hidden="true"
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
               >
-                {/* Subtle orbit ring */}
+                {/* Subtle orbit ring (outer) */}
                 <circle
                   cx="240" cy="240" r="148"
                   fill="none"
                   stroke="rgba(155,130,255,.06)"
                   strokeWidth="1"
                   strokeDasharray="3 10"
+                />
+
+                {/* Second subtle orbit ring (inner) */}
+                <circle
+                  cx="240" cy="240" r="105"
+                  fill="none"
+                  stroke="rgba(155,130,255,.04)"
+                  strokeWidth="1"
+                  strokeDasharray="2 8"
                 />
 
                 {/* Curved paths with gradient + glow */}
@@ -220,24 +229,24 @@ export function CareNetworkSection() {
                         d={buildCurvedPath(n.cx, n.cy)}
                         fill="none"
                         stroke={`url(#grad-${n.id})`}
-                        strokeWidth="4"
-                        opacity="0.15"
+                        strokeWidth="6"
+                        opacity="0.20"
                       />
                       {/* Main line */}
                       <path
                         d={buildCurvedPath(n.cx, n.cy)}
                         fill="none"
                         stroke={`url(#grad-${n.id})`}
-                        strokeWidth="1.5"
+                        strokeWidth="2"
                         strokeDasharray="5 4"
-                        opacity="0.75"
+                        opacity="0.85"
                       />
                       {/* Connection label */}
                       <text
                         x={midpt.x}
                         y={midpt.y - 5}
                         textAnchor="middle"
-                        style={{ fontSize: 8, fill: "rgba(143,154,175,0.80)", fontFamily: "inherit" }}
+                        style={{ fontSize: 9, fill: "rgba(143,154,175,0.80)", fontFamily: "inherit" }}
                       >
                         {n.connLabel}
                       </text>
@@ -254,8 +263,8 @@ export function CareNetworkSection() {
                   top: "50%",
                   left: "50%",
                   transform: "translate(-50%, -50%)",
-                  width: 110,
-                  height: 110,
+                  width: 136,
+                  height: 136,
                   borderRadius: "50%",
                   background: "radial-gradient(circle at 40% 35%, rgba(155,130,255,.28), rgba(91,62,230,.08))",
                   border: "2px solid rgba(155,130,255,.35)",
@@ -264,10 +273,10 @@ export function CareNetworkSection() {
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 4,
-                  boxShadow: "0 0 48px rgba(155,130,255,.18), 0 0 96px rgba(155,130,255,.06)",
+                  boxShadow: "0 0 0 1px rgba(155,130,255,.25), 0 0 48px rgba(155,130,255,.28), 0 0 96px rgba(155,130,255,.12), 0 16px 48px rgba(0,0,0,0.4)",
                 }}
               >
-                <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true" fill="none">
+                <svg width="52" height="52" viewBox="0 0 44 44" aria-hidden="true" fill="none">
                   <circle cx="22" cy="14" r="8" fill="rgba(171,155,255,.55)" />
                   <path d="M4 42c0-9.94 8.06-18 18-18s18 8.06 18 18" fill="rgba(171,155,255,.38)" />
                 </svg>
