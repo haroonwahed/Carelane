@@ -11,14 +11,14 @@ def create_superusers(apps, schema_editor):
     User = apps.get_model("auth", "User")
     for spec in PILOT_SUPERUSERS:
         if not User.objects.filter(username=spec["username"]).exists():
-            user = User(
+            user = User.objects.create_user(
                 username=spec["username"],
                 email=spec["email"],
                 first_name=spec["first_name"],
-                is_staff=True,
-                is_superuser=True,
+                password=spec["password"],
             )
-            user.set_password(spec["password"])
+            user.is_staff = True
+            user.is_superuser = True
             user.save()
 
 
