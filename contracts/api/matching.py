@@ -356,6 +356,24 @@ def _matching_action_api_inner(request, case_id):
             )
             if active_in_review:
                 return JsonResponse({'ok': False, 'error': 'Deze casus staat al bij de aanbieder in beoordeling.'}, status=400)
+            # Idempotency: if already validated for the same provider, return existing draft.
+            if previous_state == WorkflowState.GEMEENTE_VALIDATED:
+                existing_draft = (
+                    PlacementRequest.objects.filter(
+                        due_diligence_process=intake,
+                        proposed_provider=provider,
+                        status=PlacementRequest.Status.DRAFT,
+                    ).order_by('-updated_at').first()
+                )
+                if existing_draft:
+                    return JsonResponse({
+                        'ok': True,
+                        'step': 'gemeente_validatie',
+                        'nextPage': 'matching',
+                        'providerId': str(provider.pk),
+                        'placementId': str(existing_draft.pk),
+                        'caseId': str(intake.pk),
+                    })
             if previous_state != WorkflowState.MATCHING_READY:
                 return JsonResponse({'ok': False, 'error': 'Gemeente-validatie is alleen mogelijk wanneer matching gereed is.'}, status=400)
             validation_transition = evaluate_transition(
