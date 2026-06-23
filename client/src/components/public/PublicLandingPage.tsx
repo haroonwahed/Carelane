@@ -37,18 +37,6 @@ interface PublicLandingPageProps {
 
 const DEMO_EMAIL = "contact@carelane.nl";
 
-const partnerBrands = [
-  { primary: "Gemeente Rotterdam", logoSrc: "/partners/logo-gemeente-rotterdam.png" },
-  { primary: "Gemeente Amsterdam", logoSrc: "/partners/logo-gemeente-amsterdam.png" },
-  { primary: "Gemeente Utrecht", logoSrc: "/partners/logo-gemeente-utrecht.svg" },
-  { primary: "Gemeente Den Haag", logoSrc: "/partners/logo-gemeente-den-haag.svg" },
-  { primary: "Ymere", logoSrc: "/partners/logo-ymere.png" },
-  { primary: "Enver", logoSrc: "/partners/logo-enver.png" },
-  { primary: "Leger des Heils", logoSrc: "/partners/logo-leger-des-heils.svg" },
-] as const;
-
-const marqueeDuped = [...partnerBrands, ...partnerBrands];
-
 export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandingPageProps) {
   // Force body/html to dark while landing page is mounted so the canvas
   // background shows correctly when content overflows the #root div.
@@ -206,51 +194,6 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
             </div>
           </div>
         </section>
-
-        {/* Partner marquee */}
-        <div
-          className="border-y py-8"
-          style={{ borderColor: "var(--cl-border-subtle)" }}
-        >
-          <p
-            className="mb-5 text-center text-xs uppercase tracking-widest"
-            style={{ color: "var(--cl-text-muted)" }}
-          >
-            Gebouwd met gemeenten en zorgaanbieders in dezelfde keten
-          </p>
-          <div className="relative overflow-hidden">
-            <div
-              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20"
-              style={{ background: "linear-gradient(to right, var(--cl-bg-canvas), transparent)" }}
-              aria-hidden="true"
-            />
-            <div
-              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20"
-              style={{ background: "linear-gradient(to left, var(--cl-bg-canvas), transparent)" }}
-              aria-hidden="true"
-            />
-            <div
-              className="flex w-max items-center gap-10 py-1 motion-reduce:animate-none"
-              style={{ animation: "partner-marquee 36s linear infinite" }}
-              aria-label="Partners en gemeenten"
-            >
-              {marqueeDuped.map(({ primary, logoSrc }, i) => (
-                <div
-                  key={`${primary}-${i}`}
-                  className="flex min-w-[140px] items-center justify-center"
-                >
-                  <img
-                    src={logoSrc}
-                    alt={primary}
-                    className="h-6 w-auto opacity-50 grayscale brightness-200 transition-opacity duration-300 hover:opacity-80"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
 
         {/* ── 3. Care journey route ────────────────────────────────── */}
         <CareJourneySection />

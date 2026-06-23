@@ -12,7 +12,7 @@ services:
     plan: free
     repo: https://github.com/haroonwahed/Carelane
     branch: main
-    autoDeploy: false
+    autoDeploy: true
     healthCheckPath: /_health/
     # Co-locate the app with the database. The Postgres (Supabase) lives in
     # eu-west-1 (Ireland); Frankfurt is Render's closest EU region. Without this
