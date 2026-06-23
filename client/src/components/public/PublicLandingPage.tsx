@@ -111,7 +111,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
 
           <div
             className="cl-container relative z-10 flex flex-col justify-center"
-            style={{ paddingTop: "clamp(4rem, 8vw, 7rem)", paddingBottom: "clamp(3rem, 6vw, 6rem)" }}
+            style={{ paddingTop: "clamp(1.5rem, 3vw, 2.5rem)", paddingBottom: "clamp(2rem, 4vw, 4rem)" }}
           >
             <div className="grid gap-10 lg:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)] lg:items-center">
               {/* Left: copy */}
