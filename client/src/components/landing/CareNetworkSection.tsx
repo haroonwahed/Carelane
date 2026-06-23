@@ -1,10 +1,10 @@
 /**
- * Care Network section — one case at the centre with surrounding organisations.
- * Desktop: CSS-absolute node cards + SVG dashed lines, no Framer Motion.
+ * Care Network section — one case at centre with surrounding organisations.
+ * Desktop: SVG network diagram with curved paths and connection labels.
  * Mobile: role cards grid.
  */
 import type { CSSProperties } from "react";
-import { Share2, BookOpen, Activity, Building2, ShieldCheck, User, Users } from "lucide-react";
+import { Activity, BookOpen, Building2, Share2, ShieldCheck, User, Users } from "lucide-react";
 
 const bullets = [
   {
@@ -24,19 +24,35 @@ const bullets = [
   },
 ];
 
-// svgX/svgY = where the dashed line should end in the 480×480 SVG coordinate space
-const nodes = [
+interface NodeDef {
+  id: string;
+  label: string;
+  sub: string;
+  Icon: React.ElementType;
+  color: string;
+  bg: string;
+  border: string;
+  // absolute position within the 480x480 container
+  pos: CSSProperties;
+  // SVG anchor point for path drawing (0-480 scale)
+  cx: number;
+  cy: number;
+  // connection label
+  connLabel: string;
+}
+
+const nodes: NodeDef[] = [
   {
     id: "gemeente",
     label: "Gemeente",
-    sub: "Regievoering & samenwerking",
+    sub: "Regie & beoordeling",
     Icon: Building2,
     color: "var(--cl-blue)",
     bg: "rgba(62,168,255,.12)",
     border: "rgba(62,168,255,.28)",
-    svgX: 80,
-    svgY: 78,
-    pos: { top: "3%", left: "1%" } as CSSProperties,
+    pos: { top: "4%", left: "4%", width: 108 },
+    cx: 100, cy: 90,
+    connLabel: "aanmelding",
   },
   {
     id: "aanbieder",
@@ -46,9 +62,9 @@ const nodes = [
     color: "var(--cl-violet-bright)",
     bg: "rgba(155,130,255,.12)",
     border: "rgba(155,130,255,.28)",
-    svgX: 400,
-    svgY: 78,
-    pos: { top: "3%", right: "1%" } as CSSProperties,
+    pos: { top: "4%", right: "4%", width: 108 },
+    cx: 378, cy: 90,
+    connLabel: "reactie",
   },
   {
     id: "coordinator",
@@ -58,9 +74,9 @@ const nodes = [
     color: "var(--cl-amber)",
     bg: "rgba(245,165,36,.12)",
     border: "rgba(245,165,36,.28)",
-    svgX: 80,
-    svgY: 400,
-    pos: { bottom: "3%", left: "1%" } as CSSProperties,
+    pos: { bottom: "4%", left: "4%", width: 108 },
+    cx: 100, cy: 390,
+    connLabel: "informatie",
   },
   {
     id: "client",
@@ -70,11 +86,35 @@ const nodes = [
     color: "var(--cl-teal)",
     bg: "rgba(46,200,166,.12)",
     border: "rgba(46,200,166,.28)",
-    svgX: 400,
-    svgY: 400,
-    pos: { bottom: "3%", right: "1%" } as CSSProperties,
+    pos: { bottom: "4%", right: "4%", width: 108 },
+    cx: 378, cy: 390,
+    connLabel: "terugkoppeling",
   },
 ];
+
+const CENTER = { x: 240, y: 240 };
+
+function buildCurvedPath(nx: number, ny: number): string {
+  const mx = (CENTER.x + nx) / 2;
+  const my = (CENTER.y + ny) / 2;
+  // slight curve via control point offset
+  const cpx = mx + (ny < CENTER.y ? -20 : 20);
+  const cpy = my + (nx < CENTER.x ? 20 : -20);
+  return `M ${CENTER.x} ${CENTER.y} Q ${cpx} ${cpy} ${nx} ${ny}`;
+}
+
+// midpoint on the curved path at t≈0.5
+function labelPoint(nx: number, ny: number) {
+  const mx = (CENTER.x + nx) / 2;
+  const my = (CENTER.y + ny) / 2;
+  const cpx = mx + (ny < CENTER.y ? -20 : 20);
+  const cpy = my + (nx < CENTER.x ? 20 : -20);
+  const t = 0.5;
+  return {
+    x: (1 - t) * (1 - t) * CENTER.x + 2 * (1 - t) * t * cpx + t * t * nx,
+    y: (1 - t) * (1 - t) * CENTER.y + 2 * (1 - t) * t * cpy + t * t * ny,
+  };
+}
 
 export function CareNetworkSection() {
   return (
@@ -84,46 +124,43 @@ export function CareNetworkSection() {
       style={{ background: "var(--cl-bg-deep)" }}
     >
       <div className="cl-container">
-        <div className="grid gap-12 lg:grid-cols-[40%_60%] lg:items-center">
+        <div className="grid gap-10 lg:grid-cols-[38%_62%] lg:items-center">
 
-          {/* LEFT: text column */}
+          {/* LEFT text */}
           <div>
             <p className="cl-eyebrow">ÉÉN CASUS, MEERDERE ORGANISATIES</p>
             <h2 id="network-heading" className="cl-heading">
               Samenwerken rondom de jongere.
             </h2>
             <p className="cl-lead">
-              Gemeenten, aanbieders, coördinatoren en gezin werken in een gedeelde omgeving.
+              Gemeenten, aanbieders, coördinatoren en gezin werken in een gedeelde
+              omgeving — elk met eigen rol en eigen zichtbaarheid.
             </p>
 
-            <ul className="mt-8 space-y-5">
+            <ul className="mt-7 space-y-5">
               {bullets.map(({ Icon, label, desc }) => (
                 <li key={label} className="flex items-start gap-3">
                   <span
-                    className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                    className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
                     style={{
-                      background: "rgba(155,130,255,.12)",
+                      background: "rgba(155,130,255,.10)",
                       color: "var(--cl-violet-bright)",
-                      border: "1px solid rgba(155,130,255,.22)",
+                      border: "1px solid rgba(155,130,255,.20)",
                     }}
                     aria-hidden="true"
                   >
-                    <Icon size={16} strokeWidth={1.75} />
+                    <Icon size={15} strokeWidth={1.75} />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: "var(--cl-text)" }}>
-                      {label}
-                    </p>
-                    <p className="mt-0.5 text-sm leading-relaxed" style={{ color: "var(--cl-text-muted)" }}>
-                      {desc}
-                    </p>
+                    <p className="text-sm font-semibold" style={{ color: "var(--cl-text)" }}>{label}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed" style={{ color: "var(--cl-text-muted)" }}>{desc}</p>
                   </div>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* RIGHT: network diagram — desktop only */}
+          {/* RIGHT network diagram — desktop */}
           <div
             className="hidden lg:block"
             role="img"
@@ -138,42 +175,78 @@ export function CareNetworkSection() {
                 margin: "0 auto",
               }}
             >
-              {/* Dashed SVG connecting lines + subtle orbit ring */}
+              {/* SVG: curved connection paths + labels + orbit ring */}
               <svg
                 viewBox="0 0 480 480"
                 aria-hidden="true"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  pointerEvents: "none",
-                }}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
               >
+                {/* Subtle orbit ring */}
                 <circle
-                  cx="240"
-                  cy="240"
-                  r="150"
+                  cx="240" cy="240" r="148"
                   fill="none"
-                  stroke="rgba(155,130,255,.07)"
+                  stroke="rgba(155,130,255,.06)"
                   strokeWidth="1"
-                  strokeDasharray="3 9"
+                  strokeDasharray="3 10"
                 />
-                {nodes.map((n) => (
-                  <line
-                    key={n.id}
-                    x1="240"
-                    y1="240"
-                    x2={n.svgX}
-                    y2={n.svgY}
-                    stroke="rgba(155,130,255,.28)"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                  />
-                ))}
+
+                {/* Curved paths with gradient + glow */}
+                <defs>
+                  {nodes.map((n) => (
+                    <linearGradient
+                      key={`grad-${n.id}`}
+                      id={`grad-${n.id}`}
+                      x1={CENTER.x} y1={CENTER.y}
+                      x2={n.cx} y2={n.cy}
+                      gradientUnits="userSpaceOnUse"
+                    >
+                      <stop offset="0%" stopColor="rgba(155,130,255,0.55)" />
+                      <stop offset="100%" stopColor={
+                        n.id === "gemeente" ? "rgba(62,168,255,0.55)"
+                        : n.id === "aanbieder" ? "rgba(155,130,255,0.55)"
+                        : n.id === "coordinator" ? "rgba(245,165,36,0.55)"
+                        : "rgba(46,200,166,0.55)"
+                      } />
+                    </linearGradient>
+                  ))}
+                </defs>
+
+                {nodes.map((n) => {
+                  const midpt = labelPoint(n.cx, n.cy);
+                  return (
+                    <g key={n.id}>
+                      {/* Glow line (wider, blurred via opacity) */}
+                      <path
+                        d={buildCurvedPath(n.cx, n.cy)}
+                        fill="none"
+                        stroke={`url(#grad-${n.id})`}
+                        strokeWidth="4"
+                        opacity="0.15"
+                      />
+                      {/* Main line */}
+                      <path
+                        d={buildCurvedPath(n.cx, n.cy)}
+                        fill="none"
+                        stroke={`url(#grad-${n.id})`}
+                        strokeWidth="1.5"
+                        strokeDasharray="5 4"
+                        opacity="0.75"
+                      />
+                      {/* Connection label */}
+                      <text
+                        x={midpt.x}
+                        y={midpt.y - 5}
+                        textAnchor="middle"
+                        style={{ fontSize: 8, fill: "rgba(143,154,175,0.80)", fontFamily: "inherit" }}
+                      >
+                        {n.connLabel}
+                      </text>
+                    </g>
+                  );
+                })}
               </svg>
 
-              {/* Center — CASUS circle */}
+              {/* Center node */}
               <div
                 aria-hidden="true"
                 style={{
@@ -181,56 +254,45 @@ export function CareNetworkSection() {
                   top: "50%",
                   left: "50%",
                   transform: "translate(-50%, -50%)",
-                  width: 120,
-                  height: 120,
+                  width: 110,
+                  height: 110,
                   borderRadius: "50%",
-                  background:
-                    "radial-gradient(circle at 40% 35%, rgba(155,130,255,.30), rgba(91,62,230,.10))",
-                  border: "1.5px solid rgba(155,130,255,.32)",
+                  background: "radial-gradient(circle at 40% 35%, rgba(155,130,255,.28), rgba(91,62,230,.08))",
+                  border: "2px solid rgba(155,130,255,.35)",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 4,
-                  boxShadow: "0 0 48px rgba(155,130,255,.14)",
+                  boxShadow: "0 0 48px rgba(155,130,255,.18), 0 0 96px rgba(155,130,255,.06)",
                 }}
               >
-                {/* Person silhouette */}
-                <svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true" fill="none">
-                  <circle cx="23" cy="15" r="8.5" fill="rgba(171,155,255,.55)" />
-                  <path d="M4 42c0-10.49 8.51-19 19-19s19 8.51 19 19" fill="rgba(171,155,255,.40)" />
+                <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true" fill="none">
+                  <circle cx="22" cy="14" r="8" fill="rgba(171,155,255,.55)" />
+                  <path d="M4 42c0-9.94 8.06-18 18-18s18 8.06 18 18" fill="rgba(171,155,255,.38)" />
                 </svg>
-                <span
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 700,
-                    letterSpacing: "0.12em",
-                    color: "var(--cl-text-muted)",
-                    textTransform: "uppercase" as const,
-                  }}
-                >
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: "var(--cl-text-muted)", textTransform: "uppercase" }}>
                   CASUS
                 </span>
               </div>
 
-              {/* 4 role node cards at corners */}
+              {/* 4 role node cards */}
               {nodes.map(({ id, label, sub, Icon, color, bg, border, pos }) => (
                 <div
                   key={id}
                   style={{
                     position: "absolute",
                     ...pos,
-                    width: 112,
-                    borderRadius: "var(--cl-radius-lg)",
+                    borderRadius: 14,
                     background: bg,
                     border: `1.5px solid ${border}`,
-                    padding: "10px 12px",
+                    padding: "10px 11px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     gap: 5,
-                    textAlign: "center" as const,
-                    boxShadow: "var(--cl-shadow-card)",
+                    textAlign: "center",
+                    boxShadow: `0 4px 20px ${bg}`,
                   }}
                 >
                   <span
@@ -238,8 +300,8 @@ export function CareNetworkSection() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      width: 32,
-                      height: 32,
+                      width: 30,
+                      height: 30,
                       borderRadius: "50%",
                       background: bg,
                       color,
@@ -247,20 +309,16 @@ export function CareNetworkSection() {
                     }}
                     aria-hidden="true"
                   >
-                    <Icon size={15} strokeWidth={1.75} />
+                    <Icon size={14} strokeWidth={1.75} />
                   </span>
-                  <p style={{ fontSize: 11, fontWeight: 700, color, lineHeight: 1.2 }}>
-                    {label}
-                  </p>
-                  <p style={{ fontSize: 9.5, color: "var(--cl-text-muted)", lineHeight: 1.3 }}>
-                    {sub}
-                  </p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color, lineHeight: 1.2 }}>{label}</p>
+                  <p style={{ fontSize: 9, color: "var(--cl-text-muted)", lineHeight: 1.3 }}>{sub}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Mobile: role cards grid */}
+          {/* Mobile: cards grid */}
           <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
             {nodes.map(({ id, label, sub, Icon, color, bg, border }) => (
               <div
@@ -276,16 +334,13 @@ export function CareNetworkSection() {
                   >
                     <Icon size={14} strokeWidth={1.75} />
                   </span>
-                  <p className="text-sm font-semibold" style={{ color }}>
-                    {label}
-                  </p>
+                  <p className="text-sm font-semibold" style={{ color }}>{label}</p>
                 </div>
-                <p className="text-xs" style={{ color: "var(--cl-text-muted)" }}>
-                  {sub}
-                </p>
+                <p className="text-xs" style={{ color: "var(--cl-text-muted)" }}>{sub}</p>
               </div>
             ))}
           </div>
+
         </div>
       </div>
     </section>

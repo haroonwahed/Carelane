@@ -3,7 +3,7 @@
  * Real navigation groups. No invented social accounts or inactive links.
  * Copyright and legal links.
  */
-import { ShieldCheck } from "lucide-react";
+import { CarelaneMark } from "../landing/CarelaneLogo";
 import { LOGIN_URL } from "../../lib/routes";
 
 const DEMO_EMAIL = "contact@carelane.nl";
@@ -64,15 +64,9 @@ export function LandingFooter() {
             className="inline-flex items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--cl-violet-bright)] rounded-xl"
             aria-label="Carelane – terug naar homepage"
           >
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border"
-              style={{ background: "var(--cl-surface-1)", borderColor: "var(--cl-border)" }}
-            >
-              <ShieldCheck
-                size={18}
-                aria-hidden="true"
-                style={{ color: "var(--cl-violet-bright)" }}
-              />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+              style={{ background: "rgba(155,130,255,0.12)", border: "1px solid rgba(155,130,255,0.22)" }}>
+              <CarelaneMark size={18} style={{ color: "var(--cl-violet-bright)" }} />
             </div>
             <span className="text-base font-semibold text-[var(--cl-text)]">Carelane</span>
           </a>

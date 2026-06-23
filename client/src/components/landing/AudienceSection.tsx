@@ -4,113 +4,195 @@ const roles = [
   {
     icon: Building2,
     label: "Gemeenten",
-    description:
-      "Houd grip op de keten en neem onderbouwde beslissingen.",
+    outcome: "Grip op de keten",
+    description: "Houd overzicht over alle lopende casussen en neem onderbouwde beslissingen.",
     iconColor: "var(--cl-blue)",
-    iconBg: "rgba(59,130,246,0.12)",
-    highlighted: false,
+    iconBg: "rgba(62,168,255,0.14)",
+    border: "rgba(62,168,255,0.22)",
+    pos: "top-left",
   },
   {
     icon: ShieldCheck,
     label: "Zorgaanbieders",
-    description:
-      "Ontvang de juiste aanvragen en werk effectiever samen.",
+    outcome: "Juiste aanvragen",
+    description: "Ontvang passende aanvragen en reageer efficiënt binnen de gestelde termijn.",
     iconColor: "#22c55e",
-    iconBg: "rgba(34,197,94,0.12)",
-    highlighted: false,
+    iconBg: "rgba(34,197,94,0.14)",
+    border: "rgba(34,197,94,0.22)",
+    pos: "top-right",
   },
   {
     icon: Users,
     label: "Coördinatoren",
-    description:
-      "Zie wat aandacht nodig heeft en neem de volgende stap.",
+    outcome: "Volgende stap helder",
+    description: "Zie wat aandacht nodig heeft en neem direct actie zonder te zoeken.",
     iconColor: "var(--cl-teal)",
-    iconBg: "rgba(20,184,166,0.12)",
-    highlighted: true,
+    iconBg: "rgba(46,200,166,0.14)",
+    border: "rgba(46,200,166,0.30)",
+    pos: "bottom-left",
   },
   {
     icon: Heart,
     label: "Cliënten & gezinnen",
-    description:
-      "Blijf betrokken en geïnformeerd over wat er gebeurt.",
+    outcome: "Betrokken & geïnformeerd",
+    description: "Blijf op de hoogte van de voortgang en het proces rondom de zorgvraag.",
     iconColor: "var(--cl-amber)",
-    iconBg: "rgba(245,158,11,0.12)",
-    highlighted: false,
+    iconBg: "rgba(245,158,11,0.14)",
+    border: "rgba(245,158,11,0.22)",
+    pos: "bottom-right",
   },
 ];
 
 export function AudienceSection() {
   return (
-    <section id="voor-wie" className="cl-section scroll-mt-20">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+    <section id="voor-wie" className="cl-section scroll-mt-20" aria-labelledby="audience-heading">
+      <div className="cl-container">
+
         {/* Header */}
-        <div className="text-center mb-12">
-          <p
-            className="text-xs font-semibold tracking-widest uppercase mb-4"
-            style={{ color: "var(--cl-violet-bright)" }}
-          >
-            VOOR WIE IS CARELANE
-          </p>
-          <h2
-            className="text-3xl lg:text-4xl font-bold leading-tight"
-            style={{ color: "var(--cl-text)" }}
-          >
+        <div className="text-center mb-10">
+          <p className="cl-eyebrow">VOOR WIE IS CARELANE</p>
+          <h2 id="audience-heading" className="cl-heading">
             Gebouwd voor iedereen die{" "}
-            <em
-              className="not-italic font-bold"
-              style={{ color: "var(--cl-violet-bright)" }}
-            >
+            <em className="not-italic font-bold" style={{ color: "var(--cl-violet-bright)" }}>
               betere keuzes
             </em>{" "}
             wil maken in de zorgketen.
           </h2>
         </div>
 
-        {/* Cards grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {/* Desktop: 2+center+2 composition */}
+        <div className="hidden lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center gap-6">
+
+          {/* Left column: 2 roles */}
+          <div className="flex flex-col gap-4">
+            {roles.slice(0, 2).map((role) => {
+              const Icon = role.icon;
+              return (
+                <div
+                  key={role.label}
+                  className="rounded-2xl border p-5 flex flex-col gap-3"
+                  style={{
+                    background: "var(--cl-surface-1)",
+                    borderColor: role.border,
+                    boxShadow: `0 0 0 1px ${role.iconBg}`,
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                      style={{ background: role.iconBg }}
+                      aria-hidden="true"
+                    >
+                      <Icon size={18} style={{ color: role.iconColor }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold" style={{ color: "var(--cl-text)" }}>{role.label}</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: role.iconColor }}>{role.outcome}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--cl-text-secondary)" }}>
+                    {role.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Center: Carelane hub */}
+          <div className="flex flex-col items-center justify-center px-6">
+            <div
+              className="flex flex-col items-center justify-center rounded-2xl border p-5 text-center"
+              style={{
+                width: 140,
+                background: "rgba(155,130,255,0.10)",
+                borderColor: "rgba(155,130,255,0.32)",
+                boxShadow: "0 0 40px rgba(155,130,255,0.16)",
+              }}
+            >
+              {/* Logo mark */}
+              <svg width="28" height="28" viewBox="0 0 22 22" fill="none" aria-hidden="true" style={{ color: "var(--cl-violet-bright)" }}>
+                <circle cx="11" cy="11" r="2.2" fill="currentColor" />
+                <line x1="11" y1="11" x2="4.5" y2="4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <line x1="11" y1="11" x2="17.5" y2="4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <line x1="11" y1="11" x2="4.5" y2="17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <line x1="11" y1="11" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="4.5" cy="4.5" r="1.6" fill="currentColor" opacity="0.7" />
+                <circle cx="17.5" cy="4.5" r="1.6" fill="currentColor" opacity="0.7" />
+                <circle cx="4.5" cy="17.5" r="1.6" fill="currentColor" opacity="0.7" />
+                <circle cx="17.5" cy="17.5" r="1.6" fill="currentColor" opacity="0.7" />
+              </svg>
+              <p className="mt-2 text-sm font-bold" style={{ color: "var(--cl-violet-bright)" }}>Carelane</p>
+              <p className="mt-1 text-[10px] leading-snug" style={{ color: "var(--cl-text-muted)" }}>
+                Één gedeelde omgeving
+              </p>
+            </div>
+          </div>
+
+          {/* Right column: 2 roles */}
+          <div className="flex flex-col gap-4">
+            {roles.slice(2, 4).map((role) => {
+              const Icon = role.icon;
+              return (
+                <div
+                  key={role.label}
+                  className="rounded-2xl border p-5 flex flex-col gap-3"
+                  style={{
+                    background: "var(--cl-surface-1)",
+                    borderColor: role.border,
+                    boxShadow: `0 0 0 1px ${role.iconBg}`,
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                      style={{ background: role.iconBg }}
+                      aria-hidden="true"
+                    >
+                      <Icon size={18} style={{ color: role.iconColor }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold" style={{ color: "var(--cl-text)" }}>{role.label}</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: role.iconColor }}>{role.outcome}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--cl-text-secondary)" }}>
+                    {role.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Mobile: 2×2 grid */}
+        <div className="grid grid-cols-2 gap-4 lg:hidden">
           {roles.map((role) => {
             const Icon = role.icon;
             return (
               <div
                 key={role.label}
-                className="rounded-2xl p-5 flex flex-col gap-4 transition-shadow"
+                className="rounded-2xl border p-4 flex flex-col gap-3"
                 style={{
                   background: "var(--cl-surface-1)",
-                  border: role.highlighted
-                    ? "1px solid rgba(20,184,166,0.35)"
-                    : "1px solid var(--cl-border-subtle)",
-                  boxShadow: role.highlighted
-                    ? "0 0 0 1px rgba(20,184,166,0.12)"
-                    : "none",
+                  borderColor: role.border,
                 }}
               >
-                {/* Icon badge */}
                 <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
                   style={{ background: role.iconBg }}
+                  aria-hidden="true"
                 >
-                  <Icon size={20} style={{ color: role.iconColor }} />
+                  <Icon size={18} style={{ color: role.iconColor }} />
                 </div>
-
-                {/* Text */}
                 <div>
-                  <p
-                    className="text-sm font-bold mb-1.5"
-                    style={{ color: "var(--cl-text)" }}
-                  >
-                    {role.label}
-                  </p>
-                  <p
-                    className="text-xs leading-relaxed"
-                    style={{ color: "var(--cl-text-secondary)" }}
-                  >
-                    {role.description}
-                  </p>
+                  <p className="text-sm font-bold" style={{ color: "var(--cl-text)" }}>{role.label}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed" style={{ color: "var(--cl-text-secondary)" }}>{role.description}</p>
                 </div>
               </div>
             );
           })}
         </div>
+
       </div>
     </section>
   );
