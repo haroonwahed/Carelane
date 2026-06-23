@@ -1,5 +1,111 @@
 @custom-variant dark (&:is(.dark *));
 
+/* ── Carelane Landing Page tokens ─────────────────────────────── */
+/* Scoped to .carelane-landing so they never clash with app tokens */
+.carelane-landing {
+  --cl-bg-canvas: #060b17;
+  --cl-bg-deep: #081122;
+  --cl-surface-1: #0d172a;
+  --cl-surface-2: #111e34;
+  --cl-surface-3: #17243a;
+  --cl-text: #f6f8fc;
+  --cl-text-secondary: #c4ccda;
+  --cl-text-muted: #8f9aaf;
+  --cl-violet: #7c5cff;
+  --cl-violet-bright: #9b82ff;
+  --cl-violet-deep: #5b3ee6;
+  --cl-blue: #3ea8ff;
+  --cl-teal: #2ec8a6;
+  --cl-amber: #f5a524;
+  --cl-red: #ef5b62;
+  --cl-border-subtle: rgba(171,188,218,.14);
+  --cl-border: rgba(171,188,218,.22);
+  --cl-border-focus: rgba(155,130,255,.44);
+  --cl-container: 1280px;
+  --cl-reading: 680px;
+  --cl-radius-sm: 8px;
+  --cl-radius-md: 12px;
+  --cl-radius-lg: 18px;
+  --cl-radius-xl: 24px;
+  --cl-shadow-card: 0 12px 40px rgba(0,0,0,.28);
+  --cl-shadow-elevated: 0 24px 80px rgba(0,0,0,.42);
+  --cl-shadow-glow: 0 0 48px rgba(124,92,255,.20);
+}
+
+@keyframes partner-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes cl-pulse {
+  0%, 100% { opacity: .5; transform: scale(1); }
+  50%       { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes cl-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Landing utility classes ──────────────────────────────────────── */
+.cl-container {
+  width: min(calc(100% - 2.5rem), var(--cl-container));
+  margin-inline: auto;
+}
+
+@media (min-width: 640px) {
+  .cl-container { width: min(calc(100% - 4rem), var(--cl-container)); }
+}
+
+@media (min-width: 1024px) {
+  .cl-container { width: min(calc(100% - 6rem), var(--cl-container)); }
+}
+
+.cl-section {
+  padding-block: clamp(4rem, 7vw, 7rem);
+}
+
+.cl-section + .cl-section,
+.cl-section + div + .cl-section {
+  border-top: 1px solid var(--cl-border-subtle);
+}
+
+.cl-eyebrow {
+  display: block;
+  color: var(--cl-violet-bright);
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.cl-heading {
+  margin: .75rem 0 1.25rem;
+  font-size: clamp(1.875rem, 3.5vw, 3rem);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -.035em;
+  color: var(--cl-text);
+}
+
+.cl-lead {
+  max-width: 52ch;
+  color: var(--cl-text-secondary);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+/* Reduced motion — landing page */
+@media (prefers-reduced-motion: reduce) {
+  .carelane-landing *,
+  .carelane-landing *::before,
+  .carelane-landing *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
 :root {
   --font-size: 16px;
 
