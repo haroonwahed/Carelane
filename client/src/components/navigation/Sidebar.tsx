@@ -471,7 +471,7 @@ export function Sidebar({
           <CarelaneLogo
             variant={collapsed ? "mark" : "horizontal"}
             theme="adaptive"
-            size={collapsed ? "md" : "lg"}
+            size={collapsed ? "sm" : "md"}
             ariaLabel=""
           />
         </a>
