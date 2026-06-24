@@ -111,19 +111,18 @@ export function ExplainableMatchingSection() {
       style={{ paddingTop: "4rem", paddingBottom: "4rem" }}
     >
       <div className="cl-container">
-        <div className="grid gap-10 lg:grid-cols-[500px_1fr]" id="matching-heading">
-          {/* Left: heading, description, providers */}
-          <div className="flex flex-col gap-6">
-            <div>
-              <p className="cl-eyebrow">Verklaarbare matching</p>
-              <h2 className="cl-heading">De juiste match. Uitlegbaar en onderbouwd.</h2>
-              <p className="cl-lead mt-3">
-                Carelane adviseert op basis van zorgbehoefte, expertise, beschikbaarheid, regio en beperkingen. De professional houdt de regie.
-              </p>
-            </div>
+        <div className="grid gap-12 lg:grid-cols-[1fr_1.2fr]" id="matching-heading">
+          {/* Left: heading, description */}
+          <div className="flex flex-col gap-4">
+            <p className="cl-eyebrow">Verklaarbare matching</p>
+            <h2 className="cl-heading">De juiste match. Uitlegbaar en onderbouwd.</h2>
+            <p className="cl-lead mt-2">
+              Carelane adviseert op basis van zorgbehoefte, expertise, beschikbaarheid, regio en beperkingen. De professional houdt de regie.
+            </p>
+          </div>
 
-            {/* Provider cards - smaller */}
-            <div className="space-y-2" role="list" aria-label="Aanbiederopties">
+          {/* Right: Provider cards */}
+          <div className="space-y-3" role="list" aria-label="Aanbiederopties">
             {providers.map((p) => (
               <button
                 key={p.id}
@@ -232,11 +231,7 @@ export function ExplainableMatchingSection() {
                 )}
               </button>
             ))}
-            </div>
           </div>
-
-          {/* Right: empty for now, visual balance */}
-          <div />
         </div>
       </div>
     </section>
