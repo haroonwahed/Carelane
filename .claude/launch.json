@@ -4,8 +4,9 @@
     {
       "name": "django",
       "runtimeExecutable": ".venv/bin/python",
-      "runtimeArgs": ["manage.py", "runserver", "8000"],
+      "runtimeArgs": ["manage.py", "runserver"],
       "port": 8000,
+      "autoPort": true,
       "env": {
         "DJANGO_SECRET_KEY": "dev-not-for-production"
       }
