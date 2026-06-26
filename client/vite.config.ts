@@ -106,6 +106,7 @@ function manualVendorChunks(id: string) {
       // Default Node/Vite can bind IPv6-only (::1); browsers on http://127.0.0.1:3000 then get ERR_CONNECTION_REFUSED.
       host: true,
       port: parseInt(process.env.PORT ?? "3000", 10),
+      strictPort: true,
       open: true,
       proxy: {
         '/care/api/': {
