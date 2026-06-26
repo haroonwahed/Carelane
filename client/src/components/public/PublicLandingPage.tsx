@@ -16,7 +16,7 @@
  * 10. Final CTA
  * 11. Footer
  */
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import { LandingNav } from "../landing/LandingNav";
 import { CareJourneySection } from "../landing/CareJourneySection";
 import { RegiekamerSection } from "../landing/RegiekamerSection";
@@ -28,6 +28,7 @@ import { AudienceSection } from "../landing/AudienceSection";
 import { FinalCtaSection } from "../landing/FinalCtaSection";
 import { LandingFooter } from "../landing/LandingFooter";
 import { CarelaneHeroOrchestrationVisual } from "../landing/CarelaneHeroOrchestrationVisual";
+import { HeroOutcomes } from "../landing/HeroOutcomes";
 import { CarelaneLogo } from "../logos/CarelaneLogo";
 import { LOGIN_URL } from "../../lib/routes";
 
@@ -37,6 +38,15 @@ interface PublicLandingPageProps {
 }
 
 const DEMO_EMAIL = "contact@carelane.nl";
+
+// Canonical five-phase workflow — shown as a slim stepper at the base of the hero.
+const HERO_PHASES = [
+  { step: "01", name: "Aanmelding",       role: "Gemeente",            color: "#3ea8ff" },
+  { step: "02", name: "Matching",         role: "Carelane",            color: "#9b82ff" },
+  { step: "03", name: "Aanbiederreactie", role: "Zorgaanbieder",       color: "#f5a524" },
+  { step: "04", name: "Plaatsing",        role: "Gemeente + Aanbieder", color: "#2ec8a6" },
+  { step: "05", name: "Intake",           role: "Zorgaanbieder",       color: "#2ec8a6" },
+];
 
 export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandingPageProps) {
   // Force body/html to dark while landing page is mounted so the canvas
@@ -74,7 +84,6 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
         <section
           className="relative overflow-x-clip pt-[72px]"
           aria-labelledby="hero-heading"
-          style={{ minHeight: "min(90vh, 800px)" }}
         >
           {/* Background elements */}
           <div className="pointer-events-none absolute inset-0" aria-hidden="true">
@@ -99,11 +108,11 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
           </div>
 
           <div
-            className="cl-container relative z-10 flex flex-col justify-center"
-            style={{ paddingTop: "clamp(1.5rem, 3vw, 2.5rem)", paddingBottom: "clamp(2rem, 4vw, 4rem)" }}
+            className="cl-container relative z-10 flex flex-col"
+            style={{ paddingTop: "clamp(1.25rem, 2.5vw, 2rem)", paddingBottom: "clamp(1.5rem, 3vw, 2.5rem)" }}
           >
 
-            <div className="grid gap-10 lg:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)] lg:items-center">
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-center">
               {/* Left: copy */}
               <div className="max-w-[560px] space-y-6">
                 {/* Eyebrow */}
@@ -120,7 +129,7 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
                     style={{ background: "var(--cl-violet-bright)" }}
                     aria-hidden="true"
                   />
-                  Operationele regie voor zorgcoördinatie
+                  Operationele regie · Zorgcoördinatie
                 </p>
 
                 <h1
@@ -128,8 +137,8 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
                   className="text-balance font-semibold tracking-[-0.04em] text-[var(--cl-text)]"
                   style={{ fontSize: "clamp(2.4rem, 4.5vw, 3.75rem)", lineHeight: 1.05 }}
                 >
-                  Betere beslissingen in{" "}
-                  <span style={{ color: "var(--cl-violet-bright)" }}>schaarse zorg.</span>
+                  De controlelaag voor{" "}
+                  <span style={{ color: "var(--cl-violet-bright)" }}>zorgcoördinatie.</span>
                 </h1>
 
                 <p
@@ -137,12 +146,12 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
                   style={{
                     fontSize: "clamp(1rem, 1.2vw, 1.125rem)",
                     color: "var(--cl-text-secondary)",
-                    maxWidth: "46ch",
+                    maxWidth: "50ch",
                   }}
                 >
-                  Carelane verbindt gemeenten, zorgaanbieders en coördinatoren in één helder proces.
-                  Zo wordt zichtbaar wat vastloopt, wie aan zet is en welke stap een casus verder
-                  brengt.
+                  Carelane stuurt elke casus van aanmelding tot intake — met op elk moment zicht op
+                  wat vastloopt, wie aan zet is en wat de volgende stap is. Gemeenten, zorgaanbieders
+                  en coördinatoren werken in één bron, herleidbaar en op tijd.
                 </p>
 
                 {/* CTAs */}
@@ -194,8 +203,53 @@ export function PublicLandingPage({ onThemeToggle: _onThemeToggle }: PublicLandi
               {/* Right: Regiekamer preview */}
               <CarelaneHeroOrchestrationVisual />
             </div>
+
+            {/* Five-phase workflow strip — the spine of the product */}
+            <div className="mt-12 lg:mt-16">
+              <p
+                className="mb-3 text-[11px] font-bold uppercase tracking-widest"
+                style={{ color: "var(--cl-text-muted)" }}
+              >
+                Eén route — van aanmelding tot intake
+              </p>
+              <div
+                className="flex items-center gap-2 overflow-x-auto rounded-2xl border px-4 py-4 sm:gap-3 sm:px-6"
+                style={{ borderColor: "var(--cl-border-subtle)", background: "rgba(13,23,42,.45)" }}
+              >
+                {HERO_PHASES.map((p, i) => (
+                  <Fragment key={p.step}>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <span
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[12px] font-bold tabular-nums"
+                        style={{ color: p.color, background: `${p.color}1a`, border: `1px solid ${p.color}3d` }}
+                      >
+                        {p.step}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="whitespace-nowrap text-[13px] font-semibold" style={{ color: "var(--cl-text)" }}>
+                          {p.name}
+                        </p>
+                        <p className="whitespace-nowrap text-[11px]" style={{ color: "var(--cl-text-muted)" }}>
+                          {p.role}
+                        </p>
+                      </div>
+                    </div>
+                    {i < HERO_PHASES.length - 1 && (
+                      <div
+                        className="h-px w-6 shrink-0 lg:flex-1"
+                        style={{ background: "linear-gradient(to right, var(--cl-border), transparent)" }}
+                        aria-hidden="true"
+                      />
+                    )}
+                  </Fragment>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
+
+        {/* ── 2b. Operational outcomes ─────────────────────────────── */}
+        <HeroOutcomes />
 
         {/* ── 3. Care journey route ────────────────────────────────── */}
         <CareJourneySection />
