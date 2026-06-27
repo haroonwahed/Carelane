@@ -1,4 +1,5 @@
 import { Building2, Heart, ShieldCheck, Users } from "lucide-react";
+import { CarelaneLogo } from "../logos/CarelaneLogo";
 
 const roles = [
   {
@@ -132,12 +133,9 @@ export function AudienceSection() {
                 boxShadow: "0 0 0 1px rgba(155,130,255,0.20), 0 0 48px rgba(155,130,255,0.18), 0 16px 40px rgba(0,0,0,0.30)",
               }}
             >
-              {/* Carelane mark — dagger cross (†) */}
-              <svg width="28" height="28" viewBox="0 0 22 22" fill="none" aria-hidden="true" style={{ color: "var(--cl-violet-bright)" }}>
-                <line x1="11" y1="2" x2="11" y2="20" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-                <line x1="3.5" y1="8.5" x2="18.5" y2="8.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-              </svg>
-              <p className="mt-2 text-sm font-bold" style={{ color: "var(--cl-violet-bright)" }}>Carelane</p>
+              {/* Carelane brand mark */}
+              <CarelaneLogo mark decorative className="w-11" />
+              <p className="mt-2.5 text-sm font-bold" style={{ color: "var(--cl-violet-bright)" }}>Carelane</p>
               <p className="mt-1 text-[10px] leading-snug" style={{ color: "var(--cl-text-muted)" }}>
                 Één gedeelde omgeving
               </p>

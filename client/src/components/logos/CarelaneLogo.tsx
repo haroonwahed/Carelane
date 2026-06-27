@@ -15,7 +15,10 @@
  *   - mark only          → standalone gradient mark (decorative / tight spaces)
  */
 
-const BRAND_BASE = "/brand";
+// Resolve against the app's base URL so assets load in both dev (served at "/")
+// and production (the SPA is served under "/static/spa/"). BASE_URL always ends
+// with a slash.
+const BRAND_BASE = `${import.meta.env.BASE_URL}brand`;
 
 const ASSETS = {
   dark: `${BRAND_BASE}/logos/png/carelane-logo-gradient-white-transparent.png`,
