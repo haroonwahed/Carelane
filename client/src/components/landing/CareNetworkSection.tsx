@@ -1,9 +1,11 @@
 /**
- * Care Network section — one case at centre with surrounding organisations.
- * Desktop: SVG network diagram with curved paths and connection labels.
+ * Care Network section — one shared case record at the centre, each organisation
+ * connected to it with a clear, labelled flow.
+ *
+ * Desktop: a precise diagram built around a real "casus" record card (product
+ * truth, not an abstract glowing orb) with clean solid connectors.
  * Mobile: role cards grid.
  */
-import type { CSSProperties } from "react";
 import { Activity, BookOpen, Building2, Share2, ShieldCheck, User, Users } from "lucide-react";
 
 const bullets = [
@@ -29,92 +31,45 @@ interface NodeDef {
   label: string;
   sub: string;
   Icon: React.ElementType;
-  color: string;
-  bg: string;
-  border: string;
-  // absolute position within the 480x480 container
-  pos: CSSProperties;
-  // SVG anchor point for path drawing (0-480 scale)
-  cx: number;
-  cy: number;
-  // connection label
+  accent: string; // hex (used in SVG + HTML)
+  fx: number; // fractional x of the card centre (0..1)
+  fy: number; // fractional y of the card centre (0..1)
   connLabel: string;
 }
 
 const nodes: NodeDef[] = [
-  {
-    id: "gemeente",
-    label: "Gemeente",
-    sub: "Regie & beoordeling",
-    Icon: Building2,
-    color: "var(--cl-blue)",
-    bg: "rgba(62,168,255,.12)",
-    border: "rgba(62,168,255,.28)",
-    pos: { top: "4%", left: "4%", width: 116 },
-    cx: 100, cy: 90,
-    connLabel: "aanmelding",
-  },
-  {
-    id: "aanbieder",
-    label: "Aanbieder",
-    sub: "Zorg & behandeling",
-    Icon: ShieldCheck,
-    color: "var(--cl-violet-bright)",
-    bg: "rgba(155,130,255,.12)",
-    border: "rgba(155,130,255,.28)",
-    pos: { top: "4%", right: "4%", width: 116 },
-    cx: 378, cy: 90,
-    connLabel: "reactie",
-  },
-  {
-    id: "coordinator",
-    label: "Coördinator",
-    sub: "Casemanagement & voortgang",
-    Icon: User,
-    color: "var(--cl-amber)",
-    bg: "rgba(245,165,36,.12)",
-    border: "rgba(245,165,36,.28)",
-    pos: { bottom: "4%", left: "4%", width: 116 },
-    cx: 100, cy: 390,
-    connLabel: "informatie",
-  },
-  {
-    id: "client",
-    label: "Cliënt & gezin",
-    sub: "Betrokken & geïnformeerd",
-    Icon: Users,
-    color: "var(--cl-teal)",
-    bg: "rgba(46,200,166,.12)",
-    border: "rgba(46,200,166,.28)",
-    pos: { bottom: "4%", right: "4%", width: 116 },
-    cx: 378, cy: 390,
-    connLabel: "terugkoppeling",
-  },
+  { id: "gemeente",    label: "Gemeente",      sub: "Regie & beoordeling",          Icon: Building2,  accent: "#3ea8ff", fx: 0.15, fy: 0.16, connLabel: "aanmelding" },
+  { id: "aanbieder",   label: "Aanbieder",     sub: "Zorg & behandeling",           Icon: ShieldCheck, accent: "#9b82ff", fx: 0.85, fy: 0.16, connLabel: "reactie" },
+  { id: "coordinator", label: "Coördinator",   sub: "Casemanagement & voortgang",   Icon: User,       accent: "#f5a524", fx: 0.15, fy: 0.84, connLabel: "informatie" },
+  { id: "client",      label: "Cliënt & gezin", sub: "Betrokken & geïnformeerd",     Icon: Users,      accent: "#2ec8a6", fx: 0.85, fy: 0.84, connLabel: "terugkoppeling" },
 ];
 
-const CENTER = { x: 240, y: 240 };
+const VB = 480;
+const C = { x: VB / 2, y: VB / 2 };
 
-function buildCurvedPath(nx: number, ny: number): string {
-  const mx = (CENTER.x + nx) / 2;
-  const my = (CENTER.y + ny) / 2;
-  // slight curve via control point offset
-  const cpx = mx + (ny < CENTER.y ? -20 : 20);
-  const cpy = my + (nx < CENTER.x ? 20 : -20);
-  return `M ${CENTER.x} ${CENTER.y} Q ${cpx} ${cpy} ${nx} ${ny}`;
-}
-
-// midpoint on the curved path at t≈0.5
-function labelPoint(nx: number, ny: number) {
-  const mx = (CENTER.x + nx) / 2;
-  const my = (CENTER.y + ny) / 2;
-  const cpx = mx + (ny < CENTER.y ? -20 : 20);
-  const cpy = my + (nx < CENTER.x ? 20 : -20);
-  const t = 0.5;
+/** Connector endpoints, trimmed so the line starts/ends clear of both cards. */
+function edge(fx: number, fy: number) {
+  const nx = fx * VB;
+  const ny = fy * VB;
+  const dx = nx - C.x;
+  const dy = ny - C.y;
+  const len = Math.hypot(dx, dy);
+  const ux = dx / len;
+  const uy = dy / len;
+  const startOff = 86; // clear the central record card
+  const endOff = 60; // clear the role card
   return {
-    x: (1 - t) * (1 - t) * CENTER.x + 2 * (1 - t) * t * cpx + t * t * nx,
-    y: (1 - t) * (1 - t) * CENTER.y + 2 * (1 - t) * t * cpy + t * t * ny,
+    x1: C.x + ux * startOff,
+    y1: C.y + uy * startOff,
+    x2: nx - ux * endOff,
+    y2: ny - uy * endOff,
+    mx: (C.x + nx) / 2,
+    my: (C.y + ny) / 2,
   };
 }
+
+// Central record card's phase bar — Aanmelding done, Matching current.
+const RECORD_PHASES = ["#3ea8ff", "#9b82ff", "#2a3650", "#2a3650", "#2a3650"];
 
 export function CareNetworkSection() {
   return (
@@ -133,8 +88,8 @@ export function CareNetworkSection() {
               Samenwerken rondom de jongere.
             </h2>
             <p className="cl-lead">
-              Gemeenten, aanbieders, coördinatoren en gezin werken in een gedeelde
-              omgeving — elk met eigen rol en eigen zichtbaarheid.
+              Gemeenten, aanbieders, coördinatoren en gezin werken rond één gedeeld
+              dossier — elk met een eigen rol en eigen zichtbaarheid.
             </p>
 
             <ul className="mt-7 space-y-5">
@@ -160,181 +115,133 @@ export function CareNetworkSection() {
             </ul>
           </div>
 
-          {/* RIGHT network diagram — desktop */}
+          {/* RIGHT — shared case record diagram (desktop) */}
           <div
             className="hidden lg:block"
             role="img"
-            aria-label="Diagram: centrale casus omringd door gemeente, aanbieder, coördinator en cliënt & gezin"
+            aria-label="Diagram: één gedeeld casusdossier verbonden met gemeente, aanbieder, coördinator en cliënt & gezin"
           >
-            <div
-              style={{
-                position: "relative",
-                width: "100%",
-                maxWidth: 480,
-                aspectRatio: "1 / 1",
-                margin: "0 auto",
-              }}
-            >
-              {/* SVG: curved connection paths + labels + orbit rings */}
-              <svg
-                viewBox="0 0 480 480"
+            <div style={{ position: "relative", width: "100%", maxWidth: 500, aspectRatio: "1 / 1", margin: "0 auto" }}>
+              {/* Single restrained ambient — not a glow ring */}
+              <div
                 aria-hidden="true"
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
-              >
-                {/* Orbit ring glow effect — subtle radial gradient */}
+                style={{
+                  position: "absolute", inset: "22%", borderRadius: "50%",
+                  background: "radial-gradient(circle, rgba(91,62,230,.14), transparent 70%)",
+                  filter: "blur(34px)",
+                }}
+              />
+
+              {/* Connectors */}
+              <svg viewBox={`0 0 ${VB} ${VB}`} aria-hidden="true" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
                 <defs>
-                  <radialGradient id="orbitGlow" cx="50%" cy="50%" r="60%">
-                    <stop offset="0%" stopColor="rgba(155,130,255,0)" />
-                    <stop offset="70%" stopColor="rgba(155,130,255,0.06)" />
-                    <stop offset="100%" stopColor="rgba(155,130,255,0)" />
-                  </radialGradient>
+                  {nodes.map((n) => {
+                    const e = edge(n.fx, n.fy);
+                    return (
+                      <linearGradient key={`g-${n.id}`} id={`g-${n.id}`} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="rgba(150,165,200,0.30)" />
+                        <stop offset="100%" stopColor={n.accent} />
+                      </linearGradient>
+                    );
+                  })}
                 </defs>
-                <circle
-                  cx="240" cy="240" r="150"
-                  fill="url(#orbitGlow)"
-                  opacity="0.6"
-                />
-
-                {/* Premium orbit ring (outer) */}
-                <circle
-                  cx="240" cy="240" r="148"
-                  fill="none"
-                  stroke="rgba(155,130,255,.12)"
-                  strokeWidth="1.2"
-                  strokeDasharray="4 8"
-                />
-
-                {/* Second orbit ring (inner) */}
-                <circle
-                  cx="240" cy="240" r="105"
-                  fill="none"
-                  stroke="rgba(155,130,255,.08)"
-                  strokeWidth="1"
-                  strokeDasharray="3 6"
-                />
-
-                {/* Connection path gradients — richer and more saturated */}
-                {nodes.map((n) => (
-                  <linearGradient
-                    key={`grad-${n.id}`}
-                    id={`grad-${n.id}`}
-                    x1={CENTER.x} y1={CENTER.y}
-                    x2={n.cx} y2={n.cy}
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop offset="0%" stopColor="rgba(155,130,255,0.70)" />
-                    <stop offset="100%" stopColor={
-                      n.id === "gemeente" ? "rgba(62,168,255,0.70)"
-                      : n.id === "aanbieder" ? "rgba(155,130,255,0.70)"
-                      : n.id === "coordinator" ? "rgba(245,165,36,0.70)"
-                      : "rgba(46,200,166,0.70)"
-                    } />
-                  </linearGradient>
-                ))}
 
                 {nodes.map((n) => {
-                  const midpt = labelPoint(n.cx, n.cy);
+                  const e = edge(n.fx, n.fy);
+                  const w = n.connLabel.length * 5.3 + 16;
                   return (
                     <g key={n.id}>
-                      {/* Outer glow line */}
-                      <path
-                        d={buildCurvedPath(n.cx, n.cy)}
-                        fill="none"
-                        stroke={`url(#grad-${n.id})`}
-                        strokeWidth="7"
-                        opacity="0.15"
-                      />
-                      {/* Main connection line */}
-                      <path
-                        d={buildCurvedPath(n.cx, n.cy)}
-                        fill="none"
-                        stroke={`url(#grad-${n.id})`}
-                        strokeWidth="2.2"
-                        strokeDasharray="6 5"
-                        opacity="0.90"
-                        strokeLinecap="round"
-                      />
-                      {/* Connection label — enhanced contrast */}
-                      <text
-                        x={midpt.x}
-                        y={midpt.y - 5}
-                        textAnchor="middle"
-                        style={{ fontSize: 9, fill: "rgba(195,180,255,0.95)", fontFamily: "inherit", fontWeight: 500 }}
-                      >
-                        {n.connLabel}
-                      </text>
+                      {/* soft underglow */}
+                      <line x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke={n.accent} strokeWidth={6} opacity={0.06} strokeLinecap="round" />
+                      {/* main connector */}
+                      <line x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke={`url(#g-${n.id})`} strokeWidth={1.6} strokeLinecap="round" opacity={0.9} />
+                      {/* ports */}
+                      <circle cx={e.x1} cy={e.y1} r={2} fill="rgba(150,165,200,0.55)" />
+                      <circle cx={e.x2} cy={e.y2} r={3} fill={n.accent} />
+                      <circle cx={e.x2} cy={e.y2} r={5.5} fill="none" stroke={n.accent} strokeWidth={1} opacity={0.4} />
+                      {/* label pill */}
+                      <g>
+                        <rect x={e.mx - w / 2} y={e.my - 9} width={w} height={18} rx={9} fill="#0a1326" stroke={n.accent} strokeOpacity={0.32} strokeWidth={1} />
+                        <text x={e.mx} y={e.my + 3.5} textAnchor="middle" style={{ fontSize: 9.5, fill: "var(--cl-text-secondary)", fontFamily: "inherit", fontWeight: 500 }}>
+                          {n.connLabel}
+                        </text>
+                      </g>
                     </g>
                   );
                 })}
               </svg>
 
-              {/* Center node — premium glow treatment */}
+              {/* Central case record card — the shared dossier */}
               <div
-                aria-hidden="true"
                 style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  width: 136,
-                  height: 136,
-                  borderRadius: "50%",
-                  background: "radial-gradient(circle at 40% 35%, rgba(155,130,255,.35), rgba(91,62,230,.10))",
-                  border: "2.5px solid rgba(155,130,255,.45)",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4,
-                  boxShadow: "0 0 0 1px rgba(155,130,255,.35), 0 0 32px rgba(155,130,255,.35), 0 0 64px rgba(155,130,255,.18), 0 0 120px rgba(155,130,255,.10), 0 20px 60px rgba(0,0,0,0.45)",
+                  position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+                  width: 192,
+                  background: "var(--cl-surface-2)",
+                  border: "1px solid var(--cl-border)",
+                  borderRadius: 16,
+                  padding: "14px 15px",
+                  display: "flex", flexDirection: "column", gap: 10,
+                  boxShadow: "0 20px 55px rgba(0,0,0,.55), inset 0 1px 0 rgba(155,130,255,.12)",
                 }}
               >
-                <svg width="52" height="52" viewBox="0 0 44 44" aria-hidden="true" fill="none">
-                  <circle cx="22" cy="14" r="8" fill="rgba(171,155,255,.55)" />
-                  <path d="M4 42c0-9.94 8.06-18 18-18s18 8.06 18 18" fill="rgba(171,155,255,.38)" />
-                </svg>
-                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: "var(--cl-text-muted)", textTransform: "uppercase" }}>
-                  CASUS
-                </span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#2ec8a6" }} />
+                    <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cl-text-muted)" }}>Casus</span>
+                  </span>
+                  <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--cl-text-secondary)", fontVariantNumeric: "tabular-nums" }}>C-24871</span>
+                </div>
+
+                <div>
+                  <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--cl-text)", lineHeight: 1.25 }}>Jeugd-GGZ — ambulant</p>
+                  <p style={{ fontSize: 10.5, color: "var(--cl-text-muted)", marginTop: 2 }}>Regio Rotterdam</p>
+                </div>
+
+                <div style={{ display: "flex", gap: 3, height: 5 }}>
+                  {RECORD_PHASES.map((c, i) => (
+                    <span key={i} style={{ flex: 1, borderRadius: 3, background: c }} />
+                  ))}
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10 }}>
+                  <span style={{ color: "var(--cl-text-muted)" }}>Huidige fase</span>
+                  <span style={{ color: "var(--cl-violet-bright)", fontWeight: 600 }}>Matching</span>
+                </div>
               </div>
 
-              {/* 4 role node cards */}
-              {nodes.map(({ id, label, sub, Icon, color, bg, border, pos }) => (
+              {/* Role cards */}
+              {nodes.map(({ id, label, sub, Icon, accent, fx, fy }) => (
                 <div
                   key={id}
                   style={{
                     position: "absolute",
-                    ...pos,
+                    left: `${fx * 100}%`,
+                    top: `${fy * 100}%`,
+                    transform: "translate(-50%, -50%)",
+                    width: 138,
                     borderRadius: 14,
-                    background: bg,
-                    border: `1.5px solid ${border}`,
-                    padding: "10px 11px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 5,
-                    textAlign: "center",
-                    boxShadow: `0 4px 20px ${bg}`,
+                    background: "var(--cl-surface-1)",
+                    border: "1px solid var(--cl-border-subtle)",
+                    borderTop: `2px solid ${accent}`,
+                    padding: "12px 13px",
+                    display: "flex", flexDirection: "column", gap: 7,
+                    boxShadow: "0 12px 32px rgba(0,0,0,.4)",
                   }}
                 >
                   <span
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: 30,
-                      height: 30,
-                      borderRadius: "50%",
-                      background: bg,
-                      color,
-                      border: `1px solid ${border}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      width: 30, height: 30, borderRadius: 9,
+                      background: `${accent}1f`, color: accent, border: `1px solid ${accent}40`,
                     }}
                     aria-hidden="true"
                   >
-                    <Icon size={14} strokeWidth={1.75} />
+                    <Icon size={15} strokeWidth={1.9} />
                   </span>
-                  <p style={{ fontSize: 11, fontWeight: 700, color, lineHeight: 1.2 }}>{label}</p>
-                  <p style={{ fontSize: 9, color: "var(--cl-text-muted)", lineHeight: 1.3 }}>{sub}</p>
+                  <div>
+                    <p style={{ fontSize: 12.5, fontWeight: 700, color: "var(--cl-text)", lineHeight: 1.2 }}>{label}</p>
+                    <p style={{ fontSize: 10, color: "var(--cl-text-muted)", lineHeight: 1.3, marginTop: 2 }}>{sub}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -342,21 +249,21 @@ export function CareNetworkSection() {
 
           {/* Mobile: cards grid */}
           <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
-            {nodes.map(({ id, label, sub, Icon, color, bg, border }) => (
+            {nodes.map(({ id, label, sub, Icon, accent }) => (
               <div
                 key={id}
                 className="rounded-[var(--cl-radius-md)] border p-4"
-                style={{ background: "var(--cl-surface-1)", borderColor: border }}
+                style={{ background: "var(--cl-surface-1)", borderColor: "var(--cl-border-subtle)", borderTop: `2px solid ${accent}` }}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span
                     className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-                    style={{ background: bg, color }}
+                    style={{ background: `${accent}1f`, color: accent }}
                     aria-hidden="true"
                   >
-                    <Icon size={14} strokeWidth={1.75} />
+                    <Icon size={14} strokeWidth={1.85} />
                   </span>
-                  <p className="text-sm font-semibold" style={{ color }}>{label}</p>
+                  <p className="text-sm font-semibold" style={{ color: "var(--cl-text)" }}>{label}</p>
                 </div>
                 <p className="text-xs" style={{ color: "var(--cl-text-muted)" }}>{sub}</p>
               </div>
