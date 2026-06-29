@@ -336,6 +336,22 @@ export function CareAppShell({ theme, onThemeToggle }: CareAppShellProps) {
     redirectIfAuthDocumentPath();
   }, []);
   const [currentContext, setCurrentContext] = useState<Context>(availableContexts[0]);
+  const autoSwitchedRef = useRef(false);
+  useEffect(() => {
+    // Auto-select provider context on first load when the logged-in user is a zorgaanbieder.
+    // Only runs once; after that the user controls the switcher manually.
+    if (autoSwitchedRef.current || !me?.workflowRole) return;
+    if (me.workflowRole === "zorgaanbieder" && currentContext.type !== "zorgaanbieder") {
+      const providerCtx = availableContexts.find(c => c.type === "zorgaanbieder");
+      if (providerCtx) {
+        autoSwitchedRef.current = true;
+        setCurrentContext(providerCtx);
+        setCurrentPage(prev => normalizePageForRole(prev, "zorgaanbieder"));
+      }
+    } else if (me.workflowRole !== "zorgaanbieder") {
+      autoSwitchedRef.current = true; // Not a provider — no switch needed, lock out further checks
+    }
+  }, [me?.workflowRole, currentContext.type]);
   const [currentPage, setCurrentPage] = useState<Page>(() =>
     normalizePageForRole(
       getInitialNavigation(typeof window !== "undefined" ? window.location.pathname : "/").page,

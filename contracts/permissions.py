@@ -130,7 +130,7 @@ def filter_care_cases_for_provider_actor(queryset, user, organization):
         due_diligence_process__contract_id=OuterRef('pk'),
     ).filter(
         Q(proposed_provider_id__in=ids) | Q(selected_provider_id__in=ids)
-    )
+    ).exclude(status='DRAFT')  # DRAFT = pre-send validation; only show cases actually sent
     # Do NOT filter the org-scoped input queryset: cases belong to the gemeente's
     # org, not the provider's active org. Start from all CareCases and let the
     # PlacementRequest be the sole authorization gate.

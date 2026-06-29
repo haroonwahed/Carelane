@@ -7,6 +7,7 @@ import logging
 from django.core.cache import cache
 from django.db.models import Prefetch, Q
 from django.http import Http404, JsonResponse
+from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -200,32 +201,37 @@ def case_detail_api(request, contract_id=None, case_id=None):
             return JsonResponse({'error': 'Casus niet gevonden'}, status=404)
 
         organization = get_user_organization(request.user)
-        case = get_scoped_object_or_404(
-            CareCase.objects.select_related(
-                'due_diligence_process',
-                'due_diligence_process__care_category_main',
-                'due_diligence_process__care_category_sub',
-                'due_diligence_process__regio',
-                'due_diligence_process__preferred_region',
-                'due_diligence_process__gemeente',
-                'due_diligence_process__herkomst_gemeente',
-                'due_diligence_process__verantwoordelijke_gemeente',
-                'due_diligence_process__verblijfsgemeente',
-                'due_diligence_process__zorgregio',
-                'due_diligence_process__plaatsingsregio',
-                'due_diligence_process__contractregio',
-                'due_diligence_process__escalatie_regio',
-                'due_diligence_process__case_assessment',
-                'created_by',
-            ).prefetch_related(
-                Prefetch(
-                    'due_diligence_process__indications',
-                    queryset=PlacementRequest.objects.order_by('-updated_at'),
-                ),
+        base_qs = CareCase.objects.select_related(
+            'due_diligence_process',
+            'due_diligence_process__care_category_main',
+            'due_diligence_process__care_category_sub',
+            'due_diligence_process__regio',
+            'due_diligence_process__preferred_region',
+            'due_diligence_process__gemeente',
+            'due_diligence_process__herkomst_gemeente',
+            'due_diligence_process__verantwoordelijke_gemeente',
+            'due_diligence_process__verblijfsgemeente',
+            'due_diligence_process__zorgregio',
+            'due_diligence_process__plaatsingsregio',
+            'due_diligence_process__contractregio',
+            'due_diligence_process__escalatie_regio',
+            'due_diligence_process__case_assessment',
+            'created_by',
+        ).prefetch_related(
+            Prefetch(
+                'due_diligence_process__indications',
+                queryset=PlacementRequest.objects.order_by('-updated_at'),
             ),
-            organization,
-            pk=record_id,
         )
+        from contracts.permissions import filter_care_cases_for_provider_actor
+        from contracts.workflow_state_machine import WorkflowRole, resolve_actor_role
+        actor_role = resolve_actor_role(user=request.user, organization=organization)
+        if actor_role == WorkflowRole.ZORGAANBIEDER:
+            # Cases belong to the gemeente's org, not the provider's active org.
+            # Skip org scope; ensure_provider_case_visible_or_404 is the auth gate.
+            case = get_object_or_404(base_qs, pk=record_id)
+        else:
+            case = get_scoped_object_or_404(base_qs, organization, pk=record_id)
         ensure_provider_case_visible_or_404(request.user, case)
 
         payload = _build_case_data(case, include_geo=True)
