@@ -29,6 +29,7 @@ const API_PHASE_TO_DECISION: Record<string, DecisionUiPhaseId> = {
   plaatsing_intake: "plaatsing",
   plaatsing: "plaatsing",
   intake: "intake",
+  actieve_plaatsing: "intake",
 };
 
 export const DECISION_UI_PHASE_LABELS: Record<DecisionUiPhaseId, string> = {
