@@ -380,8 +380,17 @@ def provider_evaluations_list_api(request):
         | Q(status=PlacementRequest.Status.IN_REVIEW)
     )
 
+    # Providers need to see placements from the gemeente's org, not their own.
+    # for_organization() scopes by intake org (gemeente), so skip it for providers
+    # and let filter_placement_requests_for_provider_actor handle authorization.
+    actor_role = resolve_actor_role(user=request.user, organization=organization)
+    if actor_role == WorkflowRole.ZORGAANBIEDER:
+        placement_base = PlacementRequest.objects.unscoped()
+    else:
+        placement_base = PlacementRequest.objects.for_organization(organization)
+
     qs = (
-        PlacementRequest.objects.for_organization(organization)
+        placement_base
         .filter(
             due_diligence_process__isnull=False,
             due_diligence_process__contract__isnull=False,

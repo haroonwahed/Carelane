@@ -43,20 +43,44 @@ def is_organization_owner(user, organization):
 
 
 def provider_client_ids_for_user(user, organization):
-    """Provider-staff users are linked to aanbieder Client rows via responsible_coordinator.
+    """Return PKs of Client rows this provider-staff user may act on.
 
-    We do NOT filter by organization here: Client rows are owned by the gemeente org, not
-    the provider's org, so scoping by the provider's active organization always returns
-    nothing. Tenancy is already enforced upstream by scope_queryset_for_organization
-    limiting the CareCase queryset to the correct gemeente.
+    Primary link: Client.responsible_coordinator (set by seed_demo_data / migration 0095).
+    Fallback 1: UserProfile.department matches the Client name (seed always sets this).
+    Fallback 2: active organization name matches the Client name (provider org context).
+
+    We intentionally do NOT filter by the user's active organization: Client rows belong
+    to the gemeente's org, not the provider's. Tenancy is enforced upstream via the
+    PlacementRequest / CareCase filters.
     """
     if not user or not getattr(user, 'is_authenticated', False):
         return frozenset()
-    return frozenset(
-        Client.objects.filter(
-            responsible_coordinator=user,
-        ).values_list('pk', flat=True)
+
+    # Primary: explicit responsible_coordinator set by seed / migration
+    ids = frozenset(
+        Client.objects.filter(responsible_coordinator=user).values_list('pk', flat=True)
     )
+    if ids:
+        return ids
+
+    # Fallback 1: UserProfile.department = client name (seed_demo_data always sets this)
+    try:
+        dept = user.profile.department
+    except Exception:
+        dept = None
+    if dept:
+        ids = frozenset(
+            Client.objects.filter(name=dept).values_list('pk', flat=True)
+        )
+    if ids:
+        return ids
+
+    # Fallback 2: active org name matches a Client name (provider org switcher context)
+    if organization is not None and organization.name:
+        ids = frozenset(
+            Client.objects.filter(name=organization.name).values_list('pk', flat=True)
+        )
+    return ids
 
 
 def case_is_visible_to_provider_user(user, case):
@@ -128,13 +152,22 @@ def visible_provider_scoped_care_cases(user, organization):
 
 
 def filter_placement_requests_for_provider_actor(queryset, user, organization):
-    """PlacementRequest rows whose intake's CareCase is visible to the provider."""
+    """PlacementRequest rows the provider may see.
+
+    Filters directly by Client IDs (proposed/selected provider) so this works
+    regardless of which org the provider has active in the switcher. Placements
+    belong to the gemeente's org, not the provider's.
+    """
     if organization is None:
         return queryset.none()
     if resolve_actor_role(user=user, organization=organization) != WorkflowRole.ZORGAANBIEDER:
         return queryset
-    visible = visible_provider_scoped_care_cases(user, organization)
-    return queryset.filter(due_diligence_process__contract_id__in=visible.values('pk'))
+    ids = provider_client_ids_for_user(user, organization)
+    if not ids:
+        return queryset.none()
+    return queryset.filter(
+        Q(proposed_provider_id__in=ids) | Q(selected_provider_id__in=ids)
+    )
 
 
 def filter_care_signals_for_provider_actor(queryset, user, organization):
