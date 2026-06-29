@@ -43,12 +43,17 @@ def is_organization_owner(user, organization):
 
 
 def provider_client_ids_for_user(user, organization):
-    """Provider-staff users are linked to aanbieder Client rows via responsible_coordinator."""
-    if not user or not getattr(user, 'is_authenticated', False) or organization is None:
+    """Provider-staff users are linked to aanbieder Client rows via responsible_coordinator.
+
+    We do NOT filter by organization here: Client rows are owned by the gemeente org, not
+    the provider's org, so scoping by the provider's active organization always returns
+    nothing. Tenancy is already enforced upstream by scope_queryset_for_organization
+    limiting the CareCase queryset to the correct gemeente.
+    """
+    if not user or not getattr(user, 'is_authenticated', False):
         return frozenset()
     return frozenset(
         Client.objects.filter(
-            organization=organization,
             responsible_coordinator=user,
         ).values_list('pk', flat=True)
     )
