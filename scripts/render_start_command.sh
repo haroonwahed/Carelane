@@ -45,6 +45,9 @@ echo "[render] using python binary: ${PYTHON_BIN}"
 
 "$PYTHON_BIN" scripts/render_startup_checks.py
 
+echo "[render] running database migrations against production database"
+"$PYTHON_BIN" manage.py migrate --noinput
+
 if [[ "${PILOT_AUTO_BOOTSTRAP:-}" =~ ^(1|true|yes)$ ]]; then
   echo "[render] PILOT_AUTO_BOOTSTRAP enabled — migrate + bootstrap_staging_pilot"
   "$PYTHON_BIN" manage.py migrate --noinput
