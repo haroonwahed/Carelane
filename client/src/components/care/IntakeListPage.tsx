@@ -73,7 +73,7 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
     [cases, searchQuery],
   );
   const intakeCases = useMemo(
-    () => cases.filter((c) => c.status === "plaatsing" && matchesSearch(c, searchQuery)),
+    () => cases.filter((c) => (c.status === "plaatsing" || c.status === "actief") && matchesSearch(c, searchQuery)),
     [cases, searchQuery],
   );
 
@@ -179,7 +179,9 @@ export function IntakeListPage({ onCaseClick, view = "intake", onRequestApproved
                 const isPending = caseItem.status === "provider_beoordeling";
                 const isBusy = submittingCaseId === caseItem.id;
                 const canDecide = isPending && role === "zorgaanbieder";
-                const actionLabel = canDecide ? (isBusy ? "Verwerken…" : "Accepteren") : "Bekijk casus";
+                const actionLabel = canDecide
+                  ? (isBusy ? "Verwerken…" : "Accepteren")
+                  : caseItem.status === "actief" ? "Intake actief" : "Bekijk casus";
 
                 const slaTarget = slaTargetHoursForStatus(caseItem.status, caseItem.urgency);
 

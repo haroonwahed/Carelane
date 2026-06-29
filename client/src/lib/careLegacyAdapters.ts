@@ -24,6 +24,8 @@ function mapCaseStatus(status: SpaCase["status"]): CaseStatus {
       return "placement";
     case "plaatsing":
       return "placement";
+    case "actief":
+      return "active";
     case "afgerond":
       return "completed";
     default:

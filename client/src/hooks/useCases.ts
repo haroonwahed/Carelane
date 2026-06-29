@@ -73,7 +73,7 @@ interface ApiListResponse {
 
 // ---- SPA case shape (matches CaseTriageCard props) ---------------------
 
-export type CasePhase = 'intake' | 'matching' | 'provider_beoordeling' | 'plaatsing' | 'afgerond';
+export type CasePhase = 'intake' | 'matching' | 'provider_beoordeling' | 'plaatsing' | 'actief' | 'afgerond';
 export type UrgencyLevel = 'critical' | 'warning' | 'normal' | 'stable';
 
 export interface SpaCase {
@@ -141,11 +141,7 @@ const CONTRACT_TYPE_LABELS: Record<string, string> = {
 };
 
 function mapPhase(phase: string): CasePhase {
-  if (phase === 'actief') {
-    return 'intake';
-  }
-
-  const valid: CasePhase[] = ['intake', 'matching', 'provider_beoordeling', 'plaatsing', 'afgerond'];
+  const valid: CasePhase[] = ['intake', 'matching', 'provider_beoordeling', 'plaatsing', 'actief', 'afgerond'];
   return valid.includes(phase as CasePhase) ? (phase as CasePhase) : 'intake';
 }
 
