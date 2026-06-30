@@ -57,6 +57,12 @@ if [[ "${PILOT_AUTO_BOOTSTRAP:-}" =~ ^(1|true|yes)$ ]]; then
   fi
 fi
 
+if [[ "${DEMO_AUTO_SETUP:-}" =~ ^(1|true|yes)$ ]]; then
+  echo "[render] DEMO_AUTO_SETUP enabled — resetting demo capacity and syncing case phases"
+  "$PYTHON_BIN" manage.py reset_demo_capacity || true
+  "$PYTHON_BIN" manage.py sync_case_phases --execute || true
+fi
+
 echo "[render] Startup checks passed; starting gunicorn on port ${PORT:-?}"
 
 WORKERS="${GUNICORN_WORKERS:-${WEB_CONCURRENCY:-2}}"
