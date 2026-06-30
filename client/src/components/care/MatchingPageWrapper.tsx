@@ -92,5 +92,11 @@ export function MatchingPageWrapper({
   }
 
   // Otherwise show the list view
-  return <MatchingQueuePage onCaseClick={handleCaseClick} onNavigateToCasussen={onNavigateToCasussen} />;
+  return (
+    <MatchingQueuePage
+      onCaseClick={handleCaseClick}
+      onCaseDetailClick={onNavigateToCaseDetail}
+      onNavigateToCasussen={onNavigateToCasussen}
+    />
+  );
 }

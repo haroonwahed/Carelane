@@ -39,6 +39,8 @@ import { getShortReasonLabel } from "../../lib/uxCopy";
 
 interface MatchingQueuePageProps {
   onCaseClick: (caseId: string) => void;
+  /** For non-matching phases (plaatsing, intake) — opens case detail/execution page instead of MatchingPageWithMap. */
+  onCaseDetailClick?: (caseId: string) => void;
   onNavigateToCasussen?: () => void;
 }
 
@@ -91,7 +93,10 @@ function countByPhase(items: WorkflowCaseView[]): Record<DecisionUiPhaseId, numb
   return counts;
 }
 
-function matchingRowActionLabel(item: WorkflowCaseView): "Bekijk onderbouwing" | "Vraag gegevens op" {
+function matchingRowActionLabel(item: WorkflowCaseView): string {
+  const phase = phaseOf(item);
+  if (phase === "plaatsing") return "Bevestig plaatsing";
+  if (phase === "intake") return "Bekijk intake";
   if (item.isBlocked || item.missingDataItems.length > 0) return "Vraag gegevens op";
   return "Bekijk onderbouwing";
 }
@@ -117,7 +122,7 @@ function matchingReasonLabel(item: WorkflowCaseView): string {
 
 const MATCHING_COLS = "minmax(12rem,2fr) minmax(8rem,1.2fr) minmax(8rem,1fr) minmax(10rem,1.5fr) minmax(9rem,1fr)";
 
-export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: MatchingQueuePageProps) {
+export function MatchingQueuePage({ onCaseClick, onCaseDetailClick, onNavigateToCasussen }: MatchingQueuePageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [phaseFilter, setPhaseFilter] = useState<DecisionUiPhaseId>("matching");
@@ -282,7 +287,13 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
                     cols={MATCHING_COLS}
                     minWidth="820px"
                     accentTone={accentTone}
-                    onRowClick={() => onCaseClick(item.id)}
+                    onRowClick={() => {
+                      if ((phaseOf(item) === "plaatsing" || phaseOf(item) === "intake") && onCaseDetailClick) {
+                        onCaseDetailClick(item.id);
+                      } else {
+                        onCaseClick(item.id);
+                      }
+                    }}
                   >
                     {/* Casus */}
                     <div className="min-w-0">
@@ -323,8 +334,19 @@ export function MatchingQueuePage({ onCaseClick, onNavigateToCasussen }: Matchin
                     <CareWorklistRowAction>
                       <button
                         type="button"
-                        className={ROW_ACTION_CLASSES.default}
-                        onClick={(e) => { e.stopPropagation(); onCaseClick(item.id); }}
+                        className={
+                          (phaseOf(item) === "plaatsing")
+                            ? ROW_ACTION_CLASSES.primary
+                            : ROW_ACTION_CLASSES.default
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if ((phaseOf(item) === "plaatsing" || phaseOf(item) === "intake") && onCaseDetailClick) {
+                            onCaseDetailClick(item.id);
+                          } else {
+                            onCaseClick(item.id);
+                          }
+                        }}
                       >
                         {nextActionLabel}
                         <ChevronRight size={12} className="shrink-0 opacity-60" aria-hidden />
