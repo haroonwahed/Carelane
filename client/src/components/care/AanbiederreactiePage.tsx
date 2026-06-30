@@ -83,11 +83,11 @@ const RESPONSE_FILTERS: Array<{ key: ResponseFilterKey; label: string }> = [
 ];
 
 const RESPONSE_STATUS_ORDER: Record<ResponseStatusKey, number> = {
-  reminder_needed: 0,
-  info_requested: 1,
-  waiting: 2,
-  rejected: 3,
-  approved: 4,
+  approved: 0,
+  reminder_needed: 1,
+  info_requested: 2,
+  waiting: 3,
+  rejected: 4,
   expired: 5,
 };
 
@@ -400,6 +400,13 @@ export function AanbiederreactiePage({
     >
       <CareMetricStrip>
         <CareMetricCard
+          value={counts.approved}
+          label="Bevestig plaatsing"
+          tone="emerald"
+          isActive={statusFilter === "approved"}
+          onClick={() => setStatusFilter(statusFilter === "approved" ? "all" : "approved")}
+        />
+        <CareMetricCard
           value={counts.reminder_needed}
           label="Herinnering nodig"
           tone="urgent"
@@ -412,13 +419,6 @@ export function AanbiederreactiePage({
           tone="warning"
           isActive={statusFilter === "waiting"}
           onClick={() => setStatusFilter(statusFilter === "waiting" ? "all" : "waiting")}
-        />
-        <CareMetricCard
-          value={counts.expired}
-          label="Verlopen"
-          tone="urgent"
-          isActive={statusFilter === "expired"}
-          onClick={() => setStatusFilter(statusFilter === "expired" ? "all" : "expired")}
         />
       </CareMetricStrip>
 
@@ -525,7 +525,7 @@ export function AanbiederreactiePage({
                     <CareWorklistRowAction>
                       <button
                         type="button"
-                        className={ROW_ACTION_CLASSES.default}
+                        className={row.statusKey === "approved" ? ROW_ACTION_CLASSES.primary : ROW_ACTION_CLASSES.default}
                         onClick={(e) => { e.stopPropagation(); onCaseClick(row.caseId); }}
                       >
                         {row.nextActionLabel}

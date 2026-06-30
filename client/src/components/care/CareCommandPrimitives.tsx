@@ -64,7 +64,7 @@ export function CareMetricStrip({ children, cols = 3 }: { children: ReactNode; c
   );
 }
 
-type MetricTone = "urgent" | "warning" | "neutral";
+type MetricTone = "urgent" | "warning" | "neutral" | "emerald";
 
 const METRIC_TONES: Record<MetricTone, { idle: string; active: string; value: string; label: string }> = {
   urgent: {
@@ -78,6 +78,12 @@ const METRIC_TONES: Record<MetricTone, { idle: string; active: string; value: st
     active: "border-care-warning-border bg-care-warning-bg ring-2 ring-care-warning-solid/30 shadow-sm",
     value: "text-care-warning-text",
     label: "text-care-warning-text/70",
+  },
+  emerald: {
+    idle: "border-care-success-border bg-care-success-bg hover:-translate-y-0.5 hover:shadow-md hover:border-care-success-solid/60",
+    active: "border-care-success-border bg-care-success-bg ring-2 ring-care-success-solid/30 shadow-sm",
+    value: "text-care-success-text",
+    label: "text-care-success-text/70",
   },
   neutral: {
     idle: "border-border/60 bg-card/40 hover:bg-card/55 hover:-translate-y-0.5 hover:shadow-md hover:border-border/80 dark:bg-card/20 dark:hover:bg-card/30",

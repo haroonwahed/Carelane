@@ -682,12 +682,19 @@ export function MatchingPageWithMap({
             <div className="mt-4 space-y-3">
               {rankedMatches.map((item) => {
                 const isSelected = selectedProviderId === item.provider.id;
+                const score = item.matchScore ?? 0;
                 const qualityBadge =
-                  item.index === 0
+                  item.index === 0 && score >= 60
                     ? { label: "Beste match", cls: "bg-care-brand-bg text-care-brand-text" }
-                    : item.index === 1
-                      ? { label: "Goede match", cls: "bg-care-success-bg text-care-success-text" }
-                      : { label: "Reserve", cls: "bg-muted/40 text-muted-foreground" };
+                    : item.index === 0 && score >= 40
+                      ? { label: "Meest passend", cls: "bg-care-warning-bg text-care-warning-text" }
+                      : item.index === 0
+                        ? { label: "Enige optie", cls: "bg-muted/40 text-muted-foreground" }
+                        : item.index === 1 && score >= 60
+                          ? { label: "Goede match", cls: "bg-care-success-bg text-care-success-text" }
+                          : item.index === 1
+                            ? { label: "Alternatief", cls: "bg-muted/40 text-muted-foreground" }
+                            : { label: "Reserve", cls: "bg-muted/40 text-muted-foreground" };
                 const scoreColor =
                   (item.matchScore ?? 0) >= 80
                     ? "text-care-success-solid"
