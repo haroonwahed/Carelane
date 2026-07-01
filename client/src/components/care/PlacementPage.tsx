@@ -88,7 +88,14 @@ export function PlacementPage({
   const legacyProviders = providers.map(toLegacyProvider);
 
   const caseData = legacyCases.find(c => c.id === caseId);
-  const provider = legacyProviders.find(p => p.id === providerId);
+  // Prefer the placement-detail API response over the prop — arrangement_provider on CareCase
+  // is often not backfilled, so the prop may arrive as "". Fall back through proposed → selected.
+  const effectiveProviderId =
+    providerId ||
+    placementDetail?.placement?.selectedProviderId ||
+    placementDetail?.placement?.proposedProviderId ||
+    "";
+  const provider = legacyProviders.find(p => p.id === effectiveProviderId);
   const taxonomyReasons = placementDetail
     ? [
         placementDetail.placement.taxonomieLijn,
