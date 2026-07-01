@@ -446,7 +446,10 @@ def _placement_action_api_inner(request, case_id):
             )
             if not transition.allowed:
                 return JsonResponse({'ok': False, 'error': transition.reason}, status=400)
-            if placement.provider_response_status not in normalize_provider_rejection_states():
+            # Allow rematch when municipality already rejected the placement (placement.status == REJECTED),
+            # even if the provider had previously accepted (handles legacy/seeded data inconsistencies).
+            placement_already_rejected = placement.status == PlacementRequest.Status.REJECTED
+            if not placement_already_rejected and placement.provider_response_status not in normalize_provider_rejection_states():
                 return JsonResponse({'ok': False, 'error': 'Rematch kan alleen na aanbiederafwijzing.'}, status=400)
 
             release_capacity(placement)
