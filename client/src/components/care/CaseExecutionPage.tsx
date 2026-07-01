@@ -278,6 +278,10 @@ function actionHolderForWorkflowState(
   if (state === "PLACEMENT_CONFIRMED" && ctx && !ctx.intake_started) {
     return selectedProviderName || "Intakecoordinator";
   }
+  // activate-monitoring (INTAKE_STARTED → ACTIVE_PLACEMENT) is a gemeente action
+  if (state === "INTAKE_STARTED") {
+    return municipalityOwnerLabel;
+  }
   return stepOwner;
 }
 
