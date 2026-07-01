@@ -388,6 +388,13 @@ def _placement_action_api_inner(request, case_id):
             if not transition.allowed:
                 return JsonResponse({'ok': False, 'error': transition.reason}, status=400)
 
+            # Promote proposed_provider → selected_provider when seeded/legacy records
+            # have provider acceptance recorded but selected_provider was never set.
+            if not placement.selected_provider_id and placement.proposed_provider_id and \
+                    placement.provider_response_status == PlacementRequest.ProviderResponseStatus.ACCEPTED:
+                placement.selected_provider_id = placement.proposed_provider_id
+                placement.save(update_fields=['selected_provider', 'updated_at'])
+
             allowed, blocker = placement.can_transition_to_status(PlacementRequest.Status.APPROVED)
             if not allowed:
                 return JsonResponse({'ok': False, 'error': blocker or 'Plaatsing kan niet worden bevestigd.'}, status=400)
