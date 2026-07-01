@@ -48,6 +48,23 @@ interface Document {
   externalHandoffReference?: string;
 }
 
+const API_DOC_TYPE_MAP: Record<string, DocumentType> = {
+  CONTRACT: "contract",
+  AMENDMENT: "overig",
+  EXHIBIT: "rapport",
+  CORRESPONDENCE: "overig",
+  MEMO: "overig",
+  RESEARCH: "rapport",
+  TEMPLATE: "overig",
+  OTHER: "overig",
+  // lowercase passthrough
+  intake: "intake",
+  contract: "contract",
+  rapport: "rapport",
+  beoordeling: "beoordeling",
+  overig: "overig",
+};
+
 const documentTypeConfig: Record<DocumentType, { label: string; color: string; icon: any }> = {
   intake: { label: "Intake", color: "text-care-brand-text", icon: FileText },
   contract: { label: "Contract", color: "text-care-info-text", icon: FileCheck },
@@ -76,7 +93,7 @@ export function DocumentenPage() {
       setDocuments(apiDocuments.map((d) => ({
         id: d.id,
         name: d.name,
-        type: (d.type as DocumentType) || ("overig" as DocumentType),
+        type: API_DOC_TYPE_MAP[d.type] ?? "overig",
         linkedTo: {
           type: (d.linkedCaseId ? "casus" : "geen") as LinkedEntity,
           id: d.linkedCaseId ?? undefined,
@@ -307,8 +324,8 @@ function DocumentRow({
   onLink: () => void;
   onArchive: () => void;
 }) {
-  const typeConfig = documentTypeConfig[document.type];
-  const linkedConfig = linkedEntityConfig[document.linkedTo.type];
+  const typeConfig = documentTypeConfig[document.type] ?? documentTypeConfig.overig;
+  const linkedConfig = linkedEntityConfig[document.linkedTo.type] ?? linkedEntityConfig.geen;
   const TypeIcon = typeConfig.icon;
 
   return (
@@ -382,8 +399,8 @@ function DocumentPreview({
   onArchive: () => void;
   onClose: () => void;
 }) {
-  const typeConfig = documentTypeConfig[document.type];
-  const linkedConfig = linkedEntityConfig[document.linkedTo.type];
+  const typeConfig = documentTypeConfig[document.type] ?? documentTypeConfig.overig;
+  const linkedConfig = linkedEntityConfig[document.linkedTo.type] ?? linkedEntityConfig.geen;
 
   return (
     <div className="sticky space-y-3 rounded-[20px] border border-border/60 bg-card/45 p-4 shadow-sm backdrop-blur" style={{ top: tokens.layout.edgeZero }}>
